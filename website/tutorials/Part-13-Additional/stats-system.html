@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计系统 (Stats System) - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #7f8c8d 0%, #7f8c8d88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-13.html">Part-13</a>
+                        <span>/</span>
+                        <span>统计系统 (Stats System)</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">统计系统 (Stats System)</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-13: 附加系统</span>
+                    <span><i class="fas fa-file"></i> stats-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是统计系统-">什么是统计系统？</a></li><li class="h3"><a href="#统计系统能记录什么-">统计系统能记录什么？</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#统计系统架构">统计系统架构</a></li><li class="h3"><a href="#统计触发流程">统计触发流程</a></li><li class="h3"><a href="#常见统计类型层次">常见统计类型层次</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#stats-java-统计常量定义">Stats.java - 统计常量定义</a></li><li class="h3"><a href="#stat-java-单个统计定义">Stat.java - 单个统计定义</a></li><li class="h3"><a href="#stattype-java-统计类型">StatType.java - 统计类型</a></li><li class="h3"><a href="#stathandler-java-客户端-服务端统计处理器">StatHandler.java - 客户端/服务端统计处理器</a></li><li class="h3"><a href="#serverstathandler-java-服务端持久化">ServerStatHandler.java - 服务端持久化</a></li><li class="h3"><a href="#statformatter-java-数值格式化">StatFormatter.java - 数值格式化</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#监听玩家挖矿事件">监听玩家挖矿事件</a></li><li class="h3"><a href="#创建自定义统计">创建自定义统计</a></li><li class="h3"><a href="#显示玩家统计">显示玩家统计</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="sound-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> Minecraft 声音系统详解</strong>
+        </a><a href="text-system.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>文本系统 (Text System) <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>读完这篇文章后，你将理解 Minecraft 的统计系统如何追踪玩家活动，并能在源码中找到相关实现。</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Minecraft 服务端架构</p>
+<p>- 熟悉泛型和注册表(Registry)的概念</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是统计系统-">什么是统计系统？</h3>
+
+<p>想象一下手机上的"健康"App，它会自动记录你每天走了多少步、爬了几层楼。Minecraft 的统计系统就是游戏的"健康App"——<strong>自动记录玩家的各种游戏活动</strong>。</p>
+
+<h3 id="统计系统能记录什么-">统计系统能记录什么？</h3>
+
+<table><thead><tr><th>类别</th><th>示例</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>破坏方块</td><td>挖矿数、砍树数</td><td>`MINED` 类型</td></tr><tr><td>合成物品</td><td>合成钻石剑次数</td><td>`CRAFTED` 类型</td></tr><tr><td>使用物品</td><td>吃东西次数</td><td>`USED` 类型</td></tr><tr><td>拾取物品</td><td>捡起圆石数量</td><td>`PICKED_UP` 类型</td></tr><tr><td>击杀生物</td><td>杀猪数、杀僵尸数</td><td>`KILLED` 类型</td></tr><tr><td>被杀次数</td><td>被怪物杀死次数</td><td>`KILLED_BY` 类型</td></tr><tr><td>自定义统计</td><td>游戏时长、死亡次数</td><td>`CUSTOM` 类型</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="统计系统架构">统计系统架构</h3>
+
+<div class="mermaid">
+graph TB
+    subgraph Stats[统计注册表]
+        ST1["MINED<Block>"]
+        ST2["CRAFTED<Item>"]
+        ST3["USED<Item>"]
+        ST4["KILLED<EntityType>"]
+        ST5["CUSTOM<Identifier>"]
+    end
+    
+    subgraph StatType[泛型统计类型]
+        ST["StatType<T>"]
+        ST -->|注册表| R["Registry<T>"]
+        ST -->|映射| SM["Map<T, Stat<T>>"]
+    end
+    
+    subgraph Stat[单个统计]
+        S1["Stat<MinedBlock>"]
+        S2["Stat<KilledEntity>"]
+        S3["Stat<Custom>"]
+    end
+    
+    subgraph StatHandler[统计处理器]
+        SH["StatHandler"]
+        SM2["Map<Stat<?>, Integer>"]
+    end
+    
+    ST1 --> ST2 --> ST3 --> ST4 --> ST5
+    ST --> ST1
+    ST1 --> S1
+    ST4 --> S2
+    ST5 --> S3
+    SH --> SM2
+    
+    classDef container fill:#3F51B5,color:white
+    classDef stat fill:#4CAF50,color:white
+    classDef handler fill:#FF9800,color:white
+    
+    class ST,ST1,ST2,ST3,ST4,ST5 container
+    class S1,S2,S3 stat
+    class SH handler
+</div>
+
+<h3 id="统计触发流程">统计触发流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant P as 玩家
+    participant SH as StatHandler
+    participant GS as 游戏服务器
+    participant NBT as 存档文件
+    
+    Note over P: 玩家挖掉一个石头
+    
+    P->>GS: 触发 Block#onBreak
+    
+    GS->>SH: increaseStat(player, Stat<?>, +1)
+    
+    alt 服务器端
+        SH->>SH: statMap[stat] += 1
+        SH->>SH: pendingStats.add(stat)
+        GS->>P: 同步统计包
+    else 存档保存
+        GS->>NBT: 每5分钟保存
+        NBT->>SH: 读取/写入 JSON
+    end
+    
+    Note over P: ESC菜单显示统计
+</div>
+
+<h3 id="常见统计类型层次">常见统计类型层次</h3>
+
+<div class="mermaid">
+classDiagram
+    class Stat~T~ {
+        +StatType~T~ type
+        +T value
+        +StatFormatter formatter
+        +format(int)
+    }
+    
+    class StatType~T~ {
+        +Registry~T~ registry
+        +Map~T, Stat~ stats
+        +getOrCreateStat(T, formatter)
+    }
+    
+    class StatHandler {
+        +Map~Stat<?>, Integer~ statMap
+        +increaseStat()
+        +getStat()
+        +setStat()
+    }
+    
+    class ServerStatHandler {
+        +MinecraftServer server
+        +File saveFile
+        +save()
+        +parse()
+        +sendStats()
+    }
+    
+    StatHandler <|-- ServerStatHandler
+    Stat *-- StatType
+    StatType *-- Stat
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="stats-java-统计常量定义">Stats.java - 统计常量定义</h3>
+
+<pre><code>public class Stats {
+    // 基于方块的统计 (挖矿)
+    public static final StatType&lt;Block&gt; MINED = registerType(&quot;mined&quot;, Registries.BLOCK);
+    
+    // 基于物品的统计
+    public static final StatType&lt;Item&gt; CRAFTED = registerType(&quot;crafted&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; USED = registerType(&quot;used&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; BROKEN = registerType(&quot;broken&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; PICKED_UP = registerType(&quot;picked_up&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; DROPPED = registerType(&quot;dropped&quot;, Registries.ITEM);
+    
+    // 基于实体类型的统计
+    public static final StatType&lt;EntityType&lt;?&gt;&gt; KILLED = registerType(&quot;killed&quot;, Registries.ENTITY_TYPE);
+    public static final StatType&lt;EntityType&lt;?&gt;&gt; KILLED_BY = registerType(&quot;killed_by&quot;, Registries.ENTITY_TYPE);
+    
+    // 自定义统计
+    public static final StatType&lt;Identifier&gt; CUSTOM = registerType(&quot;custom&quot;, Registries.CUSTOM_STAT);
+    
+    // 常用自定义统计
+    public static final Identifier DEATHS = register(&quot;deaths&quot;, StatFormatter.DEFAULT);
+    public static final Identifier MOB_KILLS = register(&quot;mob_kills&quot;, StatFormatter.DEFAULT);
+    public static final Identifier PLAY_TIME = register(&quot;play_time&quot;, StatFormatter.TIME);
+    
+    // 距离统计
+    public static final Identifier WALK_ONE_CM = register(&quot;walk_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier SPRINT_ONE_CM = register(&quot;sprint_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier FLY_ONE_CM = register(&quot;fly_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier SWIM_ONE_CM = register(&quot;swim_one_cm&quot;, StatFormatter.DISTANCE);
+    
+    // 伤害统计
+    public static final Identifier DAMAGE_DEALT = register(&quot;damage_dealt&quot;, StatFormatter.DIVIDE_BY_TEN);
+    public static final Identifier DAMAGE_TAKEN = register(&quot;damage_taken&quot;, StatFormatter.DIVIDE_BY_TEN);
+    
+    // 注册统计类型
+    private static &lt;T&gt; StatType&lt;T&gt; registerType(String id, Registry&lt;T&gt; registry) {
+        MutableText text = Text.translatable(&quot;stat_type.minecraft.&quot; + id);
+        return Registry.register(Registries.STAT_TYPE, id, new StatType&lt;T&gt;(registry, text));
+    }
+    
+    // 注册自定义统计
+    private static Identifier register(String id, StatFormatter formatter) {
+        Identifier identifier = Identifier.ofVanilla(id);
+        Registry.register(Registries.CUSTOM_STAT, id, identifier);
+        CUSTOM.getOrCreateStat(identifier, formatter);
+        return identifier;
+    }
+}</code></pre>
+
+<h3 id="stat-java-单个统计定义">Stat.java - 单个统计定义</h3>
+
+<pre><code>public class Stat&lt;T&gt; extends ScoreboardCriterion {
+    private final StatFormatter formatter;    // 显示格式器
+    private final T value;                     // 统计值(如石头方块)
+    private final StatType&lt;T&gt; type;             // 统计类型
+    
+    // 获取统计唯一名称
+    public static &lt;T&gt; String getName(StatType&lt;T&gt; type, T value) {
+        return Registries.STAT_TYPE.getId(type) + &quot;:&quot; + 
+               type.getRegistry().getId(value);
+    }
+    
+    // 格式化显示
+    public String format(int value) {
+        return formatter.format(value);
+    }
+}</code></pre>
+
+<h3 id="stattype-java-统计类型">StatType.java - 统计类型</h3>
+
+<pre><code>public class StatType&lt;T&gt; implements Iterable&lt;Stat&lt;T&gt;&gt; {
+    private final Registry&lt;T&gt; registry;      // 值类型的注册表
+    private final Map&lt;T, Stat&lt;T&gt;&gt; stats = new IdentityHashMap&lt;&gt;();  // 缓存
+    
+    // 获取或创建统计
+    public Stat&lt;T&gt; getOrCreateStat(T key, StatFormatter formatter) {
+        return stats.computeIfAbsent(key, value -&gt; new Stat&lt;&gt;(this, value, formatter));
+    }
+    
+    // 迭代所有统计
+    @Override
+    public Iterator&lt;Stat&lt;T&gt;&gt; iterator() {
+        return stats.values().iterator();
+    }
+}</code></pre>
+
+<h3 id="stathandler-java-客户端-服务端统计处理器">StatHandler.java - 客户端/服务端统计处理器</h3>
+
+<pre><code>public class StatHandler {
+    // 存储 统计 -&gt; 数值 的映射
+    protected final Object2IntMap&lt;Stat&lt;?&gt;&gt; statMap = 
+        Object2IntMaps.synchronize(new Object2IntOpenHashMap());
+    
+    // 增加统计值
+    public void increaseStat(PlayerEntity player, Stat&lt;?&gt; stat, int value) {
+        int newValue = (int) Math.min(
+            (long) getStat(stat) + (long) value, 
+            Integer.MAX_VALUE
+        );
+        setStat(player, stat, newValue);
+    }
+    
+    // 获取统计值
+    public &lt;T&gt; int getStat(StatType&lt;T&gt; type, T stat) {
+        return type.hasStat(stat) ? getStat(type.getOrCreateStat(stat)) : 0;
+    }
+    
+    public int getStat(Stat&lt;?&gt; stat) {
+        return statMap.getInt(stat);
+    }
+}</code></pre>
+
+<h3 id="serverstathandler-java-服务端持久化">ServerStatHandler.java - 服务端持久化</h3>
+
+<pre><code>public class ServerStatHandler extends StatHandler {
+    private final MinecraftServer server;
+    private final File file;                   // 保存路径
+    private final Set&lt;Stat&lt;?&gt;&gt; pendingStats;   // 待同步统计
+    
+    // 保存到文件
+    public void save() {
+        FileUtils.writeStringToFile(file, asString());
+    }
+    
+    // 发送统计给客户端
+    public void sendStats(ServerPlayerEntity player) {
+        Object2IntOpenHashMap map = new Object2IntOpenHashMap();
+        for (Stat&lt;?&gt; stat : takePendingStats()) {
+            map.put(stat, getStat(stat));
+        }
+        player.networkHandler.sendPacket(new StatisticsS2CPacket(map));
+    }
+    
+    // 从JSON解析
+    public void parse(DataFixer dataFixer, String json) {
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject statsObj = root.getAsJsonObject(&quot;stats&quot;);
+        
+        for (Map.Entry&lt;String, JsonElement&gt; entry : statsObj.entrySet()) {
+            StatType&lt;?&gt; type = Registries.STAT_TYPE.get(Identifier.of(entry.getKey()));
+            JsonObject typeStats = entry.getValue().getAsJsonObject();
+            
+            for (Map.Entry&lt;String, JsonElement&gt; statEntry : typeStats.entrySet()) {
+                Identifier id = Identifier.tryParse(statEntry.getKey());
+                int value = statEntry.getValue().getAsInt();
+                Stat&lt;?&gt; stat = type.getOrCreateStat(id);
+                statMap.put(stat, value);
+            }
+        }
+    }
+}</code></pre>
+
+<h3 id="statformatter-java-数值格式化">StatFormatter.java - 数值格式化</h3>
+
+<pre><code>public class StatFormatter {
+    // 直接显示数字
+    public static final StatFormatter DEFAULT = value -&gt; String.valueOf(value);
+    
+    // 显示为时间 (秒数 -&gt; 分:秒)
+    public static final StatFormatter TIME = value -&gt; {
+        int i = value / 3600;
+        int j = (value / 60) % 60;
+        int k = value % 60;
+        return (i != 0 ? i + &quot;m &quot; : &quot;&quot;) + (j != 0 ? j + &quot;s&quot; : (k + &quot;s&quot;));
+    };
+    
+    // 显示为距离 (厘米 -&gt; 米/公里)
+    public static final StatFormatter DISTANCE = value -&gt; {
+        if (value &gt;= 100000) {
+            return String.format(&quot;%.1f km&quot;, value / 10000 / 100.0);
+        }
+        return value / 100.0 + &quot; m&quot;;
+    };
+    
+    // 显示为伤害值 (除以10)
+    public static final StatFormatter DIVIDE_BY_TEN = value -&gt; 
+        String.valueOf(value / 10.0);
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="监听玩家挖矿事件">监听玩家挖矿事件</h3>
+
+<pre><code>// 在 Block 类中自动触发
+public class Block {
+    public void onBroken(World world, PlayerEntity player) {
+        // 触发挖矿统计
+        Stat&lt;Block&gt; stat = Stats.MINED.getOrCreateStat(this);
+        player.incrementStat(stat);
+    }
+}
+
+// 玩家端获取统计
+public int getMinedCount(PlayerEntity player, Block block) {
+    StatHandler handler = player.getStatHandler();
+    return handler.getStat(Stats.MINED, block);
+}</code></pre>
+
+<h3 id="创建自定义统计">创建自定义统计</h3>
+
+<pre><code>public class MyMod {
+    // 1. 定义自定义统计ID
+    public static final Identifier CUSTOM_STAT_ID = Identifier.of(&quot;mymod&quot;, &quot;jump_count&quot;);
+    
+    // 2. 注册统计 (在 mod 初始化时)
+    public static Identifier JUMP_COUNT;
+    
+    public static void onInitialize() {
+        // 通过 Stats.CUSTOM 注册
+        JUMP_COUNT = Stats.register(&quot;mymod.jump_count&quot;, StatFormatter.DEFAULT);
+    }
+    
+    // 3. 使用统计
+    public void onPlayerJump(ServerPlayerEntity player) {
+        StatHandler handler = player.getStatHandler();
+        handler.incrementStat(player, Stats.CUSTOM.getOrCreateStat(JUMP_COUNT), 1);
+    }
+    
+    // 4. 获取统计
+    public int getJumpCount(ServerPlayerEntity player) {
+        StatHandler handler = player.getStatHandler();
+        return handler.getStat(Stats.CUSTOM.getOrCreateStat(JUMP_COUNT));
+    }
+}</code></pre>
+
+<h3 id="显示玩家统计">显示玩家统计</h3>
+
+<pre><code>public void showPlayerStats(ServerPlayerEntity player, ServerPlayerEntity target) {
+    StatHandler handler = target.getStatHandler();
+    
+    // 获取各种统计
+    int kills = handler.getStat(Stats.MOB_KILLS);
+    int deaths = handler.getStat(Stats.DEATHS);
+    int playTime = handler.getStat(Stats.PLAY_TIME);
+    
+    // 创建显示文本
+    MutableText message = Text.literal(&quot;玩家统计: \n&quot;)
+        .append(&quot;击杀: &quot;).append(String.valueOf(kills)).append(&quot;\n&quot;)
+        .append(&quot;死亡: &quot;).append(String.valueOf(deaths)).append(&quot;\n&quot;)
+        .append(&quot;游戏时间: &quot;).append(Stats.PLAY_TIME.format(playTime));
+    
+    player.sendMessage(message);
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>统计系统是 Minecraft 追踪玩家活动的重要工具：</p>
+
+<p>1. <strong>Stats</strong> 类定义所有内置统计常量</p>
+<p>2. <strong>StatType<T></strong> 泛型类处理不同类型(方块、物品、实体)的统计</p>
+<p>3. <strong>Stat</strong> 表示单个统计项，包含类型、值和格式化器</p>
+<p>4. <strong>StatHandler</strong> 维护玩家统计数据</p>
+<p>5. <strong>ServerStatHandler</strong> 处理服务端持久化和同步</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 在源码中找到 <code>Stats.java</code>，列出所有 <code>CUSTOM</code> 类型的统计</p>
+<p>2. 实现一个记录玩家说"你好"次数的 mod 统计</p>
+<p>3. 研究 <code>StatFormatter</code> 的其他实现方式</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./scoreboard-system.html">记分板系统</a> - 了解记分板与统计的关系</p>
+<p>- <a href="./text-system.html">文本系统</a> - 学习如何格式化统计显示</p>
+<p>- 源码路径: <code>d:/Projects/mc/source/net/minecraft/stat/</code></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

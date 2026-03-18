@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>42 - 战利品表：掉落物定义 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #f39c12 0%, #f39c1288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-8.html">Part-8</a>
+                        <span>/</span>
+                        <span>42 - 战利品表：掉落物定义</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">42 - 战利品表：掉落物定义</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-8: 资源系统</span>
+                    <span><i class="fas fa-file"></i> 42-loot-table</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-用生活比喻-">核心概念（用生活比喻）</a></li><li class="h3"><a href="#什么是战利品表-">什么是战利品表？</a></li><li class="h3"><a href="#核心概念对应表">核心概念对应表</a></li><li><a href="#战利品表结构">战利品表结构</a></li><li class="h3"><a href="#json-基本格式">JSON 基本格式</a></li><li class="h3"><a href="#pool-池-">Pool（池）</a></li><li class="h3"><a href="#entry-条目-">Entry（条目）</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#战利品生成流程">战利品生成流程</a></li><li class="h3"><a href="#战利品表继承关系">战利品表继承关系</a></li><li class="h3"><a href="#条件判断流程">条件判断流程</a></li><li><a href="#常用条件-conditions-">常用条件（Conditions）</a></li><li class="h3"><a href="#1-entity_properties-实体属性">1. entity_properties - 实体属性</a></li><li class="h3"><a href="#2-killed_by_player-被玩家击杀">2. killed_by_player - 被玩家击杀</a></li><li class="h3"><a href="#3-entity_scores-实体记分板">3. entity_scores - 实体记分板</a></li><li class="h3"><a href="#4-random_chance-随机概率">4. random_chance - 随机概率</a></li><li class="h3"><a href="#5-enchantment_check-附魔检查">5. enchantment_check - 附魔检查</a></li><li class="h3"><a href="#6-reference-引用其他条件">6. reference - 引用其他条件</a></li><li><a href="#常用函数-functions-">常用函数（Functions）</a></li><li class="h3"><a href="#1-set_count-设置数量">1. set_count - 设置数量</a></li><li class="h3"><a href="#2-enchant_randomly-随机附魔">2. enchant_randomly - 随机附魔</a></li><li class="h3"><a href="#3-looting_enchant-抢夺附魔">3. looting_enchant - 抢夺附魔</a></li><li class="h3"><a href="#4-set_nbt-设置-nbt">4. set_nbt - 设置 NBT</a></li><li class="h3"><a href="#5-set_attributes-设置属性">5. set_attributes - 设置属性</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#示例-1-自定义僵尸掉落">示例 1：自定义僵尸掉落</a></li><li class="h3"><a href="#示例-2-使用-tag-掉落">示例 2：使用 tag 掉落</a></li><li class="h3"><a href="#示例-3-引用其他掉落表">示例 3：引用其他掉落表</a></li><li><a href="#源代码解析">源代码解析</a></li><li class="h3"><a href="#loottable-类核心结构">LootTable 类核心结构</a></li><li class="h3"><a href="#lootpool-类核心结构">LootPool 类核心结构</a></li><li class="h3"><a href="#内置战利品表注册">内置战利品表注册</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#下一步">下一步</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="41-datapack-intro.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 41 - 数据包：游戏数据定义</strong>
+        </a><a href="43-advancement.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>43 - 进度系统：成就与任务 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- 什么是战利品表（Loot Table）</p>
+<p>- Pool（池）、Entry（条目）、Condition（条件）、Function（函数）的概念</p>
+<p>- 如何创建自定义掉落表</p>
+<p>- 常见的条件和函数</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 已完成 <a href="./41-datapack-intro.html">第41章 数据包</a> 章节</p>
+<p>- 了解 JSON 基本格式</p>
+<p>- 知道数据包的目录结构</p>
+
+<h2 id="核心概念-用生活比喻-">核心概念（用生活比喻）</h2>
+
+<h3 id="什么是战利品表-">什么是战利品表？</h3>
+
+<p>想象你击败了一只怪物，怪物会从背包里掉落物品。</p>
+
+<p><strong>战利品表 = 怪物的"掉落规则表"</strong></p>
+
+<pre><code>┌─────────────────────────────────────────┐
+│  怪物掉落系统                              │
+│                                         │
+│  怪物死亡 → 查看战利品表 → 决定给什么      │
+│                                         │
+│  表里写着：                               │
+│  ┌─────────────────────────────────┐    │
+│  │ Pool（池）                        │    │
+│  │   ├── rolls: 投掷次数（抽几次）     │    │
+│  │   ├── Entry（条目）               │    │
+│  │   │   ├── 物品A 权重10           │    │
+│  │   │   ├── 物品B 权重5            │    │
+│  │   │   └── 物品C 权重1            │    │
+│  │   └── Condition（条件）           │    │
+│  │       └── 只有满足条件才掉落       │    │
+│  └─────────────────────────────────┘    │
+│                                         │
+│  Function（函数）                         │
+│    └── 对结果进行二次处理                 │
+│                                         │
+└─────────────────────────────────────────┘</code></pre>
+
+<h3 id="核心概念对应表">核心概念对应表</h3>
+
+<table><thead><tr><th>概念</th><th>Minecraft 术语</th><th>生活比喻</th></tr></thead><tbody><tr><td>------</td><td>---------------</td><td>----------</td></tr><tr><td>抽奖次数</td><td>`rolls`</td><td>摸奖的次数</td></tr><tr><td>奖品</td><td>`entries`</td><td>奖品池</td></tr><tr><td>概率权重</td><td>`weight`</td><td>中奖率</td></tr><tr><td>限制条件</td><td>`conditions`</td><td>"满18岁才能参加"</td></tr><tr><td>附加处理</td><td>`functions`</td><td>"送礼物时加个蝴蝶结"</td></tr><tr><td>额外抽奖</td><td>`bonus_rolls`</td><td>"买一送一"</td></tr></tbody></table>
+
+<h2 id="战利品表结构">战利品表结构</h2>
+
+<h3 id="json-基本格式">JSON 基本格式</h3>
+
+<pre><code>{
+    &quot;type&quot;: &quot;minecraft:generic&quot;,          // 可选：指定上下文类型
+    &quot;random_sequence&quot;: &quot;minecraft:...&quot;,   // 可选：随机数序列
+    &quot;pools&quot;: [                            // 池列表（至少一个）
+        {
+            &quot;rolls&quot;: 3,                   // 基础抽取次数
+            &quot;bonus_rolls&quot;: 1,             // 额外抽取次数（幸运属性加成）
+            &quot;entries&quot;: [...],             // 奖品条目
+            &quot;conditions&quot;: [...],          // 池生效条件
+            &quot;functions&quot;: [...]            // 池内物品处理函数
+        }
+    ],
+    &quot;functions&quot;: [...]                     // 全局处理函数
+}</code></pre>
+
+<h3 id="pool-池-">Pool（池）</h3>
+
+<p>每个池是一次独立的抽奖过程：</p>
+
+<pre><code>{
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,                    // 抽1次
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;item&quot;,        // 物品类型
+                    &quot;name&quot;: &quot;minecraft:diamond&quot;,
+                    &quot;weight&quot;: 1
+                }
+            ]
+        }
+    ]
+}</code></pre>
+
+<h3 id="entry-条目-">Entry（条目）</h3>
+
+<p>条目定义了可以掉落的物品或容器：</p>
+
+<pre><code>{
+    &quot;type&quot;: &quot;minecraft:item&quot;,             // 条目类型
+    &quot;name&quot;: &quot;minecraft:diamond&quot;,          // 物品ID
+    &quot;weight&quot;: 1,                          // 权重（越高越容易抽到）
+    &quot;quality&quot;: 0,                         // 质量（影响幸运效果）
+    &quot;functions&quot;: [...],                   // 条目专属函数
+    &quot;children&quot;: [...]                      // 子条目（用于容器类型）
+}</code></pre>
+
+<p><strong>常见条目类型</strong>：</p>
+
+<table><thead><tr><th>类型</th><th>说明</th><th>用途</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>`item`</td><td>物品</td><td>最常用的物品掉落</td></tr><tr><td>`tag`</td><td>标签</td><td>掉落符合标签的所有物品之一</td></tr><tr><td>`loot_table`</td><td>引用其他战利品表</td><td>引用或组合多个掉落表</td></tr><tr><td>`group`</td><td>分组</td><td>组合多个子条目</td></tr><tr><td>`empty`</td><td>空</td><td>什么都不掉落</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="战利品生成流程">战利品生成流程</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[开始生成战利品] --> B[遍历所有 Pool]
+    
+    B --> C{Pool 条件满足?}
+    C -->|否| D[跳过此 Pool]
+    C -->|是| E[开始抽奖]
+    
+    E --> F[rolls + bonus_rolls = 总次数]
+    F --> G{还有抽奖次数?}
+    G -->|是| H[随机选择一个 Entry]
+    G -->|否| I[应用全局 Function]
+    
+    H --> J{Entry 是容器类型?}
+    J -->|是| K[递归处理子条目]
+    J -->|否| L[生成物品]
+    
+    K --> L
+    L --> M[应用 Entry Function]
+    M --> G
+    
+    I --> N[应用到容器的箱子]
+    N --> O[完成]
+    
+    style H fill:#90EE90
+    style L fill:#90EE90
+    style I fill:#87CEEB
+</div>
+
+<h3 id="战利品表继承关系">战利品表继承关系</h3>
+
+<div class="mermaid">
+classDiagram
+    class LootTable {
+        +LootContextType type
+        +List~LootPool~ pools
+        +List~LootFunction~ functions
+        +generateLoot()
+    }
+    
+    class LootPool {
+        +List~LootPoolEntry~ entries
+        +List~LootCondition~ conditions
+        +List~LootFunction~ functions
+        +LootNumberProvider rolls
+        +LootNumberProvider bonusRolls
+        +addGeneratedLoot()
+    }
+    
+    class LootPoolEntry {
+        <<abstract>>
+        +expand()
+        +generateLoot()
+    }
+    
+    class LootCondition {
+        <<interface>>
+        +test(context) boolean
+    }
+    
+    class LootFunction {
+        <<interface>>
+        +apply()
+    }
+    
+    LootTable "1" o-- "n" LootPool
+    LootPool "1" o-- "n" LootPoolEntry
+    LootPool "1" o-- "n" LootCondition
+    LootPool "1" o-- "n" LootFunction
+    
+    LootPoolEntry <|-- ItemPoolEntry
+    LootPoolEntry <|-- TagPoolEntry
+    LootPoolEntry <|-- LootTableReference
+</div>
+
+<h3 id="条件判断流程">条件判断流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 系统 as 战利品生成系统
+    participant Pool as 战利品池
+    participant 条件 as 条件检查器
+    
+    系统->>Pool: 请求生成掉落
+    Pool->>条件: 检查所有条件
+    
+    loop 每个条件
+        条件->>条件: entity_properties?
+        条件->>条件: killed_by_player?
+        条件->>条件: random_chance?
+        条件->>条件: enchantment_check?
+    end
+    
+    条件-->>Pool: 全部通过/有条件失败
+    
+    alt 全部通过
+        Pool->>Pool: 执行掉落抽奖
+        Pool-->>系统: 返回掉落物品
+    else 有条件失败
+        Pool-->>系统: 返回空列表
+    end
+</div>
+
+<h2 id="常用条件-conditions-">常用条件（Conditions）</h2>
+
+<h3 id="1-entity_properties-实体属性">1. entity_properties - 实体属性</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:entity_properties&quot;,
+    &quot;entity&quot;: &quot;this&quot;,
+    &quot;properties&quot;: {
+        &quot;on_fire&quot;: true
+    }
+}</code></pre>
+<p><strong>用途</strong>：只有实体着火时才掉落（如燃烧的骷髅掉落骨头）</p>
+
+<h3 id="2-killed_by_player-被玩家击杀">2. killed_by_player - 被玩家击杀</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:killed_by_player&quot;
+}</code></pre>
+<p><strong>用途</strong>：只有被玩家击杀才掉落</p>
+
+<h3 id="3-entity_scores-实体记分板">3. entity_scores - 实体记分板</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:entity_scores&quot;,
+    &quot;entity&quot;: &quot;this&quot;,
+    &quot;scores&quot;: {
+        &quot;kills&quot;: {&quot;min&quot;: 10}
+    }
+}</code></pre>
+<p><strong>用途</strong>：只有击杀数达到一定值才掉落</p>
+
+<h3 id="4-random_chance-随机概率">4. random_chance - 随机概率</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:random_chance&quot;,
+    &quot;chance&quot;: 0.1
+}</code></pre>
+<p><strong>用途</strong>：10% 概率掉落</p>
+
+<h3 id="5-enchantment_check-附魔检查">5. enchantment_check - 附魔检查</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:enchantment_check&quot;,
+    &quot;enchantment&quot;: &quot;minecraft:looting&quot;,
+    &quot;levels&quot;: {&quot;min&quot;: 1}
+}</code></pre>
+<p><strong>用途</strong>：需要有抢夺附魔才掉落额外物品</p>
+
+<h3 id="6-reference-引用其他条件">6. reference - 引用其他条件</h3>
+
+<pre><code>{
+    &quot;condition&quot;: &quot;minecraft:reference&quot;,
+    &quot;name&quot;: &quot;minecraft:all_of&quot;
+}</code></pre>
+<p><strong>用途</strong>：引用预定义的条件组合</p>
+
+<h2 id="常用函数-functions-">常用函数（Functions）</h2>
+
+<h3 id="1-set_count-设置数量">1. set_count - 设置数量</h3>
+
+<pre><code>{
+    &quot;function&quot;: &quot;minecraft:set_count&quot;,
+    &quot;count&quot;: {&quot;type&quot;: &quot;minecraft:uniform&quot;, &quot;min&quot;: 1, &quot;max&quot;: 3}
+}</code></pre>
+<p><strong>用途</strong>：掉落 1-3 个物品</p>
+
+<h3 id="2-enchant_randomly-随机附魔">2. enchant_randomly - 随机附魔</h3>
+
+<pre><code>{
+    &quot;function&quot;: &quot;minecraft:enchant_randomly&quot;
+}</code></pre>
+<p><strong>用途</strong>：给物品随机附魔</p>
+
+<h3 id="3-looting_enchant-抢夺附魔">3. looting_enchant - 抢夺附魔</h3>
+
+<pre><code>{
+    &quot;function&quot;: &quot;minecraft:looting_enchant&quot;,
+    &quot;count&quot;: 1
+}</code></pre>
+<p><strong>用途</strong>：每级抢夺附魔增加 1 个</p>
+
+<h3 id="4-set_nbt-设置-nbt">4. set_nbt - 设置 NBT</h3>
+
+<pre><code>{
+    &quot;function&quot;: &quot;minecraft:set_nbt&quot;,
+    &quot;tag&quot;: &quot;{display:{Name:'{\&quot;text\&quot;:\&quot;我的物品\&quot;}'}}&quot;
+}</code></pre>
+<p><strong>用途</strong>：设置自定义名称</p>
+
+<h3 id="5-set_attributes-设置属性">5. set_attributes - 设置属性</h3>
+
+<pre><code>{
+    &quot;function&quot;: &quot;minecraft:set_attributes&quot;,
+    &quot;modifiers&quot;: [
+        {
+            &quot;attribute&quot;: &quot;minecraft:generic.attack_damage&quot;,
+            &quot;name&quot;: &quot;bonus&quot;,
+            &quot;amount&quot;: 1,
+            &quot;operation&quot;: &quot;addition&quot;
+        }
+    ]
+}</code></pre>
+<p><strong>用途</strong>：掉落具有额外属性的物品</p>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="示例-1-自定义僵尸掉落">示例 1：自定义僵尸掉落</h3>
+
+<p>创建 <code>data/mymod/loot_tables/entities/my_zombie.json</code>：</p>
+
+<pre><code>{
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,
+            &quot;bonus_rolls&quot;: 0,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:item&quot;,
+                    &quot;name&quot;: &quot;minecraft:rotten_flesh&quot;,
+                    &quot;weight&quot;: 1,
+                    &quot;functions&quot;: [
+                        {
+                            &quot;function&quot;: &quot;minecraft:set_count&quot;,
+                            &quot;count&quot;: {
+                                &quot;type&quot;: &quot;minecraft:uniform&quot;,
+                                &quot;min&quot;: 0,
+                                &quot;max&quot;: 2
+                            }
+                        }
+                    ]
+                }
+            ],
+            &quot;conditions&quot;: [
+                {
+                    &quot;condition&quot;: &quot;minecraft:killed_by_player&quot;
+                }
+            ]
+        },
+        {
+            &quot;rolls&quot;: 1,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:item&quot;,
+                    &quot;name&quot;: &quot;mymod:zombie_heart&quot;,
+                    &quot;weight&quot;: 5,
+                    &quot;conditions&quot;: [
+                        {
+                            &quot;condition&quot;: &quot;minecraft:random_chance&quot;,
+                            &quot;chance&quot;: 0.025
+                        },
+                        {
+                            &quot;condition&quot;: &quot;minecraft:killed_by_player&quot;
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}</code></pre>
+
+<h3 id="示例-2-使用-tag-掉落">示例 2：使用 tag 掉落</h3>
+
+<pre><code>{
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:tag&quot;,
+                    &quot;name&quot;: &quot;minecraft:logs&quot;,
+                    &quot;expand&quot;: true,
+                    &quot;weight&quot;: 1
+                }
+            ]
+        }
+    ]
+}</code></pre>
+
+<h3 id="示例-3-引用其他掉落表">示例 3：引用其他掉落表</h3>
+
+<pre><code>{
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:loot_table&quot;,
+                    &quot;name&quot;: &quot;minecraft:gameplay/hero_of_the_village/gift&quot;
+                }
+            ]
+        }
+    ]
+}</code></pre>
+
+<h2 id="源代码解析">源代码解析</h2>
+
+<h3 id="loottable-类核心结构">LootTable 类核心结构</h3>
+
+<pre><code>42:61:net/minecraft/loot/LootTable.java
+public class LootTable {
+    // 上下文类型（决定能使用什么条件/函数）
+    private final LootContextType type;
+    
+    // 随机序列 ID
+    private final Optional&lt;Identifier&gt; randomSequenceId;
+    
+    // 所有的池
+    private final List&lt;LootPool&gt; pools;
+    
+    // 全局函数
+    private final List&lt;LootFunction&gt; functions;
+    
+    // 生成战利品
+    public void generateLoot(LootContextParameterSet parameters, 
+                            Consumer&lt;ItemStack&gt; lootConsumer) {
+        // ...
+    }
+}</code></pre>
+
+<h3 id="lootpool-类核心结构">LootPool 类核心结构</h3>
+
+<pre><code>37:54:net/minecraft/loot/LootPool.java
+public class LootPool {
+    // 奖品条目
+    public final List&lt;LootPoolEntry&gt; entries;
+    
+    // 生效条件
+    public final List&lt;LootCondition&gt; conditions;
+    
+    // 处理函数
+    public final List&lt;LootFunction&gt; functions;
+    
+    // 抽取次数
+    public final LootNumberProvider rolls;
+    
+    // 额外抽取次数（受幸运影响）
+    public final LootNumberProvider bonusRolls;
+}</code></pre>
+
+<h3 id="内置战利品表注册">内置战利品表注册</h3>
+
+<pre><code>14:45:net/minecraft/loot/LootTables.java
+public class LootTables {
+    // 实体掉落
+    public static final RegistryKey&lt;LootTable&gt; WHITE_SHEEP_ENTITY = 
+        register(&quot;entities/sheep/white&quot;);
+    
+    // 箱子战利品
+    public static final RegistryKey&lt;LootTable&gt; SIMPLE_DUNGEON_CHEST = 
+        register(&quot;chests/simple_dungeon&quot;);
+    
+    // 钓鱼奖励
+    public static final RegistryKey&lt;LootTable&gt; FISHING_TREASURE_GAMEPLAY = 
+        register(&quot;gameplay/fishing/treasure&quot;);
+    
+    // 村民礼物
+    public static final RegistryKey&lt;LootTable&gt; HERO_OF_THE_VILLAGE_ARMORER_GIFT_GAMEPLAY = 
+        register(&quot;gameplay/hero_of_the_village/armorer_gift&quot;);
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<table><thead><tr><th>概念</th><th>说明</th><th>JSON 字段</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>**Pool（池）**</td><td>一次独立的掉落抽奖</td><td>`pools[]`</td></tr><tr><td>**Entry（条目）**</td><td>可掉落的物品或容器</td><td>`entries[]`</td></tr><tr><td>**Condition（条件）**</td><td>掉落需要满足的限制</td><td>`conditions[]`</td></tr><tr><td>**Function（函数）**</td><td>对物品的二次处理</td><td>`functions[]`</td></tr><tr><td>**rolls**</td><td>基础抽取次数</td><td>`rolls`</td></tr><tr><td>**bonus_rolls**</td><td>幸运加成次数</td><td>`bonus_rolls`</td></tr><tr><td>**weight**</td><td>物品权重</td><td>`weight`</td></tr></tbody></table>
+
+<p><strong>常见用途</strong>：</p>
+<p>1. 实体掉落（zombie, cow, skeleton...）</p>
+<p>2. 箱子战利品（dungeon chest, temple chest...）</p>
+<p>3. 钓鱼奖励（junk, treasure, fish）</p>
+<p>4. 村民交易礼物</p>
+<p>5. 考古挖掘奖励</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>基础练习</strong></p>
+<p>   创建一个战利品表，模拟打开一个"神秘箱子"，里面有：</p>
+<p>   - 50% 概率获得铁锭 x5</p>
+<p>   - 30% 概率获得金锭 x3</p>
+<p>   - 20% 概率获得钻石 x1</p>
+
+<p>2. <strong>条件练习</strong></p>
+<p>   修改上面的箱子，让玩家只有在拥有"钥匙"物品时才能获得钻石。</p>
+
+<p>3. <strong>函数练习</strong></p>
+<p>   创建一个掉落表，让掉落的物品自动带上"锋利 I"附魔。</p>
+
+<p>4. <strong>思考题</strong></p>
+<p>   - 如何实现"抢夺附魔增加掉落数量"？</p>
+<p>   - 多个 Pool 的掉落是累积的还是互斥的？</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Loot_table">Minecraft Wiki - Loot table</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Loot_table#Conditions">Minecraft Wiki - Loot table conditions</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Loot_table#Functions">Minecraft Wiki - Loot table functions</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.loot.LootTable</code></p>
+<p>  - <code>net.minecraft.loot.LootPool</code></p>
+<p>  - <code>net.minecraft.loot.LootTables</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>LootTable.java</td><td>`net/minecraft/loot/LootTable.java`</td><td>战利品表类</td></tr><tr><td>LootPool.java</td><td>`net/minecraft/loot/LootPool.java`</td><td>战利品池类</td></tr><tr><td>LootTables.java</td><td>`net/minecraft/loot/LootTables.java`</td><td>战利品表注册</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+<p>学习完战利品表后，下一个重要系统是<strong>进度系统（Advancement）</strong>，它用于定义成就和任务。</p>
+
+<blockquote>[第43章 - 进度系统：成就与任务](./43-advancement.md)</blockquote>
+
+<hr>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：战利品表、LootTable、LootPool、LootCondition、LootFunction、掉落物</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

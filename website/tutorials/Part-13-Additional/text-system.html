@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本系统 (Text System) - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #7f8c8d 0%, #7f8c8d88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-13.html">Part-13</a>
+                        <span>/</span>
+                        <span>文本系统 (Text System)</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">文本系统 (Text System)</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-13: 附加系统</span>
+                    <span><i class="fas fa-file"></i> text-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是文本系统-">什么是文本系统？</a></li><li class="h3"><a href="#文本系统的核心接口">文本系统的核心接口</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#text-接口层次">Text 接口层次</a></li><li class="h3"><a href="#文本构建过程">文本构建过程</a></li><li class="h3"><a href="#文本树结构">文本树结构</a></li><li class="h3"><a href="#clickevent-和-hoverevent">ClickEvent 和 HoverEvent</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#text-java-文本工厂">Text.java - 文本工厂</a></li><li class="h3"><a href="#mutabletext-java-可变文本实现">MutableText.java - 可变文本实现</a></li><li class="h3"><a href="#style-java-样式定义">Style.java - 样式定义</a></li><li class="h3"><a href="#clickevent-java-点击事件">ClickEvent.java - 点击事件</a></li><li class="h3"><a href="#hoverevent-java-悬浮事件">HoverEvent.java - 悬浮事件</a></li><li class="h3"><a href="#plaintextcontent-java-纯文本内容">PlainTextContent.java - 纯文本内容</a></li><li class="h3"><a href="#translatabletextcontent-java-可翻译文本">TranslatableTextContent.java - 可翻译文本</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#基本文本创建">基本文本创建</a></li><li class="h3"><a href="#带样式的文本">带样式的文本</a></li><li class="h3"><a href="#带点击事件的文本">带点击事件的文本</a></li><li class="h3"><a href="#带悬浮提示的文本">带悬浮提示的文本</a></li><li class="h3"><a href="#完整消息示例">完整消息示例</a></li><li class="h3"><a href="#物品名称与描述">物品名称与描述</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="stats-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 统计系统 (Stats System)</strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>读完这篇文章后，你将理解 Minecraft 文本系统的层次结构，并能用它创建丰富多彩的聊天消息、物品描述和UI文字。</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Java 接口和类的概念</p>
+<p>- 熟悉 Builder 模式</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是文本系统-">什么是文本系统？</h3>
+
+<p>想象一下手机的短信和微信消息。普通的短信只能显示纯文字，但微信可以：</p>
+<p>- 发送表情</p>
+<p>- 点击链接跳转</p>
+<p>- 长按显示详情</p>
+
+<p>Minecraft 的文本系统就像"增强版微信"，它让你的文字可以：</p>
+<p>- 有颜色</p>
+<p>- 加粗、斜体、删除线</p>
+<p>- 点击执行命令</p>
+<p>- 鼠标悬浮显示提示</p>
+
+<h3 id="文本系统的核心接口">文本系统的核心接口</h3>
+
+<table><thead><tr><th>接口/类</th><th>作用</th><th>生活类比</th></tr></thead><tbody><tr><td>----------</td><td>------</td><td>----------</td></tr><tr><td>`Text`</td><td>文本顶层接口</td><td>一条完整的消息</td></tr><tr><td>`MutableText`</td><td>可变文本实现</td><td>可以修改的草稿</td></tr><tr><td>`Style`</td><td>样式定义</td><td>文字的"化妆"</td></tr><tr><td>`TextContent`</td><td>内容类型</td><td>消息的"本质"(文字/翻译/分数)</td></tr><tr><td>`ClickEvent`</td><td>点击事件</td><td>短信中的"快捷回复"</td></tr><tr><td>`HoverEvent`</td><td>悬浮事件</td><td>长按显示的"气泡"</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="text-接口层次">Text 接口层次</h3>
+
+<div class="mermaid">
+classDiagram
+    class Text {
+        <<interface>>
+        +getStyle() Style
+        +getContent() TextContent
+        +getSiblings() List~Text~
+        +copy() MutableText
+        +literal(String) MutableText
+        +translatable(String, Object...) MutableText
+    }
+    
+    class MutableText {
+        +of(TextContent) MutableText
+        +append(Text) MutableText
+        +styled(Function) MutableText
+        +formatted(Formatting...) MutableText
+    }
+    
+    class TextContent {
+        <<interface>>
+        +getType() Type~
+    }
+    
+    class PlainTextContent {
+        <<interface>>
+        +string() String
+    }
+    
+    class TranslatableTextContent {
+        +key: String
+        +fallback: String
+        +args: Object[]
+    }
+    
+    class Style {
+        +color: TextColor
+        +bold: Boolean
+        +italic: Boolean
+        +clickEvent: ClickEvent
+        +hoverEvent: HoverEvent
+    }
+    
+    MutableText ..|> Text
+    MutableText o-- TextContent
+    MutableText o-- Style
+    TextContent <|-- PlainTextContent
+    TextContent <|-- TranslatableTextContent
+    Style o-- ClickEvent
+    Style o-- HoverEvent
+</div>
+
+<h3 id="文本构建过程">文本构建过程</h3>
+
+<div class="mermaid">
+flowchart LR
+    A["Text.literal('Hello')"] --> B["创建 PlainTextContent"]
+    B --> C["包装为 MutableText"]
+    C --> D[".styled() 添加样式"]
+    D --> E[".formatted(RED) 添加颜色"]
+    E --> F[".append(Text.literal('!')) 添加子文本"]
+    F --> G["最终 Text 对象"]
+    
+    style A fill:#4CAF50,color:white
+    style G fill:#2196F3,color:white
+</div>
+
+<h3 id="文本树结构">文本树结构</h3>
+
+<div class="mermaid">
+graph TD
+    T["Text 根节点<br/>Style: 红色+粗体"]
+    T --> C1["PlainTextContent<br/>'你好 '"]
+    T --> S1["Style: 蓝色"]
+    S1 --> C2["PlainTextContent<br/>'世界'"]
+    S1 --> S2["Style: 下划线"]
+    S2 --> C3["PlainTextContent<br/>'!'"]
+    
+    classDef root fill:#E91E63,color:white
+    classDef content fill:#4CAF50,color:white
+    classDef style fill:#2196F3,color:white
+    
+    class T root
+    class C1,C2,C3 content
+    class S1,S2 style
+</div>
+
+<h3 id="clickevent-和-hoverevent">ClickEvent 和 HoverEvent</h3>
+
+<div class="mermaid">
+classDiagram
+    class ClickEvent {
+        +Action action
+        +String value
+        +enum Action
+            OPEN_URL
+            RUN_COMMAND
+            SUGGEST_COMMAND
+            COPY_TO_CLIPBOARD
+    }
+    
+    class HoverEvent {
+        +Action~T~ action
+        +T value
+        +enum Action
+            SHOW_TEXT
+            SHOW_ITEM
+            SHOW_ENTITY
+    }
+    
+    class Style {
+        +withClickEvent(ClickEvent) Style
+        +withHoverEvent(HoverEvent) Style
+        +withColor(Formatting) Style
+        +withBold(Boolean) Style
+    }
+    
+    Style --> ClickEvent
+    Style --> HoverEvent
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="text-java-文本工厂">Text.java - 文本工厂</h3>
+
+<pre><code>public interface Text extends Message, StringVisitable {
+    
+    // ==================== 工厂方法 ====================
+    
+    // 创建纯文本
+    public static MutableText literal(String string) {
+        return MutableText.of(PlainTextContent.of(string));
+    }
+    
+    // 创建可翻译文本
+    public static MutableText translatable(String key) {
+        return MutableText.of(new TranslatableTextContent(key, null, 
+            TranslatableTextContent.EMPTY_ARGUMENTS));
+    }
+    
+    // 创建带参数的可翻译文本
+    public static MutableText translatable(String key, Object... args) {
+        return MutableText.of(new TranslatableTextContent(key, null, args));
+    }
+    
+    // 创建按键绑定文本 (如 &quot;Ctrl&quot; 会根据设置显示)
+    public static MutableText keybind(String string) {
+        return MutableText.of(new KeybindTextContent(string));
+    }
+    
+    // 创建分数占位符
+    public static MutableText score(String name, String objective) {
+        return MutableText.of(new ScoreTextContent(name, objective));
+    }
+    
+    // 创建选择器文本 (@a, @p 等)
+    public static MutableText selector(String pattern, Optional&lt;Text&gt; separator) {
+        return MutableText.of(new SelectorTextContent(pattern, separator));
+    }
+    
+    // ==================== 核心方法 ====================
+    
+    // 获取样式
+    public Style getStyle();
+    
+    // 获取内容
+    public TextContent getContent();
+    
+    // 获取子文本列表
+    public List&lt;Text&gt; getSiblings();
+    
+    // 深拷贝
+    public MutableText copy();
+}</code></pre>
+
+<h3 id="mutabletext-java-可变文本实现">MutableText.java - 可变文本实现</h3>
+
+<pre><code>public class MutableText implements Text {
+    private final TextContent content;     // 内容
+    private final List&lt;Text&gt; siblings;    // 子文本
+    private Style style;                  // 样式
+    
+    // 创建文本
+    public static MutableText of(TextContent content) {
+        return new MutableText(content, new ArrayList&lt;&gt;(), Style.EMPTY);
+    }
+    
+    // 追加文本
+    public MutableText append(Text text) {
+        siblings.add(text);
+        return this;
+    }
+    
+    // 追加字符串
+    public MutableText append(String text) {
+        return append(Text.literal(text));
+    }
+    
+    // 修改样式
+    public MutableText styled(UnaryOperator&lt;Style&gt; styleUpdater) {
+        setStyle(styleUpdater.apply(getStyle()));
+        return this;
+    }
+    
+    // 添加格式
+    public MutableText formatted(Formatting... formattings) {
+        setStyle(getStyle().withFormatting(formattings));
+        return this;
+    }
+    
+    // 设置颜色
+    public MutableText withColor(int color) {
+        setStyle(getStyle().withColor(color));
+        return this;
+    }
+}</code></pre>
+
+<h3 id="style-java-样式定义">Style.java - 样式定义</h3>
+
+<pre><code>public class Style {
+    public static final Style EMPTY = new Style(null, null, null, null, 
+        null, null, null, null, null, null);
+    
+    // 样式属性
+    @Nullable final TextColor color;
+    @Nullable final Boolean bold;
+    @Nullable final Boolean italic;
+    @Nullable final Boolean underlined;
+    @Nullable final Boolean strikethrough;
+    @Nullable final Boolean obfuscated;
+    @Nullable final ClickEvent clickEvent;
+    @Nullable final HoverEvent hoverEvent;
+    @Nullable final String insertion;
+    @Nullable final Identifier font;
+    
+    // ==================== 样式方法 ====================
+    
+    // 设置颜色
+    public Style withColor(@Nullable TextColor color) { ... }
+    public Style withColor(@Nullable Formatting color) { 
+        return withColor(color != null ? TextColor.fromFormatting(color) : null);
+    }
+    public Style withColor(int rgbColor) {
+        return withColor(TextColor.fromRgb(rgbColor));
+    }
+    
+    // 设置格式
+    public Style withBold(@Nullable Boolean bold) { ... }
+    public Style withItalic(@Nullable Boolean italic) { ... }
+    public Style withUnderline(@Nullable Boolean underline) { ... }
+    public Style withStrikethrough(@Nullable Boolean strikethrough) { ... }
+    public Style withObfuscated(@Nullable Boolean obfuscated) { ... }
+    
+    // 设置事件
+    public Style withClickEvent(@Nullable ClickEvent event) { ... }
+    public Style withHoverEvent(@Nullable HoverEvent event) { ... }
+    public Style withInsertion(@Nullable String insertion) { ... }
+    
+    // 设置字体
+    public Style withFont(@Nullable Identifier font) { ... }
+    
+    // 添加格式 (快捷方式)
+    public Style withFormatting(Formatting formatting) {
+        switch (formatting) {
+            case BOLD -&gt; return withBold(true);
+            case ITALIC -&gt; return withItalic(true);
+            case UNDERLINE -&gt; return withUnderline(true);
+            case STRIKETHROUGH -&gt; return withStrikethrough(true);
+            case OBFUSCATED -&gt; return withObfuscated(true);
+            case RESET -&gt; return EMPTY;
+            default -&gt; return withColor(formatting);
+        }
+    }
+    
+    // 合并父样式
+    public Style withParent(Style parent) {
+        return new Style(
+            color != null ? color : parent.color,
+            bold != null ? bold : parent.bold,
+            italic != null ? italic : parent.italic,
+            // ... 其他属性
+        );
+    }
+}</code></pre>
+
+<h3 id="clickevent-java-点击事件">ClickEvent.java - 点击事件</h3>
+
+<pre><code>public class ClickEvent {
+    private final Action action;
+    private final String value;
+    
+    public enum Action implements StringIdentifiable {
+        // 打开网址
+        OPEN_URL(&quot;open_url&quot;, true),
+        
+        // 打开本地文件
+        OPEN_FILE(&quot;open_file&quot;, false),
+        
+        // 执行命令
+        RUN_COMMAND(&quot;run_command&quot;, true),
+        
+        // 建议命令 (输入到聊天框但不执行)
+        SUGGEST_COMMAND(&quot;suggest_command&quot;, true),
+        
+        // 翻页 (用于书本)
+        CHANGE_PAGE(&quot;change_page&quot;, true),
+        
+        // 复制到剪贴板
+        COPY_TO_CLIPBOARD(&quot;copy_to_clipboard&quot;, true);
+        
+        private final boolean userDefinable;  // 玩家是否可以触发
+    }
+    
+    // 创建打开链接
+    public static ClickEvent openUrl(String url) {
+        return new ClickEvent(Action.OPEN_URL, url);
+    }
+    
+    // 创建执行命令
+    public static ClickEvent runCommand(String command) {
+        return new ClickEvent(Action.RUN_COMMAND, command);
+    }
+    
+    // 创建建议命令
+    public static ClickEvent suggestCommand(String command) {
+        return new ClickEvent(Action.SUGGEST_COMMAND, command);
+    }
+}</code></pre>
+
+<h3 id="hoverevent-java-悬浮事件">HoverEvent.java - 悬浮事件</h3>
+
+<pre><code>public class HoverEvent {
+    private final EventData&lt;?&gt; data;
+    
+    public static class Action&lt;T&gt; implements StringIdentifiable {
+        // 显示文本
+        public static final Action&lt;Text&gt; SHOW_TEXT = 
+            new Action&lt;&gt;(&quot;show_text&quot;, true, TextCodecs.CODEC, ...);
+        
+        // 显示物品
+        public static final Action&lt;ItemStackContent&gt; SHOW_ITEM = 
+            new Action&lt;&gt;(&quot;show_item&quot;, true, ItemStackContent.CODEC, ...);
+        
+        // 显示实体信息
+        public static final Action&lt;EntityContent&gt; SHOW_ENTITY = 
+            new Action&lt;&gt;(&quot;show_entity&quot;, true, EntityContent.CODEC, ...);
+    }
+    
+    // 显示文本
+    public static HoverEvent showText(Text text) {
+        return new HoverEvent(Action.SHOW_TEXT, text);
+    }
+    
+    // 显示物品
+    public static HoverEvent showItem(ItemStack stack) {
+        return new HoverEvent(Action.SHOW_ITEM, new ItemStackContent(stack));
+    }
+    
+    // 显示实体
+    public static HoverEvent showEntity(EntityType&lt;?&gt; type, UUID uuid, @Nullable Text name) {
+        return new HoverEvent(Action.SHOW_ENTITY, new EntityContent(type, uuid, name));
+    }
+}</code></pre>
+
+<h3 id="plaintextcontent-java-纯文本内容">PlainTextContent.java - 纯文本内容</h3>
+
+<pre><code>public interface PlainTextContent extends TextContent {
+    // 空内容
+    public static final PlainTextContent EMPTY = new PlainTextContent() {
+        @Override public String string() { return &quot;&quot;; }
+    };
+    
+    // 创建纯文本
+    public static PlainTextContent of(String string) {
+        return string.isEmpty() ? EMPTY : new Literal(string);
+    }
+    
+    public String string();
+    
+    // 实现类
+    public record Literal(String string) implements PlainTextContent {
+        @Override
+        public &lt;T&gt; Optional&lt;T&gt; visit(StringVisitable.Visitor&lt;T&gt; visitor) {
+            return visitor.accept(this.string);
+        }
+        
+        @Override
+        public &lt;T&gt; Optional&lt;T&gt; visit(StringVisitable.StyledVisitor&lt;T&gt; visitor, Style style) {
+            return visitor.accept(style, this.string);
+        }
+    }
+}</code></pre>
+
+<h3 id="translatabletextcontent-java-可翻译文本">TranslatableTextContent.java - 可翻译文本</h3>
+
+<pre><code>public class TranslatableTextContent implements TextContent {
+    private final String key;           // 翻译键 (如 &quot;item.diamond.name&quot;)
+    @Nullable
+    private final String fallback;      // 备用文本
+    private final Object[] args;        // 参数 (如 %1$s, %2$d)
+    
+    // 解析翻译并替换参数
+    private void updateTranslations() {
+        Language language = Language.getInstance();
+        String translation = fallback != null 
+            ? language.get(key, fallback) 
+            : language.get(key);
+        
+        // 处理 %1$s, %2$d 等格式
+        ImmutableList.Builder&lt;StringVisitable&gt; builder = ImmutableList.builder();
+        forEachPart(translation, builder::add);
+        this.translations = builder.build();
+    }
+    
+    // 获取参数值
+    public final StringVisitable getArg(int index) {
+        Object arg = args[index];
+        if (arg instanceof Text) {
+            return (Text) arg;
+        }
+        return arg == null 
+            ? StringVisitable.plain(&quot;null&quot;) 
+            : StringVisitable.plain(arg.toString());
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="基本文本创建">基本文本创建</h3>
+
+<pre><code>// 最简单的纯文本
+Text simple = Text.literal(&quot;Hello World!&quot;);
+
+// 可变文本构建
+MutableText message = Text.literal(&quot;游戏开始!&quot;)
+    .append(&quot;\n&quot;)
+    .append(Text.literal(&quot;准备好了吗？&quot;).formatted(Formatting.YELLOW));
+
+// 可翻译文本 (支持多语言)
+Text deathMessage = Text.translatable(&quot;death.attack.cactus&quot;, 
+    player.getName());</code></pre>
+
+<h3 id="带样式的文本">带样式的文本</h3>
+
+<pre><code>// 单一样式
+Text red = Text.literal(&quot;红色文字&quot;).formatted(Formatting.RED);
+
+// 多种格式
+Text styled = Text.literal(&quot;粗体斜体红色&quot;)
+    .formatted(Formatting.BOLD, Formatting.ITALIC, Formatting.RED);
+
+// 使用 styled 方法链
+MutableText complex = Text.literal(&quot;复杂样式&quot;)
+    .styled(style -&gt; style
+        .withColor(Formatting.GOLD)
+        .withBold(true)
+        .withUnderline(true)
+    );</code></pre>
+
+<h3 id="带点击事件的文本">带点击事件的文本</h3>
+
+<pre><code>// 创建可点击的链接
+MutableText link = Text.literal(&quot;点击访问 Wiki&quot;)
+    .styled(style -&gt; style
+        .withColor(Formatting.BLUE)
+        .withUnderline(true)
+        .withClickEvent(ClickEvent.openUrl(&quot;https://minecraft.wiki/&quot;))
+    );
+
+// 创建可执行的命令
+MutableText command = Text.literal(&quot;[打开箱子]&quot;)
+    .styled(style -&gt; style
+        .withColor(Formatting.GREEN)
+        .withClickEvent(ClickEvent.runCommand(&quot;/give @s chest&quot;))
+        .withHoverEvent(HoverEvent.showText(Text.literal(&quot;打开箱子&quot;)))
+    );
+
+// 建议命令
+MutableText suggest = Text.literal(&quot;传送选项:&quot;)
+    .append(&quot;\n&quot;)
+    .append(Text.literal(&quot;- 回家&quot;).styled(s -&gt; s
+        .withClickEvent(ClickEvent.suggestCommand(&quot;/home&quot;))
+    ))
+    .append(&quot;\n&quot;)
+    .append(Text.literal(&quot;- 传送到主城&quot;).styled(s -&gt; s
+        .withClickEvent(ClickEvent.suggestCommand(&quot;/spawn&quot;))
+    ));</code></pre>
+
+<h3 id="带悬浮提示的文本">带悬浮提示的文本</h3>
+
+<pre><code>// 显示提示文本
+MutableText tooltip = Text.literal(&quot;悬停查看详情&quot;)
+    .styled(style -&gt; style
+        .withHoverEvent(HoverEvent.showText(
+            Text.literal(&quot;这是一条提示信息！\n第二行内容&quot;)
+                .formatted(Formatting.GRAY)
+        ))
+    );
+
+// 显示物品信息
+MutableText itemInfo = Text.literal(&quot;钻石剑&quot;)
+    .styled(style -&gt; style
+        .withHoverEvent(HoverEvent.showItem(new ItemStack(Items.DIAMOND_SWORD)))
+    );
+
+// 显示实体信息
+MutableText entityInfo = Text.literal(&quot;查看村民&quot;)
+    .styled(style -&gt; style
+        .withHoverEvent(HoverEvent.showEntity(
+            EntityTypes.VILLAGER, 
+            villager.getUuid(),
+            villager.getName()
+        ))
+    );</code></pre>
+
+<h3 id="完整消息示例">完整消息示例</h3>
+
+<pre><code>// 创建一个精美的游戏公告
+public Text createGameAnnouncement(String winner, int kills, int time) {
+    return Text.literal(&quot;&quot;)
+        // 标题
+        .append(Text.literal(&quot;═══════════════════════\n&quot;)
+            .formatted(Formatting.GOLD))
+        // 主标题
+        .append(Text.literal(&quot;🏆 游戏结束 🏆\n&quot;)
+            .styled(s -&gt; s
+                .withColor(Formatting.YELLOW)
+                .withBold(true)
+            ))
+        // 获胜者
+        .append(Text.literal(&quot;冠军: &quot;)
+            .formatted(Formatting.GRAY))
+        .append(Text.literal(winner)
+            .styled(s -&gt; s
+                .withColor(Formatting.GREEN)
+                .withBold(true)
+                .withHoverEvent(HoverEvent.showText(
+                    Text.literal(&quot;查看 &quot; + winner + &quot; 的统计&quot;)
+                ))
+            ))
+        // 击杀数
+        .append(&quot;\n&quot;)
+        .append(Text.literal(&quot;总击杀: &quot;)
+            .formatted(Formatting.GRAY))
+        .append(Text.literal(String.valueOf(kills))
+            .formatted(Formatting.RED))
+        // 游戏时长
+        .append(&quot;\n&quot;)
+        .append(Text.literal(&quot;游戏时长: &quot;)
+            .formatted(Formatting.GRAY))
+        .append(Stats.PLAY_TIME.format(time))
+        // 分隔线
+        .append(&quot;\n&quot;)
+        .append(Text.literal(&quot;═══════════════════════&quot;)
+            .formatted(Formatting.GOLD));
+}
+
+// 发送公告
+player.sendMessage(createGameAnnouncement(&quot;Steve&quot;, 15, 3600));</code></pre>
+
+<h3 id="物品名称与描述">物品名称与描述</h3>
+
+<pre><code>// 创建自定义物品显示
+public Text createItemDisplay(ItemStack stack) {
+    MutableText text = Text.literal(&quot;&quot;);
+    
+    // 物品名称
+    text.append(stack.getName()
+        .copy()
+        .styled(s -&gt; s.withColor(Formatting.WHITE)));
+    
+    // 耐久度
+    if (stack.isDamageable()) {
+        int damage = stack.getMaxDamage() - stack.getDamage();
+        int max = stack.getMaxDamage();
+        text.append(&quot;\n&quot;)
+            .append(Text.literal(&quot;耐久度: &quot; + damage + &quot;/&quot; + max)
+                .styled(s -&gt; s.withColor(Formatting.GRAY)));
+    }
+    
+    // 物品lore
+    text.append(&quot;\n&quot;)
+        .append(Text.literal(&quot;§7稀有度: §b史诗&quot;)
+            .formatted(Formatting.GRAY));
+    
+    return text;
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>文本系统是 Minecraft 中最灵活的信息展示工具：</p>
+
+<p>1. <strong>Text 接口</strong> 提供工厂方法创建各种文本</p>
+<p>2. <strong>MutableText</strong> 允许链式构建复杂文本</p>
+<p>3. <strong>Style</strong> 定义颜色、格式和事件</p>
+<p>4. <strong>ClickEvent</strong> 处理点击交互</p>
+<p>5. <strong>HoverEvent</strong> 提供悬浮信息</p>
+<p>6. <strong>TextContent</strong> 区分不同类型的内容</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 创建一个点击后复制到剪贴板的文本</p>
+<p>2. 实现一个显示玩家装备的悬浮提示</p>
+<p>3. 创建一个带颜色的排行榜消息</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./scoreboard-system.html">记分板系统</a> - Text.score() 用于显示记分板</p>
+<p>- <a href="./stats-system.html">统计系统</a> - 了解如何用 Text 显示统计数据</p>
+<p>- 源码路径: <code>d:/Projects/mc/source/net/minecraft/text/</code></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

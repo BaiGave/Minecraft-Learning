@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>附录：源码查找指南 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #34495e 0%, #34495e88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-0.html">Part-0</a>
+                        <span>/</span>
+                        <span>附录：源码查找指南</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">附录：源码查找指南</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-0: 前置知识</span>
+                    <span><i class="fas fa-file"></i> 04-sourcecode-guide</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-源码在哪里-">核心概念：源码在哪里？</a></li><li class="h3"><a href="#项目结构速览">项目结构速览</a></li><li><a href="#技巧1-快速搜索文件">技巧1：快速搜索文件</a></li><li class="h3"><a href="#方法a-双击-shift-推荐-">方法A：双击 Shift（推荐！）</a></li><li class="h3"><a href="#方法b-ctrl-shift-n-文件搜索-">方法B：Ctrl+Shift+N（文件搜索）</a></li><li class="h3"><a href="#方法c-ctrl-n-类搜索-">方法C：Ctrl+N（类搜索）</a></li><li><a href="#技巧2-全文搜索">技巧2：全文搜索</a></li><li class="h3"><a href="#方法a-ctrl-shift-f-全局搜索-">方法A：Ctrl+Shift+F（全局搜索）</a></li><li class="h3"><a href="#方法b-ctrl-f-当前文件搜索-">方法B：Ctrl+F（当前文件搜索）</a></li><li class="h3"><a href="#方法c-ctrl-shift-r-全局替换-">方法C：Ctrl+Shift+R（全局替换）</a></li><li><a href="#技巧3-类继承导航">技巧3：类继承导航</a></li><li class="h3"><a href="#方法a-ctrl-h-类型层次结构-">方法A：Ctrl+H（类型层次结构）</a></li><li class="h3"><a href="#方法b-ctrl-alt-b-实现导航-">方法B：Ctrl+Alt+B（实现导航）</a></li><li class="h3"><a href="#方法c-ctrl-u-父类导航-">方法C：Ctrl+U（父类导航）</a></li><li><a href="#技巧4-方法导航">技巧4：方法导航</a></li><li class="h3"><a href="#方法a-ctrl-f12-文件结构-">方法A：Ctrl+F12（文件结构）</a></li><li class="h3"><a href="#方法b-f12-或-ctrl-g-跳转到行-">方法B：F12 或 Ctrl+G（跳转到行）</a></li><li class="h3"><a href="#方法c-ctrl-和-ctrl-代码块导航-">方法C：Ctrl+[ 和 Ctrl+]（代码块导航）</a></li><li><a href="#技巧5-根据命名规律找源码">技巧5：根据命名规律找源码</a></li><li class="h3"><a href="#minecraft-的命名规律">Minecraft 的命名规律</a></li><li class="h3"><a href="#常用对应关系">常用对应关系</a></li><li><a href="#技巧6-从游戏行为反推源码">技巧6：从游戏行为反推源码</a></li><li class="h3"><a href="#场景1-想知道破坏方块时发生了什么">场景1：想知道破坏方块时发生了什么</a></li><li class="h3"><a href="#场景2-想知道村民如何交易">场景2：想知道村民如何交易</a></li><li class="h3"><a href="#场景3-想知道生物如何生成">场景3：想知道生物如何生成</a></li><li><a href="#技巧7-常用快捷键速查">技巧7：常用快捷键速查</a></li><li class="h3"><a href="#文件操作">文件操作</a></li><li class="h3"><a href="#导航">导航</a></li><li class="h3"><a href="#搜索">搜索</a></li><li class="h3"><a href="#编辑">编辑</a></li><li><a href="#技巧8-使用书签管理重要代码">技巧8：使用书签管理重要代码</a></li><li class="h3"><a href="#添加书签">添加书签</a></li><li class="h3"><a href="#查看所有书签">查看所有书签</a></li><li class="h3"><a href="#收藏夹-favorites-">收藏夹（Favorites）</a></li><li><a href="#技巧9-idea-常用插件推荐">技巧9：IDEA 常用插件推荐</a></li><li class="h3"><a href="#必需插件">必需插件</a></li><li class="h3"><a href="#推荐插件">推荐插件</a></li><li><a href="#实战练习">实战练习</a></li><li class="h3"><a href="#练习1-找到钻石剑的定义">练习1：找到钻石剑的定义</a></li><li class="h3"><a href="#练习2-找到玩家跳跃的代码">练习2：找到玩家跳跃的代码</a></li><li class="h3"><a href="#练习3-找到区块保存的代码">练习3：找到区块保存的代码</a></li><li class="h3"><a href="#练习4-找到附魔效果计算">练习4：找到附魔效果计算</a></li><li class="h3"><a href="#练习5-找到村民职业选择">练习5：找到村民职业选择</a></li><li><a href="#小结">小结</a></li><li><a href="#相关链接">相关链接</a></li><li><a href="#延伸阅读">延伸阅读</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="03-project-intro.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 📁 项目结构介绍</strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>学会这章，你就能像老手一样快速找到任意游戏功能的源码位置！</blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+<p>学完本章后，你将能够：</p>
+<p>1. 在 IDEA 中快速搜索和定位源码</p>
+<p>2. 理解 Minecraft 源码的命名规律</p>
+<p>3. 根据游戏行为推测源码位置</p>
+<p>4. 使用书签和收藏夹管理重要代码</p>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 会使用 IDEA（或其他 Java IDE）</p>
+<p>- 知道 Java 基本语法</p>
+<p>- 了解项目结构</p>
+
+<hr>
+
+<h2 id="核心概念-源码在哪里-">核心概念：源码在哪里？</h2>
+
+<h3 id="项目结构速览">项目结构速览</h3>
+
+<pre><code>d:/Projects/mc/
+├── source/                    ← Minecraft 源码（5364个Java文件）
+│   ├── net/minecraft/
+│   │   ├── registry/          ← 注册表系统
+│   │   ├── world/             ← 世界系统
+│   │   ├── block/             ← 方块系统
+│   │   ├── item/              ← 物品系统
+│   │   ├── entity/            ← 实体系统
+│   │   ├── client/            ← 客户端
+│   │   ├── server/            ← 服务端
+│   │   └── ...
+│   └── com/mojang/
+│       └── brigadier/         ← 命令解析库
+├── analysis/                   ← 源码分析文档
+├── tutorials/                  ← 教程文档
+└── README.md</code></pre>
+
+<hr>
+
+<h2 id="技巧1-快速搜索文件">技巧1：快速搜索文件</h2>
+
+<h3 id="方法a-双击-shift-推荐-">方法A：双击 Shift（推荐！）</h3>
+
+<pre><code>操作：连续按两次 Shift 键</code></pre>
+
+<div class="mermaid">
+flowchart LR
+    A["按两次 Shift"] --> B["弹出搜索框"]
+    B --> C["输入文件名"]
+    C --> D["选择文件"]
+    D --> E["回车打开"]
+    
+    style A fill:#4d96ff,color:#fff
+    style E fill:#6bcb77,color:#fff
+</div>
+
+<p><strong>适用场景</strong>：</p>
+<p>- 知道文件名，想快速打开</p>
+<p>- 例如：<code>World.java</code>、<code>Block.java</code>、<code>Enchantment.java</code></p>
+
+<p><strong>搜索技巧</strong>：</p>
+<p>- 输入文件名的一部分即可，如搜 <code>World</code> 会显示所有包含 World 的文件</p>
+<p>- 使用驼峰命名缩写，如搜 <code>WE</code> 可以找到 <code>WorldEvent</code></p>
+
+<h3 id="方法b-ctrl-shift-n-文件搜索-">方法B：Ctrl+Shift+N（文件搜索）</h3>
+
+<pre><code>操作：Ctrl + Shift + N</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 可以搜索所有类型文件</p>
+<p>- 支持正则表达式</p>
+<p>- 支持路径过滤</p>
+
+<h3 id="方法c-ctrl-n-类搜索-">方法C：Ctrl+N（类搜索）</h3>
+
+<pre><code>操作：Ctrl + N</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 只搜索 Java 类</p>
+<p>- 支持模糊搜索</p>
+<p>- 显示类的包路径</p>
+
+<hr>
+
+<h2 id="技巧2-全文搜索">技巧2：全文搜索</h2>
+
+<h3 id="方法a-ctrl-shift-f-全局搜索-">方法A：Ctrl+Shift+F（全局搜索）</h3>
+
+<pre><code>操作：Ctrl + Shift + F</code></pre>
+
+<div class="mermaid">
+flowchart TB
+    A["Ctrl+Shift+F"] --> B["弹出搜索面板"]
+    B --> C["输入搜索关键词"]
+    C --> D["选择搜索范围"]
+    D --> E["Results窗口显示结果"]
+    
+    style A fill:#4d96ff,color:#fff
+    style E fill:#6bcb77,color:#fff
+</div>
+
+<p><strong>适用场景</strong>：</p>
+<p>- 找某个方法在哪里被调用</p>
+<p>- 找某个字符串在哪里使用</p>
+<p>- 找某个变量在哪里定义</p>
+
+<p><strong>示例</strong>：</p>
+<table><thead><tr><th>搜索内容</th><th>目的</th></tr></thead><tbody><tr><td>---------</td><td>------</td></tr><tr><td>`TICKS_PER_SECOND`</td><td>找游戏tick常量定义</td></tr><tr><td>`minecraft:stone`</td><td>找石头方块注册位置</td></tr><tr><td>`onBlockBreak`</td><td>找破坏方块的逻辑</td></tr><tr><td>`damage`</td><td>找伤害相关代码</td></tr></tbody></table>
+
+<h3 id="方法b-ctrl-f-当前文件搜索-">方法B：Ctrl+F（当前文件搜索）</h3>
+
+<pre><code>操作：Ctrl + F</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 速度快，只在当前文件搜索</p>
+<p>- 支持正则表达式</p>
+<p>- 支持大小写敏感/不敏感</p>
+
+<h3 id="方法c-ctrl-shift-r-全局替换-">方法C：Ctrl+Shift+R（全局替换）</h3>
+
+<pre><code>操作：Ctrl + Shift + R</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 先搜索，再替换</p>
+<p>- 支持预览</p>
+<p>- 支持整个项目或指定目录</p>
+
+<hr>
+
+<h2 id="技巧3-类继承导航">技巧3：类继承导航</h2>
+
+<h3 id="方法a-ctrl-h-类型层次结构-">方法A：Ctrl+H（类型层次结构）</h3>
+
+<pre><code>操作：Ctrl + H</code></pre>
+
+<div class="mermaid">
+flowchart TB
+    A["选中类名"] --> B["Ctrl+H"]
+    B --> C["显示继承树"]
+    
+    subgraph 继承树示例["World 类的继承关系"]
+        W1["Object"]
+        W2["World"] 
+        W3["ServerWorld"]
+        W4["ClientWorld"]
+    end
+    
+    W1 --> W2
+    W2 --> W3
+    W2 --> W4
+    
+    style W2 fill:#ff6b6b,color:#fff
+</div>
+
+<p><strong>适用场景</strong>：</p>
+<p>- 想了解某个类的父类是谁</p>
+<p>- 想看某个类有哪些子类</p>
+<p>- 理解类的继承关系</p>
+
+<h3 id="方法b-ctrl-alt-b-实现导航-">方法B：Ctrl+Alt+B（实现导航）</h3>
+
+<pre><code>操作：Ctrl + Alt + B</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 如果光标在接口上，显示所有实现类</p>
+<p>- 如果光标在抽象方法上，显示所有实现</p>
+
+<p><strong>示例</strong>：</p>
+<table><thead><tr><th>光标位置</th><th>显示结果</th></tr></thead><tbody><tr><td>---------</td><td>---------</td></tr><tr><td>`interface Entity`</td><td>所有 Entity 的实现类</td></tr><tr><td>`interface Item`</td><td>所有 Item 的实现类</td></tr><tr><td>`method tick()`</td><td>所有实现了 tick() 的类</td></tr></tbody></table>
+
+<h3 id="方法c-ctrl-u-父类导航-">方法C：Ctrl+U（父类导航）</h3>
+
+<pre><code>操作：Ctrl + U</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 跳转到父类/父接口</p>
+<p>- 和 Ctrl+Alt+B 配合使用</p>
+
+<hr>
+
+<h2 id="技巧4-方法导航">技巧4：方法导航</h2>
+
+<h3 id="方法a-ctrl-f12-文件结构-">方法A：Ctrl+F12（文件结构）</h3>
+
+<pre><code>操作：Ctrl + F12</code></pre>
+
+<p><strong>显示内容</strong>：</p>
+<pre><code>World.java
+├── 字段
+│   ├── isClient: boolean
+│   ├── border: WorldBorder
+│   └── ...
+├── 方法
+│   ├── tick()
+│   ├── getBlockState()
+│   ├── setBlockState()
+│   └── ...</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 快速了解一个类的所有成员</p>
+<p>- 可以直接点击跳转</p>
+
+<h3 id="方法b-f12-或-ctrl-g-跳转到行-">方法B：F12 或 Ctrl+G（跳转到行）</h3>
+
+<pre><code>操作：F12</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 跳转到指定行号</p>
+<p>- 行号在 IDE 左下角显示</p>
+
+<h3 id="方法c-ctrl-和-ctrl-代码块导航-">方法C：Ctrl+[ 和 Ctrl+]（代码块导航）</h3>
+
+<pre><code>操作：Ctrl + [  （向前）
+操作：Ctrl + ]  （向后）</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 跳转到代码块的开始/结束</p>
+<p>- 适合在大方法中快速移动</p>
+
+<hr>
+
+<h2 id="技巧5-根据命名规律找源码">技巧5：根据命名规律找源码</h2>
+
+<h3 id="minecraft-的命名规律">Minecraft 的命名规律</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph 规律["命名规律表"]
+        R1["功能 + 位置"]
+        R2["具体类型"]
+        R3["管理器/Helper"]
+    end
+    
+    subgraph 示例["例子"]
+        E1["Block + Entity = BlockEntity"]
+        E2["Item + Stack = ItemStack"]
+        E3["World + Chunk = WorldChunk"]
+    end
+    
+    R1 --> E1
+    R2 --> E2
+    R3 --> E3
+</div>
+
+<h3 id="常用对应关系">常用对应关系</h3>
+
+<table><thead><tr><th>关键词</th><th>可能的文件名</th><th>位置</th></tr></thead><tbody><tr><td>--------</td><td>-------------</td><td>------</td></tr><tr><td>方块实体</td><td>`BlockEntity.java`</td><td>`net.minecraft.block.entity`</td></tr><tr><td>物品堆叠</td><td>`ItemStack.java`</td><td>`net.minecraft.item`</td></tr><tr><td>实体类型</td><td>`EntityType.java`</td><td>`net.minecraft.entity`</td></tr><tr><td>世界</td><td>`World.java`</td><td>`net.minecraft.world`</td></tr><tr><td>区块</td><td>`WorldChunk.java`</td><td>`net.minecraft.world.chunk`</td></tr><tr><td>玩家</td><td>`PlayerEntity.java`</td><td>`net.minecraft.entity.player`</td></tr><tr><td>村民</td><td>`VillagerEntity.java`</td><td>`net.minecraft.entity.passive`</td></tr><tr><td>僵尸</td><td>`ZombieEntity.java`</td><td>`net.minecraft.entity.mob`</td></tr><tr><td>附魔</td><td>`Enchantment.java`</td><td>`net.minecraft.enchantment`</td></tr><tr><td>配方</td><td>`Recipe.java`</td><td>`net.minecraft.recipe`</td></tr><tr><td>战利品表</td><td>`LootTables.java`</td><td>`net.minecraft.loot`</td></tr><tr><td>声音</td><td>`SoundEvent.java`</td><td>`net.minecraft.sound`</td></tr><tr><td>粒子</td><td>`Particle.java`</td><td>`net.minecraft.particle`</td></tr><tr><td>药水效果</td><td>`StatusEffect.java`</td><td>`net.minecraft.entity.effect`</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="技巧6-从游戏行为反推源码">技巧6：从游戏行为反推源码</h2>
+
+<h3 id="场景1-想知道破坏方块时发生了什么">场景1：想知道破坏方块时发生了什么</h3>
+
+<div class="mermaid">
+flowchart TB
+    A["游戏行为：破坏方块"] --> B["思考：哪个类处理这个？"]
+    B --> C["搜索关键词"]
+    C --> D["Block.onBreak()"]
+    C --> E["PlayerEntity.destroyBlock()"]
+    C --> F["World.setBlockState()"]
+    
+    style A fill:#ffd93d,color:#000
+</div>
+
+<p><strong>搜索步骤</strong>：</p>
+<p>1. 全局搜索 <code>breakBlock</code> 或 <code>onBlockBreak</code></p>
+<p>2. 找到 <code>Block.java</code> 中的 <code>onBreak()</code> 方法</p>
+<p>3. 查看方法内部的逻辑</p>
+
+<h3 id="场景2-想知道村民如何交易">场景2：想知道村民如何交易</h3>
+
+<div class="mermaid">
+flowchart TB
+    A["游戏行为：村民交易"] --> B["思考：哪个类管理交易？"]
+    B --> C["搜索关键词"]
+    C --> D["TradeOffers.java"]
+    C --> E["Merchant.java"]
+    C --> F["VillagerEntity.java"]
+    
+    style A fill:#ffd93d,color:#000
+</div>
+
+<p><strong>搜索步骤</strong>：</p>
+<p>1. 全局搜索 <code>getOffers</code> 或 <code>trade</code></p>
+<p>2. 找到 <code>Merchant.java</code> 接口</p>
+<p>3. 看它的实现类</p>
+
+<h3 id="场景3-想知道生物如何生成">场景3：想知道生物如何生成</h3>
+
+<div class="mermaid">
+flowchart TB
+    A["游戏行为：生物生成"] --> B["思考：哪里控制生成？"]
+    B --> C["搜索关键词"]
+    C --> D["MobSpawner.java"]
+    C --> E["SpawnRestriction.java"]
+    C --> F["LivingEntity.checkSpawnRules()"]
+    
+    style A fill:#ffd93d,color:#000
+</div>
+
+<p><strong>搜索步骤</strong>：</p>
+<p>1. 全局搜索 <code>canSpawn</code> 或 <code>spawn</code></p>
+<p>2. 找 <code>SpawnRestriction.java</code> 看生成规则</p>
+<p>3. 找 <code>MobSpawner.java</code> 看生成逻辑</p>
+
+<hr>
+
+<h2 id="技巧7-常用快捷键速查">技巧7：常用快捷键速查</h2>
+
+<h3 id="文件操作">文件操作</h3>
+
+<table><thead><tr><th>快捷键</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>`Ctrl+Shift+N`</td><td>全局文件搜索</td></tr><tr><td>`Ctrl+N`</td><td>类搜索</td></tr><tr><td>`Ctrl+Shift+T`</td><td>测试类搜索</td></tr><tr><td>`Alt+F1`</td><td>在资源管理器中定位</td></tr></tbody></table>
+
+<h3 id="导航">导航</h3>
+
+<table><thead><tr><th>快捷键</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>`Ctrl+G`</td><td>跳转到行</td></tr><tr><td>`Ctrl+H`</td><td>类型层次结构</td></tr><tr><td>`Ctrl+Alt+H`</td><td>方法调用层次</td></tr><tr><td>`Ctrl+B`</td><td>跳转到声明</td></tr><tr><td>`Ctrl+Alt+B`</td><td>跳转到实现</td></tr><tr><td>`F4`</td><td>跳转到源码</td></tr><tr><td>`Ctrl+U`</td><td>跳转到父类</td></tr></tbody></table>
+
+<h3 id="搜索">搜索</h3>
+
+<table><thead><tr><th>快捷键</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>`Ctrl+F`</td><td>当前文件搜索</td></tr><tr><td>`Ctrl+Shift+F`</td><td>全局搜索</td></tr><tr><td>`Ctrl+R`</td><td>当前文件替换</td></tr><tr><td>`Ctrl+Shift+R`</td><td>全局替换</td></tr><tr><td>`Ctrl+Shift+/`</td><td>注释/取消注释</td></tr></tbody></table>
+
+<h3 id="编辑">编辑</h3>
+
+<table><thead><tr><th>快捷键</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>`Ctrl+D`</td><td>复制行</td></tr><tr><td>`Ctrl+Y`</td><td>删除行</td></tr><tr><td>`Ctrl+/`</td><td>注释行</td></tr><tr><td>`Ctrl+Shift+↑/↓`</td><td>移动代码块</td></tr><tr><td>`Ctrl+Alt+L`</td><td>格式化代码</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="技巧8-使用书签管理重要代码">技巧8：使用书签管理重要代码</h2>
+
+<h3 id="添加书签">添加书签</h3>
+
+<pre><code>操作：
+1. 将光标放在要标记的行
+2. 按 F3 或 Ctrl+F11
+3. 选择书签编号（0-9）</code></pre>
+
+<h3 id="查看所有书签">查看所有书签</h3>
+
+<pre><code>操作：Shift+F3</code></pre>
+
+<p><strong>特点</strong>：</p>
+<p>- 可以给代码加数字书签</p>
+<p>- 方便在多个文件间快速跳转</p>
+<p>- 书签可以命名</p>
+
+<h3 id="收藏夹-favorites-">收藏夹（Favorites）</h3>
+
+<pre><code>操作：
+1. 右键点击文件/方法
+2. 选择&quot;Add to Favorites&quot;
+3. 在左侧 Favorites 面板查看</code></pre>
+
+<hr>
+
+<h2 id="技巧9-idea-常用插件推荐">技巧9：IDEA 常用插件推荐</h2>
+
+<h3 id="必需插件">必需插件</h3>
+
+<table><thead><tr><th>插件名</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>**Minecraft Development**</td><td>MC 项目支持、生成模板</td></tr><tr><td>**Translation**</td><td>翻译插件，看不懂英文变量名时用</td></tr><tr><td>**Key Promoter X**</td><td>快捷键提示</td></tr></tbody></table>
+
+<h3 id="推荐插件">推荐插件</h3>
+
+<table><thead><tr><th>插件名</th><th>功能</th></tr></thead><tbody><tr><td>--------</td><td>------</td></tr><tr><td>**Rainbow Brackets**</td><td>括号颜色高亮</td></tr><tr><td>**GitToolBox**</td><td>Git 增强</td></tr><tr><td>**String Manipulation**</td><td>字符串处理</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="实战练习">实战练习</h2>
+
+<h3 id="练习1-找到钻石剑的定义">练习1：找到钻石剑的定义</h3>
+
+<p><strong>目标</strong>：找到 <code>diamond_sword</code> 在哪里定义</p>
+
+<p><strong>提示</strong>：</p>
+<p>1. 先想好关键词：<code>diamond_sword</code> 或 <code>DIAMOND_SWORD</code></p>
+<p>2. 用 Ctrl+Shift+F 全局搜索</p>
+<p>3. 在 <code>Items.java</code> 或 <code>Registries.java</code> 中找</p>
+
+<h3 id="练习2-找到玩家跳跃的代码">练习2：找到玩家跳跃的代码</h3>
+
+<p><strong>目标</strong>：找到玩家跳跃时执行的代码</p>
+
+<p><strong>提示</strong>：</p>
+<p>1. 搜索关键词：<code>jump</code>、<code>setVelocity</code></p>
+<p>2. 在 <code>LivingEntity.java</code> 或 <code>PlayerEntity.java</code> 中找</p>
+<p>3. 查看 <code>jump()</code> 方法</p>
+
+<h3 id="练习3-找到区块保存的代码">练习3：找到区块保存的代码</h3>
+
+<p><strong>目标</strong>：找到区块数据保存到磁盘的代码</p>
+
+<p><strong>提示</strong>：</p>
+<p>1. 搜索关键词：<code>save</code>、<code>write</code>、<code>NBT</code></p>
+<p>2. 在 <code>WorldChunk.java</code> 或 <code>ServerWorld.java</code> 中找</p>
+<p>3. 查看 <code>writeNbt()</code> 或 <code>save()</code> 方法</p>
+
+<h3 id="练习4-找到附魔效果计算">练习4：找到附魔效果计算</h3>
+
+<p><strong>目标</strong>：找到锋利附魔增加伤害的代码</p>
+
+<p><strong>提示</strong>：</p>
+<p>1. 搜索关键词：<code>Sharpness</code>、<code>EnchantmentHelper</code></p>
+<p>2. 在 <code>EnchantmentHelper.java</code> 中找</p>
+<p>3. 查看 <code>getDamageBonus()</code> 方法</p>
+
+<h3 id="练习5-找到村民职业选择">练习5：找到村民职业选择</h3>
+
+<p><strong>目标</strong>：找到村民如何选择职业</p>
+
+<p><strong>提示</strong>：</p>
+<p>1. 搜索关键词：<code>profession</code>、<code>VillagerProfession</code></p>
+<p>2. 在 <code>VillagerEntity.java</code> 中找</p>
+<p>3. 查看 <code>setProfession()</code> 方法</p>
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+<div class="mermaid">
+mindmap
+  root((源码查找))
+    文件搜索
+      双击Shift
+      Ctrl+Shift+N
+      Ctrl+N
+    全文搜索
+      Ctrl+Shift+F
+      Ctrl+F
+    继承导航
+      Ctrl+H
+      Ctrl+Alt+B
+      Ctrl+U
+    命名规律
+      BlockEntity
+      ItemStack
+      WorldChunk
+    行为反推
+      找关键词
+      看相关类
+      顺藤摸瓜
+    快捷键
+      F3书签
+      Ctrl+B跳转
+      F12结构
+</div>
+
+<hr>
+
+<h2 id="相关链接">相关链接</h2>
+
+<blockquote>⚠️ <strong>注意</strong>：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。</blockquote>
+
+<p>- <a href="./03-project-intro.html">Part-0: 项目结构</a></p>
+<p>- <a href="./04-registry-system.html">Part-1: 注册表系统</a></p>
+<p>- Part-2: World核心 - 文档待完成</p>
+
+<hr>
+
+<h2 id="延伸阅读">延伸阅读</h2>
+
+<p>- <a href="https://www.jetbrains.com/help/idea/keymap-reference.html">IDEA 官方快捷键文档</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Tutorials">Minecraft Wiki: 开发教程</a></p>
+
+<hr>
+
+<p><em>最后更新：2026-03-19</em></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

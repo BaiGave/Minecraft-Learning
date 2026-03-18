@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第四十九章：Minecraft 服务器核心 - MinecraftServer - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #9b59b6 0%, #9b59b688 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-10.html">Part-10</a>
+                        <span>/</span>
+                        <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第四十九章：Minecraft 服务器核心 - MinecraftServer</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-10: 服务端</span>
+                    <span><i class="fas fa-file"></i> 49-server-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#minecraftserver-是什么-">MinecraftServer 是什么？</a></li><li class="h3"><a href="#核心组件详解">核心组件详解</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#服务器架构图">服务器架构图</a></li><li class="h3"><a href="#tick-循环流程图">Tick 循环流程图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#服务器启动">服务器启动</a></li><li class="h3"><a href="#tick-方法核心">Tick 方法核心</a></li><li class="h3"><a href="#世界管理">世界管理</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-服务器-tick-循环如何工作">场景：服务器 Tick 循环如何工作</a></li><li><a href="#和-minecraftclient-的区别">和 MinecraftClient 的区别</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="50-player-manager.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第五十章：玩家大管家 - PlayerManager <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解 MinecraftServer 是什么</p>
+<p>- 了解服务器 Tick 循环的运作方式</p>
+<p>- 认识世界管理的基本概念</p>
+<p>- 区分服务器端和客户端的职责</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 Minecraft 的客户端-服务器架构</p>
+<p>- 了解什么是 Tick（游戏刻）</p>
+<p>- 知道世界是什么（主世界、下界、末地）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="minecraftserver-是什么-">MinecraftServer 是什么？</h3>
+
+<p>想象一下 Minecraft 服务器就像一个<strong>餐厅</strong>：</p>
+
+<p>- <strong>餐厅经理（MinecraftServer）</strong>：负责整个餐厅的运营</p>
+<p>- <strong>服务员（PlayerManager）</strong>：管理顾客（玩家）的接待和服务</p>
+<p>- <strong>厨房（ServerWorld）</strong>：准备食物（生成方块、生物等）</p>
+<p>- <strong>仓库（存档系统）</strong>：存储食材（世界数据）</p>
+
+<p><code>MinecraftServer</code> 是服务端的核心类，它：</p>
+<p>- 管理所有世界的运行</p>
+<p>- 处理玩家的连接和断开</p>
+<p>- 控制游戏 Tick 的节奏</p>
+<p>- 保存和加载世界数据</p>
+
+<pre><code>// 源码位置：net/minecraft/server/MinecraftServer.java
+public abstract class MinecraftServer
+extends ReentrantThreadExecutor&lt;ServerTask&gt;
+implements QueryableServer, ChunkErrorHandler, CommandOutput, AutoCloseable {
+    
+    // 核心组件
+    private final Map&lt;RegistryKey&lt;World&gt;, ServerWorld&gt; worlds;  // 所有世界
+    private PlayerManager playerManager;  // 玩家管理器
+    private final ServerTickManager tickManager;  // Tick 管理器
+    private final ServerNetworkIo networkIo;  // 网络通信
+    
+    // 运行状态
+    private volatile boolean running = true;  // 服务器是否运行
+    private int ticks;  // 当前 Tick 数
+}</code></pre>
+
+<h3 id="核心组件详解">核心组件详解</h3>
+
+<table><thead><tr><th>组件</th><th>作用</th><th>类比</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>`worlds`</td><td>管理主世界、下界、末地等所有维度</td><td>餐厅的多个厨房</td></tr><tr><td>`playerManager`</td><td>管理所有在线玩家</td><td>服务员团队</td></tr><tr><td>`tickManager`</td><td>控制 Tick 节奏</td><td>餐厅的时钟</td></tr><tr><td>`networkIo`</td><td>处理网络连接</td><td>餐厅的门迎</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="服务器架构图">服务器架构图</h3>
+
+<div class="mermaid">
+graph TB
+    subgraph "MinecraftServer 核心"
+        MS[MinecraftServer<br/>服务器主类]
+        TM[ServerTickManager<br/>Tick管理器]
+        PM[PlayerManager<br/>玩家管理器]
+        NW[ServerNetworkIo<br/>网络通信]
+    end
+    
+    subgraph "世界管理"
+        OW[Overworld<br/>主世界]
+        NW[Nether<br/>下界]
+        EW[End<br/>末地]
+    end
+    
+    MS --> TM
+    MS --> PM
+    MS --> NW
+    MS --> OW
+    MS --> NW
+    MS --> EW
+    
+    PM --> Players[玩家列表]
+    NW --> Clients[客户端连接]
+    
+    TM --> TickLoop["Tick 循环<br/>每秒20次"]
+    
+    style MS fill:#e1f5fe
+    style TM fill:#fff3e0
+    style PM fill:#e8f5e9
+</div>
+
+<h3 id="tick-循环流程图">Tick 循环流程图</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant Server as MinecraftServer
+    participant TM as ServerTickManager
+    participant World as ServerWorld
+    participant PM as PlayerManager
+    
+    loop 每秒20次（每50ms一次）
+        Server->>TM: 获取 Tick 时间
+        TM-->>Server: 返回 tick 间隔
+        
+        Server->>World: tick() 更新世界
+        World-->>Server: 世界更新完成
+        
+        Server->>PM: updatePlayerLatency() 更新延迟
+        PM-->>Server: 延迟更新完成
+        
+        Server->>PM: saveAll() 自动保存检查
+        alt 到达保存间隔
+            PM-->>Server: 保存玩家数据
+            Server-->>World: 保存世界数据
+        end
+        
+        Note over Server: 发送区块数据给玩家
+    end
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="服务器启动">服务器启动</h3>
+
+<pre><code>// MinecraftServer.java - 服务器主循环
+protected void runServer() {
+    if (this.setupServer()) {  // 设置服务器
+        this.tickStartTimeNanos = Util.getMeasuringTimeNano();
+        
+        while (this.running) {  // 服务器运行主循环
+            // 计算 Tick 间隔
+            long l = this.tickManager.getNanosPerTick();
+            
+            // 执行 Tick
+            this.tick(shouldKeepTicking);
+            
+            // 等待下一个 Tick
+            this.runTasksTillTickEnd();
+        }
+    }
+}</code></pre>
+
+<h3 id="tick-方法核心">Tick 方法核心</h3>
+
+<pre><code>public void tick(BooleanSupplier shouldKeepTicking) {
+    ++this.ticks;  // Tick 数加1
+    
+    this.tickManager.step();  // Tick 管理器步进
+    this.tickWorlds(shouldKeepTicking);  // 更新所有世界
+    
+    // 自动保存逻辑
+    --this.ticksUntilAutosave;
+    if (this.ticksUntilAutosave &lt;= 0) {
+        this.ticksUntilAutosave = this.getAutosaveInterval();
+        this.saveAll(true, false, false);  // 保存世界
+    }
+}</code></pre>
+
+<h3 id="世界管理">世界管理</h3>
+
+<pre><code>// 获取主世界
+public final ServerWorld getOverworld() {
+    return this.worlds.get(World.OVERWORLD);
+}
+
+// 获取指定世界
+@Nullable
+public ServerWorld getWorld(RegistryKey&lt;World&gt; key) {
+    return this.worlds.get(key);
+}
+
+// 获取所有世界
+public Iterable&lt;ServerWorld&gt; getWorlds() {
+    return this.worlds.values();
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-服务器-tick-循环如何工作">场景：服务器 Tick 循环如何工作</h3>
+
+<p>想象你开了一家 Minecraft 餐厅：</p>
+
+<pre><code>🍽️ Tick 1（0秒）          🍽️ Tick 2（0.05秒）        🍽️ Tick 3（0.1秒）
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│ 1. 玩家移动     │       │ 1. 怪物AI更新    │       │ 1. 红石更新     │
+│ 2. 区块加载检查 │  ──▶  │ 2. 农作物生长   │  ──▶  │ 2. 实体移动     │
+│ 3. 命令执行     │       │ 3. 天气更新     │       │ 3. 村民交易     │
+│ 4. 发送数据     │       │ 4. 刷怪笼工作   │       │ 4. 发送数据     │
+└─────────────────┘       └─────────────────┘       └─────────────────┘</code></pre>
+
+<p>每 300 个 Tick（15秒）触发一次自动保存！</p>
+
+<h2 id="和-minecraftclient-的区别">和 MinecraftClient 的区别</h2>
+
+<table><thead><tr><th>特性</th><th>MinecraftServer</th><th>MinecraftClient</th></tr></thead><tbody><tr><td>------</td><td>-----------------</td><td>-----------------</td></tr><tr><td>**运行环境**</td><td>服务端（无 GUI）</td><td>客户端（有 GUI）</td></tr><tr><td>**Tick 循环**</td><td>服务端独立控制</td><td>客户端跟随服务端</td></tr><tr><td>**世界数据**</td><td>完整保存到磁盘</td><td>只显示服务端发来的</td></tr><tr><td>**玩家**</td><td>管理多个玩家</td><td>只是一个玩家</td></tr><tr><td>**实体处理**</td><td>计算所有实体行为</td><td>只渲染附近的实体</td></tr></tbody></table>
+
+<pre><code>// 客户端和服务端的Tick差异
+
+// 客户端 Tick（MinecraftClient.java）
+@Override
+public void tick() {
+    if (this.isPaused()) return;  // 暂停时不更新
+    super.tick();
+}
+
+// 服务端 Tick（MinecraftServer.java）
+@Override
+public void tick(BooleanSupplier shouldKeepTicking) {
+    ++this.ticks;  // 始终递增
+    this.tickWorlds(shouldKeepTicking);  // 始终更新世界
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>MinecraftServer 是服务端核心</strong>：管理所有世界、玩家、网络通信</p>
+<p>2. <strong>Tick 循环每秒 20 次</strong>：每 50ms 执行一次完整的游戏逻辑更新</p>
+<p>3. <strong>世界由 ServerWorld 表示</strong>：主世界、下界、末地都是独立的 ServerWorld</p>
+<p>4. <strong>服务端负责所有计算</strong>：客户端只负责显示，服务端决定一切</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：如果服务器 Tick 卡顿超过 5 秒，会发生什么？</p>
+<p>2. <strong>找一找</strong>：在源码中找到 <code>runServer()</code> 方法，理解它如何启动服务器循环</p>
+<p>3. <strong>实践</strong>：阅读 <code>tickWorlds()</code> 方法，了解它如何遍历所有世界</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./Part-11-Network/">Part-11 网络通信</a> - 了解玩家如何连接服务器</p>
+<p>- <a href="./Part-12-WorldGen/">Part-12 世界生成</a> - 了解 ServerWorld 如何生成地形</p>
+<p>- 源码：<code>net/minecraft/server/MinecraftServer.java</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>MinecraftServer.java</td><td>`net/minecraft/server/MinecraftServer.java`</td><td>服务器主类</td></tr><tr><td>TickScheduler.java</td><td>`net/minecraft/server/TickScheduler.java`</td><td>Tick 调度器</td></tr><tr><td>WorldGenerationProgressListener.java</td><td>`net/minecraft/server/WorldGenerationProgressListener.java`</td><td>世界生成进度监听器</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：MinecraftServer、Tick、ServerWorld、PlayerManager</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>17 - Item 类：物品的基础 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #2980b9 0%, #2980b988 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-3.html">Part-3</a>
+                        <span>/</span>
+                        <span>17 - Item 类：物品的基础</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">17 - Item 类：物品的基础</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-3: 方块物品</span>
+                    <span><i class="fas fa-file"></i> 17-item-basics</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-用生活比喻-">核心概念（用生活比喻）</a></li><li class="h3"><a href="#item-类是什么-">Item 类是什么？</a></li><li class="h3"><a href="#item-vs-blockitem">Item vs BlockItem</a></li><li class="h3"><a href="#生活中的比喻">生活中的比喻</a></li><li class="h3"><a href="#item-类的关键特性">Item 类的关键特性</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#item-继承关系图">Item 继承关系图</a></li><li class="h3"><a href="#物品使用流程图">物品使用流程图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#创建简单的物品">创建简单的物品</a></li><li class="h3"><a href="#item-settings-常用配置">Item.Settings 常用配置</a></li><li class="h3"><a href="#自定义物品行为">自定义物品行为</a></li><li class="h3"><a href="#blockitem-方块对应的物品-">BlockItem（方块对应的物品）</a></li><li class="h3"><a href="#itemgroup-创造模式物品栏-">ItemGroup（创造模式物品栏）</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#案例-创建一个-修复图纸-">案例：创建一个"修复图纸"</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="16-block-entity.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 16 - BlockEntity：需要存储数据的方块</strong>
+        </a><a href="18-item-stack.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>18 - ItemStack：物品堆叠 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- Item 类是什么（玩家可以持有/使用的物品）</p>
+<p>- Item vs BlockItem（物品和方块物品的区别）</p>
+<p>- 物品的基本属性设置</p>
+<p>- ItemGroup（创造模式物品栏分类）</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 <a href="./14-block-basics.html">Block 基础</a></p>
+<p>- 了解 Java 继承和多态概念</p>
+
+<h2 id="核心概念-用生活比喻-">核心概念（用生活比喻）</h2>
+
+<h3 id="item-类是什么-">Item 类是什么？</h3>
+
+<p><strong>物品（Item）</strong> = 玩家可以<strong>拿在手里</strong>的东西</p>
+
+<table><thead><tr><th>物品</th><th>能做什么</th></tr></thead><tbody><tr><td>------</td><td>----------</td></tr><tr><td>苹果</td><td>吃（恢复饥饿值）</td></tr><tr><td>钻石剑</td><td>攻击生物</td></tr><tr><td>橡木原木</td><td>可以放置变成方块</td></tr><tr><td>桶</td><td>装水/倒水</td></tr></tbody></table>
+
+<p><strong>简单区分</strong>：</p>
+<p>- <strong>可以放置的物品</strong> = 方块对应的物品 = <strong>BlockItem</strong></p>
+<p>- <strong>不能放置的物品</strong> = 纯物品 = <strong>Item</strong></p>
+
+<h3 id="item-vs-blockitem">Item vs BlockItem</h3>
+
+<pre><code>Item (物品基类)
+    │
+    ├── 食物 (FoodItem)
+    │   └── 苹果、金萝卜、蛋糕...
+    │
+    ├── 工具 (DiggerItem / SwordItem)
+    │   └── 镐子、斧头、剑...
+    │
+    └── BlockItem (方块物品)
+            │
+            └── 石头、木头、泥土...
+                │
+                ├── 对应一个 Block
+                └── 可以放置到世界中</code></pre>
+
+<h3 id="生活中的比喻">生活中的比喻</h3>
+
+<p>想象你在超市买东西：</p>
+
+<pre><code>┌─────────────────────────────────────┐
+│                                     │
+│  物品 (Item)                        │
+│    │                                │
+│    ├── 可以吃的 = 食物               │
+│    │   └── 有饱腹度、恢复生命效果     │
+│    │                                │
+│    ├── 可以用的 = 工具               │
+│    │   └── 有耐久度、攻击/挖掘加成   │
+│    │                                │
+│    └── 可以放的 = BlockItem          │
+│        └── 对应一个方块              │
+│                                     │
+└─────────────────────────────────────┘</code></pre>
+
+<h3 id="item-类的关键特性">Item 类的关键特性</h3>
+
+<table><thead><tr><th>特性</th><th>说明</th><th>例子</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>**maxCount**</td><td>最大堆叠数</td><td>64（普通物品）/ 1（工具）</td></tr><tr><td>**maxDamage**</td><td>最大耐久度</td><td>工具武器有耐久度</td></tr><tr><td>**food**</td><td>食物组件</td><td>苹果、金胡萝卜</td></tr><tr><td>**rarity**</td><td>稀有度颜色</td><td>普通/优秀/稀有/史诗</td></tr><tr><td>**fireproof**</td><td>防火</td><td>打火石、岩浆桶</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="item-继承关系图">Item 继承关系图</h3>
+
+<div class="mermaid">
+classDiagram
+    class ItemConvertible {
+        <<interface>>
+        +asItem() Item
+    }
+    
+    class ToggleableFeature {
+        <<interface>>
+        +getRequiredFeatures()
+    }
+    
+    class FabricItem {
+        <<interface>>
+    }
+    
+    class Item {
+        +components: ComponentMap
+        +recipeRemainder: Item
+        +asItem() Item
+        +use() TypedActionResult
+        +finishUsing() ItemStack
+        +onStackClicked() boolean
+    }
+    
+    class BlockItem {
+        +block: Block
+        +useOnBlock() ActionResult
+    }
+    
+    class FoodItem {
+        +foodComponent: FoodComponent
+    }
+    
+    class ItemStack {
+        +count: int
+        +components: ComponentMap
+    }
+    
+    ItemConvertible <|.. Item
+    ToggleableFeature <|.. Item
+    FabricItem <|.. Item
+    Item <|-- BlockItem
+    Item <|-- FoodItem
+    
+    Item ..> ItemStack : 持有
+    BlockItem --> Block : 对应
+</div>
+
+<h3 id="物品使用流程图">物品使用流程图</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[玩家持有物品] --> B{右键点击?}
+    B -->|是| C[Item.use]
+    B -->|左键点击方块| D[检查工具]
+    
+    C --> E{物品类型?}
+    E -->|食物| F[开始吃东西]
+    E -->|工具| G[切换到使用动画]
+    E -->|方块| H[放置方块]
+    E -->|其他| I[执行自定义行为]
+    
+    F --> J[等待进食时间]
+    J --> K[finishUsing - 完成进食]
+    K --> L[恢复饥饿值]
+    
+    G --> M[持续使用中]
+    M --> N[达到最大使用时间]
+    N --> O[finishUsing - 完成使用]
+    
+    H --> P[BlockItem.onUse]
+    P --> Q[放置方块]
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="创建简单的物品">创建简单的物品</h3>
+
+<pre><code>public class MyMod implements ModInitializer {
+    
+    // 1. 基础物品（无特殊功能）
+    public static final Item MY_ITEM = Registry.register(
+        Registries.ITEM,
+        Identifier.of(&quot;mymod&quot;, &quot;my_item&quot;),
+        new Item(new Item.Settings()
+            .maxCount(64)  // 最大堆叠64个
+        )
+    );
+    
+    // 2. 有耐久度的物品
+    public static final Item MY_TOOL = Registry.register(
+        Registries.ITEM,
+        Identifier.of(&quot;mymod&quot;, &quot;my_tool&quot;),
+        new Item(new Item.Settings()
+            .maxDamage(100)  // 100点耐久
+        )
+    );
+    
+    // 3. 食物物品（直接使用食物组件）
+    public static final Item MY_FOOD = Registry.register(
+        Registries.ITEM,
+        Identifier.of(&quot;mymod&quot;, &quot;my_food&quot;),
+        new Item(new Item.Settings()
+            .food(new FoodComponent.Builder()
+                .hunger(4)      // 恢复4点饥饿
+                .saturationModifier(2.0f)  // 饱和度加成
+                .meat()         // 狼可以吃
+                .alwaysEdible() // 饱腹时也能吃
+                .build()
+            )
+        )
+    );
+    
+    @Override
+    public void onInitialize() {
+        // 物品已注册
+    }
+}</code></pre>
+
+<h3 id="item-settings-常用配置">Item.Settings 常用配置</h3>
+
+<pre><code>// 1. 普通物品（默认64个堆叠）
+new Item.Settings()
+
+// 2. 工具类（只能堆叠1个，有耐久度）
+new Item.Settings()
+    .maxCount(1)
+    .maxDamage(250)  // 钻石耐久
+
+// 3. 稀有度设置（影响名称颜色）
+new Item.Settings()
+    .rarity(Rarity.RARE)   // 蓝色
+    .rarity(Rarity.EPIC)   // 紫色
+
+// 4. 防火物品（不会被岩浆烧毁）
+new Item.Settings()
+    .fireproof()
+
+// 5. 合成后保留物品
+new Item.Settings()
+    .recipeRemainder(Items.BUCKET)  // 用桶装牛奶后保留空桶
+
+// 6. 组合耐力加成
+new Item.Settings()
+    .food(new FoodComponent.Builder()
+        .hunger(10)
+        .saturationModifier(10f)
+        .snack()
+        .build()
+    )</code></pre>
+
+<h3 id="自定义物品行为">自定义物品行为</h3>
+
+<pre><code>// 创建有自定义行为的物品
+public class MagicWandItem extends Item {
+    
+    public MagicWandItem(Settings settings) {
+        super(settings);
+    }
+    
+    // 右键使用物品
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient) {
+            // 在服务端执行逻辑
+            
+            // 造成闪电伤害
+            LightningEntity lightning = new LightningEntity(
+                EntityType.LIGHTNING_BOLT, world);
+            lightning.setPosition(player.getX(), player.getY(), player.getZ());
+            world.spawnEntity(lightning);
+            
+            // 消耗物品耐久
+            ItemStack stack = player.getStackInHand(hand);
+            stack.damage(1, player, EquipmentSlot.MAINHAND);
+        }
+        
+        return TypedActionResult.success(player.getStackInHand(hand));
+    }
+    
+    // 物品在背包中每tick被调用
+    @Override
+    public void inventoryTick(ItemStack stack, World world, 
+                             Entity entity, int slot, boolean selected) {
+        if (entity instanceof PlayerEntity player &amp;&amp; selected) {
+            // 玩家手持这个物品时发光
+            player.addStatusEffect(new StatusEffectInstance(
+                StatusEffects.GLOWING, 20, 0));
+        }
+    }
+}</code></pre>
+
+<h3 id="blockitem-方块对应的物品-">BlockItem（方块对应的物品）</h3>
+
+<pre><code>// BlockItem 会自动创建对应的物品
+// 大多数情况下，Minecraft 会自动为注册的方块创建物品
+// 但你也可以手动创建
+
+// 1. 自动生成（推荐）
+// 注册 Block 时，Minecraft 会自动注册对应的 BlockItem
+
+// 2. 手动创建（需要自定义行为时）
+public static final Block MY_CUSTOM_BLOCK = new Block(...);
+public static final BlockItem MY_CUSTOM_BLOCK_ITEM = Registry.register(
+    Registries.ITEM,
+    Identifier.of(&quot;mymod&quot;, &quot;my_custom_block&quot;),
+    new BlockItem(MY_CUSTOM_BLOCK, new Item.Settings()) {
+        // 自定义放置行为
+        @Override
+        public ActionResult useOnBlock(ItemUsageContext context) {
+            // 可以在放置前做特殊检查
+            World world = context.getWorld();
+            BlockPos pos = context.getBlockPos();
+            
+            // 例如：检查是否在水中
+            if (world.getBlockState(pos).getFluidState().isOf(Fluids.WATER)) {
+                return ActionResult.FAIL;  // 阻止放置
+            }
+            
+            return super.useOnBlock(context);
+        }
+    }
+);</code></pre>
+
+<h3 id="itemgroup-创造模式物品栏-">ItemGroup（创造模式物品栏）</h3>
+
+<pre><code>// 创建自定义物品栏分类
+public static final ItemGroup MY_ITEM_GROUP = ItemGroup.create(
+    Identifier.of(&quot;mymod&quot;, &quot;my_tab&quot;)
+)
+    .displayName(Text.literal(&quot;我的物品&quot;))
+    .icon(() -&gt; new ItemStack(MY_ITEM))
+    .entries((displayContext, entries) -&gt; {
+        // 添加物品到分类
+        entries.add(MY_ITEM);
+        entries.add(MY_TOOL);
+        entries.add(MY_FOOD);
+    });
+
+// 或者添加到现有分类
+Registry.register(Registries.ITEM_GROUP, 
+    Identifier.of(&quot;mymod&quot;, &quot;my_tab&quot;), 
+    MY_ITEM_GROUP);</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="案例-创建一个-修复图纸-">案例：创建一个"修复图纸"</h3>
+
+<pre><code>public class RepairBlueprintItem extends Item {
+    
+    public RepairBlueprintItem(Settings settings) {
+        super(settings);
+    }
+    
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        ItemStack blueprint = player.getStackInHand(hand);
+        
+        if (world.isClient) {
+            return TypedActionResult.pass(blueprint);
+        }
+        
+        // 获取主手的物品
+        ItemStack mainHandItem = player.getMainStack();
+        
+        if (mainHandItem.isEmpty()) {
+            player.sendMessage(Text.literal(&quot;请在主手拿一个物品！&quot;));
+            return ActionResult.FAIL;
+        }
+        
+        if (!mainHandItem.isDamageable()) {
+            player.sendMessage(Text.literal(&quot;这个物品不能被修复！&quot;));
+            return ActionResult.FAIL;
+        }
+        
+        // 修复物品（恢复50%耐久）
+        int maxDamage = mainHandItem.getMaxDamage();
+        int currentDamage = mainHandItem.getDamage();
+        int repairAmount = maxDamage / 2;
+        mainHandItem.setDamage(Math.max(0, currentDamage - repairAmount));
+        
+        // 消耗图纸
+        blueprint.decrement(1);
+        
+        player.sendMessage(Text.literal(&quot;物品已修复！&quot;));
+        return ActionResult.SUCCESS;
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>Item 类</strong> = 玩家可以持有的物品</p>
+<p>2. <strong>BlockItem</strong> = 专门用于放置方块的 Item 子类</p>
+<p>3. 物品属性通过 <code>Item.Settings</code> 配置</p>
+<p>4. 常见物品类型：</p>
+<p>   - 普通物品（可堆叠）</p>
+<p>   - 工具（单格、有耐久）</p>
+<p>   - 食物（可食用）</p>
+<p>5. 自定义行为通过重写 <code>use()</code> 等方法实现</p>
+<p>6. ItemGroup 用于在创造模式物品栏中分类显示</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 创建一个可以无限使用的"火把"</p>
+<p>2. 创建一个吃下去会获得随机效果的"魔法糖果"</p>
+<p>3. 思考：为什么岩浆桶使用后会保留空桶？</p>
+<p>4. 进阶：创建一个可以存储药水效果的"药水瓶子"</p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Item.java</td><td>`net/minecraft/item/Item.java`</td><td>物品基类</td></tr><tr><td>Items.java</td><td>`net/minecraft/item/Items.java`</td><td>所有原版物品定义</td></tr><tr><td>BlockItem.java</td><td>`net/minecraft/item/BlockItem.java`</td><td>方块物品</td></tr><tr><td>ItemGroup.java</td><td>`net/minecraft/creative/ItemGroup.java`</td><td>创造模式物品栏</td></tr></tbody></table>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./14-block-basics.html">Block 基础</a></p>
+<p>- <a href="./16-block-entity.html">BlockEntity</a></p>
+<p>- <a href="./18-item-stack.html">ItemStack 下一章</a></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第五十一章：世界守护者 - 存档系统 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #9b59b6 0%, #9b59b688 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-10.html">Part-10</a>
+                        <span>/</span>
+                        <span>第五十一章：世界守护者 - 存档系统</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第五十一章：世界守护者 - 存档系统</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-10: 服务端</span>
+                    <span><i class="fas fa-file"></i> 51-save-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#存档系统是什么-">存档系统是什么？</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#保存流程图">保存流程图</a></li><li class="h3"><a href="#世界文件结构图">世界文件结构图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#服务器保存方法">服务器保存方法</a></li><li class="h3"><a href="#自动保存触发">自动保存触发</a></li><li class="h3"><a href="#玩家数据保存">玩家数据保存</a></li><li class="h3"><a href="#世界数据保存">世界数据保存</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-5分钟内的保存流程">场景：5分钟内的保存流程</a></li><li class="h3"><a href="#手动保存命令">手动保存命令</a></li><li><a href="#区块-chunk-保存详解">区块（Chunk）保存详解</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="50-player-manager.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第五十章：玩家大管家 - PlayerManager</strong>
+        </a><a href="52-dedicated-vs-integrated.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第五十二章：双生子 - 独立服务器与整合服务器 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解 Minecraft 存档系统的基本概念</p>
+<p>- 掌握自动保存的触发机制</p>
+<p>- 了解 Chunk（区块）保存的原理</p>
+<p>- 认识玩家数据如何持久化</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 MinecraftServer 的基本架构</p>
+<p>- 了解 PlayerManager 如何管理玩家</p>
+<p>- 知道什么是世界（World）和区块（Chunk）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="存档系统是什么-">存档系统是什么？</h3>
+
+<p>把 Minecraft 的存档系统想象成<strong>图书馆的自动还书系统</strong>：</p>
+
+<p>- <strong>书架（World）</strong>：存放所有的"书"（方块数据）</p>
+<p>- <strong>借阅记录（PlayerData）</strong>：记录谁借了什么（玩家的背包、位置）</p>
+<p>- <strong>自动还书机（Autosave）</strong>：每 15 秒自动把所有"借阅记录"放回书架</p>
+<p>- <strong>图书馆员（LevelStorage）</strong>：管理整个图书馆的运作</p>
+
+<p><code>MinecraftServer</code> 的存档系统负责：</p>
+<p>- 保存世界的方块数据</p>
+<p>- 保存玩家的背包、位置、进度</p>
+<p>- 管理存档的加载和创建</p>
+<p>- 处理世界转换</p>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="保存流程图">保存流程图</h3>
+
+<div class="mermaid">
+flowchart TD
+    subgraph "触发时机"
+        A[每 6000 Tick<br/>约 5 分钟] --> B{是否到达保存点?}
+        B -->|是| C[开始自动保存]
+        B -->|否| D[继续游戏]
+    end
+    
+    subgraph "保存过程"
+        C --> E[保存玩家数据]
+        E --> F[保存所有世界]
+        F --> G[保存主世界属性]
+        G --> H[备份配置数据]
+    end
+    
+    subgraph "保存内容"
+        E --> I["玩家背包<br/>玩家位置<br/>玩家统计<br/>玩家进度"]
+        F --> J["所有区块数据<br/>所有实体数据<br/>时间、天气"]
+        G --> K["难度设置<br/>游戏模式<br/>边界设置"]
+        H --> L["游戏规则<br/>自定义数据"]
+    end
+    
+    subgraph "完成"
+        H --> M[保存完成]
+        M --> D
+    end
+    
+    style C fill:#fff3e0
+    style E fill:#e8f5e9
+    style F fill:#e8f5e9
+    style M fill:#c8e6c9
+</div>
+
+<h3 id="世界文件结构图">世界文件结构图</h3>
+
+<div class="mermaid">
+graph LR
+    subgraph "存档目录结构"
+        World["📁 world/"]
+        World --> DIM0["📁 DIM1/<br/>主世界"]
+        World --> DIM-1["📁 DIM-1/<br/>下界"]
+        World --> DIM1["📁 DIM1/<br/>末地"]
+        World --> DATA["📁 data/"]
+        World --> PLAYER["📁 playerdata/"]
+        World --> ADV["📁 advancements/"]
+        World --> STAT["📁 stats/"]
+        World --> LEVEL["📄 level.dat<br/>世界属性"]
+    end
+    
+    DIM0 --> CHUNKS["📁 region/<br/>方块数据"]
+    DIM0 --> ENTITIES["📁 entities/<br/>实体数据"]
+    
+    style World fill:#e1f5fe
+    style LEVEL fill:#fff9c4
+    style CHUNKS fill:#c8e6c9
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="服务器保存方法">服务器保存方法</h3>
+
+<pre><code>// MinecraftServer.java - 保存世界
+public boolean save(boolean suppressLogs, boolean flush, boolean force) {
+    boolean bl = false;
+    
+    // 1. 保存所有世界
+    for (ServerWorld serverWorld : this.getWorlds()) {
+        if (!suppressLogs) {
+            LOGGER.info(&quot;Saving chunks for level '{}'/{}&quot;, 
+                       serverWorld, serverWorld.getRegistryKey().getValue());
+        }
+        serverWorld.save(null, flush, serverWorld.savingDisabled &amp;&amp; !force);
+        bl = true;
+    }
+    
+    // 2. 保存世界属性
+    ServerWorld serverWorld2 = this.getOverworld();
+    ServerWorldProperties properties = this.saveProperties.getMainWorldProperties();
+    properties.setWorldBorder(serverWorld2.getWorldBorder().write());
+    
+    // 3. 保存自定义数据
+    this.saveProperties.setCustomBossEvents(this.getBossBarManager().toNbt(...));
+    
+    // 4. 保存配置数据
+    this.session.backupLevelDataFile(..., this.getPlayerManager().getUserData());
+    
+    return bl;
+}
+
+// 保存所有数据（包括玩家）
+public boolean saveAll(boolean suppressLogs, boolean flush, boolean force) {
+    try {
+        this.saving = true;
+        
+        // 先保存所有玩家
+        this.getPlayerManager().saveAllPlayerData();
+        
+        // 再保存世界
+        boolean bl = this.save(suppressLogs, flush, force);
+        return bl;
+    } finally {
+        this.saving = false;
+    }
+}</code></pre>
+
+<h3 id="自动保存触发">自动保存触发</h3>
+
+<pre><code>// MinecraftServer.java - Tick 中的自动保存
+public void tick(BooleanSupplier shouldKeepTicking) {
+    long l = Util.getMeasuringTimeNano();
+    ++this.ticks;
+    
+    this.tickManager.step();
+    this.tickWorlds(shouldKeepTicking);
+    
+    // 自动保存计数
+    --this.ticksUntilAutosave;
+    if (this.ticksUntilAutosave &lt;= 0) {
+        this.ticksUntilAutosave = this.getAutosaveInterval();
+        
+        LOGGER.debug(&quot;Autosave started&quot;);
+        this.profiler.push(&quot;save&quot;);
+        
+        // 执行保存
+        this.saveAll(true, false, false);
+        
+        this.profiler.pop();
+        LOGGER.debug(&quot;Autosave finished&quot;);
+    }
+}
+
+// 计算保存间隔
+private int getAutosaveInterval() {
+    float f;
+    if (this.tickManager.isSprinting()) {
+        // 服务器繁忙时减少保存频率
+        long l = this.getAverageNanosPerTick() + 1L;
+        f = (float)TimeHelper.SECOND_IN_NANOS / (float)l;
+    } else {
+        f = this.tickManager.getTickRate();
+    }
+    // 基础间隔 300 Tick（约 15 秒）
+    return Math.max(100, (int)(f * 300.0f));
+}</code></pre>
+
+<h3 id="玩家数据保存">玩家数据保存</h3>
+
+<pre><code>// PlayerManager.java - 保存玩家数据
+public void saveAllPlayerData() {
+    for (int i = 0; i &lt; this.players.size(); ++i) {
+        this.savePlayerData(this.players.get(i));
+    }
+}
+
+protected void savePlayerData(ServerPlayerEntity player) {
+    // 通过 PlayerSaveHandler 保存到磁盘
+    this.saveHandler.savePlayerData(player);
+    
+    // 保存统计
+    ServerStatHandler statHandler = this.statisticsMap.get(player.getUuid());
+    if (statHandler != null) {
+        statHandler.save();
+    }
+    
+    // 保存进度
+    PlayerAdvancementTracker tracker = this.advancementTrackers.get(player.getUuid());
+    if (tracker != null) {
+        tracker.save();
+    }
+}</code></pre>
+
+<h3 id="世界数据保存">世界数据保存</h3>
+
+<pre><code>// ServerWorld.java - 保存世界
+public void save(@Nullable Runnable callback, boolean flush, boolean savingDisabled) {
+    if (savingDisabled) return;  // 如果禁用保存则跳过
+    
+    // 1. 保存区块数据
+    this.chunkManager.save(flush);
+    
+    // 2. 保存实体数据
+    this.saveEntityData();
+    
+    // 3. 保存时间等属性
+    this.saveWorldState();
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-5分钟内的保存流程">场景：5分钟内的保存流程</h3>
+
+<pre><code>⏱️ 时间轴（假设 Tick 正常）
+
+Tick 0:        服务器启动，ticksUntilAutosave = 6000
+Tick 1-5999:   正常游戏，ticksUntilAutosave 递减
+               ├─ 每 Tick 减 1
+               └─ 约 300 秒后到达 0
+
+Tick 6000:     触发自动保存！
+               ├─ 保存所有玩家数据
+               ├─ 保存所有区块
+               └─ 保存配置
+
+Tick 6001:     ticksUntilAutosave 重置为 6000
+               └─ 继续正常游戏
+
+🔔 服务器日志示例：
+[18:00:00] [Server thread/INFO]: Saving chunks for level 'minecraft:overworld'/minecraft:overworld
+[18:00:01] [Server thread/INFO]: Saving chunks for level 'minecraft:the_nether'/minecraft:the_nether
+[18:00:02] [Server thread/INFO]: Saving chunks for level 'minecraft:the_end'/minecraft:the_end
+[18:00:03] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved</code></pre>
+
+<h3 id="手动保存命令">手动保存命令</h3>
+
+<p>玩家可以使用 <code>/save-all</code> 命令手动保存：</p>
+
+<pre><code>/save-all     - 保存所有数据
+/save-on      - 开启自动保存（默认开启）
+/save-off     - 关闭自动保存（不推荐！）</code></pre>
+
+<h2 id="区块-chunk-保存详解">区块（Chunk）保存详解</h2>
+
+<p>Minecraft 使用 <strong>Anvil 格式</strong>保存区块数据：</p>
+
+<pre><code>📁 DIM1/region/
+├── r.0.0.mca    # 区域文件 (0,0) 到 (31,31)
+├── r.0.1.mca    # 区域文件 (0,32) 到 (31,63)
+├── r.1.0.mca    # 区域文件 (32,0) 到 (63,31)
+└── ...
+
+📄 .mca 文件结构：
+┌─────────────────────────────────┐
+│ Header (8 bytes per region)     │
+│ ├─ Location[0]: x=0, z=0        │
+│ ├─ Location[1]: x=0, z=1        │
+│ └─ ...                          │
+├─────────────────────────────────┤
+│ Chunk Data (compressed NBT)     │
+│ ├─ Chunk[0,0] - Zlib 压缩        │
+│ ├─ Chunk[0,1] - Zlib 压缩        │
+│ └─ ...                          │
+└─────────────────────────────────┘</code></pre>
+
+<p>每个 Chunk 包含：</p>
+<p>- 方块状态（16 x 256 x 16）</p>
+<p>- 区块高度图</p>
+<p>- 实体数据</p>
+<p>- 方块实体数据</p>
+<p>- 天空暗度</p>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>自动保存每 5 分钟一次</strong>：每 6000 Tick 触发一次</p>
+<p>2. <strong>保存顺序很重要</strong>：先玩家，再世界</p>
+<p>3. <strong>Chunk 使用 Anvil 格式</strong>：高效压缩的区块存储</p>
+<p>4. <strong>玩家数据独立存储</strong>：每个玩家一个文件（UUID命名）</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么玩家数据要先于世界数据保存？</p>
+<p>2. <strong>找一找</strong>：阅读 <code>saveProperties</code> 的定义，了解它保存什么配置</p>
+<p>3. <strong>实践</strong>：查看 <code>level.dat</code> 文件的结构</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./Part-8-Chunk/">Part-8 区块系统</a> - 了解 Chunk 的结构</p>
+<p>- <a href="./Part-9-Entity/">Part-9 实体系统</a> - 了解实体如何保存</p>
+<p>- 源码：<code>net/minecraft/server/MinecraftServer.java</code> (save 相关方法)</p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>WorldSaveHandler.java</td><td>`net/minecraft/server/WorldSaveHandler.java`</td><td>世界存档处理器</td></tr><tr><td>Session.java</td><td>`net/minecraft/server/Session.java`</td><td>服务器会话管理</td></tr><tr><td>PlayerData.java</td><td>`net/minecraft/server/PlayerData.java`</td><td>玩家数据接口</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：WorldSaveHandler、Autosave、Chunk、Anvil</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

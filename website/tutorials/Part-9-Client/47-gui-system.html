@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第47章 GUI系统 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #3498db 0%, #3498db88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-9.html">Part-9</a>
+                        <span>/</span>
+                        <span>第47章 GUI系统</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第47章 GUI系统</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-9: 客户端</span>
+                    <span><i class="fas fa-file"></i> 47-gui-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是-gui-">什么是 GUI？</a></li><li class="h3"><a href="#gui-的组成">GUI 的组成</a></li><li class="h3"><a href="#screen-基类">Screen 基类</a></li><li class="h3"><a href="#hud-是什么-">HUD 是什么？</a></li><li class="h3"><a href="#minecraft-hud-组成">Minecraft HUD 组成</a></li><li class="h3"><a href="#粒子效果">粒子效果</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#屏幕层级架构">屏幕层级架构</a></li><li class="h3"><a href="#hud-渲染流程">HUD 渲染流程</a></li><li class="h3"><a href="#粒子系统流程">粒子系统流程</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#screen-基类结构">Screen 基类结构</a></li><li class="h3"><a href="#hud-渲染主类">HUD 渲染主类</a></li><li class="h3"><a href="#粒子管理器">粒子管理器</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-打开背包界面">场景：打开背包界面</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="46-render-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第46章 渲染系统</strong>
+        </a><a href="48-input-handling.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第48章 输入处理 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是 GUI 系统</p>
+<p>- 了解 Screen 基类的设计</p>
+<p>- 掌握 HUD 的渲染原理</p>
+<p>- 认识粒子效果系统</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Minecraft 客户端基本结构（第45章）</p>
+<p>- 知道什么是"界面"、"按钮"、"血条"</p>
+<p>- 了解渲染系统基础（第46章）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是-gui-">什么是 GUI？</h3>
+
+<p>GUI = <strong>图形用户界面</strong>（Graphical User Interface）</p>
+
+<p>想象你家的<strong>电视遥控器</strong>：</p>
+
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                   GUI = 遥控器                        │
+│                                                      │
+│   电视（游戏）本身：                                   │
+│   - 能播放画面、有声音                                 │
+│   - 但没有遥控器，你很难控制它                          │
+│                                                      │
+│   遥控器（GUI）提供：                                  │
+│   - 开关按钮（开始游戏、退出游戏）                      │
+│   - 音量调节（设置菜单）                               │
+│   - 频道切换（切换游戏模式）                            │
+│   - 显示当前频道（显示当前信息）                        │
+│                                                      │
+│   Minecraft GUI = 游戏世界的&quot;遥控器&quot;                    │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="gui-的组成">GUI 的组成</h3>
+
+<table><thead><tr><th>组件</th><th>作用</th><th>示例</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>**Screen**</td><td>界面容器，承载所有元素</td><td>背包界面、设置菜单</td></tr><tr><td>**Button**</td><td>可点击的按钮</td><td>确认按钮、选项切换</td></tr><tr><td>**TextField**</td><td>文本输入框</td><td>聊天输入、命名框</td></tr><tr><td>**Slider**</td><td>滑动条</td><td>音量调节、音乐大小</td></tr><tr><td>**HUD**</td><td>游戏中的小部件</td><td>血条、饥饿值、小地图</td></tr><tr><td>**Tooltip**</td><td>悬浮提示</td><td>物品说明、按钮提示</td></tr></tbody></table>
+
+<h3 id="screen-基类">Screen 基类</h3>
+
+<p>所有界面都继承自 <code>Screen</code> 类，就像所有手机都基于同一个操作系统：</p>
+
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                       Screen 基类                            │
+│  (所有界面的&quot;老祖宗&quot;)                                        │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                   Screen                               │ │
+│  │  - 管理界面上的所有元素（按钮、文本框等）                  │ │
+│  │  - 处理键盘和鼠标输入                                    │ │
+│  │  - 负责渲染界面背景                                     │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│                          ↓                                    │
+│    ┌─────────────┬─────────────┬─────────────┐                 │
+│    ↓             ↓             ↓             ↓                 │
+│ ┌──────┐   ┌──────────┐  ┌────────┐   ┌────────┐            │
+│ │Title │   │Inventory │  │Chat    │   │Pause   │            │
+│ │Screen│   │Screen    │  │Screen  │   │Menu    │            │
+│ │主菜单│   │背包界面   │  │聊天界面 │   │暂停菜单 │            │
+│ └──────┘   └──────────┘  └────────┘   └────────┘            │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="hud-是什么-">HUD 是什么？</h3>
+
+<p>HUD = <strong>抬头显示</strong>（Head-Up Display）</p>
+
+<p>就像战斗机的<strong>仪表盘</strong>：</p>
+
+<pre><code>┌─────────────────────────────────────────────────────┐
+│           HUD = 战斗机的仪表盘                         │
+│                                                      │
+│   战斗机飞行员需要：                                   │
+│   - 同时看到外界和仪表数据                              │
+│   - 速度、高度、燃料、目标位置...                        │
+│   - 不能因为看仪表而撞山！                              │
+│                                                      │
+│   游戏玩家需要：                                       │
+│   - 同时看到游戏世界和状态信息                           │
+│   - 血量、饥饿值、背包、坐标...                          │
+│   - 不能因为看血条而被僵尸咬！                          │
+│                                                      │
+│   解决方案：HUD 叠加在游戏世界上方                       │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="minecraft-hud-组成">Minecraft HUD 组成</h3>
+
+<table><thead><tr><th>HUD元素</th><th>位置</th><th>作用</th></tr></thead><tbody><tr><td>---------</td><td>------</td><td>------</td></tr><tr><td>**准星**</td><td>屏幕中央</td><td>瞄准指示</td></tr><tr><td>**血量心**</td><td>左下角</td><td>显示生命值</td></tr><tr><td>**饥饿值**</td><td>左下角（心下方）</td><td>显示饱食度</td></tr><tr><td>**护甲值**</td><td>心左边</td><td>显示护甲</td></tr><tr><td>**经验条**</td><td>屏幕下方中间</td><td>显示等级和经验</td></tr><tr><td>**热键栏**</td><td>屏幕下方</td><td>显示快捷栏物品</td></tr><tr><td>**聊天框**</td><td>左下角</td><td>显示和输入聊天</td></tr><tr><td>**生命条**</td><td>骑乘生物时</td><td>显示生物血量</td></tr><tr><td>**BOSS血条**</td><td>屏幕上方</td><td>显示BOSS血量</td></tr><tr><td>**物品提示**</td><td>鼠标附近</td><td>显示物品信息</td></tr></tbody></table>
+
+<h3 id="粒子效果">粒子效果</h3>
+
+<p>粒子 = <strong>小颗粒</strong>，用于表现各种视觉效果：</p>
+
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                 Minecraft 粒子效果                    │
+│                                                      │
+│  【破坏方块】                                         │
+│  💥 方块碎裂 → 飞散的小方块颗粒                        │
+│                                                      │
+│  【水的流动】                                         │
+│  💧 水滴下落 → 溅起的水花                             │
+│                                                      │
+│  【火焰燃烧】                                         │
+│  🔥 火焰闪烁 → 上升的火苗                             │
+│                                                      │
+│  【爆炸】                                             │
+│  💣 爆炸 → 烟雾、火焰、碎石混合                        │
+│                                                      │
+│  【下雪】                                             │
+│  ❄️ 雪花飘落 → 白色小圆点缓缓下落                       │
+│                                                      │
+│  【脚印】                                            │
+│  👣 行走 → 雪地上的脚印（不是真正的粒子）                │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="屏幕层级架构">屏幕层级架构</h3>
+
+<div class="mermaid">
+flowchart TB
+    subgraph Screens["界面层次"]
+        direction TB
+        A1["Overlay<br/>覆盖层（加载中、暂停等）"]
+        A2["Screen<br/>游戏界面层"]
+        A3["HUD<br/>游戏内HUD层"]
+        A4["World<br/>游戏世界层（最底层）"]
+    end
+
+    subgraph GameScreens["游戏界面类型"]
+        B1["TitleScreen<br/>主菜单"]
+        B2["PauseScreen<br/>暂停菜单"]
+        B3["InventoryScreen<br/>背包界面"]
+        B4["ChatScreen<br/>聊天界面"]
+        B5["DeathScreen<br/>死亡界面"]
+    end
+
+    subgraph HUD["HUD 组件"]
+        C1["InGameHud<br/>游戏HUD主类"]
+        C2["HealthBar<br/>血量条"]
+        C3["Hotbar<br/>快捷栏"]
+        C4["ChatHud<br/>聊天框"]
+        C5["BossBar<br/>BOSS血条"]
+        C6["Crosshair<br/>准星"]
+    end
+
+    A1 --> A2 --> A3 --> A4
+    A2 --> GameScreens
+    A3 --> HUD
+
+    style Screens fill:#e3f2fd
+    style GameScreens fill:#fff3e0
+    style HUD fill:#e8f5e9
+</div>
+
+<h3 id="hud-渲染流程">HUD 渲染流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant GR as GameRenderer
+    participant HUD as InGameHud
+    participant Render as 渲染系统
+    participant Screen as 屏幕
+
+    Note over GR,Screen: 渲染一帧的 HUD 流程
+
+    GR->>GR: 设置相机为透视投影
+    GR->>GR: 渲染游戏世界
+    Note right of GR: WorldRenderer.drawWorld()
+
+    GR->>HUD: 调用 hud.render()
+    HUD->>HUD: 1. 渲染杂项覆盖（渐晕、望远镜等）
+    HUD->>HUD: 2. 渲染准星
+    HUD->>HUD: 3. 渲染主HUD（热键栏、状态栏）
+    HUD->>HUD: 4. 渲染经验等级
+    HUD->>HUD: 5. 渲染状态效果图标
+    HUD->>HUD: 6. 渲染BOSS血条
+    
+    Note over HUD: 使用 DrawContext 绘制
+
+    HUD->>Render: 设置正交投影模式
+    Note right of Render: 从3D切换到2D
+
+    Render->>Screen: 绘制到屏幕
+</div>
+
+<h3 id="粒子系统流程">粒子系统流程</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph Spawn["粒子生成"]
+        A1["方块破坏<br/>BlockBreakParticle"]
+        A2["生物死亡<br/>DeathParticle"]
+        A3["药水效果<br/>PotionParticle"]
+        A4["火焰燃烧<br/>FlameParticle"]
+    end
+
+    subgraph Update["粒子更新"]
+        B1["应用重力"]
+        B2["碰撞检测"]
+        B3["生命周期"]
+        B4["颜色渐变"]
+    end
+
+    subgraph Render["粒子渲染"]
+        C1["排序"]
+        C2["混合模式"]
+        C3["绘制精灵"]
+    end
+
+    Spawn --> Update --> Render
+
+    style Spawn fill:#e3f2fd
+    style Update fill:#fff3e0
+    style Render fill:#e8f5e9
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="screen-基类结构">Screen 基类结构</h3>
+
+<pre><code>// 源码位置: gui/screen/Screen.java
+
+public abstract class Screen extends AbstractParentElement implements Drawable {
+    
+    // 界面标题
+    protected final Text title;
+    
+    // 界面尺寸
+    public int width;
+    public int height;
+    
+    // 所有可绘制元素
+    private final List&lt;Drawable&gt; drawables = Lists.newArrayList();
+    
+    // Minecraft 客户端引用
+    @Nullable protected MinecraftClient client;
+    
+    // 渲染方法
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // 1. 绘制背景
+        this.renderBackground(context, mouseX, mouseY, delta);
+        
+        // 2. 绘制所有子元素
+        for (Drawable drawable : this.drawables) {
+            drawable.render(context, mouseX, mouseY, delta);
+        }
+    }
+    
+    // 键盘事件
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) { ... }
+    
+    // 鼠标点击事件
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) { ... }
+}</code></pre>
+
+<h3 id="hud-渲染主类">HUD 渲染主类</h3>
+
+<pre><code>// 源码位置: gui/hud/InGameHud.java
+
+public class InGameHud {
+    private final MinecraftClient client;
+    private final ChatHud chatHud;
+    private final BossBarHud bossBarHud;
+    private final PlayerListHud playerListHud;
+    private final LayeredDrawer layeredDrawer = new LayeredDrawer();
+    
+    // HUD 分层渲染
+    public void render(DrawContext context, RenderTickCounter tickCounter) {
+        RenderSystem.enableDepthTest();
+        this.layeredDrawer.render(context, tickCounter);
+        RenderSystem.disableDepthTest();
+    }
+    
+    // 渲染热键栏
+    private void renderHotbar(DrawContext context, ...) {
+        // 绘制热键栏背景
+        context.drawGuiTexture(HOTBAR_TEXTURE, x, y, 182, 22);
+        
+        // 绘制每个物品栏
+        for (int i = 0; i &lt; 9; i++) {
+            this.renderHotbarItem(context, x, y, ...);
+        }
+    }
+    
+    // 渲染血量条
+    private void renderHealthBar(DrawContext context, ...) {
+        // 绘制心形图标
+        for (int i = 0; i &lt; hearts; i++) {
+            this.drawHeart(context, type, x, y, ...);
+        }
+    }
+}</code></pre>
+
+<h3 id="粒子管理器">粒子管理器</h3>
+
+<pre><code>// 源码位置: particle/ParticleManager.java
+
+public class ParticleManager implements ResourceReloader {
+    private final ClientWorld world;
+    private final Object2ObjectMap&lt;ParticleEffect, ParticleManager.ParticleTextureData&gt; ...
+    
+    // 生成粒子
+    public void emitParticles(World world, BlockPos pos, ParticleEffect parameters, ...) {
+        // 创建新粒子并添加到世界
+    }
+    
+    // 常用粒子发射方法
+    public void addDustParticles(BlockPos pos, int count) {
+        for (int i = 0; i &lt; count; i++) {
+            this.emitParticles(world, pos, ParticleTypes.DRAGON_BREATH, ...);
+        }
+    }
+}
+
+// 使用例子
+this.client.particleManager.addBlockBreakParticles(pos, state);</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-打开背包界面">场景：打开背包界面</h3>
+
+<p>1. <strong>玩家按 E 键</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // KeyboardInput 或 KeyBinding</p>
+<p>   if (this.client.options.inventoryKey.wasPressed()) {</p>
+<p>       this.client.player.openHandledScreen();</p>
+<p>   }</p>
+<p>   <code>`</code></p>
+
+<p>2. <strong>创建背包界面</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // ClientPlayerEntity</p>
+<p>   @Nullable</p>
+<p>   public ScreenHandler openHandledScreen() {</p>
+<p>       NamedScreenHandlerFactory factory = this.getCurrentScreenHandler();</p>
+<p>       if (factory != null) {</p>
+<p>           this.client.setScreen(new InventoryScreen(this));</p>
+<p>           return factory.createMenu(this);</p>
+<p>       }</p>
+<p>       return null;</p>
+<p>   }</p>
+<p>   <code>`</code></p>
+
+<p>3. <strong>Screen 初始化</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // InventoryScreen</p>
+<p>   protected void init() {</p>
+<p>       // 创建物品槽</p>
+<p>       this.addRenderableWidget(new PlayerInventoryPanel(...));</p>
+
+<p>       // 创建标签页按钮（创造模式）</p>
+<p>       this.addRenderableWidget(new TabButton(...));</p>
+<p>   }</p>
+<p>   <code>`</code></p>
+
+<p>4. <strong>渲染背包</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // InventoryScreen.render()</p>
+<p>   super.render(context, mouseX, mouseY, delta);</p>
+
+<p>   // 绘制物品（已由子组件完成）</p>
+<p>   // 绘制物品Tooltip</p>
+<p>   if (hoveredSlot != null && hoveredSlot.hasStack()) {</p>
+<p>       context.drawTooltip(this.getTextRenderer(), </p>
+<p>           hoveredSlot.getStack().getName(), mouseX, mouseY);</p>
+<p>   }</p>
+<p>   <code>`</code></p>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>GUI</strong> = 游戏界面，让玩家和游戏交互</p>
+<p>2. <strong>Screen</strong> = 所有界面的基类，管理元素和输入</p>
+<p>3. <strong>HUD</strong> = 叠加在游戏画面上的状态显示</p>
+<p>4. <strong>粒子</strong> = 小型视觉效果，用于丰富画面</p>
+<p>5. <strong>层级</strong> = 屏幕层级（游戏内HUD → 游戏界面 → 覆盖层）</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 在源码中找到 <code>Screen.java</code>，了解界面的生命周期方法</p>
+<p>2. 查看 <code>InGameHud.java</code>，找出渲染准星和热键栏的代码</p>
+<p>3. 在游戏中触发不同事件（如破坏方块），观察产生的粒子</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- 下一章：<a href="./48-input-handling.html">第48章 输入处理</a> - 键盘鼠标控制</p>
+<p>- Part-9：<a href="./46-render-system.html">渲染系统</a></p>
+<p>- Part-9：<a href="./45-minecraft-client.html">Minecraft客户端核心</a></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Screen.java</td><td>`net/minecraft/client/gui/screen/Screen.java`</td><td>界面基类</td></tr><tr><td>HandledScreen.java</td><td>`net/minecraft/client/gui/screen/HandledScreen.java`</td><td>带物品槽的界面基类</td></tr><tr><td>InGameHud.java</td><td>`net/minecraft/client/gui/hud/InGameHud.java`</td><td>游戏内 HUD 渲染器</td></tr><tr><td>DrawContext.java</td><td>`net/minecraft/client/gui/DrawContext.java`</td><td>2D 绘制上下文</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：GUI、Screen、HUD、Particle、Tooltip、Inventory、Render</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第五十二章：双生子 - 独立服务器与整合服务器 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #9b59b6 0%, #9b59b688 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-10.html">Part-10</a>
+                        <span>/</span>
+                        <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第五十二章：双生子 - 独立服务器与整合服务器</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-10: 服务端</span>
+                    <span><i class="fas fa-file"></i> 52-dedicated-vs-integrated</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#两种服务器的区别">两种服务器的区别</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#两种服务器架构对比">两种服务器架构对比</a></li><li class="h3"><a href="#选择流程图">选择流程图</a></li><li><a href="#核心代码对比">核心代码对比</a></li><li class="h3"><a href="#初始化对比">初始化对比</a></li><li class="h3"><a href="#tick-循环对比">Tick 循环对比</a></li><li class="h3"><a href="#playermanager-对比">PlayerManager 对比</a></li><li><a href="#详细对比表">详细对比表</a></li><li><a href="#lan-联机原理">LAN 联机原理</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="51-save-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第五十一章：世界守护者 - 存档系统</strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解独立服务器和整合服务器的区别</p>
+<p>- 掌握两种服务器的优缺点</p>
+<p>- 了解它们各自的适用场景</p>
+<p>- 认识代码中如何区分这两种服务器</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 MinecraftServer 的基本架构</p>
+<p>- 了解 MinecraftClient 客户端的工作方式</p>
+<p>- 知道什么是本地局域网联机</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="两种服务器的区别">两种服务器的区别</h3>
+
+<p>想象两种餐厅模式：</p>
+
+<p><strong>独立服务器 = 连锁餐厅</strong></p>
+<p>- 独立的店面、独立的员工</p>
+<p>- 可以服务来自四面八方的顾客（玩家）</p>
+<p>- 需要专门的人来管理</p>
+
+<p><strong>整合服务器 = 家庭厨房</strong></p>
+<p>- 就在顾客家里</p>
+<p>- 只有住在房子里的人能来</p>
+<p>- 关闭房门（退出游戏）就结束了</p>
+
+<pre><code>// 独立服务器
+// 源码：net/minecraft/server/dedicated/MinecraftDedicatedServer.java
+public class MinecraftDedicatedServer extends MinecraftServer {
+    // 独立的配置文件
+    private final ServerPropertiesLoader propertiesLoader;
+    
+    // 独立的命令行
+    private final List&lt;PendingServerCommand&gt; commandQueue;
+    
+    @Override
+    public boolean isDedicated() {
+        return true;
+    }
+}
+
+// 整合服务器
+// 源码：net/minecraft/server/integrated/IntegratedServer.java
+public class IntegratedServer extends MinecraftServer {
+    // 关联到客户端
+    private final MinecraftClient client;
+    
+    // 游戏暂停状态
+    private boolean paused = true;
+    
+    @Override
+    public boolean isDedicated() {
+        return false;
+    }
+}</code></pre>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="两种服务器架构对比">两种服务器架构对比</h3>
+
+<div class="mermaid">
+graph LR
+    subgraph "独立服务器 (Dedicated Server)"
+        direction TB
+        D1["🏢 服务器进程"]
+        D1 --> D2["⚙️ ServerProperties<br/>配置文件"]
+        D1 --> D3["🌐 网络端口 25565"]
+        D1 --> D4["💾 独立存档"]
+        
+        D5["👤 玩家1"] --> D3
+        D6["👤 玩家2"] --> D3
+        D7["👤 玩家3"] --> D3
+        
+        D3 -.->|远程连接| D1
+    end
+    
+    subgraph "整合服务器 (Integrated Server)"
+        direction TB
+        I1["🎮 Minecraft 客户端"]
+        I1 --> I2["🖥️ 游戏界面"]
+        I1 --> I3["⚡ 服务端代码<br/>同一进程内"]
+        I1 --> I4["🏠 存档在 .minecraft"]
+        
+        I5["👤 本地玩家"] --> I3
+        I6["👤 LAN玩家"] --> I3
+    end
+    
+    style D1 fill:#e3f2fd
+    style I1 fill:#fff3e0
+</div>
+
+<h3 id="选择流程图">选择流程图</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[你想怎么玩游戏？] --> B{是否需要<br/>远程玩家加入?}
+    
+    B -->|是| C[选择独立服务器]
+    C --> D["✅ 支持全球玩家<br/>✅ 24/7 运行<br/>✅ 可配置更多选项"]
+    
+    B -->|否| E{是否需要<br/>开启局域网?}
+    
+    E -->|是| F[选择整合服务器]
+    F --> G["✅ 单人/好友游戏<br/>✅ 开启 LAN 即可联机<br/>✅ 内存共享"]
+    
+    E -->|否| H[选择单人游戏]
+    H --> I["✅ 最简单<br/>✅ 性能最好<br/>⚠️ 无法联机"]
+    
+    style C fill:#c8e6c9
+    style F fill:#fff9c4
+    style H fill:#e1f5fe
+</div>
+
+<h2 id="核心代码对比">核心代码对比</h2>
+
+<h3 id="初始化对比">初始化对比</h3>
+
+<pre><code>// ==================== 独立服务器 ====================
+// MinecraftDedicatedServer.java
+
+public boolean setupServer() throws IOException {
+    // 1. 启动控制台输入线程
+    Thread thread = new Thread(&quot;Server console handler&quot;) {
+        @Override
+        public void run() {
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(System.in, StandardCharsets.UTF_8));
+            while (!isStopped() &amp;&amp; isRunning()) {
+                String command = reader.readLine();
+                enqueueCommand(command, getCommandSource());
+            }
+        }
+    };
+    thread.start();
+    
+    // 2. 加载配置文件
+    ServerPropertiesHandler properties = this.propertiesLoader.getPropertiesHandler();
+    
+    // 3. 设置在线模式
+    this.setOnlineMode(properties.onlineMode);
+    
+    // 4. 绑定网络端口
+    this.getNetworkIo().bind(inetAddress, this.getServerPort());
+    
+    // 5. 加载玩家管理器
+    this.setPlayerManager(new DedicatedPlayerManager(this, ...));
+    
+    // 6. 加载世界
+    this.loadWorld();
+    
+    return true;
+}</code></pre>
+
+<pre><code>// ==================== 整合服务器 ====================
+// IntegratedServer.java
+
+public boolean setupServer() {
+    // 1. 简单设置（不需要控制台）
+    
+    // 2. 强制在线模式（验证本地玩家）
+    this.setOnlineMode(true);
+    this.setPvpEnabled(true);
+    this.setFlightEnabled(true);
+    
+    // 3. 生成密钥
+    this.generateKeyPair();
+    
+    // 4. 加载世界
+    this.loadWorld();
+    
+    return true;
+}</code></pre>
+
+<h3 id="tick-循环对比">Tick 循环对比</h3>
+
+<pre><code>// ==================== 独立服务器 Tick ====================
+@Override
+public void tick(BooleanSupplier shouldKeepTicking) {
+    // 直接执行 Tick
+    super.tick(shouldKeepTicking);
+    
+    // 执行控制台命令
+    this.executeQueuedCommands();
+}
+
+// ==================== 整合服务器 Tick ====================
+@Override
+public void tick(BooleanSupplier shouldKeepTicking) {
+    int j;
+    boolean bl = this.paused;
+    
+    // 检查游戏是否暂停
+    this.paused = MinecraftClient.getInstance().isPaused();
+    
+    // 暂停时保存并返回
+    if (!bl &amp;&amp; this.paused) {
+        LOGGER.info(&quot;Saving and pausing game...&quot;);
+        this.saveAll(false, false, false);
+        return;
+    }
+    
+    // 恢复时同步时间
+    if (bl &amp;&amp; !this.paused) {
+        this.sendTimeUpdatePackets();
+    }
+    
+    // 继续正常 Tick
+    super.tick(shouldKeepTicking);
+}</code></pre>
+
+<h3 id="playermanager-对比">PlayerManager 对比</h3>
+
+<pre><code>// ==================== 独立服务器 PlayerManager ====================
+// DedicatedPlayerManager.java
+
+public class DedicatedPlayerManager extends PlayerManager {
+    public DedicatedPlayerManager(MinecraftDedicatedServer server, ...) {
+        super(server, ..., server.getProperties().maxPlayers);
+        
+        // 加载权限配置
+        this.loadUserBanList();      // 加载封禁列表
+        this.saveUserBanList();
+        this.loadIpBanList();
+        this.loadOpList();
+        this.loadWhitelist();        // 加载白名单
+    }
+    
+    @Override
+    public boolean isWhitelisted(GameProfile profile) {
+        // 检查白名单
+        return !this.isWhitelistEnabled() 
+            || this.isOperator(profile) 
+            || this.getWhitelist().isAllowed(profile);
+    }
+}</code></pre>
+
+<pre><code>// ==================== 整合服务器 PlayerManager ====================
+// IntegratedPlayerManager.java
+
+public class IntegratedPlayerManager extends PlayerManager {
+    @Nullable
+    private NbtCompound userData;  // 单人游戏玩家数据
+    
+    public IntegratedPlayerManager(IntegratedServer server, ...) {
+        super(server, ..., 8);  // 最多 8 个玩家
+        this.setViewDistance(10);
+    }
+    
+    @Override
+    protected void savePlayerData(ServerPlayerEntity player) {
+        // 主机玩家的数据保存到 level.dat
+        if (this.getServer().isHost(player.getGameProfile())) {
+            this.userData = player.writeNbt(new NbtCompound());
+        }
+        super.savePlayerData(player);
+    }
+}</code></pre>
+
+<h2 id="详细对比表">详细对比表</h2>
+
+<table><thead><tr><th>特性</th><th>独立服务器</th><th>整合服务器</th></tr></thead><tbody><tr><td>------</td><td>-----------</td><td>-----------</td></tr><tr><td>**运行环境**</td><td>纯服务端，无 GUI</td><td>客户端内嵌服务端</td></tr><tr><td>**适用场景**</td><td>多人服务器、租赁服</td><td>单人/局域网游戏</td></tr><tr><td>**最大玩家数**</td><td>可配置（通常 20-100+）</td><td>固定 8 人</td></tr><tr><td>**在线模式**</td><td>可配置开关</td><td>强制开启</td></tr><tr><td>**暂停功能**</td><td>无</td><td>有（单进程）</td></tr><tr><td>**控制台**</td><td>有（命令行）</td><td>无</td></tr><tr><td>**OP 权限**</td><td>配置文件管理</td><td>自动给主机</td></tr><tr><td>**白名单**</td><td>支持</td><td>不支持</td></tr><tr><td>**封禁列表**</td><td>支持</td><td>不支持</td></tr><tr><td>**RCON**</td><td>支持</td><td>不支持</td></tr><tr><td>**资源占用**</td><td>仅服务端</td><td>客户端+服务端</td></tr></tbody></table>
+
+<h2 id="lan-联机原理">LAN 联机原理</h2>
+
+<p>当你选择"对局域网开放"时发生了什么？</p>
+
+<pre><code>// IntegratedServer.java - 开启 LAN
+@Override
+public boolean openToLan(@Nullable GameMode gameMode, boolean cheatsAllowed, int port) {
+    try {
+        // 1. 绑定网络端口
+        this.getNetworkIo().bind(null, port);
+        LOGGER.info(&quot;Started serving on {}&quot;, port);
+        
+        // 2. 记录 LAN 端口
+        this.lanPort = port;
+        
+        // 3. 启动 LAN 发现服务
+        this.lanPinger = new LanServerPinger(this.getServerMotd(), &quot;&quot; + port);
+        this.lanPinger.start();
+        
+        // 4. 设置作弊权限
+        this.getPlayerManager().setCheatsAllowed(cheatsAllowed);
+        
+        return true;
+    } catch (IOException e) {
+        return false;
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>独立服务器是完整的服务端</strong>：可以远程访问，支持完整的管理功能</p>
+<p>2. <strong>整合服务器是客户端附带的服务端</strong>：只能本地或局域网访问</p>
+<p>3. <strong>选择依据</strong>：需要远程联机选独立，仅仅是本地/局域网选整合</p>
+<p>4. <strong>代码层面</strong>：通过 <code>isDedicated()</code> 方法区分两种服务器</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么整合服务器最多只能有 8 个玩家？</p>
+<p>2. <strong>找一找</strong>：阅读 <code>openToLan()</code> 方法，理解 LAN 联机如何工作</p>
+<p>3. <strong>实践</strong>：对比 <code>DedicatedPlayerManager</code> 和 <code>IntegratedPlayerManager</code> 的 <code>savePlayerData()</code> 方法</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./49-server-intro.html">Part-49 服务器核心</a> - MinecraftServer 的基本概念</p>
+<p>- <a href="./50-player-manager.html">Part-50 玩家管理</a> - PlayerManager 的详细实现</p>
+<p>- 独立服务器源码：<code>net/minecraft/server/dedicated/MinecraftDedicatedServer.java</code></p>
+<p>- 整合服务器源码：<code>net/minecraft/server/integrated/IntegratedServer.java</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>IntegratedServer.java</td><td>`net/minecraft/server/integrated/IntegratedServer.java`</td><td>整合服务器（单人/局域网）</td></tr><tr><td>DedicatedServer.java</td><td>`net/minecraft/server/dedicated/MinecraftDedicatedServer.java`</td><td>独立服务器（专用服务器）</td></tr><tr><td>MinecraftServer.java</td><td>`net/minecraft/server/MinecraftServer.java`</td><td>服务器主类（共同基类）</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：IntegratedServer、DedicatedServer、LAN、Singleplayer</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

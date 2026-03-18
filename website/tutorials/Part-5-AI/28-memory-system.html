@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第28章：记忆系统 - 生物的"记忆库" - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e67e22 0%, #e67e2288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-5.html">Part-5</a>
+                        <span>/</span>
+                        <span>第28章：记忆系统 - 生物的"记忆库"</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第28章：记忆系统 - 生物的"记忆库"</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-5: AI系统</span>
+                    <span><i class="fas fa-file"></i> 28-memory-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-什么是记忆-">核心概念：什么是记忆？</a></li><li class="h3"><a href="#生活比喻">生活比喻</a></li><li class="h3"><a href="#源码解读">源码解读</a></li><li class="h3"><a href="#memory-类-记忆的容器">Memory 类 - 记忆的容器</a></li><li class="h3"><a href="#memorymoduletype-记忆的类型">MemoryModuleType - 记忆的类型</a></li><li><a href="#图解-记忆存储结构">图解：记忆存储结构</a></li><li class="h3"><a href="#记忆的三种状态">记忆的三种状态</a></li><li><a href="#图解-记忆的读写流程">图解：记忆的读写流程</a></li><li><a href="#核心代码-记忆的基本操作">核心代码：记忆的基本操作</a></li><li class="h3"><a href="#1-写入记忆-记住-">1. 写入记忆（记住）</a></li><li class="h3"><a href="#2-读取记忆-回忆-">2. 读取记忆（回忆）</a></li><li class="h3"><a href="#3-清除记忆-遗忘-">3. 清除记忆（遗忘）</a></li><li class="h3"><a href="#4-检查记忆是否存在">4. 检查记忆是否存在</a></li><li><a href="#实战演示-僵尸的记忆">实战演示：僵尸的记忆</a></li><li class="h3"><a href="#完整例子">完整例子</a></li><li><a href="#重要概念-记忆模块类型列表">重要概念：记忆模块类型列表</a></li><li class="h3"><a href="#目标类记忆">目标类记忆</a></li><li class="h3"><a href="#位置类记忆">位置类记忆</a></li><li class="h3"><a href="#状态类记忆">状态类记忆</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="27-ai-brain-intro.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第27章：AI大脑 - 生物的"思考中心"</strong>
+        </a><a href="29-sensor-system.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第二十九章：传感器系统 - 生物的"感官" <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是记忆（Memory）</p>
+<p>- 掌握短期记忆和长期记忆的区别</p>
+<p>- 学会使用 MemoryModuleType 存储和读取数据</p>
+<p>- 理解记忆的过期机制</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Brain 的基本结构（见第二十七章）</p>
+<p>- 知道什么是 HashMap（键值对存储）</p>
+
+<h2 id="核心概念-什么是记忆-">核心概念：什么是记忆？</h2>
+
+<h3 id="生活比喻">生活比喻</h3>
+
+<p>人的记忆有两种：</p>
+
+<p>1. <strong>短期记忆</strong> - "我刚才把钥匙放哪儿了？"（过一会儿就忘）</p>
+<p>2. <strong>长期记忆</strong> - "我妈妈叫什么名字？"（记一辈子）</p>
+
+<p>Minecraft 的生物也有类似的记忆系统：</p>
+
+<table><thead><tr><th>记忆类型</th><th>生命周期</th><th>例子</th><th>对应代码</th></tr></thead><tbody><tr><td>----------</td><td>----------</td><td>------</td><td>----------</td></tr><tr><td>临时记忆</td><td>几秒~几分钟</td><td>"刚才听到铃声"</td><td>`Memory.timed(value, expiry)`</td></tr><tr><td>永久记忆</td><td>永远</td><td>"我的家在哪里"</td><td>`Memory.permanent(value)`</td></tr></tbody></table>
+
+<blockquote><strong>一句话理解</strong>：记忆就是生物"知道"的各种信息，有的时间短，有的时间长。</blockquote>
+
+<h3 id="源码解读">源码解读</h3>
+
+<h4 id="memory-类-记忆的容器">Memory 类 - 记忆的容器</h4>
+
+<pre><code>public class Memory&lt;T&gt; {
+    private final T value;      // 记忆的内容
+    private long expiry;        // 过期时间（tick数）
+
+    // 创建永久记忆
+    public static &lt;T&gt; Memory&lt;T&gt; permanent(T value) {
+        return new Memory&lt;T&gt;(value, Long.MAX_VALUE);
+    }
+
+    // 创建临时记忆（会过期）
+    public static &lt;T&gt; Memory&lt;T&gt; timed(T value, long expiry) {
+        return new Memory&lt;T&gt;(value, expiry);
+    }
+
+    // 每tick减少1
+    public void tick() {
+        if (this.isTimed()) {
+            --this.expiry;
+        }
+    }
+
+    // 检查是否过期
+    public boolean isExpired() {
+        return this.expiry &lt;= 0L;
+    }
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/brain/Memory.java</code></p>
+
+<h4 id="memorymoduletype-记忆的类型">MemoryModuleType - 记忆的类型</h4>
+
+<p>每种记忆都有一个类型，比如：</p>
+
+<pre><code>public class MemoryModuleType&lt;U&gt; {
+    // 攻击目标
+    public static final MemoryModuleType&lt;LivingEntity&gt; ATTACK_TARGET = ...;
+
+    // 走路目标
+    public static final MemoryModuleType&lt;WalkTarget&gt; WALK_TARGET = ...;
+
+    // 最近的床
+    public static final MemoryModuleType&lt;BlockPos&gt; NEAREST_BED = ...;
+
+    // 受到的伤害来源
+    public static final MemoryModuleType&lt;DamageSource&gt; HURT_BY = ...;
+
+    // 是否在水中
+    public static final MemoryModuleType&lt;Unit&gt; IS_IN_WATER = ...;
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/brain/MemoryModuleType.java</code></p>
+
+<h2 id="图解-记忆存储结构">图解：记忆存储结构</h2>
+
+<p>Brain 中记忆的存储方式是一个 Map（键值对）：</p>
+
+<div class="mermaid">
+graph LR
+    subgraph "Brain.memories (Map结构)"
+        K1["键 Key<br/>MemoryModuleType"] --> V1["值 Value<br/>Optional<Memory<T>>"]
+        K2["ATTACK_TARGET"] --> V2["Memory<Steve>"]
+        K3["NEAREST_BED"] --> V3["Memory<BlockPos(100,64,200)>"]
+        K4["IS_IN_WATER"] --> V4["空 (已被遗忘)"]
+    end
+
+    style K1 fill:#e3f2fd
+    style V1 fill:#e8f5e8
+</div>
+
+<h3 id="记忆的三种状态">记忆的三种状态</h3>
+
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> REGISTERED: 注册记忆类型
+    REGISTERED --> VALUE_ABSENT: 存在但没有值
+    VALUE_ABSENT --> VALUE_PRESENT: 记住某事
+    VALUE_PRESENT --> VALUE_ABSENT: 遗忘
+    VALUE_PRESENT --> REGISTERED: 删除记忆类型
+</div>
+
+<h2 id="图解-记忆的读写流程">图解：记忆的读写流程</h2>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 任务 as Task/传感器
+    participant 大脑 as Brain
+
+    Note over 大脑: 初始状态：记忆都是空的
+
+    任务->>大脑: remember(MemoryModuleType, value)
+    Note over 大脑: 存储：OPTIONAL.of(Memory)
+
+    任务->>大脑: getOptionalRegisteredMemory(type)
+    大脑-->>任务: 返回记忆的值
+
+    Note over 大脑: 经过N个tick后...
+
+    大脑->>大脑: tick() -> isExpired() = true
+    大脑->>大脑: forget(type)
+    Note over 大脑: 记忆被自动清除
+</div>
+
+<h2 id="核心代码-记忆的基本操作">核心代码：记忆的基本操作</h2>
+
+<h3 id="1-写入记忆-记住-">1. 写入记忆（记住）</h3>
+
+<pre><code>Brain&lt;?&gt; brain = entity.getBrain();
+
+// 永久记住（不会自动消失）
+brain.remember(MemoryModuleType.HOME, homePosition);
+
+// 临时记住（会在指定tick后自动消失）
+// 例如：记住30秒（30秒 × 20tick/秒 = 600tick）
+brain.remember(MemoryModuleType.HEARD_BELL_TIME, world.getTime(), 600L);</code></pre>
+
+<h3 id="2-读取记忆-回忆-">2. 读取记忆（回忆）</h3>
+
+<pre><code>Brain&lt;?&gt; brain = entity.getBrain();
+
+// 安全读取（推荐）：返回 Optional
+Optional&lt;BlockPos&gt; home = brain.getOptionalRegisteredMemory(MemoryModuleType.HOME);
+home.ifPresent(pos -&gt; {
+    // 找到家了！去那里
+    brain.remember(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, speed, 5));
+});
+
+// 或者直接获取值
+if (brain.hasMemoryModule(MemoryModuleType.HOME)) {
+    BlockPos home = brain.getOptionalRegisteredMemory(MemoryModuleType.HOME).get();
+    // 使用 home...
+}</code></pre>
+
+<h3 id="3-清除记忆-遗忘-">3. 清除记忆（遗忘）</h3>
+
+<pre><code>Brain&lt;?&gt; brain = entity.getBrain();
+
+// 忘记某个记忆
+brain.forget(MemoryModuleType.ATTACK_TARGET);
+
+// 忘记所有记忆
+brain.forgetAll();</code></pre>
+
+<h3 id="4-检查记忆是否存在">4. 检查记忆是否存在</h3>
+
+<pre><code>Brain&lt;?&gt; brain = entity.getBrain();
+
+// 检查是否有某个记忆
+if (brain.hasMemoryModule(MemoryModuleType.NEAREST_BED)) {
+    // 有床的记忆
+}
+
+// 检查是否有特定值的记忆
+if (brain.hasMemoryModuleWithValue(MemoryModuleType.HURT_BY_ENTITY, attacker)) {
+    // 记得被这个人攻击过
+}</code></pre>
+
+<h2 id="实战演示-僵尸的记忆">实战演示：僵尸的记忆</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph 感知触发
+        S1["僵尸看到玩家"]
+        S2["僵尸受到伤害"]
+        S3["玩家离开视野"]
+    end
+
+    subgraph 写入记忆
+        W1["remember<br/>ATTACK_TARGET = Steve"]
+        W2["remember<br/>HURT_BY_ENTITY = Steve"]
+        W3["forget<br/>ATTACK_TARGET"]
+    end
+
+    subgraph 结果
+        R1["开始追击"]
+        R2["记得仇恨"]
+        R3["停止追击"]
+    end
+
+    S1 --> W1 --> R1
+    S2 --> W2 --> R2
+    S3 --> W3 --> R3
+</div>
+
+<h3 id="完整例子">完整例子</h3>
+
+<pre><code>public class ZombieBrain {
+    public static void initialize(Brain&lt;ZombieEntity&gt; brain) {
+        // 添加需要的记忆类型
+        brain.setTaskList(Activity.CORE, 0, ImmutableList.of(
+            // 检查是否有攻击目标
+            new CustomTask&lt;ZombieEntity&gt;() {
+                @Override
+                public boolean check() {
+                    return brain.hasMemoryModule(MemoryModuleType.ATTACK_TARGET);
+                }
+
+                @Override
+                public void execute(ZombieEntity zombie) {
+                    // 回忆攻击目标
+                    Optional&lt;LivingEntity&gt; target =
+                        brain.getOptionalRegisteredMemory(MemoryModuleType.ATTACK_TARGET);
+
+                    target.ifPresent(entity -&gt; {
+                        // 设置走路目标
+                        brain.remember(MemoryModuleType.WALK_TARGET,
+                            new WalkTarget(entity, 1.0f, 3));
+                    });
+                }
+            }
+        ));
+    }
+}</code></pre>
+
+<h2 id="重要概念-记忆模块类型列表">重要概念：记忆模块类型列表</h2>
+
+<h3 id="目标类记忆">目标类记忆</h3>
+
+<table><thead><tr><th>记忆类型</th><th>存储内容</th><th>用途</th></tr></thead><tbody><tr><td>----------</td><td>----------</td><td>------</td></tr><tr><td>`ATTACK_TARGET`</td><td>攻击目标实体</td><td>僵尸、骷髅等记得要打谁</td></tr><tr><td>`NEAREST_VISIBLE_PLAYER`</td><td>最近可见的玩家</td><td>感知玩家</td></tr><tr><td>`NEAREST_BED`</td><td>最近的床位置</td><td>村民回家睡觉</td></tr><tr><td>`BREED_TARGET`</td><td>繁殖目标</td><td>动物配对</td></tr></tbody></table>
+
+<h3 id="位置类记忆">位置类记忆</h3>
+
+<table><thead><tr><th>记忆类型</th><th>存储内容</th><th>用途</th></tr></thead><tbody><tr><td>----------</td><td>----------</td><td>------</td></tr><tr><td>`HOME`</td><td>家（世界坐标）</td><td>记得出生地</td></tr><tr><td>`JOB_SITE`</td><td>工作站点</td><td>村民记得自己的工作台</td></tr><tr><td>`MEETING_POINT`</td><td>聚集点</td><td>村民记得会议地点</td></tr><tr><td>`HIDING_PLACE`</td><td>藏身处</td><td>逃跑时的躲避点</td></tr></tbody></table>
+
+<h3 id="状态类记忆">状态类记忆</h3>
+
+<table><thead><tr><th>记忆类型</th><th>存储内容</th><th>用途</th></tr></thead><tbody><tr><td>----------</td><td>----------</td><td>------</td></tr><tr><td>`IS_IN_WATER`</td><td>是否在水中</td><td>触发游泳行为</td></tr><tr><td>`IS_PANICKING`</td><td>是否恐慌</td><td>触发逃跑</td></tr><tr><td>`DANCING`</td><td>是否在跳舞</td><td>村民庆祝</td></tr></tbody></table>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>记忆</strong>是 Brain 中存储信息的结构，分永久和临时两种</p>
+<p>2. <strong>Memory</strong> 类包含值和过期时间</p>
+<p>3. <strong>MemoryModuleType</strong> 是记忆的类型标识符</p>
+<p>4. <strong>remember()</strong> 写入记忆，<strong>forget()</strong> 清除记忆</p>
+<p>5. <strong>临时记忆</strong>会随着 tick 自动过期</p>
+<p>6. 记忆让多个 Task 可以共享信息，避免重复计算</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：村民如何记得自己要去哪张床睡觉？</p>
+<p>2. <strong>动手题</strong>：写代码让生物记住一个位置，5秒后自动忘记</p>
+<p>3. <strong>挑战题</strong>：查看还有哪些记忆类型是你感兴趣的？</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="./27-ai-brain-intro.html">第27章 AI大脑介绍</a></p>
+<p>- <strong>下一章</strong>：<a href="./29-sensor-system.html">第29章 传感器系统</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/ai/brain/Memory.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/brain/MemoryModuleType.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/brain/MemoryModuleState.java</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>MemoryModuleType.java</td><td>`net/minecraft/entity/ai/brain/MemoryModuleType.java`</td><td>记忆模块类型</td></tr><tr><td>MemoryModuleState.java</td><td>`net/minecraft/entity/ai/brain/MemoryModuleState.java`</td><td>记忆状态</td></tr><tr><td>Brain.java</td><td>`net/minecraft/entity/ai/brain/Brain.java`</td><td>包含记忆管理方法</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

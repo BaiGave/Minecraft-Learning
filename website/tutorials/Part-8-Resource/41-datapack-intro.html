@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>41 - 数据包：游戏数据定义 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #f39c12 0%, #f39c1288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-8.html">Part-8</a>
+                        <span>/</span>
+                        <span>41 - 数据包：游戏数据定义</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">41 - 数据包：游戏数据定义</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-8: 资源系统</span>
+                    <span><i class="fas fa-file"></i> 41-datapack-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-用生活比喻-">核心概念（用生活比喻）</a></li><li class="h3"><a href="#什么是数据包-">什么是数据包？</a></li><li class="h3"><a href="#数据包-vs-资源包">数据包 vs 资源包</a></li><li><a href="#数据包结构">数据包结构</a></li><li class="h3"><a href="#完整目录结构">完整目录结构</a></li><li class="h3"><a href="#pack-mcmeta-文件">pack.mcmeta 文件</a></li><li class="h3"><a href="#namespace-和-path-的作用">namespace 和 path 的作用</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#数据包加载流程">数据包加载流程</a></li><li class="h3"><a href="#数据包内容关系图">数据包内容关系图</a></li><li class="h3"><a href="#常见数据类型文件位置">常见数据类型文件位置</a></li><li><a href="#数据包能定义的内容">数据包能定义的内容</a></li><li class="h3"><a href="#1-配方-recipes-">1. 配方（Recipes）</a></li><li class="h3"><a href="#2-战利品表-loot-tables-">2. 战利品表（Loot Tables）</a></li><li class="h3"><a href="#3-进度-advancements-">3. 进度（Advancements）</a></li><li class="h3"><a href="#4-函数-functions-">4. 函数（Functions）</a></li><li class="h3"><a href="#5-标签-tags-">5. 标签（Tags）</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#创建一个简单的数据包">创建一个简单的数据包</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#下一步">下一步</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="40-resource-pack.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 40 - 资源包：游戏的外观与音效</strong>
+        </a><a href="42-loot-table.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>42 - 战利品表：掉落物定义 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- 什么是数据包（Datapack）</p>
+<p>- 数据包的目录结构</p>
+<p>- namespace 和 path 的作用</p>
+<p>- 数据包能定义哪些内容</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 已完成 <a href="../Part-7-Command/40-command-advanced.html">第39章 命令进阶</a>（建议）</p>
+<p>- 了解 JSON 文件基本格式</p>
+<p>- 知道 Identifier 的命名空间概念</p>
+
+<h2 id="核心概念-用生活比喻-">核心概念（用生活比喻）</h2>
+
+<h3 id="什么是数据包-">什么是数据包？</h3>
+
+<p>想象 Minecraft 世界是一家中餐厅。</p>
+
+<table><thead><tr><th>Minecraft 组件</th><th>餐厅比喻</th></tr></thead><tbody><tr><td>---------------</td><td>---------</td></tr><tr><td>**资源包**</td><td>餐厅的装修和餐具（外观）</td></tr><tr><td>**数据包**</td><td>餐厅的菜谱和配方（内容）</td></tr></tbody></table>
+
+<p>数据包告诉游戏：</p>
+<p>- "这道菜怎么做？" → 配方（Recipe）</p>
+<p>- "打完 Boss 给什么奖励？" → 战利品表（Loot Table）</p>
+<p>- "完成什么任务获得什么徽章？" → 进度（Advancement）</p>
+<p>- "村民怎么交易？" → 交易表（Trade Table）</p>
+
+<h3 id="数据包-vs-资源包">数据包 vs 资源包</h3>
+
+<table><thead><tr><th>特性</th><th>数据包 (Datapack)</th><th>资源包 (Resource Pack)</th></tr></thead><tbody><tr><td>------</td><td>-------------------</td><td>----------------------</td></tr><tr><td>**存放位置**</td><td>`world/datapacks/` 或 jar 内</td><td>`.minecraft/resourcepacks/`</td></tr><tr><td>**主要内容**</td><td>JSON 游戏数据</td><td>材质、音效、模型</td></tr><tr><td>**作用对象**</td><td>服务端（游戏逻辑）</td><td>客户端（视觉效果）</td></tr><tr><td>**修改范围**</td><td>配方、战利品、进度等</td><td>贴图、音效、字体等</td></tr><tr><td>**加载时机**</td><td>进入世界时加载</td><td>可随时切换</td></tr></tbody></table>
+
+<p><strong>简单理解</strong>：</p>
+<p>- 资源包 = 换皮肤（看得见的改变）</p>
+<p>- 数据包 = 换规则（玩法的改变）</p>
+
+<h2 id="数据包结构">数据包结构</h2>
+
+<h3 id="完整目录结构">完整目录结构</h3>
+
+<pre><code>my_datapack.zip/
+├── pack.mcmeta          # 数据包描述文件
+└── data/
+    ├── namespace1/      # 命名空间1（你的 mod id）
+    │   ├── advancements/
+    │   │   └── my_advancement.json
+    │   ├── functions/
+    │   │   ├── tick.mcfunction
+    │   │   └── hello.mcfunction
+    │   ├── loot_tables/
+    │   │   └── blocks/
+    │   │       └── my_custom_block.json
+    │   ├── recipes/
+    │   │   └── my_recipe.json
+    │   ├── structure/
+    │   │   └── my_structure.nbt
+    │   ├── trim_pattern/
+    │   │   └── my_pattern.json
+    │   └── worldgen/
+    │       ├── biome/
+    │       ├── configured_carver/
+    │       └── ...
+    │
+    └── namespace2/      # 可以有多个命名空间
+        └── ...</code></pre>
+
+<h3 id="pack-mcmeta-文件">pack.mcmeta 文件</h3>
+
+<p>每个数据包必须有 <code>pack.mcmeta</code>：</p>
+
+<pre><code>{
+    &quot;pack&quot;: {
+        &quot;pack_format&quot;: 34,
+        &quot;description&quot;: &quot;我的第一个数据包&quot;
+    }
+}</code></pre>
+
+<p><strong>pack_format 对照表</strong>：</p>
+
+<table><thead><tr><th>Minecraft 版本</th><th>pack_format</th></tr></thead><tbody><tr><td>---------------</td><td>-------------</td></tr><tr><td>1.20.4 - 1.21</td><td>34</td></tr><tr><td>1.20 - 1.20.3</td><td>26</td></tr><tr><td>1.19 - 1.19.4</td><td>24</td></tr><tr><td>1.18 - 1.18.2</td><td>15</td></tr></tbody></table>
+
+<h3 id="namespace-和-path-的作用">namespace 和 path 的作用</h3>
+
+<pre><code>data/minecraft/loot_tables/blocks/dirt.json
+    ↑命名空间  ↑文件名（path）</code></pre>
+
+<p><strong>命名空间规则</strong>：</p>
+<p>- <code>minecraft</code> - 保留给原版使用</p>
+<p>- 自定义 mod 应使用自己的 mod id</p>
+
+<p><strong>路径规则</strong>：</p>
+<p>- 使用小写字母、数字、下划线</p>
+<p>- 可以用 <code>/</code> 分隔层级</p>
+<p>- 路径会转换成 Identifier</p>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="数据包加载流程">数据包加载流程</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[游戏启动 / 进入世界] --> B[扫描 datapacks 目录]
+    B --> C[读取 pack.mcmeta]
+    C --> D{pack_format 匹配?}
+    D -->|是| E[加载数据包]
+    D -->|否| F[警告：版本不兼容]
+    F --> G[跳过该数据包]
+    
+    E --> H[解析 data/ 目录结构]
+    H --> I[根据类型加载 JSON]
+    
+    I --> J{加载成功?}
+    J -->|是| K[注册到对应管理器]
+    J -->|否| L[记录错误日志]
+    
+    K --> M[游戏就绪]
+    L --> M
+    
+    style E fill:#90EE90
+    style G fill:#FFB6C1
+    style K fill:#90EE90
+</div>
+
+<h3 id="数据包内容关系图">数据包内容关系图</h3>
+
+<div class="mermaid">
+classDiagram
+    class Datapack {
+        +pack.mcmeta
+        +data/
+    }
+    
+    class Namespace {
+        +advancements/
+        +functions/
+        +loot_tables/
+        +recipes/
+    }
+    
+    class 数据类型 {
+        <<enumeration>>
+        LOOT_TABLE
+        RECIPE
+        ADVANCEMENT
+        FUNCTION
+        TAG
+        WORLDGEN
+    }
+    
+    Datapack --> Namespace : contains
+    Namespace --> 数据类型 : defines
+</div>
+
+<h3 id="常见数据类型文件位置">常见数据类型文件位置</h3>
+
+<div class="mermaid">
+mindmap
+    root((数据包内容))
+        配方 Recipes
+            合成配方
+            烧炼配方
+            锻造配方
+        战利品 Loot Tables
+            实体掉落
+            箱子战利品
+            钓鱼奖励
+        进度 Advancements
+            任务树
+            奖励定义
+        函数 Functions
+            服务器命令
+            定时执行
+        标签 Tags
+            方块标签
+            物品标签
+            生物标签
+        世界生成 Worldgen
+            生物群系
+            结构
+            特征
+</div>
+
+<h2 id="数据包能定义的内容">数据包能定义的内容</h2>
+
+<h3 id="1-配方-recipes-">1. 配方（Recipes）</h3>
+
+<p>定义如何合成物品：</p>
+
+<pre><code>{
+    &quot;type&quot;: &quot;minecraft:crafting_shaped&quot;,
+    &quot;pattern&quot;: [
+        &quot;###&quot;,
+        &quot; # &quot;,
+        &quot; # &quot;
+    ],
+    &quot;key&quot;: {
+        &quot;#&quot;: {
+            &quot;item&quot;: &quot;minecraft:stick&quot;
+        }
+    },
+    &quot;result&quot;: {
+        &quot;item&quot;: &quot;minecraft:wooden_sword&quot;,
+        &quot;count&quot;: 1
+    }
+}</code></pre>
+
+<h3 id="2-战利品表-loot-tables-">2. 战利品表（Loot Tables）</h3>
+
+<p>定义击杀生物或打开箱子获得什么：</p>
+
+<pre><code>{
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:item&quot;,
+                    &quot;name&quot;: &quot;minecraft:diamond&quot;,
+                    &quot;weight&quot;: 1
+                }
+            ]
+        }
+    ]
+}</code></pre>
+
+<h3 id="3-进度-advancements-">3. 进度（Advancements）</h3>
+
+<p>定义任务和奖励：</p>
+
+<pre><code>{
+    &quot;display&quot;: {
+        &quot;icon&quot;: &quot;minecraft:diamond&quot;,
+        &quot;title&quot;: &quot;挖到钻石！&quot;,
+        &quot;description&quot;: &quot;获得你的第一颗钻石&quot;
+    },
+    &quot;criteria&quot;: {
+        &quot;got_diamond&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+            &quot;conditions&quot;: {
+                &quot;items&quot;: [{&quot;items&quot;: [&quot;minecraft:diamond&quot;]}]
+            }
+        }
+    }
+}</code></pre>
+
+<h3 id="4-函数-functions-">4. 函数（Functions）</h3>
+
+<p>执行一系列命令：</p>
+
+<pre><code># hello.mcfunction
+say 你好，世界！
+give @s minecraft:diamond 1</code></pre>
+
+<h3 id="5-标签-tags-">5. 标签（Tags）</h3>
+
+<p>将多个物品/方块归为一组：</p>
+
+<pre><code>{
+    &quot;values&quot;: [
+        &quot;minecraft:oak_log&quot;,
+        &quot;minecraft:spruce_log&quot;,
+        &quot;minecraft:birch_log&quot;
+    ]
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="创建一个简单的数据包">创建一个简单的数据包</h3>
+
+<p><strong>步骤 1：创建目录结构</strong></p>
+
+<pre><code>d:/
+└── MyFirstDatapack/
+    └── data/
+        └── mymod/                    # 命名空间 = mod id
+            ├── advancements/
+            │   └── first_creation.json
+            ├── loot_tables/
+            │   └── blocks/
+            │       └── my_block.json
+            └── recipes/
+                └── my_recipe.json
+    └── pack.mcmeta</code></pre>
+
+<p><strong>注意</strong>：目录名是 <code>advancements</code>（复数），不是 <code>advancement</code>。</p>
+
+<p><strong>步骤 2：编写 pack.mcmeta</strong></p>
+
+<pre><code>{
+    &quot;pack&quot;: {
+        &quot;pack_format&quot;: 34,
+        &quot;description&quot;: &quot;我的第一个数据包 - 添加自定义内容&quot;
+    }
+}</code></pre>
+
+<p><strong>步骤 3：创建配方文件</strong></p>
+
+<p><code>data/mymod/recipe/my_recipe.json</code>:</p>
+<pre><code>{
+    &quot;type&quot;: &quot;minecraft:crafting_shaped&quot;,
+    &quot;category&quot;: &quot;misc&quot;,
+    &quot;group&quot;: &quot;magic_items&quot;,
+    &quot;pattern&quot;: [
+        &quot; D &quot;,
+        &quot;BDB&quot;,
+        &quot; O &quot;
+    ],
+    &quot;key&quot;: {
+        &quot;D&quot;: {&quot;item&quot;: &quot;minecraft:diamond&quot;},
+        &quot;B&quot;: {&quot;item&quot;: &quot;minecraft:blaze_powder&quot;},
+        &quot;O&quot;: {&quot;item&quot;: &quot;minecraft:obsidian&quot;}
+    },
+    &quot;result&quot;: {
+        &quot;item&quot;: &quot;minecraft:nether_star&quot;,
+        &quot;count&quot;: 1
+    }
+}</code></pre>
+
+<p><strong>步骤 4：测试数据包</strong></p>
+
+<p>1. 将文件夹复制到 <code>.minecraft/saves/你的世界/datapacks/</code></p>
+<p>2. 进入游戏，输入 <code>/reload</code> 重载数据包</p>
+<p>3. 使用 <code>/give @s minecraft:crafting_table</code> 打开合成界面</p>
+
+<h2 id="小结">小结</h2>
+
+<table><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>**数据包**</td><td>定义游戏逻辑数据的 JSON 文件集合</td></tr><tr><td>**namespace**</td><td>区分不同来源数据的命名空间</td></tr><tr><td>**path**</td><td>具体数据文件的路径</td></tr><tr><td>**pack.mcmeta**</td><td>数据包元信息（版本、描述）</td></tr><tr><td>**pack_format**</td><td>版本标识，1.21 使用 34</td></tr></tbody></table>
+
+<p><strong>数据包的优势</strong>：</p>
+<p>1. 玩家可以在不使用 mod 的情况下自定义游戏</p>
+<p>2. 可以覆盖原版数据（作弊/模组兼容）</p>
+<p>3. 格式统一，易于分享</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>创建练习</strong></p>
+<p>   创建一个数据包，添加一个"钻石苹果"配方：</p>
+<p>   - 材料：8 个钻石围绕 1 个苹果</p>
+<p>   - 参考原版附魔金苹果格式</p>
+
+<p>2. <strong>思考题</strong></p>
+<p>   - 如果数据包和 mod 都定义了同一个配方，会优先使用哪个？</p>
+<p>   - 数据包能否添加全新的方块/物品？</p>
+
+<p>3. <strong>扩展挑战</strong></p>
+<p>   创建一个自定义进度，当玩家合成钻石苹果时触发，并给予经验奖励。</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Datapack">Minecraft Wiki - Datapack</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Pack.mcmeta">Minecraft Wiki - pack.mcmeta</a></p>
+<p>- <a href="https://wiki.bedrock.dev/concepts/behavior-packs.html">Bedrock Wiki - Behavior Pack</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.server.DataPackResources</code></p>
+<p>  - <code>net.minecraft.data.server</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>DataPackContent.java</td><td>`net/minecraft/server/DataPackContent.java`</td><td>数据包内容存储</td></tr><tr><td>DataPackResources.java</td><td>`net/minecraft/server/DataPackResources.java`</td><td>数据包资源管理</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+<p>数据包中的核心数据之一是<strong>战利品表（Loot Table）</strong>，下一章节我们将深入学习它如何定义掉落物。</p>
+
+<blockquote>[第42章 - 战利品表：掉落物定义](./42-loot-table.md)</blockquote>
+
+<hr>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：数据包、Datapack、namespace、path、pack.mcmeta、pack_format</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
