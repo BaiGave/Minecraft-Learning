@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>19 - ComponentMap：1.21新版物品数据系统 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #2980b9 0%, #2980b988 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-3.html">Part-3</a>
+                        <span>/</span>
+                        <span>19 - ComponentMap：1.21新版物品数据系统</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">19 - ComponentMap：1.21新版物品数据系统</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-3: 方块物品</span>
+                    <span><i class="fas fa-file"></i> 19-item-component</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-用生活比喻-">核心概念（用生活比喻）</a></li><li class="h3"><a href="#什么是-component-组件-">什么是 Component（组件）？</a></li><li class="h3"><a href="#为什么要用-component-">为什么要用 Component？</a></li><li class="h3"><a href="#生活中的比喻">生活中的比喻</a></li><li class="h3"><a href="#componentmap-是什么-">ComponentMap 是什么？</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#component-系统架构图">Component 系统架构图</a></li><li class="h3"><a href="#组件操作流程图">组件操作流程图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#datacomponenttypes-常用类型">DataComponentTypes 常用类型</a></li><li class="h3"><a href="#在-itemstack-中使用组件">在 ItemStack 中使用组件</a></li><li class="h3"><a href="#创建带组件的-itemstack">创建带组件的 ItemStack</a></li><li class="h3"><a href="#组件修改器-高级-">组件修改器（高级）</a></li><li class="h3"><a href="#创建自定义组件类型-进阶-">创建自定义组件类型（进阶）</a></li><li><a href="#常见组件详解">常见组件详解</a></li><li class="h3"><a href="#附魔组件">附魔组件</a></li><li class="h3"><a href="#食物组件">食物组件</a></li><li class="h3"><a href="#工具组件">工具组件</a></li><li><a href="#与旧版-nbt-的对比">与旧版 NBT 的对比</a></li><li class="h3"><a href="#获取物品显示名称">获取物品显示名称</a></li><li class="h3"><a href="#获取物品耐久">获取物品耐久</a></li><li class="h3"><a href="#设置耐久">设置耐久</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="18-item-stack.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 18 - ItemStack：物品堆叠</strong>
+        </a><a href="README.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>Part-3 方块与物品 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- ComponentMap 是什么（Minecraft 1.21 引入的新系统）</p>
+<p>- 组件（Component）和旧版 NBT 的区别</p>
+<p>- 常见的组件类型及其用途</p>
+<p>- 如何在 ItemStack 中使用组件</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 <a href="./18-item-stack.html">ItemStack</a></p>
+<p>- 了解基本的 Java 泛型和接口概念</p>
+
+<h2 id="核心概念-用生活比喻-">核心概念（用生活比喻）</h2>
+
+<h3 id="什么是-component-组件-">什么是 Component（组件）？</h3>
+
+<p>在 Minecraft 1.21 之前，物品的数据存储用的是 <strong>NBT（Named Binary Tag）</strong> 系统。现在，Minecraft 引入了一个更现代化的系统：<strong>Component（组件）</strong>。</p>
+
+<p><strong>旧版（NBT）</strong>：用文件夹和文件来存储数据</p>
+
+<pre><code>物品数据（NBT）
+├── display
+│   ├── Name: &quot;金苹果&quot;
+│   └── Lore: [&quot;传说中...&quot;, &quot;增加生命&quot;]
+├── ench
+│   ├── {id: 0, lvl: 1}
+│   └── {id: 1, lvl: 2}
+└── Damage: 0</code></pre>
+
+<p><strong>新版（Component）</strong>：用结构化标签来存储</p>
+
+<pre><code>ItemStack.components
+├── CustomName: Text(&quot;金苹果&quot;)
+├── Lore: [Text(&quot;传说中...&quot;), Text(&quot;增加生命&quot;)]
+├── Enchantments: {protection: 1, sharpness: 2}
+└── Damage: 0</code></pre>
+
+<h3 id="为什么要用-component-">为什么要用 Component？</h3>
+
+<table><thead><tr><th>对比项</th><th>NBT（旧）</th><th>Component（新）</th></tr></thead><tbody><tr><td>--------</td><td>-----------</td><td>-----------------</td></tr><tr><td>**类型安全**</td><td>需要手动解析</td><td>编译时检查</td></tr><tr><td>**默认值**</td><td>需要手动处理</td><td>自动处理</td></tr><tr><td>**性能**</td><td>每次都要序列化</td><td>可以缓存</td></tr><tr><td>**可读性**</td><td>字符串键</td><td>类型化访问</td></tr><tr><td>**验证**</td><td>运行时检查</td><td>编译时检查</td></tr></tbody></table>
+
+<h3 id="生活中的比喻">生活中的比喻</h3>
+
+<p>想象图书馆的书：</p>
+
+<p>- <strong>NBT 方式</strong>：把所有书都放在一个大箱子里，贴上各种纸条标签，找东西要一个个翻</p>
+<p>- <strong>Component 方式</strong>：每个书架有固定的分类（小说区、漫画区、杂志区），每本书自带作者、页数、分类标签</p>
+
+<h3 id="componentmap-是什么-">ComponentMap 是什么？</h3>
+
+<p><strong>ComponentMap</strong> = 存储组件的"容器"</p>
+
+<pre><code>// ItemStack 持有一个 ComponentMap
+ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+// stack.components 是这个物品堆的所有组件</code></pre>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="component-系统架构图">Component 系统架构图</h3>
+
+<div class="mermaid">
+flowchart TD
+    subgraph Item["ItemStack"]
+        I1[Item]
+        I2[Count]
+        I3[ComponentMap]
+    end
+    
+    subgraph ComponentMap["ComponentMap (组件容器)"]
+        C1[CustomName]
+        C2[Enchantments]
+        C3[Damage]
+        C4[Food]
+    end
+    
+    I3 --> C1
+    I3 --> C2
+    I3 --> C3
+    I3 --> C4
+    
+    C1 -->|数据类型| T1[Text]
+    C2 -->|数据类型| T2[ItemEnchantmentsComponent]
+    C3 -->|数据类型| T3[int]
+    C4 -->|数据类型| T4[FoodComponent]
+</div>
+
+<h3 id="组件操作流程图">组件操作流程图</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph 创建
+        A[创建ItemStack] --> B[获取组件]
+    end
+    
+    subgraph 读取
+        B --> C[get获取组件]
+        C --> D{存在?}
+        D -->|是| E[使用组件数据]
+        D -->|否| F[返回默认值]
+    end
+    
+    subgraph 修改
+        E --> G[修改组件]
+        G --> H[set设置组件]
+        H --> I[返回旧值]
+    end
+    
+    subgraph 删除
+        G --> J[remove移除]
+        J --> K[移除组件]
+    end
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="datacomponenttypes-常用类型">DataComponentTypes 常用类型</h3>
+
+<pre><code>// 位置: net.minecraft.component.DataComponentTypes
+
+// 1. 自定义名称
+DataComponentTypes.CUSTOM_NAME      // Text
+DataComponentTypes.ITEM_NAME        // Text
+
+// 2. 附魔相关
+DataComponentTypes.ENCHANTMENTS     // ItemEnchantmentsComponent
+DataComponentTypes.STORED_ENCHANTMENTS  // ItemEnchantmentsComponent
+DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE // Boolean
+
+// 3. 耐久度相关
+DataComponentTypes.DAMAGE          // int (当前损坏值)
+DataComponentTypes.MAX_DAMAGE       // int (最大耐久)
+DataComponentTypes.UNBREAKABLE     // Unit (无耐久限制标记)
+
+// 4. 食物相关
+DataComponentTypes.FOOD             // FoodComponent
+DataComponentTypes.CONSUMABLE      // ConsumableComponent
+
+// 5. 工具相关
+DataComponentTypes.TOOL            // ToolComponent
+DataComponentTypes.BROKEN          // Unit (已损坏标记)
+
+// 6. 桶类
+DataComponentTypes.BUCKET_CONTENTS  // Fluid
+
+// 7. 其他
+DataComponentTypes.LORE            // List&lt;Text&gt;
+DataComponentTypes.RARITY          // Rarity
+DataComponentTypes.HIDE_TOOLTIP    // Unit</code></pre>
+
+<h3 id="在-itemstack-中使用组件">在 ItemStack 中使用组件</h3>
+
+<pre><code>// 1. 获取组件
+ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+
+// 获取附魔组件
+ItemEnchantmentsComponent enchants = stack.get(DataComponentTypes.ENCHANTMENTS);
+
+// 安全获取（不存在时返回默认值）
+int damage = stack.getOrDefault(DataComponentTypes.DAMAGE, 0);
+
+// 检查组件是否存在
+if (stack.contains(DataComponentTypes.ENCHANTMENTS)) {
+    // 有附魔
+}
+
+// 2. 设置组件
+stack.set(DataComponentTypes.DAMAGE, 100);  // 设置损坏值
+stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(&quot;我的钻石剑&quot;));
+stack.set(DataComponentTypes.UNBREAKABLE, Unit.INSTANCE);  // 设置为不可破坏
+
+// 3. 移除组件
+stack.remove(DataComponentTypes.ENCHANTMENTS);  // 移除所有附魔
+stack.remove(DataComponentTypes.CUSTOM_NAME);  // 移除自定义名称</code></pre>
+
+<h3 id="创建带组件的-itemstack">创建带组件的 ItemStack</h3>
+
+<pre><code>// 方法1：创建后设置
+ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+stack.set(DataComponentTypes.ENCHANTMENTS, 
+    new ItemEnchantmentsComponent(Map.of(
+        Enchantments.SHARPNESS, 5,
+        Enchantments.FIRE_ASPECT, 2
+    ))
+);
+stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(&quot;附魔剑&quot;));
+
+// 方法2：在 Item 定义默认组件
+public static final Item MY_ITEM = Registry.register(
+    Registries.ITEM,
+    Identifier.of(&quot;mymod&quot;, &quot;my_item&quot;),
+    new Item(new Item.Settings()
+        .component(DataComponentTypes.RARITY, Rarity.EPIC)  // 默认稀有度
+        .component(DataComponentTypes.CUSTOM_NAME, 
+            Text.literal(&quot;史诗物品&quot;))
+    )
+);</code></pre>
+
+<h3 id="组件修改器-高级-">组件修改器（高级）</h3>
+
+<pre><code>// 使用 apply 方法进行链式修改
+ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+
+// 添加附魔（不覆盖现有附魔）
+stack.apply(DataComponentTypes.ENCHANTMENTS, 
+    ItemEnchantmentsComponent.DEFAULT,     // 默认空附魔
+    Map.of(Enchantments.SHARPNESS, 3),    // 要添加的附魔
+    (existing, additions) -&gt; {
+        // 合并附魔
+        Map&lt;RegistryEntry&lt;Enchantment&gt;, Integer&gt; merged = 
+            new java.util.HashMap&lt;&gt;(existing.asMap());
+        additions.forEach((ench, lvl) -&gt; 
+            merged.merge(ench, lvl, Integer::max));
+        return new ItemEnchantmentsComponent(merged);
+    }
+);
+
+// 移除附魔
+stack.apply(DataComponentTypes.ENCHANTMENTS,
+    ItemEnchantmentsComponent.DEFAULT,
+    Set.of(Enchantments.SHARPNESS),       // 要移除的附魔类型
+    (existing, removals) -&gt; {
+        Map&lt;RegistryEntry&lt;Enchantment&gt;, Integer&gt; filtered = 
+            new java.util.HashMap&lt;&gt;(existing.asMap());
+        removals.forEach(filtered::remove);
+        return new ItemEnchantmentsComponent(filtered);
+    }
+);</code></pre>
+
+<h3 id="创建自定义组件类型-进阶-">创建自定义组件类型（进阶）</h3>
+
+<pre><code>// 1. 定义组件类型
+public static final ComponentType&lt;MyData&gt; MY_DATA = 
+    ComponentType.&lt;MyData&gt;builder()
+        .codec(MyData.CODEC)  // 序列化编解码器
+        .build();
+
+// 2. 创建组件值类
+public class MyData {
+    public static final MapCodec&lt;MyData&gt; CODEC = RecordCodecBuilder.mapCodec(
+        instance -&gt; instance.group(
+            Codecs.VAR_INT.fieldOf(&quot;value&quot;).forGetter(MyData::value),
+            Codec.STRING.fieldOf(&quot;name&quot;).forGetter(MyData::name)
+        ).apply(instance, MyData::new)
+    );
+    
+    private final int value;
+    private final String name;
+    
+    public MyData(int value, String name) {
+        this.value = value;
+        this.name = name;
+    }
+    
+    public int value() { return value; }
+    public String name() { return name; }
+}
+
+// 3. 在 ItemStack 中使用
+ItemStack stack = new ItemStack(Items.DIAMOND);
+stack.set(MY_DATA, new MyData(42, &quot;答案&quot;));</code></pre>
+
+<h2 id="常见组件详解">常见组件详解</h2>
+
+<h3 id="附魔组件">附魔组件</h3>
+
+<pre><code>ItemStack enchantedBook = new ItemStack(Items.ENCHANTED_BOOK);
+
+// 获取附魔
+ItemEnchantmentsComponent enchants = enchantedBook.get(
+    DataComponentTypes.STORED_ENCHANTMENTS);
+
+// 遍历附魔
+for (Map.Entry&lt;RegistryEntry&lt;Enchantment&gt;, Integer&gt; entry : 
+    enchants.getEnchantmentMap().entrySet()) {
+    Enchantment enchant = entry.getKey().value();
+    int level = entry.getValue();
+    System.out.println(enchant.getTranslationKey() + &quot; &quot; + level);
+}
+
+// 添加附魔
+enchantedBook.set(DataComponentTypes.STORED_ENCHANTMENTS,
+    new ItemEnchantmentsComponent(Map.of(
+        Enchantments.MENDING, 1
+    ))
+);</code></pre>
+
+<h3 id="食物组件">食物组件</h3>
+
+<pre><code>ItemStack stack = new ItemStack(Items.GOLDEN_APPLE);
+
+// 获取食物数据
+FoodComponent food = stack.get(DataComponentTypes.FOOD);
+if (food != null) {
+    int hunger = food.getHunger();        // 饱食度
+    float sat = food.getSaturation();     // 饱和度
+    boolean meat = food.isMeat();         // 狼可吃
+    boolean always = food.canAlwaysEat();  // 饱食时可吃
+}</code></pre>
+
+<h3 id="工具组件">工具组件</h3>
+
+<pre><code>ItemStack pickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
+
+// 获取工具数据
+ToolComponent tool = pickaxe.get(DataComponentTypes.TOOL);
+if (tool != null) {
+    // 获取对特定方块的挖掘速度
+    float speed = tool.getSpeed(Blocks.STONE.defaultState());
+    // 检查是否为正确工具
+    boolean correct = tool.isCorrectForDrops(Blocks.COBBLESTONE.defaultState());
+}</code></pre>
+
+<h2 id="与旧版-nbt-的对比">与旧版 NBT 的对比</h2>
+
+<h3 id="获取物品显示名称">获取物品显示名称</h3>
+
+<pre><code>// 旧版 NBT
+NbtCompound display = stack.getNbt().getCompound(&quot;display&quot;);
+String name = display.getString(&quot;Name&quot;);
+
+// 新版 Component
+Text name = stack.getName();  // 直接获取
+// 或获取自定义名称
+Text customName = stack.get(DataComponentTypes.CUSTOM_NAME);</code></pre>
+
+<h3 id="获取物品耐久">获取物品耐久</h3>
+
+<pre><code>// 旧版 NBT
+int damage = stack.getNbt().getInt(&quot;Damage&quot;);
+
+// 新版 Component
+int damage = stack.getDamage();
+// 或
+int damage = stack.getOrDefault(DataComponentTypes.DAMAGE, 0);</code></pre>
+
+<h3 id="设置耐久">设置耐久</h3>
+
+<pre><code>// 旧版 NBT
+stack.getNbt().putInt(&quot;Damage&quot;, 100);
+
+// 新版 Component
+stack.set(DataComponentTypes.DAMAGE, 100);</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>Component</strong> = Minecraft 1.21 引入的新版物品数据系统</p>
+<p>2. <strong>ComponentMap</strong> = 存储组件的容器，每个 ItemStack 都有一个</p>
+<p>3. <strong>DataComponentTypes</strong> = 预定义的各种组件类型</p>
+<p>4. 组件操作：获取用 <code>get()</code>，设置用 <code>set()</code>，移除用 <code>remove()</code></p>
+<p>5. 相比 NBT，组件系统更类型安全、性能更好</p>
+<p>6. 组件在 Item 创建时定义默认值，可以在 ItemStack 层级覆盖</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 创建一个物品，初始带有自定义名称和lore</p>
+<p>2. 创建一个函数，将一个物品的所有附魔复制到另一个物品</p>
+<p>3. 思考：为什么组件比 NBT 更高效？</p>
+<p>4. 进阶：创建一个自定义组件类型，用于存储物品的"使用次数"</p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>ItemStack.java</td><td>`net/minecraft/item/ItemStack.java`</td><td>物品堆叠(包含组件)</td></tr><tr><td>DataComponentTypes.java</td><td>`net/minecraft/component/DataComponentTypes.java`</td><td>组件类型定义</td></tr><tr><td>ComponentMap.java</td><td>`net/minecraft/component/ComponentMap.java`</td><td>组件映射</td></tr></tbody></table>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./18-item-stack.html">ItemStack</a></p>
+<p>- <a href="./16-block-entity.html">BlockEntity 中的组件</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Component">Minecraft Wiki: Components</a></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

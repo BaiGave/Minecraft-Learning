@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e74c3c 0%, #e74c3c88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-7.html">Part-7</a>
+                        <span>/</span>
+                        <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-7: 命令系统</span>
+                    <span><i class="fas fa-file"></i> 38-brigadier-basics</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#brigadier-是什么-">Brigadier 是什么？</a></li><li class="h3"><a href="#brigadier-的核心组件">Brigadier 的核心组件</a></li><li class="h3"><a href="#argumentbuilder-家族">ArgumentBuilder 家族</a></li><li><a href="#图解">图解</a></li><li class="h3"><a href="#参数解析流程图">参数解析流程图</a></li><li class="h3"><a href="#命令树结构示例">命令树结构示例</a></li><li class="h3"><a href="#内置参数类型一览">内置参数类型一览</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#简单的命令注册">简单的命令注册</a></li><li class="h3"><a href="#give-命令-带多个参数-">Give 命令（带多个参数）</a></li><li class="h3"><a href="#execute-命令-子命令很多-">Execute 命令（子命令很多）</a></li><li class="h3"><a href="#创建自定义参数类型">创建自定义参数类型</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-创建一个完整的-hello-命令">场景：创建一个完整的 /hello 命令</a></li><li class="h3"><a href="#命令注册流程图">命令注册流程图</a></li><li class="h3"><a href="#-hello-命令树结构">/hello 命令树结构</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#练习-1-创建一个问候命令">练习 1：创建一个问候命令</a></li><li class="h3"><a href="#练习-2-创建一个带数字参数的命令">练习 2：创建一个带数字参数的命令</a></li><li class="h3"><a href="#练习-3-理解命令树">练习 3：理解命令树</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="37-command-intro.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第37章 命令系统入门 —— 理解 Minecraft 的指令世界</strong>
+        </a><a href="39-custom-command.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第39章 自定义命令 —— 创建你的第一个命令 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解 Brigadier 是什么</p>
+<p>- 掌握 ArgumentBuilder 的使用方法</p>
+<p>- 了解内置参数类型</p>
+<p>- 学会注册命令的基本方法</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 完成 <a href="./37-command-intro.html">第37章 命令系统入门</a></p>
+<p>- Java 面向对象编程（Builder 模式）</p>
+<p>- 了解 Minecraft 命令格式（如 <code>/give <player> <item> [count]</code>）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="brigadier-是什么-">Brigadier 是什么？</h3>
+
+<p><strong>Brigadier</strong> 是 Mojang 用 Java 编写的命令行解析库，专门用于 Minecraft。</p>
+
+<p>想象你要教一个机器人理解"给我倒杯水"：</p>
+<p>- 你可以说"倒水"、"拿杯水来"、"我渴了"——人类能理解，但机器人需要精确的格式</p>
+<p>- Brigadier 就是那个把"给我倒杯水"翻译成机器人能理解的结构化数据的翻译官</p>
+
+<div class="mermaid">
+graph LR
+    A["玩家输入<br/>'/give @p diamond 64'"] --> B["Brigadier<br/>解析器"]
+    B --> C["结构化数据<br/>CommandContext"]
+    C --> D["命令执行"]
+    D --> E["返回结果"]
+    
+    style A fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#e8f5e9
+    style D fill:#fce4ec
+</div>
+
+<h3 id="brigadier-的核心组件">Brigadier 的核心组件</h3>
+
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    Brigadier 核心组件                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────┐                                         │
+│  │ CommandDispatcher │  ← 命令调度器，管理所有命令            │
+│  │  (命令调度器)    │                                         │
+│  └────────┬────────┘                                         │
+│           │                                                  │
+│           ▼                                                  │
+│  ┌─────────────────┐                                         │
+│  │  CommandNode    │  ← 命令树上的节点（可以是字面量或参数）  │
+│  │   (命令节点)    │                                         │
+│  └────────┬────────┘                                         │
+│           │                                                  │
+│     ┌─────┴─────┐                                            │
+│     ▼           ▼                                            │
+│  ┌──────┐   ┌─────────────┐                                 │
+│  │Literal│   │RequiredArg │  ← Literal: &quot;give&quot;              │
+│  │Node   │   │Node        │    RequiredArg: &lt;player&gt; &lt;item&gt;  │
+│  └──────┘   └─────────────┘                                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="argumentbuilder-家族">ArgumentBuilder 家族</h3>
+
+<div class="mermaid">
+classDiagram
+    class ArgumentBuilder~S, T~ {
+        <<abstract>>
+        +then(ArgumentBuilder) 添加子节点
+        +executes(Command) 设置执行函数
+        +requires(Predicate) 设置权限要求
+    }
+    
+    ArgumentBuilder <|-- LiteralArgumentBuilder : 子类
+    ArgumentBuilder <|-- RequiredArgumentBuilder : 子类
+    
+    class LiteralArgumentBuilder~S~ {
+        +literal(String) 创建字面量
+        +getLiteral() 获取字面量名称
+    }
+    
+    class RequiredArgumentBuilder~S, T~ {
+        +argument(String, ArgumentType) 创建参数
+        +getType() 获取参数类型
+        +suggests(SuggestionProvider) 设置建议提供者
+    }
+</div>
+
+<h2 id="图解">图解</h2>
+
+<h3 id="参数解析流程图">参数解析流程图</h3>
+
+<div class="mermaid">
+flowchart TD
+    subgraph 输入解析
+        A["'/give Steve diamond 64'"] --> B["CommandDispatcher.parse"]
+    end
+    
+    subgraph 解析过程
+        B --> C["匹配 'give' 字面量"]
+        C --> D["解析 targets 参数<br/>'Steve' → EntitySelector"]
+        D --> E["解析 item 参数<br/>'diamond' → ItemStack"]
+        E --> F["解析 count 参数<br/>'64' → Integer"]
+    end
+    
+    subgraph 结果
+        F --> G["CommandContext"]
+        G --> H["包含所有解析后的参数"]
+    end
+    
+    style A fill:#e3f2fd
+    style G fill:#c8e6c9
+    style H fill:#c8e6c9
+</div>
+
+<h3 id="命令树结构示例">命令树结构示例</h3>
+
+<pre><code>命令：/give &lt;targets&gt; &lt;item&gt; [count]
+
+命令树结构：
+
+                    Root（根节点）
+                       │
+                       │
+                     &quot;give&quot;  ← LiteralCommandNode
+                       │
+                       ▼
+              RequiredArgumentBuilder
+                 &lt;targets: player&gt;
+                       │
+                       ▼
+              RequiredArgumentBuilder
+                 &lt;item: item&gt;
+                       │
+                       ▼
+              Optional count: 64
+              
+命令注册代码：
+    
+    dispatcher.register(
+        literal(&quot;give&quot;)
+            .then(argument(&quot;targets&quot;, EntityArgumentType.player())
+                .then(argument(&quot;item&quot;, ItemStackArgumentType.itemStack())
+                    .then(argument(&quot;count&quot;, IntegerArgumentType.integer(1))
+                        .executes(context -&gt; execute(...))
+                    )
+                )
+            )
+    );</code></pre>
+
+<h3 id="内置参数类型一览">内置参数类型一览</h3>
+
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                      Minecraft 内置参数类型                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  📝 字符串/文本                                                  │
+│  ├── StringArgumentType     - 普通字符串                         │
+│  └── MessageArgumentType    - 聊天消息                          │
+│                                                                 │
+│  🎯 实体/玩家                                                   │
+│  ├── EntityArgumentType     - @p, @a, @e, 玩家名, UUID           │
+│  └── PlayerArgumentType    - 只能选玩家                          │
+│                                                                 │
+│  📍 坐标/位置                                                   │
+│  ├── Vec3ArgumentType      - 3D坐标 (x y z)                     │
+│  ├── Vec2ArgumentType      - 2D坐标 (x z)                       │
+│  └── BlockPosArgumentType  - 方块坐标                           │
+│                                                                 │
+│  🔢 数值                                                        │
+│  ├── IntegerArgumentType   - 整数                               │
+│  ├── LongArgumentType      - 长整数                             │
+│  └── DoubleArgumentType    - 浮点数                             │
+│                                                                 │
+│  🎨 资源/注册表                                                  │
+│  ├── IdentifierArgumentType - 命名空间:路径 (minecraft:stone)    │
+│  ├── ItemStackArgumentType  - 物品（含NBT）                      │
+│  └── BlockStateArgumentType - 方块状态                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="简单的命令注册">简单的命令注册</h3>
+
+<pre><code>// MeCommand.java - 最简单的命令示例
+public class MeCommand {
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher) {
+        // register 方法是所有命令的入口
+        dispatcher.register(
+            // 1. 创建字面量 &quot;me&quot;
+            CommandManager.literal(&quot;me&quot;)
+                // 2. 添加参数：action（消息类型）
+                .then(
+                    CommandManager.argument(&quot;action&quot;, MessageArgumentType.message())
+                        // 3. 设置执行逻辑
+                        .executes(context -&gt; {
+                            // 获取命令源
+                            ServerCommandSource source = context.getSource();
+                            
+                            // 获取参数
+                            MessageArgumentType.getSignedMessage(context, &quot;action&quot;, message -&gt; {
+                                // 广播消息
+                                source.getServer().getPlayerManager()
+                                    .broadcast(message, source, MessageType.params(...));
+                            });
+                            
+                            return 1; // 返回值代表成功
+                        })
+                )
+        );
+    }
+}</code></pre>
+
+<h3 id="give-命令-带多个参数-">Give 命令（带多个参数）</h3>
+
+<pre><code>// GiveCommand.java - 复杂命令示例
+public class GiveCommand {
+    
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher, 
+                                 CommandRegistryAccess access) {
+        
+        dispatcher.register(
+            // 1. 创建 &quot;give&quot; 字面量
+            CommandManager.literal(&quot;give&quot;)
+                // 2. 设置权限要求（等级2）
+                .requires(source -&gt; source.hasPermissionLevel(2))
+                // 3. 添加目标玩家参数
+                .then(
+                    CommandManager.argument(&quot;targets&quot;, EntityArgumentType.players())
+                        // 4. 在玩家参数下添加物品参数
+                        .then(
+                            CommandManager.argument(&quot;item&quot;, ItemStackArgumentType.itemStack(access))
+                                // 5. 默认数量为1
+                                .executes(context -&gt; execute(source, item, targets, 1))
+                                // 6. 添加可选的数量参数
+                                .then(
+                                    CommandManager.argument(&quot;count&quot;, IntegerArgumentType.integer(1))
+                                        .executes(context -&gt; execute(source, item, targets, 
+                                            IntegerArgumentType.getInteger(context, &quot;count&quot;)))
+                                )
+                        )
+                )
+        );
+    }
+}</code></pre>
+
+<h3 id="execute-命令-子命令很多-">Execute 命令（子命令很多）</h3>
+
+<pre><code>// ExecuteCommand.java - execute 命令注册
+public class ExecuteCommand {
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher, 
+                                 CommandRegistryAccess access) {
+        
+        // 注册主命令
+        dispatcher.register(
+            CommandManager.literal(&quot;execute&quot;)
+                .requires(source -&gt; source.hasPermissionLevel(2))
+                
+                // 子命令：run（执行另一个命令）
+                .then(CommandManager.literal(&quot;run&quot;)
+                    .redirect(dispatcher.getRoot()))
+                
+                // 子命令：if（条件执行）
+                .then(ExecuteCommand.addConditionArguments(..., &quot;if&quot;, true, ...))
+                
+                // 子命令：unless（条件执行）
+                .then(ExecuteCommand.addConditionArguments(..., &quot;unless&quot;, false, ...))
+                
+                // 子命令：as（以某实体身份执行）
+                .then(CommandManager.argument(&quot;targets&quot;, EntityArgumentType.entities())
+                    .fork(literalCommandNode, context -&gt; {
+                        // 为每个目标创建新的命令源
+                        List&lt;ServerCommandSource&gt; list = Lists.newArrayList();
+                        for (Entity entity : EntityArgumentType.getOptionalEntities(context, &quot;targets&quot;)) {
+                            list.add(context.getSource().withEntity(entity));
+                        }
+                        return list;
+                    }))
+                
+                // 子命令：at（在某实体位置执行）
+                .then(CommandManager.argument(&quot;targets&quot;, EntityArgumentType.entities())
+                    .fork(literalCommandNode, context -&gt; {
+                        // 改变位置和世界
+                        List&lt;ServerCommandSource&gt; list = Lists.newArrayList();
+                        for (Entity entity : EntityArgumentType.getOptionalEntities(context, &quot;targets&quot;)) {
+                            list.add(context.getSource()
+                                .withWorld((ServerWorld) entity.getWorld())
+                                .withPosition(entity.getPos()));
+                        }
+                        return list;
+                    }))
+                
+                // ... 还有更多子命令
+        );
+    }
+}</code></pre>
+
+<h3 id="创建自定义参数类型">创建自定义参数类型</h3>
+
+<pre><code>// 自定义布尔参数（true/false）
+public class CustomCommand {
+    
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher) {
+        
+        dispatcher.register(
+            CommandManager.literal(&quot;mycommand&quot;)
+                .then(
+                    CommandManager.argument(&quot;toggle&quot;, BoolArgumentType.bool())
+                        .executes(context -&gt; {
+                            boolean value = BoolArgumentType.getBool(context, &quot;toggle&quot;);
+                            // 使用这个布尔值
+                            return 1;
+                        })
+                )
+        );
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-创建一个完整的-hello-命令">场景：创建一个完整的 /hello 命令</h3>
+
+<pre><code>public class HelloCommand {
+    
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher) {
+        
+        dispatcher.register(
+            CommandManager.literal(&quot;hello&quot;)
+                // hello - 基础版本
+                .executes(context -&gt; {
+                    ServerCommandSource source = context.getSource();
+                    source.sendFeedback(() -&gt; 
+                        Text.literal(&quot;你好, &quot; + source.getName() + &quot;!&quot;), false);
+                    return 1;
+                })
+                // hello &lt;player&gt; - 带玩家参数
+                .then(
+                    CommandManager.argument(&quot;player&quot;, EntityArgumentType.player())
+                        .executes(context -&gt; {
+                            ServerCommandSource source = context.getSource();
+                            ServerPlayerEntity target = EntityArgumentType.getPlayer(context, &quot;player&quot;);
+                            
+                            source.sendFeedback(() -&gt; 
+                                Text.literal(&quot;你好 &quot; + target.getName() + &quot;！&quot;), false);
+                            
+                            target.sendMessage(Text.literal(
+                                source.getName() + &quot; 向你打了个招呼！&quot;));
+                            
+                            return 1;
+                        })
+                )
+        );
+    }
+}</code></pre>
+
+<h3 id="命令注册流程图">命令注册流程图</h3>
+
+<div class="mermaid">
+flowchart TD
+    A["开始注册命令"] --> B["创建 CommandDispatcher"]
+    B --> C["调用 register 方法"]
+    C --> D["添加字面量节点<br/>literal('hello')"]
+    D --> E["添加参数节点<br/>argument('player', ...)"]
+    E --> F["设置执行逻辑<br/>executes(context -> {...})"]
+    F --> G["构建命令树"]
+    G --> H["命令可被玩家使用"]
+    
+    style A fill:#e3f2fd
+    style H fill:#c8e6c9
+</div>
+
+<h3 id="-hello-命令树结构">/hello 命令树结构</h3>
+
+<pre><code>Root
+  └── &quot;hello&quot;
+        ├── 无参数分支 → 显示 &quot;你好, [名字]!&quot;
+        │
+        └── &lt;player: player&gt;
+              └── 显示 &quot;你好 [目标]！&quot; 并发送消息</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>Brigadier</strong> 是 Minecraft 使用的命令解析库，将字符串命令转换为结构化数据</p>
+
+<p>2. <strong>LiteralArgumentBuilder</strong> 用于创建字面量节点（如 <code>give</code>、<code>tp</code>、<code>time</code>）</p>
+
+<p>3. <strong>RequiredArgumentBuilder</strong> 用于创建参数节点（如 <code><player></code>、<code><count></code>）</p>
+
+<p>4. <strong>命令树</strong> 是命令的层次结构，描述了命令的完整语法</p>
+
+<p>5. <strong>参数类型</strong> 决定了玩家可以输入什么类型的值</p>
+
+<p>6. <strong>权限检查</strong> 使用 <code>.requires()</code> 方法设置权限等级要求</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="练习-1-创建一个问候命令">练习 1：创建一个问候命令</h3>
+
+<pre><code>// 创建一个 /greet &lt;player&gt; 命令
+// 效果：对指定玩家发送 &quot;Hello!&quot; 消息
+// 权限：需要等级 1
+
+public class GreetCommand {
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher) {
+        // TODO: 实现这个命令
+    }
+}</code></pre>
+
+<h3 id="练习-2-创建一个带数字参数的命令">练习 2：创建一个带数字参数的命令</h3>
+
+<pre><code>// 创建一个 /heal &lt;player&gt; [amount] 命令
+// amount 默认为 4（两颗心）
+// 效果：恢复玩家指定数量的生命值
+
+public class HealCommand {
+    public static void register(CommandDispatcher&lt;ServerCommandSource&gt; dispatcher) {
+        // TODO: 实现这个命令
+    }
+}</code></pre>
+
+<h3 id="练习-3-理解命令树">练习 3：理解命令树</h3>
+
+<pre><code>绘制以下命令的命令树结构：
+
+/spawn &lt;entity&gt; [x] [y] [z] [nbt]
+
+思考：
+1. 哪些参数是必须的？
+2. 哪些参数是可选的？
+3. 参数的顺序是什么？</code></pre>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="./37-command-intro.html">第37章 命令系统入门</a></p>
+<p>- <strong>下一章</strong>：<a href="./39-custom-command.html">第39章 自定义命令</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/server/command/GiveCommand.java</code> - give 命令实现</p>
+<p>  - <code>net/minecraft/server/command/MeCommand.java</code> - me 命令实现</p>
+<p>  - <code>net/minecraft/server/command/ExecuteCommand.java</code> - execute 命令实现</p>
+<p>  - <code>net/minecraft/server/command/CommandManager.java</code> - 命令管理器</p>
+<p>- <strong>扩展阅读</strong>：</p>
+<p>  - <a href="https://github.com/Mojang/brigadier">Brigadier GitHub 仓库</a></p>
+<p>  - <a href="https://minecraft.fandom.com/wiki/Commands">Minecraft 命令 Wiki</a></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>ArgumentBuilder.java</td><td>`com/mojang/brigadier/builder/ArgumentBuilder.java`</td><td>参数构建器基类</td></tr><tr><td>LiteralArgumentBuilder.java</td><td>`com/mojang/brigadier/builder/LiteralArgumentBuilder.java`</td><td>字面量参数构建器</td></tr><tr><td>RequiredArgumentBuilder.java</td><td>`com/mojang/brigadier/builder/RequiredArgumentBuilder.java`</td><td>必需参数构建器</td></tr></tbody></table>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：Brigadier、ArgumentBuilder、LiteralArgumentBuilder、RequiredArgumentBuilder、参数类型</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

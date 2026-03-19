@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第54章 流体系统 (Fluids) - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #16a085 0%, #16a08588 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-11.html">Part-11</a>
+                        <span>/</span>
+                        <span>第54章 流体系统 (Fluids)</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第54章 流体系统 (Fluids)</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-11: 进阶主题</span>
+                    <span><i class="fas fa-file"></i> 54-fluids</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是流体-">什么是流体？</a></li><li class="h3"><a href="#生活中的比喻-水流系统">生活中的比喻：水流系统</a></li><li><a href="#fluid-和-fluidstate">Fluid 和 FluidState</a></li><li class="h3"><a href="#类比理解">类比理解</a></li><li class="h3"><a href="#fluid-类-流体的-类型-">Fluid 类（流体的"类型"）</a></li><li class="h3"><a href="#fluidstate-类-流体的-状态-">FluidState 类（流体的"状态"）</a></li><li class="h3"><a href="#流体等级系统">流体等级系统</a></li><li><a href="#图解-流体流动">图解：流体流动</a></li><li class="h3"><a href="#流动算法流程">流动算法流程</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#定义流体">定义流体</a></li><li class="h3"><a href="#岩浆的特殊处理">岩浆的特殊处理</a></li><li class="h3"><a href="#流动算法核心">流动算法核心</a></li><li><a href="#实战演示-创建自定义流体">实战演示：创建自定义流体</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="53-datafixer.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第53章 数据修复系统 (DataFixer)</strong>
+        </a><a href="55-village-system.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第55章 村民系统 (Village System) <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解流体系统的基本概念</p>
+<p>- 掌握 Fluid 和 FluidState 的关系</p>
+<p>- 了解流动算法的原理</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- Block 和 BlockState 的关系 (第8章)</p>
+<p>- 方块状态系统 StateManager</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是流体-">什么是流体？</h3>
+
+<p>想象你有一杯水。杯子里的水会：</p>
+<p>- 保持液面水平（静止状态）</p>
+<p>- 从高处流向低处（重力作用）</p>
+<p>- 填满周围的空隙（流动特性）</p>
+
+<p>在 Minecraft 中，<strong>流体就是像水和岩浆这样的液体</strong>，它们会在世界中流动、填充空间。</p>
+
+<h3 id="生活中的比喻-水流系统">生活中的比喻：水流系统</h3>
+
+<p>把 Minecraft 的流体系统想象成<strong>城市自来水系统</strong>：</p>
+
+<table><thead><tr><th>真实世界</th><th>Minecraft 流体</th></tr></thead><tbody><tr><td>---------</td><td>---------------</td></tr><tr><td>水管</td><td>流体方块</td></tr><tr><td>水龙头</td><td>流体源</td></tr><tr><td>水压</td><td>流体等级 (level)</td></tr><tr><td>流动</td><td>流动算法</td></tr></tbody></table>
+
+<h2 id="fluid-和-fluidstate">Fluid 和 FluidState</h2>
+
+<h3 id="类比理解">类比理解</h3>
+
+<pre><code>Block     ←→  Fluid
+BlockState ←→ FluidState</code></pre>
+
+<p>就像每个方块位置有一个 BlockState，每个位置也可以有一个 FluidState。</p>
+
+<h3 id="fluid-类-流体的-类型-">Fluid 类（流体的"类型"）</h3>
+
+<div class="mermaid">
+classDiagram
+    class Fluid {
+        +getDefaultState() : FluidState
+        +getBucketItem() : Item
+        +getTickRate() : int
+        +isStill() : boolean
+        +getLevel() : int
+        +toBlockState() : BlockState
+    }
+    
+    class WaterFluid {
+        +getFlowing() : Fluid
+        +getStill() : Fluid
+        +getMaxFlowDistance() : int
+    }
+    
+    class LavaFluid {
+        +getMaxFlowDistance() : int
+        +onRandomTick()
+    }
+    
+    Fluid <|-- WaterFluid
+    Fluid <|-- LavaFluid
+</div>
+
+<h3 id="fluidstate-类-流体的-状态-">FluidState 类（流体的"状态"）</h3>
+
+<p>每个位置的流体状态记录了：</p>
+
+<pre><code>public final class FluidState extends State&lt;Fluid, FluidState&gt; {
+    // 继承自 State 类
+    // 包含流体的具体属性，如等级、是否下落等
+    
+    public int getLevel() {
+        return getFluid().getLevel(this);  // 获取流动等级
+    }
+    
+    public boolean isStill() {
+        return getFluid().isStill(this);    // 是否是静止的
+    }
+}</code></pre>
+
+<h3 id="流体等级系统">流体等级系统</h3>
+
+<pre><code>Level = 0     :  最深层（接近源头）
+Level = 1-7   :  流动中的水
+Level = 8     :  静止的水
+Level = 9     :  满的方块</code></pre>
+
+<h2 id="图解-流体流动">图解：流体流动</h2>
+
+<div class="mermaid">
+flowchart TB
+    subgraph 流体状态
+        S["源 (Level=8)<br/>isStill=true"]
+        F1["流动 Level=7"]
+        F2["流动 Level=6"]
+        F3["流动 Level=5"]
+        F4["流动 Level=4"]
+        F5["流动 Level=3"]
+    end
+    
+    subgraph 流动方向
+        D["向下 (Gravity)"]
+        H["水平 (Horizontal)"]
+    end
+    
+    S -->|"Level > 1"| F1
+    F1 -->|"减少1级"| F2
+    F2 -->|"减少1级"| F3
+    F3 -->|"减少1级"| F4
+    F4 -->|"减少1级"| F5
+    
+    S --> D
+    F1 --> H
+    
+    style S fill:#3399ff,color:#fff
+    style F5 fill:#66ccff
+</div>
+
+<h3 id="流动算法流程">流动算法流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 调度器 as 流体调度器
+    participant 流体 as FluidState
+    participant 算法 as 流动算法
+    participant 世界 as World
+    
+    调度器->>流体: 每tick调用 onScheduledTick()
+    
+    流体->>算法: 获取更新状态 getUpdatedState()
+    
+    算法->>算法: 检查是否可以向下流动
+    
+    alt 可以向下流动
+        算法->>算法: 流动到下方
+    else 下方阻塞
+        算法->>算法: 检查周围8个方向
+        算法->>算法: 找到最低/最近的出口
+        算法->>算法: 水平流动
+    end
+    
+    算法-->>流体: 返回新状态
+    流体->>世界: 更新方块状态
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="定义流体">定义流体</h3>
+
+<pre><code>// 水流体
+public abstract class WaterFluid extends FlowableFluid {
+    
+    @Override
+    public Fluid getFlowing() {
+        return Fluids.FLOWING_WATER;  // 返回流动版本
+    }
+    
+    @Override
+    public Fluid getStill() {
+        return Fluids.WATER;          // 返回静止版本
+    }
+    
+    // 最大流动距离（水平方向）
+    @Override
+    public int getMaxFlowDistance(WorldView world) {
+        return 4;  // 水可以流4格
+    }
+    
+    // 每格降低的等级
+    @Override
+    public int getLevelDecreasePerBlock(WorldView world) {
+        return 1;
+    }
+}</code></pre>
+
+<h3 id="岩浆的特殊处理">岩浆的特殊处理</h3>
+
+<p>岩浆和水的区别：</p>
+
+<pre><code>// 岩浆流得更慢
+@Override
+public int getTickRate(WorldView world) {
+    return world.getDimension().ultrawarm() ? 10 : 30;
+    // 下界更快 (10 tick)，主世界很慢 (30 tick)
+}
+
+// 岩浆流动距离更短
+@Override
+public int getMaxFlowDistance(WorldView world) {
+    return world.getDimension().ultrawarm() ? 4 : 2;
+    // 下界4格，其他地方只有2格
+}</code></pre>
+
+<h3 id="流动算法核心">流动算法核心</h3>
+
+<pre><code>// FlowableFluid.java 中的流动逻辑
+protected void tryFlow(World world, BlockPos fluidPos, FluidState state) {
+    // 1. 检查是否可以向下流动
+    if (canFlow(world, fluidPos, blockState, Direction.DOWN, ...)) {
+        // 2. 向下流动
+        flow(world, blockPos, blockState, Direction.DOWN, fluidState);
+    }
+    // 3. 如果不能向下，尝试水平流动
+    else {
+        flowToSides(world, fluidPos, state, blockState);
+    }
+}
+
+// 获取可以流向的所有方向
+protected Map&lt;Direction, FluidState&gt; getSpread(World world, 
+                                               BlockPos pos, 
+                                               BlockState state) {
+    // 遍历四个水平方向
+    // 计算每个方向的距离
+    // 返回可以流动的方向
+}</code></pre>
+
+<h2 id="实战演示-创建自定义流体">实战演示：创建自定义流体</h2>
+
+<pre><code>// 1. 定义流体类
+public class CustomFluid extends FlowableFluid {
+    
+    @Override
+    public Fluid getFlowing() {
+        return ModFluids.FLOWING_CUSTOM;
+    }
+    
+    @Override
+    public Fluid getStill() {
+        return ModFluids.CUSTOM;
+    }
+    
+    @Override
+    public Item getBucketItem() {
+        return ModItems.CUSTOM_BUCKET;
+    }
+    
+    @Override
+    protected int getLevelDecreasePerBlock(WorldView world) {
+        return 1;
+    }
+    
+    @Override
+    public int getTickRate(WorldView world) {
+        return 5;
+    }
+    
+    @Override
+    protected boolean isInfinite(World world) {
+        return true;  // 是否无限（如海洋）
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    流体系统                              │
+├─────────────────────────────────────────────────────────┤
+│  核心概念：                                             │
+│  • Fluid = 流体的&quot;类型&quot;（如水、岩浆）                    │
+│  • FluidState = 流体的&quot;状态&quot;（等级、是否下落）           │
+│  • Level = 0-8，代表流体深度/量                         │
+│                                                         │
+│  流动规则：                                             │
+│  • 向下流动（重力）                                     │
+│  • 水平流动（向低处）                                   │
+│  • Level 随距离递减                                     │
+│                                                         │
+│  特殊属性：                                             │
+│  • 水：无限源、流动8格、降1级/格                         │
+│  • 岩浆：非无限、流动短、烧毁物品                       │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么水有"无限源"的特性，但岩浆没有？</p>
+
+<p>2. <strong>实践题</strong>：如果要让蜂蜜像水一样流动，需要修改哪些参数？</p>
+
+<p>3. <strong>调试题</strong>：使用 F3 调试菜单观察流动水的 Level 值变化。</p>
+
+<p>4. <strong>进阶题</strong>：思考如何实现"双向流动"的液体（如岩浆从两边向中间流）。</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Fluid">Minecraft Wiki: Fluids</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Water">Minecraft Wiki: Water</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Lava">Minecraft Wiki: Lava</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.fluid.Fluid</code></p>
+<p>  - <code>net.minecraft.fluid.FluidState</code></p>
+<p>  - <code>net.minecraft.fluid.FlowableFluid</code></p>
+<p>  - <code>net.minecraft.fluid.WaterFluid</code></p>
+<p>  - <code>net.minecraft.fluid.LavaFluid</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Fluid.java</td><td>`net/minecraft/fluid/Fluid.java`</td><td>流体基类</td></tr><tr><td>FlowableFluid.java</td><td>`net/minecraft/fluid/FlowableFluid.java`</td><td>可流动流体实现</td></tr><tr><td>FluidState.java</td><td>`net/minecraft/fluid/FluidState.java`</td><td>流体状态</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：Fluid、FluidState、Water、Lava、Flow</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

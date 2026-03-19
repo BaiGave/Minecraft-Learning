@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第57章 结构系统 (Structure System) - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #16a085 0%, #16a08588 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-11.html">Part-11</a>
+                        <span>/</span>
+                        <span>第57章 结构系统 (Structure System)</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第57章 结构系统 (Structure System)</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-11: 进阶主题</span>
+                    <span><i class="fas fa-file"></i> 57-structure-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是结构系统-">什么是结构系统？</a></li><li class="h3"><a href="#minecraft-中的结构">Minecraft 中的结构</a></li><li><a href="#图解-结构系统架构">图解：结构系统架构</a></li><li class="h3"><a href="#jigsaw-结构生成流程">Jigsaw 结构生成流程</a></li><li><a href="#structurepiece-结构部件">StructurePiece 结构部件</a></li><li class="h3"><a href="#基础结构">基础结构</a></li><li class="h3"><a href="#常用方法">常用方法</a></li><li class="h3"><a href="#创建自定义-structurepiece">创建自定义 StructurePiece</a></li><li><a href="#jigsaw-结构管理器">Jigsaw 结构管理器</a></li><li class="h3"><a href="#jigsawblock-方块">JigsawBlock 方块</a></li><li class="h3"><a href="#连接规则">连接规则</a></li><li class="h3"><a href="#structurepool-结构池">StructurePool 结构池</a></li><li class="h3"><a href="#投影模式">投影模式</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#注册新结构">注册新结构</a></li><li class="h3"><a href="#structurepiecetype-注册">StructurePieceType 注册</a></li><li><a href="#实战演示-创建一个简单的jigsaw结构">实战演示：创建一个简单的Jigsaw结构</a></li><li class="h3"><a href="#步骤1-创建结构池-json">步骤1：创建结构池 JSON</a></li><li class="h3"><a href="#步骤2-创建拼图房间模板">步骤2：创建拼图房间模板</a></li><li class="h3"><a href="#步骤3-添加jigsaw方块">步骤3：添加Jigsaw方块</a></li><li class="h3"><a href="#步骤4-测试生成">步骤4：测试生成</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="56-raid-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第56章 袭击系统 (Raid System)</strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解结构系统的概念</p>
+<p>- 掌握 StructurePiece 的使用方法</p>
+<p>- 了解 Jigsaw 拼图结构生成器</p>
+<p>- 认识结构生成的完整流程</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 世界生成基础</p>
+<p>- 生物群系系统</p>
+<p>- 方块放置系统</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是结构系统-">什么是结构系统？</h3>
+
+<p>把 Minecraft 的结构系统想象成<strong>乐高积木的拼装过程</strong>：</p>
+
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                 结构系统 = 乐高积木                      │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  🔧 基础零件                                            │
+│     └─ StructurePiece = 单个乐高块                     │
+│                                                         │
+│  🧩 拼图连接                                            │
+│     └─ Jigsaw = 乐高凸起和凹槽                        │
+│                                                         │
+│  📦 零件库                                              │
+│     └─ StructurePool = 乐高套装                         │
+│                                                         │
+│  🏗️ 拼装过程                                            │
+│     └─ StructureGenerator = 拼装说明书                 │
+│                                                         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="minecraft-中的结构">Minecraft 中的结构</h3>
+
+<table><thead><tr><th>结构</th><th>生成方式</th><th>示例</th></tr></thead><tbody><tr><td>------</td><td>---------</td><td>------</td></tr><tr><td>沙漠神殿</td><td>预定义</td><td>单一块状结构</td></tr><tr><td>要塞</td><td>Jigsaw</td><td>由多个房间拼接</td></tr><tr><td>村庄</td><td>Jigsaw</td><td>由房屋+道路拼接</td></tr><tr><td>林地府邸</td><td>Jigsaw</td><td>由房间和走廊拼接</td></tr><tr><td>下界要塞</td><td>Jigsaw</td><td>随机走廊组合</td></tr></tbody></table>
+
+<h2 id="图解-结构系统架构">图解：结构系统架构</h2>
+
+<div class="mermaid">
+flowchart TB
+    subgraph 核心类
+        S["Structure<br/>结构基类"]
+        JS["JigsawStructure<br/>拼图结构"]
+        SP["StructurePiece<br/>结构部件"]
+        PSP["PoolStructurePiece<br/>池结构部件"]
+    end
+    
+    subgraph 数据源
+        ST["StructureTemplate<br/>结构模板"]
+        Pool["StructurePool<br/>结构池"]
+        Pools["StructurePools<br/>结构池注册"]
+    end
+    
+    subgraph 生成器
+        SPG["StructurePoolBasedGenerator<br/>生成器"]
+        JBM["JigsawBlock<br/>拼图方块"]
+    end
+    
+    S --> JS
+    JS --> SPG
+    SPG --> PSP
+    PSP --> SP
+    
+    Pool --> SPG
+    Pools --> Pool
+    
+    ST --> PSP
+    JBM --> SPG
+    
+    style S fill:#ffcccc
+    style Pool fill:#ccffcc
+    style SPG fill:#ffffcc
+</div>
+
+<h3 id="jigsaw-结构生成流程">Jigsaw 结构生成流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 世界 as WorldGen
+    participant 结构 as JigsawStructure
+    participant 生成器 as Generator
+    participant 池 as StructurePool
+    participant 模板 as StructureTemplate
+    
+    世界->>结构: 检查生物群系<br/>获取生成位置
+    
+    结构->>池: 获取起始池<br/>start_pool
+    
+    池->>模板: 随机选择一个元素
+    
+    生成器->>生成器: 查找起始拼图<br/>findStartingJigsawPos()
+    
+    Note over 生成器: 第一次拼装：<br/>放置起始模板
+    
+    loop 递归拼装
+        生成器->>生成器: 找到当前模板的<br/>所有Jigsaw方块
+        
+        For 每个Jigsaw方块
+            生成器->>池: 查找目标池<br/>pool="minecraft:xxx"
+            
+            池->>模板: 随机选择一个<br/>目标模板
+            
+            生成器->>生成器: 检查连接匹配<br/>attachmentMatches()
+            
+            alt 匹配成功
+                生成器->>生成器: 计算位置和旋转
+                生成器->>生成器: 添加到Piece列表
+            else 匹配失败
+                生成器->>生成器: 尝试备用池
+            end
+        End
+        
+        生成器->>生成器: 检查是否达到<br/>最大深度/大小
+    end
+    
+    生成器-->>世界: 返回所有StructurePiece
+    世界->>世界: 生成方块到世界中
+</div>
+
+<h2 id="structurepiece-结构部件">StructurePiece 结构部件</h2>
+
+<h3 id="基础结构">基础结构</h3>
+
+<pre><code>public abstract class StructurePiece {
+    // 边界盒 - 定义这个部件占据的空间
+    protected BlockBox boundingBox;
+    
+    // 朝向 - 定义部件的方向
+    @Nullable
+    private Direction facing;
+    
+    // 镜像 - 水平翻转
+    private BlockMirror mirror;
+    
+    // 旋转 - 0°, 90°, 180°, 270°
+    private BlockRotation rotation;
+    
+    // 链长度 - 递归深度
+    protected int chainLength;
+    
+    // 类型标识
+    private final StructurePieceType type;
+}</code></pre>
+
+<h3 id="常用方法">常用方法</h3>
+
+<pre><code>// 获取部件在世界中的实际位置
+protected BlockPos.Mutable offsetPos(int x, int y, int z) {
+    return new BlockPos.Mutable(
+        applyXTransform(x, z),   // X坐标变换
+        applyYTransform(y),      // Y坐标变换（加上边界盒最小Y）
+        applyZTransform(x, z)    // Z坐标变换
+    );
+}
+
+// 添加方块到世界
+protected void addBlock(StructureWorldAccess world, BlockState block, 
+                        int x, int y, int z, BlockBox box) {
+    BlockPos.Mutable pos = offsetPos(x, y, z);
+    if (!box.contains(pos)) return;  // 必须在边界盒内
+    world.setBlockState(pos, block, Block.NOTIFY_LISTENERS);
+}
+
+// 填充一个矩形区域
+protected void fillWithOutline(StructureWorldAccess world, BlockBox box,
+                               int minX, int minY, int minZ,
+                               int maxX, int maxY, int maxZ,
+                               BlockState outline, BlockState inside) {
+    // 填充空心矩形
+}</code></pre>
+
+<h3 id="创建自定义-structurepiece">创建自定义 StructurePiece</h3>
+
+<pre><code>public class MyStructurePiece extends StructurePiece {
+    
+    public MyStructurePiece(StructurePieceType type, int length, 
+                             BlockBox boundingBox) {
+        super(type, length, boundingBox);
+    }
+    
+    public MyStructurePiece(StructurePieceType type, NbtCompound nbt) {
+        super(type, nbt);
+    }
+    
+    @Override
+    protected void writeNbt(StructureContext context, NbtCompound nbt) {
+        // 保存额外数据
+    }
+    
+    @Override
+    public void generate(StructureWorldAccess world, StructureAccessor accessor,
+                        ChunkGenerator generator, Random random,
+                        BlockBox box, ChunkPos chunkPos, BlockPos pivot) {
+        // 生成逻辑
+        BlockState wood = Blocks.OAK_PLANKS.getDefaultState();
+        BlockState air = Blocks.AIR.getDefaultState();
+        
+        // 填充 5x5x5 的空心立方体
+        fillWithOutline(world, box, 
+            0, 0, 0,  // 最小坐标
+            4, 4, 4,  // 最大坐标
+            wood, air, false  // 外层木头，内部空气
+        );
+    }
+}</code></pre>
+
+<h2 id="jigsaw-结构管理器">Jigsaw 结构管理器</h2>
+
+<h3 id="jigsawblock-方块">JigsawBlock 方块</h3>
+
+<pre><code>// Jigsaw方块有4个重要属性
+public class JigsawBlock {
+    // 连接方向
+    Direction facing = ...;
+    
+    // 目标池名称
+    String pool = &quot;minecraft:empty&quot;;
+    
+    // 目标拼图名称
+    String name = &quot;empty&quot;;
+    
+    // 优先级
+    int priority = 0;
+}</code></pre>
+
+<h3 id="连接规则">连接规则</h3>
+
+<div class="mermaid">
+graph LR
+    A["Jigsaw A<br/>facing=south<br/>name=entrance"] 
+    -->|对接| B["Jigsaw B<br/>facing=north<br/>name=entrance"]
+    
+    style A fill:#3399ff,color:#fff
+    style B fill:#3399ff,color:#fff
+</div>
+
+<p>两个 Jigsaw 方块能够连接的条件：</p>
+<p>1. <strong>方向相反</strong>：A 向南，B 向北</p>
+<p>2. <strong>名称匹配</strong>：entrance 对 entrance</p>
+<p>3. <strong>高度兼容</strong>：RIGID 对 RIGID 或TERRAIN_MATCHING</p>
+
+<h3 id="structurepool-结构池">StructurePool 结构池</h3>
+
+<pre><code>// 结构池定义
+public class StructurePool {
+    // 池的唯一标识
+    ResourceKey&lt;StructurePool&gt; key;
+    
+    // 池中的所有元素
+    List&lt;StructurePoolElement&gt; elements;
+    
+    // 当池为空时的后备
+    RegistryEntry&lt;StructurePool&gt; fallback;
+    
+    // 投影模式
+    Projection projection = Projection.RIGID;
+}</code></pre>
+
+<h3 id="投影模式">投影模式</h3>
+
+<table><thead><tr><th>模式</th><th>描述</th><th>用途</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>`RIGID`</td><td>严格高度</td><td>地牢、房间</td></tr><tr><td>`TERRAIN_MATCHING`</td><td>适应地形</td><td>地表建筑</td></tr></tbody></table>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="注册新结构">注册新结构</h3>
+
+<pre><code>// 1. 定义结构
+public class MyStructure extends JigsawStructure {
+    public MyStructure(Config config, RegistryEntry&lt;StructurePool&gt; startPool,
+                      int size, HeightProvider startHeight, 
+                      boolean useExpansionHack) {
+        super(config, startPool, size, startHeight, useExpansionHack);
+    }
+    
+    @Override
+    public Optional&lt;StructurePosition&gt; getStructurePosition(
+            Structure.Context context) {
+        // 调用生成器
+        return StructurePoolBasedGenerator.generate(
+            context,
+            this.startPool,
+            Optional.empty(),
+            this.size,
+            ...其他参数
+        );
+    }
+}
+
+// 2. 在初始化时注册
+@Override
+public void onConfigured(RegistrationContext context, 
+                         MutableRegistry&lt;Structure&gt; registry) {
+    RegistryKey&lt;StructurePool&gt; poolKey = 
+        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, 
+            new Identifier(&quot;mymod&quot;, &quot;my_structure_pool&quot;));
+    
+    RegistryEntry&lt;StructurePool&gt; pool = context.register(
+        poolKey,
+        new StructurePool(poolKey, 
+            List.of(
+                new SinglePoolElement(&quot;mymod:my_start&quot;, Projection.RIGID),
+                // 更多元素...
+            ),
+            StructurePools.EMPTY  // 后备池
+        )
+    );
+    
+    registry.register(
+        new Identifier(&quot;mymod&quot;, &quot;my_structure&quot;),
+        new MyStructure(
+            new Structure.Config(
+                context.get(RegistryKeys.BIOME)
+                    .getOrThrow(PlainsBiome.KEY),
+                Map.of(),
+                GenerationStep.Feature.SURFACE_STRUCTURES,
+                StructureTerrainAdaptation.NONE
+            ),
+            pool,
+            10,  // 生成深度
+            HeightProvider.uniform(60, 80),  // 高度范围
+            false
+        )
+    );
+}</code></pre>
+
+<h3 id="structurepiecetype-注册">StructurePieceType 注册</h3>
+
+<pre><code>// 注册部件类型（用于NBT保存/加载）
+public static final StructurePieceType MY_PIECE_TYPE = 
+    StructurePieceType.register(&quot;my_mod:my_piece&quot;, MyStructurePiece::new);</code></pre>
+
+<h2 id="实战演示-创建一个简单的jigsaw结构">实战演示：创建一个简单的Jigsaw结构</h2>
+
+<h3 id="步骤1-创建结构池-json">步骤1：创建结构池 JSON</h3>
+
+<pre><code>// data/mymod/worldgen/template_pool/my_structure.json
+{
+    &quot;elements&quot;: [
+        {
+            &quot;element&quot;: {
+                &quot;location&quot;: &quot;mymod:my_start&quot;,
+                &quot;processors&quot;: &quot;minecraft:empty&quot;,
+                &quot;projection&quot;: &quot;rigid&quot;
+            },
+            &quot;weight&quot;: 1
+        }
+    ],
+    &quot;fallback&quot;: &quot;minecraft:empty&quot;
+}</code></pre>
+
+<h3 id="步骤2-创建拼图房间模板">步骤2：创建拼图房间模板</h3>
+
+<p>在 <code>data/mymod/structures/</code> 创建 NBT 文件（使用 Structure Block 保存）</p>
+
+<h3 id="步骤3-添加jigsaw方块">步骤3：添加Jigsaw方块</h3>
+
+<p>在结构模板中使用 Jigsaw Block：</p>
+<p>- <code>facing</code>: 连接方向</p>
+<p>- <code>pool</code>: 目标池，如 <code>mymod:my_next_room</code></p>
+<p>- <code>name</code>: 连接点名称</p>
+
+<h3 id="步骤4-测试生成">步骤4：测试生成</h3>
+
+<pre><code>/place structure mymod:my_structure ~ ~ ~</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    结构系统                              │
+├─────────────────────────────────────────────────────────┤
+│  核心组件：                                             │
+│  • Structure = 结构定义                                 │
+│  • StructurePiece = 结构部件                            │
+│  • JigsawBlock = 拼图连接器                            │
+│  • StructurePool = 部件池                              │
+│  • StructurePoolBasedGenerator = 生成器                 │
+│                                                         │
+│  生成流程：                                             │
+│  查找起始位置 → 选择起始模板 → 递归拼装 → 完成生成      │
+│                                                         │
+│  Jigsaw 连接规则：                                      │
+│  • 方向相反                                            │
+│  • 名称匹配                                            │
+│  • 投影兼容                                            │
+│                                                         │
+│  常见结构类型：                                         │
+│  • 预定义结构：神殿、矿井                                │
+│  • Jigsaw结构：村庄、要塞、林地府邸                     │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么要使用"池"而不是固定的结构模板列表？</p>
+
+<p>2. <strong>实践题</strong>：创建一个由3个房间组成的简单地牢结构。</p>
+
+<p>3. <strong>设计题</strong>：设计一个可以无限延伸的道路系统（类似村庄道路）。</p>
+
+<p>4. <strong>调试题</strong>：使用 <code>/debug start</code> 生成结构，然后用 <code>/debug stop</code> 查看日志分析生成过程。</p>
+
+<p>5. <strong>进阶题</strong>：如何让结构根据地形自动调整高度？</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Structure">Minecraft Wiki: Structure</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Jigsaw_Block">Minecraft Wiki: Jigsaw Block</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Structure_Void">Minecraft Wiki: Structure Void</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.world.gen.structure.Structure</code></p>
+<p>  - <code>net.minecraft.world.gen.structure.JigsawStructure</code></p>
+<p>  - <code>net.minecraft.structure.StructurePiece</code></p>
+<p>  - <code>net.minecraft.structure.pool.StructurePoolBasedGenerator</code></p>
+<p>  - <code>net.minecraft.structure.pool.StructurePool</code></p>
+<p>  - <code>net.minecraft.block.JigsawBlock</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Structure.java</td><td>`net/minecraft/world/gen/structure/Structure.java`</td><td>结构基类</td></tr><tr><td>StructurePiece.java</td><td>`net/minecraft/structure/StructurePiece.java`</td><td>结构部件基类</td></tr><tr><td>JigsawBlock.java</td><td>`net/minecraft/block/JigsawBlock.java`</td><td>拼图方块</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：Structure、StructurePiece、JigsawBlock、StructurePool</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
