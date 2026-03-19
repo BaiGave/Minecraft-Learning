@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第23章 MobEntity——会思考的生物 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #8e44ad 0%, #8e44ad88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-4.html">Part-4</a>
+                        <span>/</span>
+                        <span>第23章 MobEntity——会思考的生物</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第23章 MobEntity——会思考的生物</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-4: 实体系统</span>
+                    <span><i class="fas fa-file"></i> 23-mob-entity</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是-mobentity-">什么是 MobEntity？</a></li><li class="h3"><a href="#生活中的比喻">生活中的比喻</a></li><li class="h3"><a href="#mobentity-的核心组件">MobEntity 的核心组件</a></li><li><a href="#图解">图解</a></li><li class="h3"><a href="#mobentity-系统架构">MobEntity 系统架构</a></li><li class="h3"><a href="#ai-执行流程">AI 执行流程</a></li><li class="h3"><a href="#目标选择系统">目标选择系统</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#mobentity-的构造函数">MobEntity 的构造函数</a></li><li class="h3"><a href="#goalselector-行为目标选择器-">GoalSelector（行为目标选择器）</a></li><li class="h3"><a href="#目标选择器-targetselector-">目标选择器（TargetSelector）</a></li><li class="h3"><a href="#移动控制-movecontrol-">移动控制（MoveControl）</a></li><li class="h3"><a href="#导航系统-navigation-">导航系统（Navigation）</a></li><li class="h3"><a href="#攻击逻辑">攻击逻辑</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-创建一个简单的巡逻-ai">场景：创建一个简单的巡逻 AI</a></li><li class="h3"><a href="#场景-创建一个攻击目标的-ai">场景：创建一个攻击目标的 AI</a></li><li class="h3"><a href="#场景-初始化生物的-ai">场景：初始化生物的 AI</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#练习-1-创建跟随目标-ai">练习 1：创建跟随目标 AI</a></li><li class="h3"><a href="#练习-2-创建范围巡逻-ai">练习 2：创建范围巡逻 AI</a></li><li class="h3"><a href="#练习-3-创建逃跑-ai">练习 3：创建逃跑 AI</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="22-living-entity.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第22章 LivingEntity——有血有肉的活物</strong>
+        </a><a href="24-entity-attributes.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第24章 实体属性系统——角色的能力数值 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解 MobEntity 是什么</p>
+<p>- 掌握 AI 系统：GoalSelector 和 TargetSelector</p>
+<p>- 了解导航系统（PathNavigator）</p>
+<p>- 了解移动控制（MoveControl）</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 LivingEntity（第22章）</p>
+<p>- 了解实体生命周期（第21章）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是-mobentity-">什么是 MobEntity？</h3>
+
+<p><strong>MobEntity（生物实体）</strong> 是 LivingEntity 的子类，代表所有"会自己移动、有 AI 行为"的实体。</p>
+
+<pre><code>Entity（实体）
+    │
+    └── LivingEntity（有生命的）
+            │
+            └── MobEntity（会思考的生物）
+                    │
+                    ├── 移动控制系统
+                    │   ├── MoveControl（移动控制）
+                    │   ├── LookControl（视角控制）
+                    │   └── JumpControl（跳跃控制）
+                    │
+                    ├── 导航系统
+                    │   └── Navigation（PathNavigator）
+                    │
+                    ├── AI 目标系统
+                    │   ├── GoalSelector（行为目标）
+                    │   └── TargetSelector（攻击目标）
+                    │
+                    └── 装备系统
+                        ├── 手持物品
+                        └── 盔甲装备</code></pre>
+
+<h3 id="生活中的比喻">生活中的比喻</h3>
+
+<pre><code>MobEntity 就像一个有自己的&quot;小脑子&quot;的生物：
+
+- MoveControl = 腿，告诉它怎么走路
+- LookControl = 脖子，告诉它往哪看
+- Navigation = 导航系统，告诉它怎么去目的地
+- GoalSelector = 待办清单，要做的事情
+- TargetSelector = 目标清单，要攻击/跟随的对象</code></pre>
+
+<h3 id="mobentity-的核心组件">MobEntity 的核心组件</h3>
+
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│                        MobEntity                               │
+├────────────────────────────────────────────────────────────────┤
+│ 🦵 移动控制系统                                                 │
+│    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│    │ MoveControl │  │ LookControl  │  │ JumpControl  │       │
+│    │ 移动指令    │  │ 看向哪里    │  │ 跳跃指令    │       │
+│    └──────────────┘  └──────────────┘  └──────────────┘       │
+├────────────────────────────────────────────────────────────────┤
+│ 🧭 导航系统                                                    │
+│    ┌──────────────────────────────────────────────┐           │
+│    │           Navigation（PathNavigator）        │           │
+│    │  - startMovingTo() 开始移动到目标          │           │
+│    │  - stop() 停止移动                          │           │
+│    │  - isIdle() 是否空闲                        │           │
+│    └──────────────────────────────────────────────┘           │
+├────────────────────────────────────────────────────────────────┤
+│ 🎯 AI 目标系统                                                 │
+│    ┌────────────────────┐  ┌────────────────────┐            │
+│    │    GoalSelector    │  │  TargetSelector    │            │
+│    │    行为目标列表     │  │  攻击目标列表      │            │
+│    │    (做什么)        │  │  (打谁)            │            │
+│    └────────────────────┘  └────────────────────┘            │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="图解">图解</h2>
+
+<h3 id="mobentity-系统架构">MobEntity 系统架构</h3>
+
+<div class="mermaid">
+classDiagram
+    class MobEntity {
+        +GoalSelector goalSelector
+        +GoalSelector targetSelector
+        +MoveControl moveControl
+        +LookControl lookControl
+        +JumpControl jumpControl
+        +EntityNavigation navigation
+        +initGoals()
+        +tryAttack()
+    }
+
+    class GoalSelector {
+        +Map~Goal.Control, Set~ goals
+        +tick()
+        +addGoal()
+    }
+
+    class Goal {
+        <<interface>>
+        +canStart() 是否可以开始
+        +shouldContinue() 是否继续
+        +tick() 每刻执行
+        +stop() 停止
+    }
+
+    class MoveControl {
+        +MobEntity entity
+        +Goal.Control state
+        +tick()
+    }
+
+    class Navigation {
+        +Path path
+        +tick()
+        +startMovingTo()
+        +stop()
+    }
+
+    MobEntity --> GoalSelector
+    MobEntity --> MoveControl
+    MobEntity --> Navigation
+    GoalSelector --> Goal : 管理
+</div>
+
+<h3 id="ai-执行流程">AI 执行流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant World as 世界 tick
+    participant Mob as MobEntity
+    participant Target as TargetSelector
+    participant Goal as GoalSelector
+    participant Nav as Navigation
+    participant Control as Controllers
+
+    World->>Mob: tickNewAi()
+
+    Mob->>Target: tick()
+    Note over Target: 更新攻击目标<br/>根据目标选择规则<br/>设置/清除攻击目标
+
+    Mob->>Goal: tick()
+    Note over Goal: 从待办清单中<br/>选择合适的行动<br/>执行 Goal.tick()
+
+    Mob->>Nav: tick()
+    Note over Nav: 更新寻路<br/>沿着路径移动<br/>到达目标点停止
+
+    Mob->>Control: tick()
+    Note over Control: MoveControl: 移动<br/>LookControl: 看<br/>JumpControl: 跳
+</div>
+
+<h3 id="目标选择系统">目标选择系统</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[开始目标选择] --> B[感知周围环境]
+
+    B --> C{能看见玩家?}
+    C -->|是| D[设置为攻击目标]
+    C -->|否| E{能听见?}
+
+    E -->|是| D
+    E -->|否| F{范围内存活目标?}
+
+    F -->|是| D
+    F -->|否| G[清除攻击目标]
+
+    D --> H[目标有效?]
+    H -->|是| I[保持攻击目标]
+    H -->|否| G
+
+    I --> J[返回目标实体]
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<blockquote><strong>注意</strong>：以下代码基于 CFR 反编译结果，可能与实际源码略有差异。</blockquote>
+
+<h3 id="mobentity-的构造函数">MobEntity 的构造函数</h3>
+
+<pre><code>// MobEntity.java - 生物实体的初始化
+public abstract class MobEntity extends LivingEntity {
+
+    // 目标选择器
+    protected final GoalSelector goalSelector;
+    protected final GoalSelector targetSelector;
+
+    // 控制器
+    protected LookControl lookControl;
+    protected MoveControl moveControl;
+    protected JumpControl jumpControl;
+    protected final BodyControl bodyControl;
+
+    // 导航系统
+    protected EntityNavigation navigation;
+
+    // 攻击目标
+    @Nullable
+    private LivingEntity target;
+
+    public MobEntity(EntityType&lt;?&gt; entityType, World world) {
+        super(entityType, world);
+
+        // 初始化 AI 选择器
+        this.goalSelector = new GoalSelector(world.getProfilerSupplier());
+        this.targetSelector = new GoalSelector(world.getProfilerSupplier());
+
+        // 初始化控制器
+        this.lookControl = new LookControl(this);
+        this.moveControl = new MoveControl(this);
+        this.jumpControl = new JumpControl(this);
+        this.bodyControl = this.createBodyControl();
+
+        // 初始化导航
+        this.navigation = this.createNavigation(world);
+
+        // 在服务端初始化 AI 目标
+        if (world != null &amp;&amp; !world.isClient) {
+            this.initGoals();
+        }
+    }
+
+    // 子类重写这个方法来添加 AI 目标
+    protected void initGoals() {
+        // 默认空实现
+    }
+
+    // 创建导航系统
+    protected EntityNavigation createNavigation(World world) {
+        return new MobNavigation(this, world);
+    }
+
+    // 创建身体控制器（子类可以重写）
+    protected BodyControl createBodyControl() {
+        return new BodyControl(this);
+    }
+}</code></pre>
+
+<h3 id="goalselector-行为目标选择器-">GoalSelector（行为目标选择器）</h3>
+
+<pre><code>// GoalSelector.java - 行为目标管理器
+public class GoalSelector {
+
+    // 按优先级分组的目标
+    private final Map&lt;Goal.Control, Set&lt;Goal&gt;&gt; goalMap = new EnumMap&lt;&gt;(Goal.Control.class);
+
+    // 添加目标
+    public void addGoal(int priority, Goal goal) {
+        // priority 越小优先级越高
+        for (Goal.Control control : goal.getControls()) {
+            Set&lt;Goal&gt; goals = this.goalMap.computeIfAbsent(control, k -&gt; new ObjectLinkedOpenHashSet&lt;&gt;());
+            goals.removeIf(g -&gt; g.getPriority() == priority);
+            goals.add(goal);
+        }
+        goal.setPriority(priority);
+    }
+
+    // 每刻更新
+    public void tick() {
+        // 遍历所有目标
+        for (Goal goal : this.getRunningGoals()) {
+            // 检查是否可以运行
+            if (goal.canStart()) {
+                // 执行目标
+                goal.tick();
+            } else {
+                // 停止目标
+                goal.stop();
+            }
+        }
+    }
+
+    // 获取正在运行的目标
+    public Iterable&lt;Goal&gt; getRunningGoals() {
+        return this.goalMap.values().stream()
+            .flatMap(Collection::stream)
+            .filter(Goal::isRunning)
+            .sorted(Comparator.comparingInt(Goal::getPriority));
+    }
+}</code></pre>
+
+<h3 id="目标选择器-targetselector-">目标选择器（TargetSelector）</h3>
+
+<pre><code>// MobEntity.java - 目标选择相关代码
+public abstract class MobEntity extends LivingEntity {
+
+    // 攻击目标
+    @Nullable
+    private LivingEntity target;
+
+    // 获取攻击目标
+    @Override
+    @Nullable
+    public LivingEntity getTarget() {
+        return this.target;
+    }
+
+    // 设置攻击目标
+    public void setTarget(@Nullable LivingEntity target) {
+        this.target = target;
+    }
+
+    // 检查能否将某实体设为目标
+    @Override
+    public boolean canTarget(EntityType&lt;?&gt; type) {
+        // 默认可以攻击除了末影人之外的所有生物
+        return type != EntityType.GHAST;
+    }
+
+    // 检查是否在攻击范围内
+    public boolean isInAttackRange(LivingEntity entity) {
+        return this.getAttackBox().intersects(entity.getHitbox());
+    }
+
+    // 获取攻击范围
+    protected Box getAttackBox() {
+        return this.getBoundingBox().expand(ATTACK_RANGE, 0.0, ATTACK_RANGE);
+    }
+}</code></pre>
+
+<h3 id="移动控制-movecontrol-">移动控制（MoveControl）</h3>
+
+<pre><code>// MoveControl.java - 移动控制器
+public class MoveControl {
+
+    public enum State {
+        WAIT,       // 等待
+        MOVE_TO,    // 移动到目标
+        JUMPING,    // 跳跃中
+        STRAFE      // 横向移动
+    }
+
+    private final MobEntity entity;
+    private State state = State.WAIT;
+    private double targetX, targetY, targetZ;
+    private float speed;
+
+    // 设置移动目标
+    public void moveTo(double x, double y, double z, float speed) {
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
+        this.speed = speed;
+        this.state = State.MOVE_TO;
+    }
+
+    // 每刻更新
+    public void tick() {
+        switch (state) {
+            case MOVE_TO -&gt; {
+                // 计算方向
+                double dx = targetX - entity.getX();
+                double dy = targetY - entity.getY();
+                double dz = targetZ - entity.getZ();
+
+                // 如果很接近目标，停止移动
+                if (dx * dx + dy * dy + dz * dz &lt; 0.25) {
+                    entity.setMovementSpeed(0);
+                    state = State.WAIT;
+                    return;
+                }
+
+                // 设置移动方向和速度
+                entity.setForwardSpeed(speed);
+                entity.setUpwardSpeed(dy &gt; 0 ? 1 : 0);
+            }
+            case JUMPING -&gt; {
+                // 跳跃中...
+            }
+        }
+    }
+}</code></pre>
+
+<h3 id="导航系统-navigation-">导航系统（Navigation）</h3>
+
+<pre><code>// MobNavigation.java - 陆地导航
+public class MobNavigation extends EntityNavigation {
+
+    private final MobEntity mob;
+
+    public MobNavigation(MobEntity mob, World world) {
+        super(mob, world);
+        this.mob = mob;
+    }
+
+    // 开始移动到目标位置
+    public void startMovingTo(double x, double y, double z, double speed) {
+        this.start(
+            new PathickeNodeEvaluator(),
+            new Path(x, y, z),
+            speed
+        );
+    }
+
+    // 开始追踪实体
+    public void startMovingTo(Entity entity, double speed) {
+        this.start(
+            new PathickeNodeEvaluator(),
+            new EntityPath(entity),
+            speed
+        );
+    }
+
+    // 停止移动
+    public void stop() {
+        this.currentPath = null;
+    }
+
+    // 检查是否在移动
+    public boolean isIdle() {
+        return this.currentPath == null;
+    }
+
+    // 每刻更新
+    @Override
+    public void tick() {
+        if (this.isIdle()) return;
+
+        // 沿路径移动
+        this.doTick();
+    }
+}</code></pre>
+
+<h3 id="攻击逻辑">攻击逻辑</h3>
+
+<pre><code>// MobEntity.java - 攻击相关
+public abstract class MobEntity extends LivingEntity {
+
+    private static final double ATTACK_RANGE = Math.sqrt(2.04f) - 0.6;
+
+    // 尝试攻击
+    public boolean tryAttack(Entity target) {
+        // 获取攻击力
+        float attackDamage = (float)this.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+
+        // 获取伤害来源
+        DamageSource damageSource = this.getDamageSources().mobAttack(this);
+
+        // 附加附魔伤害
+        if (this.getWorld() instanceof ServerWorld serverWorld) {
+            attackDamage = EnchantmentHelper.getDamage(
+                serverWorld,
+                this.getWeaponStack(),  // 主手物品
+                target,
+                damageSource,
+                attackDamage
+            );
+        }
+
+        // 造成伤害
+        boolean hit = target.damage(damageSource, attackDamage);
+
+        if (hit) {
+            // 击退
+            float knockback = (float)this.getAttributeValue(EntityAttributes.GENERIC_ATTACK_KNOCKBACK);
+            if (target instanceof LivingEntity living) {
+                living.takeKnockback(
+                    knockback * 0.5f,
+                    MathHelper.sin(this.getYaw() * 0.017453292f),
+                    -MathHelper.cos(this.getYaw() * 0.017453292f)
+                );
+            }
+
+            // 附加附魔效果
+            if (this.getWorld() instanceof ServerWorld serverWorld) {
+                EnchantmentHelper.onTargetDamaged(serverWorld, target, damageSource);
+            }
+
+            // 后摇
+            this.setAttacking(false);
+        }
+
+        return hit;
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-创建一个简单的巡逻-ai">场景：创建一个简单的巡逻 AI</h3>
+
+<pre><code>public class PatrolGoal extends Goal {
+
+    private final MobEntity mob;
+    private final double speed;
+    private final float maxDistance;
+    private Vec3d targetPos;
+
+    public PatrolGoal(MobEntity mob, double speed, float maxDistance) {
+        this.mob = mob;
+        this.speed = speed;
+        this.maxDistance = maxDistance;
+        this.setControls(EnumSet.of(Goal.Control.MOVE));
+    }
+
+    @Override
+    public boolean canStart() {
+        // 总是可以开始巡逻
+        return true;
+    }
+
+    @Override
+    public boolean shouldContinue() {
+        // 如果有目标且还没到达，继续
+        if (!this.mob.getNavigation().isIdle()) {
+            return true;
+        }
+        return this.mob.squaredDistanceTo(targetPos) &gt; 1.0;
+    }
+
+    @Override
+    public void start() {
+        // 随机选择一个巡逻点
+        this.targetPos = this.getRandomPosition();
+        this.mob.getNavigation().startMovingTo(
+            targetPos.x, targetPos.y, targetPos.z,
+            this.speed
+        );
+    }
+
+    @Override
+    public void tick() {
+        // 每刻检查是否到达
+        if (this.mob.squaredDistanceTo(targetPos) &lt; 2.0) {
+            this.stop();
+        }
+    }
+
+    @Override
+    public void stop() {
+        this.mob.getNavigation().stop();
+        // 选择下一个目标
+        this.start();
+    }
+
+    private Vec3d getRandomPosition() {
+        double x = this.mob.getX() + (this.mob.random.nextFloat() * 2 - 1) * this.maxDistance;
+        double z = this.mob.getZ() + (this.mob.random.nextFloat() * 2 - 1) * this.maxDistance;
+        return new Vec3d(x, this.mob.getY(), z);
+    }
+}</code></pre>
+
+<h3 id="场景-创建一个攻击目标的-ai">场景：创建一个攻击目标的 AI</h3>
+
+<pre><code>public class MeleeAttackGoal extends Goal {
+
+    private final MobEntity mob;
+    private final double speed;
+    private final float attackRange;
+    private int cooldown = 0;
+
+    public MeleeAttackGoal(MobEntity mob, double speed, float attackRange) {
+        this.mob = mob;
+        this.speed = speed;
+        this.attackRange = attackRange;
+        this.setControls(EnumSet.of(Goal.Control.MOVE, Goal.Control.LOOK));
+    }
+
+    @Override
+    public boolean canStart() {
+        // 需要有攻击目标
+        LivingEntity target = this.mob.getTarget();
+        return target != null &amp;&amp; target.isAlive();
+    }
+
+    @Override
+    public boolean shouldContinue() {
+        return this.canStart();
+    }
+
+    @Override
+    public void start() {
+        this.cooldown = 0;
+    }
+
+    @Override
+    public void tick() {
+        LivingEntity target = this.mob.getTarget();
+
+        // 看向目标
+        this.mob.getLookControl().lookAt(target, 30.0f, 30.0f);
+
+        // 接近目标
+        double distance = this.mob.squaredDistanceTo(target);
+        if (distance &gt; this.attackRange * this.attackRange) {
+            // 距离太远，移动过去
+            this.mob.getNavigation().startMovingTo(target, this.speed);
+        } else {
+            // 停止移动
+            this.mob.getNavigation().stop();
+
+            // 攻击冷却
+            if (this.cooldown &lt;= 0) {
+                // 攻击
+                this.mob.tryAttack(target);
+                this.cooldown = 20; // 1秒冷却
+            }
+        }
+
+        if (this.cooldown &gt; 0) {
+            this.cooldown--;
+        }
+    }
+
+    @Override
+    public void stop() {
+        this.mob.getNavigation().stop();
+        this.cooldown = 0;
+    }
+}</code></pre>
+
+<h3 id="场景-初始化生物的-ai">场景：初始化生物的 AI</h3>
+
+<pre><code>public class ExampleMobEntity extends MobEntity {
+
+    public ExampleMobEntity(EntityType&lt;?&gt; type, World world) {
+        super(type, world);
+    }
+
+    @Override
+    protected void initGoals() {
+        // 创建目标选择器
+        this.targetSelector.addGoal(0, new ActiveTargetGoal&lt;&gt;(
+            this,
+            PlayerEntity.class,
+            true  // 检查可见性
+        ));
+
+        // 创建行为目标
+        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, 2.0));
+        this.goalSelector.addGoal(2, new PatrolGoal(this, 0.8, 10.0));
+        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
+        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>MobEntity = 有 AI 的生物</strong></p>
+<p>   - 继承了 LivingEntity 的所有功能</p>
+<p>   - 添加了 AI 系统来控制行为</p>
+
+<p>2. <strong>四大控制系统</strong></p>
+<p>   - <code>MoveControl</code> - 控制移动方向和速度</p>
+<p>   - <code>LookControl</code> - 控制看向哪里</p>
+<p>   - <code>JumpControl</code> - 控制跳跃</p>
+<p>   - <code>BodyControl</code> - 控制身体旋转</p>
+
+<p>3. <strong>AI 目标系统</strong></p>
+<p>   - <code>GoalSelector</code> - 管理行为目标（做什么）</p>
+<p>   - <code>TargetSelector</code> - 管理攻击目标（打谁）</p>
+<p>   - 优先级数字越小，优先级越高</p>
+
+<p>4. <strong>导航系统</strong></p>
+<p>   - <code>Navigation</code> - 寻路移动</p>
+<p>   - <code>startMovingTo()</code> - 开始追踪</p>
+<p>   - <code>stop()</code> - 停止移动</p>
+
+<p>5. <strong>AI 开发流程</strong></p>
+<p>   - 创建 Goal 类定义行为</p>
+<p>   - 在 <code>initGoals()</code> 中注册</p>
+<p>   - Goal 会自动执行</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="练习-1-创建跟随目标-ai">练习 1：创建跟随目标 AI</h3>
+
+<pre><code>// 创建一个 FollowOwnerGoal
+// 功能：生物始终跟随玩家
+// 提示：使用 Entity.getControllingPlayer() 获取主人</code></pre>
+
+<h3 id="练习-2-创建范围巡逻-ai">练习 2：创建范围巡逻 AI</h3>
+
+<pre><code>// 创建一个原地转圈巡逻的 AI
+// 功能：在原地随机方向移动
+// 提示：使用 setForwardSpeed() 和 setSidewaysSpeed()</code></pre>
+
+<h3 id="练习-3-创建逃跑-ai">练习 3：创建逃跑 AI</h3>
+
+<pre><code>// 创建一个当生命值低时逃跑的 AI
+// 功能：生命值低于50%时远离攻击者
+// 提示：在 tick() 中检查 mob.getHealth()</code></pre>
+
+<h2 id="相关链接">相关链接</h2>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>MobEntity.java</td><td>`net/minecraft/entity/mob/MobEntity.java`</td><td>生物实体基类</td></tr><tr><td>GoalSelector.java</td><td>`net/minecraft/entity/ai/GoalSelector.java`</td><td>目标选择器</td></tr><tr><td>TargetSelector.java</td><td>`net/minecraft/entity/ai/TargetSelector.java`</td><td>目标选择器</td></tr><tr><td>Navigation.java</td><td>`net/minecraft/entity/ai/Navigation.java`</td><td>导航系统</td></tr></tbody></table>
+
+<p>- <strong>上一章</strong>：<a href="./22-living-entity.html">第22章 LivingEntity</a></p>
+<p>- <strong>下一章</strong>：<a href="./24-entity-attributes.html">第24章 实体属性系统</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/mob/MobEntity.java</code> - MobEntity 主类</p>
+<p>  - <code>net/minecraft/entity/ai/goal/Goal.java</code> - Goal 接口</p>
+<p>  - <code>net/minecraft/entity/ai/control/*.java</code> - 控制器</p>
+<p>  - <code>net/minecraft/entity/ai/pathing/*.java</code> - 导航系统</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

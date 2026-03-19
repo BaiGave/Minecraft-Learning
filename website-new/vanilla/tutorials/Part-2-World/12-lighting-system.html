@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 - 光照系统：明暗的艺术 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #27ae60 0%, #27ae6088 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-2.html">Part-2</a>
+                        <span>/</span>
+                        <span>12 - 光照系统：明暗的艺术</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">12 - 光照系统：明暗的艺术</h1>
+                
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-2: 世界系统</span>
+                    <span><i class="fas fa-file"></i> 12-lighting-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#光照是什么-">光照是什么？</a></li><li class="h3"><a href="#两种光照">两种光照</a></li><li class="h3"><a href="#为什么不直接计算光照-">为什么不直接计算光照？</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#lightingprovider">LightingProvider</a></li><li class="h3"><a href="#光照计算">光照计算</a></li><li class="h3"><a href="#光照更新">光照更新</a></li><li class="h3"><a href="#区块光照提供者">区块光照提供者</a></li><li class="h3"><a href="#光照是否需要更新">光照是否需要更新</a></li><li class="h3"><a href="#传播算法核心">传播算法核心</a></li><li><a href="#图解-光照传播流程">图解：光照传播流程</a></li><li class="h3"><a href="#天空光照-vs-方块光照传播规则">天空光照 vs 方块光照传播规则</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#光照计算示例">光照计算示例</a></li><li class="h3"><a href="#为什么火把在地下也很亮-">为什么火把在地下也很亮？</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#思考题">思考题</a></li><li class="h3"><a href="#动手题">动手题</a></li><li><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="11-terrain-gen.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 11 - 地形生成：从噪声到山川河流</strong>
+        </a><a href="13-heightmap.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>13 - 高度图：快速查找地形高度 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章后，你将理解：</p>
+<p>- 方块光照和天空光照的区别</p>
+<p>- 光照传播的算法原理</p>
+<p>- 为什么不能直接计算光照（性能问题）</p>
+<p>- Minecraft 如何存储和更新光照</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- <a href="./09-chunk-system.html">09-区块系统</a> - 理解 Chunk 的存储结构</p>
+<p>- <a href="./08-world-core.html">08-世界核心</a> - 了解 World 类</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="光照是什么-">光照是什么？</h3>
+
+<p><strong>生活比喻</strong>：</p>
+
+<p>想象你在一个漆黑的房间里：</p>
+<p>- <strong>手电筒</strong> = 发光的方块（火把、南瓜灯）</p>
+<p>- <strong>窗户</strong> = 天空光照的来源</p>
+<p>- <strong>墙壁和家具</strong> = 会阻挡光照的方块</p>
+
+<p><strong>Minecraft 的光照系统</strong> = 模拟现实世界光线的传播！</p>
+
+<pre><code>现实世界：                    Minecraft：
+┌─────────────────┐         ┌─────────────────┐
+│  太阳光        │         │ 天空光照        │
+│     ↓           │         │     ↓           │
+│ ▓▓▓▓▓▓▓▓      │         │ ▓▓▓▓▓▓▓▓      │ ← 方块阻挡
+│      ↓         │         │      ↓         │
+│   手电筒       │         │   火把        │
+│     ↓           │         │     ↓           │
+│ ░░░░░░░░       │         │ ░░░░░░░░       │ ← 光照到达
+└─────────────────┘         └─────────────────┘</code></pre>
+
+<h3 id="两种光照">两种光照</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph SkyLight["天空光照 Sky Light"]
+        direction TB
+        S1["来源：天空"]
+        S2["向下传播"]
+        S3["被不透明方块阻挡"]
+    end
+
+    subgraph BlockLight["方块光照 Block Light"]
+        direction TB
+        B1["来源：发光方块"]
+        B2["向所有方向传播"]
+        B3["可穿过透明方块"]
+    end
+
+    subgraph Result["最终光照"]
+        direction TB
+        R1["取两者最大值"]
+        R2["最终亮度 = max(天空光, 方块光)"]
+    end
+
+    SkyLight --> Result
+    BlockLight --> Result
+</div>
+
+<table><thead><tr><th>类型</th><th>来源</th><th>特点</th><th>例子</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td><td>------</td></tr><tr><td>**天空光照**</td><td>天空</td><td>只向下，阻挡即消失</td><td>白天</td></tr><tr><td>**方块光照**</td><td>发光方块</td><td>向所有方向，可穿透明方块</td><td>火把、岩浆</td></tr></tbody></table>
+
+<h3 id="为什么不直接计算光照-">为什么不直接计算光照？</h3>
+
+<p><strong>生活比喻</strong>：</p>
+
+<p>想象你要计算一个城市的交通流量：</p>
+<p>- <strong>实时计算</strong> = 每辆车每秒钟都在变 → 计算量爆炸 💥</p>
+<p>- <strong>预计算+增量更新</strong> = 只计算变化的区域 → 完美！</p>
+
+<div class="mermaid">
+flowchart TD
+    subgraph Naive["实时计算（不可行）"]
+        direction TB
+        N1["每帧计算所有方块的光照"]
+        N2["复杂度：O(n³)"]
+        N3["1万个方块 = 10亿次计算/帧"]
+        N4["60帧/秒 = 60亿次/秒 💥"]
+    end
+
+    subgraph Minecraft["Minecraft 的方案"]
+        direction TB
+        M1["光照值存储在 Chunk 中"]
+        M2["只更新变化区域"]
+        M3["使用 BFS 传播算法"]
+        M4["复杂度：O(变化方块数)"]
+    end
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<blockquote>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</blockquote>
+
+<h3 id="lightingprovider">LightingProvider</h3>
+
+<p>源码路径：<code>net/minecraft/world/chunk/light/LightingProvider.java</code></p>
+
+<pre><code>21:public class LightingProvider
+22:implements LightingView {
+23:    // 世界引用
+24:    protected final HeightLimitView world;
+
+26:    // 方块光照提供者
+27:    @Nullable
+27:    private final ChunkLightProvider&lt;?, ?&gt; blockLightProvider;
+
+29:    // 天空光照提供者
+30:    @Nullable
+30:    private final ChunkLightProvider&lt;?, ?&gt; skyLightProvider;
+32:}</code></pre>
+
+<h3 id="光照计算">光照计算</h3>
+
+<pre><code>149:    public int getLight(BlockPos pos, int ambientDarkness) {
+150:        // 天空光照（减去环境暗度）
+151:        int skyLight = this.skyLightProvider == null
+152:            ? 0
+153:            : this.skyLightProvider.getLightLevel(pos) - ambientDarkness;
+155:        // 方块光照
+156:        int blockLight = this.blockLightProvider == null
+157:            ? 0
+158:            : this.blockLightProvider.getLightLevel(pos);
+160:        // 取最大值
+161:        return Math.max(blockLight, skyLight);
+162:    }</code></pre>
+
+<h3 id="光照更新">光照更新</h3>
+
+<pre><code>36:    @Override
+37:    public void checkBlock(BlockPos pos) {
+38:        // 通知两个光照提供者检查这个方块
+39:        if (this.blockLightProvider != null) {
+40:            this.blockLightProvider.checkBlock(pos);
+41:        }
+42:        if (this.skyLightProvider != null) {
+43:            this.skyLightProvider.checkBlock(pos);
+44:        }
+45:    }
+
+54:    @Override
+55:    public int doLightUpdates() {
+56:        int updates = 0;
+58:        // 方块光照更新
+59:        if (this.blockLightProvider != null) {
+60:            updates += this.blockLightProvider.doLightUpdates();
+61:        }
+63:        // 天空光照更新
+64:        if (this.skyLightProvider != null) {
+65:            updates += this.skyLightProvider.doLightUpdates();
+66:        }
+68:        return updates;
+69:    }</code></pre>
+
+<h3 id="区块光照提供者">区块光照提供者</h3>
+
+<blockquote>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</blockquote>
+
+<p>源码路径：<code>net/minecraft/world/chunk/light/ChunkLightProvider.java</code></p>
+
+<pre><code>27:public abstract class ChunkLightProvider&lt;M extends ChunkToNibbleArrayMap&lt;M&gt;,
+28:                                       S extends LightStorage&lt;M&gt;&gt;
+29:implements ChunkLightingView {
+
+31:    // 最大光照等级
+32:    public static final int MAX_LIGHT = 15;
+
+34:    // 光照衰减量（每穿过一个方块减少1）
+35:    public static final int LIGHT_DECAY = 1;
+
+37:    // 六面方向
+38:    protected static final Direction[] DIRECTIONS = Direction.values();
+39:}</code></pre>
+
+<h3 id="光照是否需要更新">光照是否需要更新</h3>
+
+<pre><code>50:    public static boolean needsLightUpdate(BlockView blockView, BlockPos pos,
+51:                                            BlockState oldState, BlockState newState) {
+52:        // 如果方块状态没变，不需要更新
+53:        if (newState == oldState) {
+54:            return false;
+55:        }
+56:
+57:        // 检查透明度、光照值、是否有方向透明度变化
+58:        return newState.getOpacity(blockView, pos) != oldState.getOpacity(blockView, pos)
+59:            || newState.getLuminance() != oldState.getLuminance()
+60:            || newState.hasSidedTransparency()
+61:            || oldState.hasSidedTransparency();
+62:    }</code></pre>
+
+<h3 id="传播算法核心">传播算法核心</h3>
+
+<p>光照使用 <strong>BFS（广度优先搜索）</strong> 传播：</p>
+
+<pre><code>99:    protected void enqueueLightUpdate(long blockPos, long flags) {
+100:        // 将方块加入传播队列
+101:        this.lightQueue.enqueue(blockPos);
+102:        this.lightQueue.enqueue(flags);
+103:    }</code></pre>
+
+<pre><code>184:    private int processLightQueue() {
+185:        int updates = 0;
+186:
+187:        // 处理待传播的光照
+188:        while (!this.lightQueue.isEmpty()) {
+189:            long blockPos = this.lightQueue.dequeueLong();
+190:            long flags = this.lightQueue.dequeueLong();
+191:
+192:            // 传播光照到相邻方块
+193:            this.propagateLight(blockPos, flags);
+194:            updates++;
+195:        }
+196:
+197:        return updates;
+198:    }</code></pre>
+
+<h2 id="图解-光照传播流程">图解：光照传播流程</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph Start["光照变化触发"]
+        A["放置火把"] --> B["标记光照需要更新"]
+        A2["破坏方块"] --> B
+    end
+
+    subgraph Propagation["BFS 传播"]
+        B --> C["获取光源方块"]
+        C --> D{"检查相邻6个方向"}
+        D -->|上| E1["向上传播"]
+        D -->|下| E2["向下传播"]
+        D -->|前后左右| E3["水平传播"]
+
+        E1 --> F{"目标光照 < 当前-衰减?"}
+        E2 --> F
+        E3 --> F
+
+        F -->|是| G["更新目标光照"]
+        F -->|否| H["跳过"]
+
+        G --> I{"传播到更远的方块?"}
+        I -->|是| D
+        I -->|否| H
+    end
+
+    subgraph Storage["存储"]
+        J["光照值存入 NibbleArray"]
+        J --> K["每个方块1字节（0-15）"]
+    end
+
+    H --> J
+</div>
+
+<h3 id="天空光照-vs-方块光照传播规则">天空光照 vs 方块光照传播规则</h3>
+
+<pre><code>                    天空光照                    方块光照
+                    ─────────                  ─────────
+方向                只向下 ↓                   所有方向 ↑↓←→↔
+
+阻挡规则            不透明方块 = 完全阻挡        不透明方块 = 完全阻挡
+                                        透明方块 = 部分衰减
+
+示例:
+
+                    天空        火把
+                      ↓          ↓
+    ▓▓▓▓▓▓▓▓    ▓▓▓▓▓▓▓▓
+
+    天空:15→14→13→▓▓(阻挡)    火把:15→14→13→▓▓(阻挡)
+                              火把:15→14→13→░░(透明,13→12)</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="光照计算示例">光照计算示例</h3>
+
+<pre><code>场景：放置一个火把
+
+初始状态（全是天空光15）：
+    15 15 15 15 15 15 15
+    15 15 15 15 15 15 15
+    15 15 15 15 15 15 15
+    15 15 15 15 15 15 15
+
+放置火把在中心 (3,2)：
+    15 15 15 15 15 15 15
+    15 15 14 14 14 15 15
+    15 14 15 15 14 14 15  ← 火把位置 = 15
+    15 14 14 14 14 14 15
+    15 15 15 15 15 15 15
+
+放置一个方块在火把上方 (3,1)：
+    15 15 15 15 15 15 15
+    15 15 ▓▓ 14 14 15 15  ← 方块阻挡天空光
+    15 14 15 15 14 14 15  ← 火把不受影响
+    15 14 14 14 14 14 15
+    15 15 15 15 15 15 15</code></pre>
+
+<h3 id="为什么火把在地下也很亮-">为什么火把在地下也很亮？</h3>
+
+<pre><code>                        地面 (天空光)
+                         ↓
+    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+    地下挖开后的天空光:
+    0 → (通过12格空气衰减) → 3 (天空光)
+
+    放置火把后:
+    火把 15 → 相邻 14 → 相邻 13 → 相邻 12
+
+    最终 = max(3, 12) = 12 (火把赢了!)</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<table><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>天空光照</td><td>从天空向下传播，被阻挡即消失</td></tr><tr><td>方块光照</td><td>从发光方块向所有方向传播</td></tr><tr><td>NibbleArray</td><td>压缩存储光照值（每方块4位）</td></tr><tr><td>BFS传播</td><td>从光源向外逐层传播光照</td></tr><tr><td>增量更新</td><td>只更新变化的区域</td></tr></tbody></table>
+
+<p><strong>关键理解</strong>：</p>
+<p>- <strong>光照是预计算的</strong>：不实时计算，而是存储在Chunk中</p>
+<p>- <strong>天空光和方块光独立</strong>：最终取两者最大值</p>
+<p>- <strong>变化触发更新</strong>：放置/破坏方块时才重新计算</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="思考题">思考题</h3>
+
+<p>1. 为什么在地底深处放一个火把，周围的亮度会很高？</p>
+<p>2. 如果你放置一个不透明方块，会影响哪些方块的光照？</p>
+<p>3. 为什么树叶是半透明的（不完全阻挡光照）？</p>
+
+<h3 id="动手题">动手题</h3>
+
+<p>1. <strong>在源码中找到</strong>：</p>
+<p>   - <code>LightingProvider.java</code> 第 149-162 行：理解最终光照计算</p>
+<p>   - <code>ChunkLightProvider.java</code> 第 50-62 行：理解何时需要更新光照</p>
+
+<p>2. <strong>在游戏中测试</strong>：</p>
+<p>   - 在完全黑暗的地方放置一个火把</p>
+<p>   - 观察光照如何向周围传播</p>
+<p>   - 尝试在水下放置火把，观察效果</p>
+
+<p>3. <strong>光照问题调试</strong>：</p>
+<p>   - 在源码中找到 <code>getSkyLight</code> 和 <code>getBlockLight</code> 方法</p>
+<p>   - 理解它们如何从存储中读取光照值</p>
+
+<h2 id="源码文件位置">源码文件位置</h2>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>LightingProvider.java</td><td>`net/minecraft/world/LightingProvider.java`</td><td>光照提供者</td></tr><tr><td>LightChunk.java</td><td>`net/minecraft/world/chunk/light/LightChunk.java`</td><td>光照区块</td></tr></tbody></table>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./09-chunk-system.html">09-区块系统</a> - 光照值如何存储在 Chunk 中</p>
+<p>- <a href="./13-heightmap.html">13-高度图</a> - 天空光与高度图的关系</p>
+<p>- Minecraft Wiki: <a href="https://minecraft.wiki/w/Light">Light</a></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

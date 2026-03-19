@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第27章：AI大脑 - 生物的"思考中心" - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e67e22 0%, #e67e2288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-5.html">Part-5</a>
+                        <span>/</span>
+                        <span>第27章：AI大脑 - 生物的"思考中心"</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第27章：AI大脑 - 生物的"思考中心"</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-5: AI系统</span>
+                    <span><i class="fas fa-file"></i> 27-ai-brain-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-什么是ai大脑-">核心概念：什么是AI大脑？</a></li><li class="h3"><a href="#生活比喻">生活比喻</a></li><li class="h3"><a href="#源码解读">源码解读</a></li><li><a href="#图解-ai三层架构">图解：AI三层架构</a></li><li class="h3"><a href="#层次详解">层次详解</a></li><li><a href="#图解-生物的-思考-流程">图解：生物的"思考"流程</a></li><li><a href="#图解-brain的tick循环">图解：Brain的tick循环</a></li><li><a href="#核心代码-创建一个简单的大脑">核心代码：创建一个简单的大脑</a></li><li class="h3"><a href="#1-创建大脑配置">1. 创建大脑配置</a></li><li class="h3"><a href="#2-设置活动">2. 设置活动</a></li><li class="h3"><a href="#3-大脑的tick方法">3. 大脑的tick方法</a></li><li><a href="#实战演示-僵尸的行为">实战演示：僵尸的行为</a></li><li class="h3"><a href="#僵尸大脑的核心代码">僵尸大脑的核心代码</a></li><li><a href="#重要概念-activity-vs-task">重要概念：Activity vs Task</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="28-memory-system.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第28章：记忆系统 - 生物的"记忆库" <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解 AI 大脑是什么</p>
+<p>- 掌握 Brain、Task、Activity 三者的关系</p>
+<p>- 能够画出 AI 三层架构图</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解什么是实体（Entity）</p>
+<p>- 知道生物是 LivingEntity 的子类</p>
+<p>- 具备基本的面向对象概念</p>
+
+<h2 id="核心概念-什么是ai大脑-">核心概念：什么是AI大脑？</h2>
+
+<h3 id="生活比喻">生活比喻</h3>
+
+<p>想象你是一只僵尸。你需要思考：</p>
+
+<p>- "前面有人吗？"（感知）</p>
+<p>- "我要追过去打他！"（决策）</p>
+<p>- "先迈左脚，再迈右脚..."（行动）</p>
+
+<p><strong>AI大脑</strong> 就是生物的"大脑"，它负责：</p>
+<p>1. <strong>感知</strong> - 通过传感器收集周围信息</p>
+<p>2. <strong>记忆</strong> - 记住重要的事情</p>
+<p>3. <strong>决策</strong> - 决定做什么</p>
+<p>4. <strong>行动</strong> - 执行具体的任务</p>
+
+<blockquote><strong>一句话理解</strong>：AI大脑就是生物的"指挥官"，协调感知、记忆、决策和行动。</blockquote>
+
+<h3 id="源码解读">源码解读</h3>
+
+<p>在 Minecraft 中，每个 <code>LivingEntity</code>（活着的生物）都有一个大脑：</p>
+
+<pre><code>public class Brain&lt;E extends LivingEntity&gt; {
+    // 记忆存储 - 生物记住的信息
+    private final Map&lt;MemoryModuleType&lt;?&gt;, Optional&lt;? extends Memory&lt;?&gt;&gt;&gt; memories;
+
+    // 传感器列表 - 生物的&quot;感官&quot;
+    private final Map&lt;SensorType&lt;? extends Sensor&lt;? super E&gt;&gt;, Sensor&lt;? super E&gt;&gt; sensors;
+
+    // 任务映射 - 按优先级组织的行为
+    private final Map&lt;Integer, Map&lt;Activity, Set&lt;Task&lt;? super E&gt;&gt;&gt;&gt; tasks;
+
+    // 日程表 - 生物的时间表
+    private Schedule schedule;
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/brain/Brain.java</code></p>
+
+<h2 id="图解-ai三层架构">图解：AI三层架构</h2>
+
+<p>Minecraft 的 AI 系统分为三层，从底层到顶层：</p>
+
+<div class="mermaid">
+graph TB
+    subgraph "第三层：决策层 Activity"
+        A["WORK 工作"]
+        B["REST 休息"]
+        C["FIGHT 战斗"]
+    end
+
+    subgraph "第二层：执行层 Task"
+        D["攻击任务"]
+        E["逃跑任务"]
+        F["觅食任务"]
+    end
+
+    subgraph "第一层：感知层 Sensor + Memory"
+        G["附近生物传感器"]
+        H["最近床传感器"]
+        I["伤害来源传感器"]
+        J["短期记忆"]
+        K["长期记忆"]
+    end
+
+    G --> J
+    H --> J
+    I --> K
+    J --> D
+    J --> E
+    K --> F
+    D -.-> A
+    E -.-> C
+    F -.-> B
+</div>
+
+<h3 id="层次详解">层次详解</h3>
+
+<table><thead><tr><th>层级</th><th>组件</th><th>作用</th><th>类比</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td><td>------</td></tr><tr><td>第三层</td><td>Activity（活动）</td><td>生物当前的状态</td><td>"我现在在做什么"</td></tr><tr><td>第二层</td><td>Task（任务）</td><td>具体的行为动作</td><td>"我要攻击他"</td></tr><tr><td>第一层</td><td>Sensor + Memory</td><td>感知和记忆</td><td>"眼睛看到敌人"</td></tr></tbody></table>
+
+<h2 id="图解-生物的-思考-流程">图解：生物的"思考"流程</h2>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 世界 as 游戏世界
+    participant 传感器 as 传感器
+    participant 记忆 as 记忆模块
+    participant 活动 as 活动管理器
+    participant 任务 as 任务执行器
+
+    世界->>传感器: 每20tick更新一次
+    传感器->>记忆: 更新记忆内容
+    记忆->>活动: 检查条件
+    活动->>任务: 激活合适的任务
+    任务->>任务: tick()执行中
+    任务-->>活动: 任务完成/失败
+</div>
+
+<h2 id="图解-brain的tick循环">图解：Brain的tick循环</h2>
+
+<p>每一刻（tick），大脑都会执行一次完整的思考循环：</p>
+
+<div class="mermaid">
+flowchart TD
+    A["tick() 开始"] --> B["tickMemories()<br/>检查记忆是否过期"]
+    B --> C["tickSensors()<br/>传感器更新"]
+    C --> D["startTasks()<br/>启动符合条件的任务"]
+    D --> E["updateTasks()<br/>更新运行中的任务"]
+    E --> F["tick() 结束"]
+
+    style A fill:#e1f5fe
+    style F fill:#e8f5e8
+</div>
+
+<h2 id="核心代码-创建一个简单的大脑">核心代码：创建一个简单的大脑</h2>
+
+<h3 id="1-创建大脑配置">1. 创建大脑配置</h3>
+
+<pre><code>// 定义需要的记忆模块类型
+Collection&lt;MemoryModuleType&lt;?&gt;&gt; memoryModules = ImmutableList.of(
+    MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE,
+    MemoryModuleType.WALK_TARGET,
+    MemoryModuleType.HURT_BY_ENTITY
+);
+
+// 定义需要的传感器
+Collection&lt;SensorType&lt;? extends Sensor&lt;?&gt;&gt;&gt; sensorTypes = ImmutableList.of(
+    SensorType.NEAREST_LIVING_ENTITIES,
+    SensorType.HURT_BY
+);
+
+// 创建大脑配置
+Profile&lt;E&gt; profile = Brain.createProfile(memoryModules, sensorTypes);
+
+// 使用配置创建大脑
+Brain&lt;E&gt; brain = profile.deserialize(data);</code></pre>
+
+<h3 id="2-设置活动">2. 设置活动</h3>
+
+<pre><code>// 设置核心活动（始终运行）
+brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+
+// 设置默认活动
+brain.setDefaultActivity(Activity.IDLE);
+
+// 为活动添加任务
+brain.setTaskList(Activity.IDLE, 0, ImmutableList.of(
+    new IdleWanderTask(),
+    new LookAtEntityTask(5)
+));</code></pre>
+
+<h3 id="3-大脑的tick方法">3. 大脑的tick方法</h3>
+
+<pre><code>public void tick(ServerWorld world, E entity) {
+    this.tickMemories();      // 检查记忆过期
+    this.tickSensors(world, entity);  // 更新传感器
+    this.startTasks(world, entity);   // 启动新任务
+    this.updateTasks(world, entity);  // 更新运行中的任务
+}</code></pre>
+
+<h2 id="实战演示-僵尸的行为">实战演示：僵尸的行为</h2>
+
+<p>让我们看一个具体的例子——僵尸是如何"思考"的：</p>
+
+<div class="mermaid">
+flowchart LR
+    subgraph 感知
+        S1["看到玩家"]
+        S2["受伤记忆"]
+    end
+
+    subgraph 记忆
+        M1["附近玩家 = Steve"]
+        M2["攻击目标 = Steve"]
+    end
+
+    subgraph 决策
+        D1{"有攻击目标？"}
+    end
+
+    subgraph 行动
+        A1["追踪任务"]
+        A2["攻击任务"]
+    end
+
+    S1 --> M1
+    S2 --> M2
+    M1 --> D1
+    M2 --> D1
+    D1 -->|是| A1
+    A1 --> A2
+</div>
+
+<h3 id="僵尸大脑的核心代码">僵尸大脑的核心代码</h3>
+
+<pre><code>// 为僵尸设置战斗AI
+brain.setTaskList(Activity.CORE, 0, ImmutableList.of(
+    new LookAtEntityTask(EntityPredicate.IS_VISIBLE),
+    new MoveToTargetTask()
+));
+
+brain.setTaskList(Activity.FIGHT, 0, ImmutableList.of(
+    new MeleeAttackTask(20),
+    new BackUpIfTooCloseTask(20)
+));
+brain.setTaskList(Activity.FIGHT, 5, ImmutableList.of(
+    new JumpOnHurtByTargetTask()
+), MemoryModuleType.HURT_BY_ENTITY);</code></pre>
+
+<h2 id="重要概念-activity-vs-task">重要概念：Activity vs Task</h2>
+
+<p>萌新经常搞混这两个概念：</p>
+
+<table><thead><tr><th>概念</th><th>英文</th><th>作用</th><th>例子</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td><td>------</td></tr><tr><td>Activity</td><td>活动</td><td>表示"状态"</td><td>WORK（工作）、REST（休息）</td></tr><tr><td>Task</td><td>任务</td><td>执行"动作"</td><td>攻击、逃跑、觅食</td></tr></tbody></table>
+
+<p><strong>简单理解</strong>：</p>
+<p>- Activity = "我现在是员工"（状态）</p>
+<p>- Task = "我现在在写代码"（动作）</p>
+
+<p>一个 Activity 可以包含多个 Task，就像"工作"状态包含"写代码"、"开会"、"吃饭"等任务。</p>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>AI大脑</strong>是生物的思考中心，管理感知、记忆、决策和行动</p>
+<p>2. <strong>三层架构</strong>：感知层(Sensor) → 执行层(Task) → 决策层(Activity)</p>
+<p>3. <strong>记忆模块</strong>存储生物的各种信息（位置、目标、状态等）</p>
+<p>4. <strong>传感器</strong>定期更新感知信息到记忆</p>
+<p>5. <strong>活动</strong>表示生物的当前状态，<strong>任务</strong>是具体的行为</p>
+<p>6. <strong>tick循环</strong>：每tick执行一次完整的思考流程</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：如果僵尸找不到攻击目标，它会处于什么Activity？</p>
+<p>2. <strong>动手题</strong>：查看村民（Villager）有哪些Activity</p>
+<p>3. <strong>挑战题</strong>：尝试理解 <code>Brain.tick()</code> 方法的执行顺序</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="../Part-4-Entity/26-spawn-system.html">第26章 生成系统</a></p>
+<p>- <strong>下一章</strong>：<a href="./28-memory-system.html">第28章 记忆系统</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/ai/brain/Brain.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/brain/Activity.java</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Brain.java</td><td>`net/minecraft/entity/ai/brain/Brain.java`</td><td>AI大脑基类</td></tr><tr><td>Activity.java</td><td>`net/minecraft/entity/ai/brain/Activity.java`</td><td>活动定义</td></tr><tr><td>Task.java</td><td>`net/minecraft/entity/ai/brain/task/Task.java`</td><td>任务基类</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

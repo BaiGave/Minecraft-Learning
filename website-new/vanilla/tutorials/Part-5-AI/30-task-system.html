@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第30章：任务系统 - 生物的"行为动作" - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e67e22 0%, #e67e2288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-5.html">Part-5</a>
+                        <span>/</span>
+                        <span>第30章：任务系统 - 生物的"行为动作"</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第30章：任务系统 - 生物的"行为动作"</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-5: AI系统</span>
+                    <span><i class="fas fa-file"></i> 30-task-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-什么是任务-">核心概念：什么是任务？</a></li><li class="h3"><a href="#生活比喻">生活比喻</a></li><li class="h3"><a href="#源码解读">源码解读</a></li><li><a href="#图解-task-的生命周期">图解：Task 的生命周期</a></li><li><a href="#图解-任务执行流程">图解：任务执行流程</a></li><li><a href="#核心代码-创建任务">核心代码：创建任务</a></li><li class="h3"><a href="#1-简单的单刻任务">1. 简单的单刻任务</a></li><li class="h3"><a href="#2-多刻任务-持续行为-">2. 多刻任务（持续行为）</a></li><li class="h3"><a href="#3-任务条件检查">3. 任务条件检查</a></li><li><a href="#图解-任务优先级">图解：任务优先级</a></li><li class="h3"><a href="#任务列表的组织方式">任务列表的组织方式</a></li><li class="h3"><a href="#优先级的执行顺序">优先级的执行顺序</a></li><li><a href="#实战演示-僵尸的ai任务">实战演示：僵尸的AI任务</a></li><li class="h3"><a href="#完整配置代码">完整配置代码</a></li><li><a href="#实战演示-村民的工作任务">实战演示：村民的工作任务</a></li><li class="h3"><a href="#代码实现">代码实现</a></li><li><a href="#重要概念-task-vs-multiticktask-vs-singleticktask">重要概念：Task vs MultiTickTask vs SingleTickTask</a></li><li class="h3"><a href="#singleticktask-例子">SingleTickTask 例子</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="29-sensor-system.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第二十九章：传感器系统 - 生物的"感官"</strong>
+        </a><a href="31-activity-schedule.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第31章：活动与日程 - 生物的"作息表" <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解 Task 是什么</p>
+<p>- 掌握 Task 的生命周期（开始、执行、结束）</p>
+<p>- 学会创建自定义任务</p>
+<p>- 理解任务优先级机制</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Brain 和 Activity 的关系</p>
+<p>- 理解记忆系统的读写操作</p>
+
+<h2 id="核心概念-什么是任务-">核心概念：什么是任务？</h2>
+
+<h3 id="生活比喻">生活比喻</h3>
+
+<p>"任务"就像你的一天：</p>
+
+<table><thead><tr><th>活动</th><th>具体任务</th></tr></thead><tbody><tr><td>------</td><td>----------</td></tr><tr><td>早上起床</td><td>睁眼 → 起床 → 穿衣 → 洗漱</td></tr><tr><td>去上班</td><td>出门 → 等公交 → 坐车 → 到达</td></tr><tr><td>工作</td><td>打开电脑 → 写代码 → 开会 → 吃饭</td></tr></tbody></table>
+
+<p><strong>Activity（活动）</strong> = 你的"身份"（我是上班族）</p>
+<p><strong>Task（任务）</strong> = 你做的具体"事情"（我在写代码）</p>
+
+<blockquote><strong>一句话理解</strong>：Task 是生物的具体行为，比如"攻击"、"逃跑"、"寻找食物"。</blockquote>
+
+<h3 id="源码解读">源码解读</h3>
+
+<pre><code>public interface Task&lt;E extends LivingEntity&gt; {
+    
+    // 获取任务当前状态
+    MultiTickTask.Status getStatus();
+    
+    // 尝试开始任务
+    boolean tryStarting(ServerWorld world, E entity, long time);
+    
+    // 每tick执行一次
+    void tick(ServerWorld world, E entity, long time);
+    
+    // 停止任务
+    void stop(ServerWorld world, E entity, long time);
+    
+    // 任务名称
+    String getName();
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/brain/task/Task.java</code></p>
+
+<h2 id="图解-task-的生命周期">图解：Task 的生命周期</h2>
+
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> STOPPED: 创建任务
+    
+    STOPPED --> RUNNING: tryStarting()返回true
+    RUNNING --> RUNNING: tick() 每刻执行
+    RUNNING --> STOPPED: stop() 或条件不满足
+    RUNNING --> [*]: 任务完成
+    STOPPED --> [*]: 销毁
+    
+    note right of STOPPED: 等待激活
+    note right of RUNNING: 正在执行
+</div>
+
+<h2 id="图解-任务执行流程">图解：任务执行流程</h2>
+
+<div class="mermaid">
+flowchart TD
+    A["Brain.tick()"] --> B["startTasks()"]
+    B --> C{"检查Task条件"}
+    C -->|不满足| D["跳过"]
+    C -->|满足| E["tryStarting()"]
+    E --> F{"返回true?"}
+    F -->|是| G["状态变为RUNNING"]
+    F -->|否| D
+    G --> H["updateTasks()"]
+    H --> I["task.tick()"]
+    I --> J{"条件还满足?"}
+    J -->|是| I
+    J -->|否| K["stop()"]
+    K --> L["状态变为STOPPED"]
+    
+    style G fill:#c8e6c9
+    style L fill:#ffcdd2
+</div>
+
+<h2 id="核心代码-创建任务">核心代码：创建任务</h2>
+
+<h3 id="1-简单的单刻任务">1. 简单的单刻任务</h3>
+
+<p>继承 <code>SingleTickTask</code>，适合只需要执行一次的行为：</p>
+
+<pre><code>public class LookAtEntityTask&lt;E extends LivingEntity&gt; extends SingleTickTask&lt;E&gt; {
+    
+    private final EntityPredicate predicate;
+    private final int duration;
+    
+    public LookAtEntityTask(EntityPredicate predicate, int duration) {
+        this.predicate = predicate;
+        this.duration = duration;
+    }
+    
+    @Override
+    public boolean shouldRun(ServerWorld world, E entity) {
+        // 检查是否有需要注视的目标
+        return entity.getBrain().hasMemoryModule(MemoryModuleType.LOOK_TARGET);
+    }
+    
+    @Override
+    public void run(ServerWorld world, E entity, long time) {
+        // 获取注视目标
+        Optional&lt;LookTarget&gt; target = entity.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.LOOK_TARGET);
+        
+        target.ifPresent(lookTarget -&gt; {
+            // 执行注视行为
+            lookTarget.lookAt(entity);
+        });
+        
+        // 任务完成
+        entity.getBrain().forget(MemoryModuleType.LOOK_TARGET);
+    }
+}</code></pre>
+
+<h3 id="2-多刻任务-持续行为-">2. 多刻任务（持续行为）</h3>
+
+<p>继承 <code>MultiTickTask</code>，适合需要持续执行的行为：</p>
+
+<pre><code>public class MeleeAttackTask&lt;E extends LivingEntity&gt; extends MultiTickTask&lt;E&gt; {
+    
+    private final int cooldownTicks;
+    
+    public MeleeAttackTask(int cooldownTicks) {
+        super(cooldownTicks);
+        this.cooldownTicks = cooldownTicks;
+    }
+    
+    @Override
+    public boolean shouldRun(ServerWorld world, E entity) {
+        // 检查是否有攻击目标
+        return entity.getBrain().hasMemoryModule(MemoryModuleType.ATTACK_TARGET);
+    }
+    
+    @Override
+    public void start(ServerWorld world, E entity, long time) {
+        // 开始攻击
+        entity.getBrain().remember(MemoryModuleType.ATTACK_COOLING_DOWN, false);
+    }
+    
+    @Override
+    public void tick(ServerWorld world, E entity, long time) {
+        // 每tick执行一次
+        Optional&lt;LivingEntity&gt; target = entity.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.ATTACK_TARGET);
+        
+        target.ifPresent(targetEntity -&gt; {
+            // 检查是否在攻击范围内
+            if (entity.squaredDistanceTo(targetEntity) &lt; 4.0) {
+                // 攻击！
+                entity.tryAttack(targetEntity);
+            } else {
+                // 追逐目标
+                entity.getNavigation().startMovingTo(targetEntity, 1.0);
+            }
+        });
+    }
+    
+    @Override
+    public void stop(ServerWorld world, E entity, long time) {
+        // 清理
+        entity.getBrain().forget(MemoryModuleType.ATTACK_TARGET);
+    }
+}</code></pre>
+
+<h3 id="3-任务条件检查">3. 任务条件检查</h3>
+
+<pre><code>// 带时间范围的条件
+public class WalkToPOITask extends MultiTickTask&lt;VillagerEntity&gt; {
+    
+    @Override
+    public boolean shouldRun(ServerWorld world, VillagerEntity entity) {
+        // 条件1：有工作地点
+        boolean hasJobSite = entity.getBrain()
+            .hasMemoryModule(MemoryModuleType.JOB_SITE);
+        
+        // 条件2：还没有在工作
+        boolean notWorking = !entity.getBrain()
+            .hasActivity(Activity.WORK);
+        
+        return hasJobSite &amp;&amp; notWorking;
+    }
+}</code></pre>
+
+<h2 id="图解-任务优先级">图解：任务优先级</h2>
+
+<h3 id="任务列表的组织方式">任务列表的组织方式</h3>
+
+<div class="mermaid">
+graph BT
+    subgraph "Brain.tasks 的结构"
+        P1["优先级 0<br/>(最高)"]
+        P2["优先级 1"]
+        P3["优先级 5"]
+    end
+    
+    subgraph "优先级0包含"
+        T1["核心任务1"]
+        T2["核心任务2"]
+    end
+    
+    subgraph "优先级1包含"
+        T3["攻击任务"]
+        T4["逃跑任务"]
+    end
+    
+    P1 --> T1
+    P1 --> T2
+    P2 --> T3
+    P2 --> T4
+</div>
+
+<h3 id="优先级的执行顺序">优先级的执行顺序</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph "任务列表"
+        A["优先级0: 移动任务"]
+        B["优先级1: 攻击任务"]
+        C["优先级2: 觅食任务"]
+    end
+    
+    A -->|"先检查"| D{"条件满足?"}
+    D -->|是| E["执行移动"]
+    D -->|否| F["跳过"]
+    
+    E --> G["(后续任务不执行)"]
+    F --> H{"条件满足?"}
+    H -->|是| I["执行攻击"]
+    H -->|否| J["跳过"]
+</div>
+
+<h2 id="实战演示-僵尸的ai任务">实战演示：僵尸的AI任务</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph "僵尸AI配置"
+        A1["Activity.CORE"]
+        A2["Activity.FIGHT"]
+        A3["Activity.IDLE"]
+    end
+    
+    subgraph "CORE任务"
+        T1["0: LookAtEntityTask<br/>看周围"]
+        T2["1: MoveToTargetTask<br/>走向目标"]
+    end
+    
+    subgraph "FIGHT任务"
+        T3["0: MeleeAttackTask<br/>近战攻击"]
+        T4["1: BackUpIfTooClose<br/>距离太近就后退"]
+    end
+    
+    A1 --> T1
+    A1 --> T2
+    A2 --> T3
+    A2 --> T4
+</div>
+
+<h3 id="完整配置代码">完整配置代码</h3>
+
+<pre><code>public class ZombieBrain {
+    public static void initialize(Brain&lt;ZombieEntity&gt; brain) {
+        // 核心任务（始终运行）
+        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        brain.setTaskList(Activity.CORE, 0, ImmutableList.of(
+            new LookAtEntityTask(
+                EntityPredicate.nonAttackable().range(8.0),  // 看8格内的非攻击实体
+                40                                                    // 注视时间
+            ),
+            new MoveToTargetTask(20)                         // 每20tick更新导航
+        ));
+        
+        // 战斗任务
+        brain.setTaskList(Activity.FIGHT, 0, ImmutableList.of(
+            new MeleeAttackTask&lt;&gt;(20),                        // 冷却时间20tick
+            new BackUpIfTooCloseTask&lt;&gt;(8)                    // 8格内则后退
+        ));
+        
+        // 默认空闲任务
+        brain.setTaskList(Activity.IDLE, ImmutableList.of(
+            new IdleWonderTask(30, 60)                       // 30-60tick的漫游
+        ));
+        
+        brain.setDefaultActivity(Activity.IDLE);
+    }
+}</code></pre>
+
+<h2 id="实战演示-村民的工作任务">实战演示：村民的工作任务</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph "感知触发"
+        S1["传感器检测到工作地点"]
+    end
+    
+    subgraph "条件检查"
+        C1{"在工作时间?"}
+        C2{"有工作地点?"}
+        C3{"不需要休息?"}
+    end
+    
+    subgraph "任务执行"
+        T1["WalkToPOITask<br/>走向工作站"]
+        T2["WorkAtPOITask<br/>在工作站工作"]
+    end
+    
+    S1 --> C1
+    C1 -->|是| C2
+    C2 -->|是| C3
+    C3 -->|是| T1 --> T2
+</div>
+
+<h3 id="代码实现">代码实现</h3>
+
+<pre><code>// 工作任务
+public class WorkTask extends MultiTickTask&lt;VillagerEntity&gt; {
+    
+    private long workStartTime;
+    
+    @Override
+    public boolean shouldRun(ServerWorld world, VillagerEntity villager) {
+        // 检查条件：正在WORK活动，有工作地点，需要工作
+        return villager.getBrain().hasActivity(Activity.WORK)
+            &amp;&amp; villager.getBrain().hasMemoryModule(MemoryModuleType.JOB_SITE)
+            &amp;&amp; villager.getBrain().hasMemoryModuleWithValue(
+                MemoryModuleType.TIME_TRYING_TO_REACH_ADMIRE_ITEM, false
+            );
+    }
+    
+    @Override
+    public void start(ServerWorld world, VillagerEntity villager, long time) {
+        this.workStartTime = time;
+        
+        // 走向工作地点
+        villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.JOB_SITE)
+            .ifPresent(pos -&gt; {
+                villager.getBrain().remember(MemoryModuleType.WALK_TARGET, 
+                    new WalkTarget(pos.getPos(), 0.8f, 2));
+            });
+    }
+    
+    @Override
+    public void tick(ServerWorld world, VillagerEntity villager, long time) {
+        // 检查是否到达工作地点
+        villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.JOB_SITE)
+            .ifPresent(pos -&gt; {
+                if (villager.getBlockPos().equals(pos.getPos())) {
+                    // 开始工作！
+                    villager.playWorkSound();
+                    villager.getBrain().remember(MemoryModuleType.LAST_WORKED_AT_POI, time);
+                }
+            });
+    }
+}</code></pre>
+
+<h2 id="重要概念-task-vs-multiticktask-vs-singleticktask">重要概念：Task vs MultiTickTask vs SingleTickTask</h2>
+
+<table><thead><tr><th>类</th><th>用途</th><th>使用场景</th></tr></thead><tbody><tr><td>-----</td><td>------</td><td>----------</td></tr><tr><td>`SingleTickTask`</td><td>只执行一次的瞬时行为</td><td>看一眼、发送一次交互</td></tr><tr><td>`MultiTickTask`</td><td>持续多刻的行为</td><td>攻击、逃跑、漫游</td></tr><tr><td>`Task`</td><td>基础接口</td><td>通常用上面的两个抽象类</td></tr></tbody></table>
+
+<h3 id="singleticktask-例子">SingleTickTask 例子</h3>
+
+<pre><code>// 瞬时任务：看向某个实体然后结束
+public class LookAtEntityTask extends SingleTickTask&lt;VillagerEntity&gt; {
+    
+    @Override
+    public boolean shouldRun(ServerWorld world, VillagerEntity villager) {
+        return villager.getBrain().hasMemoryModule(MemoryModuleType.LOOK_TARGET);
+    }
+    
+    @Override
+    public void run(ServerWorld world, VillagerEntity villager, long time) {
+        // 看向目标，一次完成
+        villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.LOOK_TARGET)
+            .ifPresent(villager::lookAtEntity);
+        
+        // 任务结束（不需要stop方法）
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>Task（任务）</strong>是生物的具体行为动作</p>
+<p>2. 任务有<strong>生命周期</strong>：STOPPED → RUNNING → STOPPED</p>
+<p>3. <code>shouldRun()</code> 检查是否应该执行，<code>tick()</code> 执行具体行为</p>
+<p>4. 任务按<strong>优先级</strong>组织，高优先级任务先执行</p>
+<p>5. <code>SingleTickTask</code> 适合瞬时行为，<code>MultiTickTask</code> 适合持续行为</p>
+<p>6. 任务通过<strong>读写记忆</strong>来获取信息和状态</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么战斗任务比漫游任务优先级高？</p>
+<p>2. <strong>动手题</strong>：创建一个让生物原地跳跃的任务</p>
+<p>3. <strong>挑战题</strong>：实现一个"看到钻石就捡起来"的任务</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="./29-sensor-system.html">第29章 传感器系统</a></p>
+<p>- <strong>下一章</strong>：<a href="./31-activity-schedule.html">第31章 活动与日程</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/ai/brain/task/Task.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/brain/task/MultiTickTask.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/brain/task/SingleTickTask.java</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Task.java</td><td>`net/minecraft/entity/ai/brain/task/Task.java`</td><td>任务基类</td></tr><tr><td>SingleTickTask.java</td><td>`net/minecraft/entity/ai/brain/task/SingleTickTask.java`</td><td>单刻任务</td></tr><tr><td>MultiTickTask.java</td><td>`net/minecraft/entity/ai/brain/task/MultiTickTask.java`</td><td>多刻任务</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

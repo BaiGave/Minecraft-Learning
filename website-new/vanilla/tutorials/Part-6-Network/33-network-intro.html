@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第33章 网络基础入门 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #1abc9c 0%, #1abc9c88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-6.html">Part-6</a>
+                        <span>/</span>
+                        <span>第33章 网络基础入门</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第33章 网络基础入门</h1>
+                <p class="tutorial-subtitle">：以下源码示例基于 CFR 反编译代码，实际源码可能略有差异。代码逻辑是正确的，但字段和方法名称可能因混淆而有所不同。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-6: 网络系统</span>
+                    <span><i class="fas fa-file"></i> 33-network-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是网络-">什么是网络？</a></li><li class="h3"><a href="#为什么-minecraft-需要网络-">为什么 Minecraft 需要网络？</a></li><li class="h3"><a href="#网络在哪里-">网络在哪里？</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#minecraft-网络架构图">Minecraft 网络架构图</a></li><li class="h3"><a href="#数据包流动图">数据包流动图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#clientconnection-客户端连接">ClientConnection 客户端连接</a></li><li class="h3"><a href="#关键概念-networkside-网络方向-">关键概念：NetworkSide（网络方向）</a></li><li class="h3"><a href="#数据包流动示意">数据包流动示意</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-玩家按下移动键">场景：玩家按下移动键</a></li><li class="h3"><a href="#网络延迟">网络延迟</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="34-packet-system.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第34章 数据包系统详解 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是网络通信</p>
+<p>- 了解 Minecraft 客户端与服务端的通信方式</p>
+<p>- 认识数据包（Packet）的概念</p>
+<p>- 掌握 Minecraft 网络架构的基本组成</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Java 基础语法</p>
+<p>- 知道什么是客户端和服务端</p>
+<p>- 理解 TCP/IP 协议的基本概念（可选）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<blockquote><strong>注意</strong>：以下源码示例基于 CFR 反编译代码，实际源码可能略有差异。代码逻辑是正确的，但字段和方法名称可能因混淆而有所不同。</blockquote>
+
+<h3 id="什么是网络-">什么是网络？</h3>
+
+<p>想象一下你和朋友通过手机聊天：</p>
+
+<p>- <strong>你</strong> = 客户端（Client）</p>
+<p>- <strong>朋友</strong> = 服务端（Server）</p>
+<p>- <strong>发送的消息</strong> = 数据包（Packet）</p>
+<p>- <strong>网络</strong> = 手机信号/Wi-Fi</p>
+
+<p>在 Minecraft 中，情况完全一样：</p>
+
+<pre><code>┌─────────────┐                    ┌─────────────┐
+│             │  ──── 数据包 ────&gt; │             │
+│   客户端      │  &lt;─── 数据包 ──── │   服务端     │
+│  (你的电脑)   │                    │  (服务器)    │
+└─────────────┘                    └─────────────┘</code></pre>
+
+<h3 id="为什么-minecraft-需要网络-">为什么 Minecraft 需要网络？</h3>
+
+<p>Minecraft 支持两种模式：</p>
+
+<table><thead><tr><th>模式</th><th>说明</th><th>需要网络吗</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>-----------</td></tr><tr><td>**单人游戏**</td><td>自己玩自己的世界</td><td>不需要（逻辑上模拟成客户端+服务端）</td></tr><tr><td>**多人游戏**</td><td>和其他玩家一起玩</td><td>**必须！**</td></tr></tbody></table>
+
+<p>多人游戏时，所有玩家都需要知道：</p>
+<p>- 谁在哪里移动</p>
+<p>- 哪个方块被破坏</p>
+<p>- 发生了什么事件</p>
+
+<p>这些信息都要通过网络传递！</p>
+
+<h3 id="网络在哪里-">网络在哪里？</h3>
+
+<p>源码路径：<code>..../source/net/minecraft/network/</code></p>
+
+<p>关键文件：</p>
+
+<table><thead><tr><th>文件</th><th>作用</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`ClientConnection.java`</td><td>管理网络连接（发送/接收数据）</td></tr><tr><td>`Packet.java`</td><td>数据包接口</td></tr><tr><td>`PacketByteBuf.java`</td><td>数据包缓冲区（序列化/反序列化）</td></tr><tr><td>`NetworkState.java`</td><td>协议状态定义</td></tr><tr><td>`NetworkPhase.java`</td><td>连接阶段（握手、登录、游戏等）</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="minecraft-网络架构图">Minecraft 网络架构图</h3>
+
+<div class="mermaid">
+flowchart TB
+    subgraph Client["客户端 (你的电脑)"]
+        MC_Client["Minecraft 客户端"]
+        Netty_Client["Netty 网络框架"]
+        PacketBuf_Client["PacketByteBuf<br/>数据包缓冲区"]
+    end
+
+    subgraph Server["服务端 (游戏服务器)"]
+        MC_Server["Minecraft 服务端"]
+        Netty_Server["Netty 网络框架"]
+        PacketBuf_Server["PacketByteBuf<br/>数据包缓冲区"]
+    end
+
+    subgraph Network["网络 (互联网)"]
+        TCP["TCP/IP 协议"]
+        Encrypt["加密/解密"]
+    end
+
+    MC_Client --> Netty_Client
+    Netty_Client <--> TCP
+    TCP <--> Encrypt
+    Encrypt <--> Netty_Server
+    Netty_Server --> MC_Server
+
+    style Client fill:#e1f5fe
+    style Server fill:#fff3e0
+    style Network fill:#f3e5f5
+</div>
+
+<h3 id="数据包流动图">数据包流动图</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant C as 客户端
+    participant N as Netty网络
+    participant S as 服务端
+
+    Note over C,S: Minecraft 多人游戏通信流程
+    
+    C->>N: 1. 创建数据包 (Packet)
+    Note right of C: 玩家点击、行走、聊天...
+    
+    N->>N: 2. PacketByteBuf 序列化
+    Note right of N: 把数据转成字节流
+    
+    N->>N: 3. 加密处理
+    N->>N: 4. 压缩（如果需要）
+    
+    N->>N: 5. 通过 TCP 发送
+    N->>S: 6. 数据包到达服务端
+    
+    S->>S: 7. 解密
+    S->>S: 8. 解压
+    S->>S: 9. 反序列化
+    
+    S->>S: 10. 处理数据包
+    Note left of S: 服务器游戏逻辑
+    
+    S->>S: 11. 可能产生响应包
+    S->>C: 12. 发送响应
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="clientconnection-客户端连接">ClientConnection 客户端连接</h3>
+
+<pre><code>// 源码位置: ClientConnection.java
+
+// 创建客户端连接
+ClientConnection connection = new ClientConnection(NetworkSide.CLIENTBOUND);
+
+// 连接到服务器
+connection.connect(&quot;server.example.com&quot;, 25565, loginPacketListener);
+
+// 发送数据包
+connection.send(packet);
+
+// 接收数据包会自动调用 listener 的方法</code></pre>
+
+<h3 id="关键概念-networkside-网络方向-">关键概念：NetworkSide（网络方向）</h3>
+
+<pre><code>// 源码位置: NetworkSide.java
+
+public enum NetworkSide {
+    SERVERBOUND,   // 发送给服务端的包（客户端 -&gt; 服务端）
+    CLIENTBOUND;   // 发送给客户端的包（服务端 -&gt; 客户端）
+}</code></pre>
+
+<h3 id="数据包流动示意">数据包流动示意</h3>
+
+<pre><code>// 发送数据包
+public void send(Packet&lt;?&gt; packet) {
+    if (this.isOpen()) {
+        // 检查连接是否打开
+        this.sendImmediately(packet, null, true);
+    } else {
+        // 连接未开，排队等待
+        this.queuedTasks.add(connection -&gt; 
+            connection.sendImmediately(packet, null, true));
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-玩家按下移动键">场景：玩家按下移动键</h3>
+
+<p>1. <strong>玩家操作</strong>：按 W 键向前走</p>
+<p>2. <strong>客户端处理</strong>：计算新位置</p>
+<p>3. <strong>创建数据包</strong>：<code>PlayerMoveC2SPacket</code></p>
+<p>4. <strong>序列化成字节</strong>：通过 <code>PacketByteBuf</code> 写入位置</p>
+<p>5. <strong>发送</strong>：<code>connection.send(movePacket)</code></p>
+<p>6. <strong>网络传输</strong>：TCP 发送到服务器</p>
+<p>7. <strong>服务端处理</strong>：验证并更新玩家位置</p>
+<p>8. <strong>广播</strong>：向周围玩家发送新位置</p>
+
+<h3 id="网络延迟">网络延迟</h3>
+
+<p>网络不是即时的，有延迟：</p>
+
+<pre><code>延迟 = 数据包从客户端到服务端的时间
+
+-  localhost (本机): ~0ms
+-  局域网:           ~1-5ms
+-  国内服务器:       ~20-50ms
+-  海外服务器:       ~100-300ms</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>网络通信</strong> = 客户端和服务端之间发送数据包</p>
+<p>2. <strong>Packet（数据包）</strong> = 承载游戏信息的"快递包裹"</p>
+<p>3. <strong>ClientConnection</strong> = 管理网络连接的对象</p>
+<p>4. <strong>PacketByteBuf</strong> = 打包/拆包的工具</p>
+<p>5. <strong>NetworkSide</strong> = 区分数据包方向（Serverbound / Clientbound）</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 在源码中找到 <code>ClientConnection.java</code>，尝试理解 <code>send()</code> 方法</p>
+<p>2. 思考：为什么需要区分 Serverbound 和 Clientbound？</p>
+<p>3. 查找代码中的 <code>packetsReceivedCounter</code> 和 <code>packetsSentCounter</code>，了解统计方式</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- 上一章：<a href="../Part-5-AI/32-pathfinding.html">第32章 路径导航</a> - AI系统最后一章</p>
+<p>- 下一章：<a href="./34-packet-system.html">第34章 数据包系统</a> - 深入了解 Packet</p>
+<p>- Netty 框架文档：https://netty.io/</p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>NetworkInteractionHandler.java</td><td>`net/minecraft/network/NetworkInteractionHandler.java`</td><td>网络交互处理器</td></tr><tr><td>ClientConnection.java</td><td>`net/minecraft/network/ClientConnection.java`</td><td>客户端连接管理</td></tr><tr><td>NetworkState.java</td><td>`net/minecraft/network/NetworkState.java`</td><td>网络状态定义</td></tr><tr><td>PlayPackets.java</td><td>`net/minecraft/network/packet/PlayPackets.java`</td><td>游戏数据包类型</td></tr></tbody></table>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：网络通信、客户端、服务端、Packet、ClientConnection、TCP/IP</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

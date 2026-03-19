@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第32章：路径导航 - 生物的"GPS导航" - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e67e22 0%, #e67e2288 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-5.html">Part-5</a>
+                        <span>/</span>
+                        <span>第32章：路径导航 - 生物的"GPS导航"</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第32章：路径导航 - 生物的"GPS导航"</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-5: AI系统</span>
+                    <span><i class="fas fa-file"></i> 32-pathfinding</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-什么是路径导航-">核心概念：什么是路径导航？</a></li><li class="h3"><a href="#生活比喻">生活比喻</a></li><li class="h3"><a href="#源码解读">源码解读</a></li><li class="h3"><a href="#pathnode-类-路径节点">PathNode 类 - 路径节点</a></li><li class="h3"><a href="#path-类-完整路径">Path 类 - 完整路径</a></li><li class="h3"><a href="#entitynavigation-类-导航系统">EntityNavigation 类 - 导航系统</a></li><li><a href="#图解-路径导航流程">图解：路径导航流程</a></li><li><a href="#图解-path-和-pathnode-的关系">图解：Path 和 PathNode 的关系</a></li><li><a href="#图解-a-寻路算法">图解：A* 寻路算法</a></li><li><a href="#核心代码-导航使用">核心代码：导航使用</a></li><li class="h3"><a href="#1-让生物走向目标">1. 让生物走向目标</a></li><li class="h3"><a href="#2-直接导航到位置">2. 直接导航到位置</a></li><li class="h3"><a href="#3-导航到实体">3. 导航到实体</a></li><li class="h3"><a href="#4-停止移动">4. 停止移动</a></li><li><a href="#核心代码-movecontrol-运动控制">核心代码：MoveControl 运动控制</a></li><li class="h3"><a href="#movecontrol-的状态">MoveControl 的状态</a></li><li class="h3"><a href="#不同的-movecontrol-实现">不同的 MoveControl 实现</a></li><li><a href="#图解-障碍物处理">图解：障碍物处理</a></li><li class="h3"><a href="#障碍物处理代码">障碍物处理代码</a></li><li><a href="#实战演示-追踪和逃跑">实战演示：追踪和逃跑</a></li><li class="h3"><a href="#僵尸追玩家">僵尸追玩家</a></li><li class="h3"><a href="#动物逃跑">动物逃跑</a></li><li><a href="#重要概念-导航失败处理">重要概念：导航失败处理</a></li><li class="h3"><a href="#路径计算失败的常见原因">路径计算失败的常见原因</a></li><li class="h3"><a href="#超时检测">超时检测</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="31-activity-schedule.html" class="tutorial-nav-btn prev">
+            <span>上一章</span>
+            <strong><i class="fas fa-arrow-left"></i> 第31章：活动与日程 - 生物的"作息表"</strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解路径导航是什么</p>
+<p>- 掌握 Path、PathNode 的结构</p>
+<p>- 学会使用 MoveControl 控制移动</p>
+<p>- 了解障碍物处理机制</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Task 任务系统</p>
+<p>- 理解实体（Entity）的基本概念</p>
+
+<h2 id="核心概念-什么是路径导航-">核心概念：什么是路径导航？</h2>
+
+<h3 id="生活比喻">生活比喻</h3>
+
+<p>想象你要去一个陌生的地方：</p>
+
+<p>1. <strong>打开地图</strong> → 计算从当前位置到目的地的路线</p>
+<p>2. <strong>按路线走</strong> → 沿着导航给的路线前进</p>
+<p>3. <strong>遇到障碍</strong> → 绕路或者重新计算</p>
+<p>4. <strong>到达终点</strong> → 完成任务</p>
+
+<p>Minecraft 的路径导航就是生物的"GPS"：</p>
+
+<table><thead><tr><th>GPS 功能</th><th>Minecraft 实现</th><th>说明</th></tr></thead><tbody><tr><td>----------</td><td>----------------</td><td>------</td></tr><tr><td>地图规划</td><td>PathNode、Path</td><td>规划路线</td></tr><tr><td>实时导航</td><td>EntityNavigation</td><td>引导移动</td></tr><tr><td>障碍处理</td><td>PathNodeType</td><td>判断能否通行</td></tr><tr><td>运动控制</td><td>MoveControl</td><td>控制速度和方向</td></tr></tbody></table>
+
+<blockquote><strong>一句话理解</strong>：路径导航让生物知道"怎么走"，MoveControl 让生物"走起来"。</blockquote>
+
+<h3 id="源码解读">源码解读</h3>
+
+<h4 id="pathnode-类-路径节点">PathNode 类 - 路径节点</h4>
+
+<pre><code>public class PathNode {
+    public final int x, y, z;  // 节点坐标
+    public float pathLength;    // 从起点到该节点的距离
+    public float penalty;        // 惩罚值（越难走的路惩罚越高）
+    public PathNodeType type;   // 节点类型（能否通行）
+    public boolean visited;     // 是否已访问（A*算法用）
+    
+    // 计算到另一个节点的曼哈顿距离
+    public float getManhattanDistance(PathNode node) {
+        return Math.abs(node.x - this.x) + Math.abs(node.y - this.y) + Math.abs(node.z - this.z);
+    }
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/PathNode.java</code></p>
+
+<h4 id="path-类-完整路径">Path 类 - 完整路径</h4>
+
+<pre><code>public class Path {
+    private final List&lt;PathNode&gt; nodes;  // 路径节点列表
+    private int currentNodeIndex;        // 当前到达第几个节点
+    private final BlockPos target;      // 目标位置
+    
+    // 获取当前位置对应的目标点
+    public Vec3d getNodePosition(Entity entity) {
+        PathNode node = nodes.get(currentNodeIndex);
+        return new Vec3d(node.x + 0.5, node.y, node.z + 0.5);
+    }
+    
+    // 移动到下一个节点
+    public void next() {
+        currentNodeIndex++;
+    }
+    
+    // 检查路径是否走完
+    public boolean isFinished() {
+        return currentNodeIndex &gt;= nodes.size();
+    }
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/Path.java</code></p>
+
+<h4 id="entitynavigation-类-导航系统">EntityNavigation 类 - 导航系统</h4>
+
+<pre><code>public abstract class EntityNavigation {
+    protected final MobEntity entity;    // 被控制的生物
+    protected final World world;        // 所在世界
+    protected Path currentPath;          // 当前路径
+    protected double speed;             // 移动速度
+    
+    // 找路
+    public Path findPathTo(BlockPos target, int distance) {
+        // 使用 A* 算法计算最短路径
+    }
+    
+    // 开始移动
+    public boolean startMovingTo(Entity target, double speed) {
+        Path path = findPathTo(target, 1);
+        return startMovingAlong(path, speed);
+    }
+    
+    // 每tick调用
+    public void tick() {
+        if (isIdle()) return;
+        
+        // 沿路径继续移动
+        continueFollowingPath();
+        
+        // 通知 MoveControl 移动
+        Vec3d targetPos = currentPath.getNodePosition(entity);
+        entity.getMoveControl().moveTo(targetPos.x, targetPos.y, targetPos.z, speed);
+    }
+}</code></pre>
+
+<p><strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/EntityNavigation.java</code></p>
+
+<h2 id="图解-路径导航流程">图解：路径导航流程</h2>
+
+<div class="mermaid">
+flowchart TD
+    A["Task: 设置 WALK_TARGET"] --> B["Brain.tick()"]
+    B --> C["Navigation.startMovingTo()"]
+    C --> D["findPathTo() 计算路径"]
+    D --> E{"找到路径?"}
+    E -->|是| F["保存 Path 对象"]
+    E -->|否| G["返回失败"]
+    F --> H["Navigation.tick() 每刻"]
+    H --> I["检查是否到达节点"]
+    I --> J{"到达节点?"}
+    J -->|是| K["Path.next() 到下一个节点"]
+    J -->|否| L["MoveControl 调整方向速度"]
+    K --> M{"路径结束?"}
+    M -->|是| N["停止移动"]
+    M -->|否| H
+    L --> H
+</div>
+
+<h2 id="图解-path-和-pathnode-的关系">图解：Path 和 PathNode 的关系</h2>
+
+<div class="mermaid">
+graph LR
+    subgraph "Path (完整路径)"
+        N1["Node 0<br/>(起点)"]
+        N2["Node 1"]
+        N3["Node 2"]
+        N4["Node 3"]
+        N5["Node 4<br/>(终点)"]
+    end
+    
+    N1 -->|"next()"| N2
+    N2 -->|"next()"| N3
+    N3 -->|"next()"| N4
+    N4 -->|"next()"| N5
+    
+    subgraph "当前位置"
+        C1["currentIndex = 2"]
+    end
+    
+    C1 -.-> N3
+    
+    style N1 fill:#81c784
+    style N5 fill:#81c784
+    style N3 fill:#fff176
+</div>
+
+<h2 id="图解-a-寻路算法">图解：A* 寻路算法</h2>
+
+<div class="mermaid">
+flowchart LR
+    subgraph "A* 算法步骤"
+        A1["1. 从起点开始"]
+        A2["2. 找最小 F 值的节点<br/>F = G + H<br/>G=已走距离, H=到终点估计"]
+        A3["3. 扩展可通行的邻居"]
+        A4["4. 重复直到找到终点"]
+    end
+    
+    subgraph "节点类型"
+        T1["WALKABLE - 可行走"]
+        T2["BLOCKED - 阻挡"]
+        T3["WATER - 水中"]
+        T4["LAVA - 岩浆中"]
+        T5["OPEN - 空中"]
+    end
+    
+    A1 --> A2 --> A3 --> A4
+</div>
+
+<h2 id="核心代码-导航使用">核心代码：导航使用</h2>
+
+<h3 id="1-让生物走向目标">1. 让生物走向目标</h3>
+
+<pre><code>// 方式1：通过记忆设置走路目标（推荐）
+public class WalkToTargetTask extends MultiTickTask&lt;VillagerEntity&gt; {
+    @Override
+    public void tick(ServerWorld world, VillagerEntity villager) {
+        // 从记忆中获取目标位置
+        villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+            .ifPresent(target -&gt; {
+                // 让导航系统移动到目标
+                villager.getNavigation().startMovingTo(
+                    target.getLookTarget().getBlockPos(),  // 目标位置
+                    target.getSpeed()                     // 移动速度
+                );
+            });
+    }
+}</code></pre>
+
+<h3 id="2-直接导航到位置">2. 直接导航到位置</h3>
+
+<pre><code>// 方式2：直接调用导航
+public void moveToWork(VillagerEntity villager, BlockPos workSite) {
+    // 开始移动到工作地点
+    boolean success = villager.getNavigation().startMovingTo(
+        workSite.getX(), workSite.getY(), workSite.getZ(),
+        0.8  // 速度：0.8 = 80% 正常速度
+    );
+    
+    if (!success) {
+        // 导航失败（比如距离太远）
+        villager.getBrain().remember(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, 
+            villager.getWorld().getTime());
+    }
+}</code></pre>
+
+<h3 id="3-导航到实体">3. 导航到实体</h3>
+
+<pre><code>// 让生物追着另一个实体跑
+public void chaseTarget(MobEntity mob, LivingEntity target) {
+    mob.getNavigation().startMovingTo(
+        target,           // 目标实体
+        1.2              // 1.2倍速度（比正常快）
+    );
+}</code></pre>
+
+<h3 id="4-停止移动">4. 停止移动</h3>
+
+<pre><code>// 停止当前导航
+mob.getNavigation().stop();
+
+// 检查是否在移动
+boolean isMoving = !mob.getNavigation().isIdle();</code></pre>
+
+<h2 id="核心代码-movecontrol-运动控制">核心代码：MoveControl 运动控制</h2>
+
+<h3 id="movecontrol-的状态">MoveControl 的状态</h3>
+
+<pre><code>public class MoveControl {
+    // 运动状态枚举
+    enum State {
+        WAIT,      // 等待（不移动）
+        MOVE_TO,   // 移动到目标
+        STRAFE,    // 横扫移动（玩家控制用）
+        JUMPING    // 跳跃中
+    }
+    
+    public void moveTo(double x, double y, double z, double speed) {
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
+        this.speed = speed;
+        this.state = State.MOVE_TO;
+    }
+    
+    // 每tick执行
+    public void tick() {
+        switch (state) {
+            case MOVE_TO:
+                // 计算方向角
+                float angle = MathHelper.atan2(dz, dx);
+                // 转向目标
+                entity.setYaw(wrapDegrees(entity.getYaw(), angle, 90));
+                // 调整速度
+                entity.setMovementSpeed(speed * entity.getAttributeValue(GENERIC_MOVEMENT_SPEED));
+                // 跳跃检测
+                if (needToJump) {
+                    entity.getJumpControl().setActive();
+                }
+                break;
+            case JUMPING:
+                // 跳跃中等待落地
+                if (entity.isOnGround()) {
+                    state = State.WAIT;
+                }
+                break;
+        }
+    }
+}</code></pre>
+
+<h3 id="不同的-movecontrol-实现">不同的 MoveControl 实现</h3>
+
+<table><thead><tr><th>类</th><th>适用生物</th><th>特点</th></tr></thead><tbody><tr><td>----</td><td>----------</td><td>------</td></tr><tr><td>`MoveControl`</td><td>陆地生物</td><td>普通行走</td></tr><tr><td>`AquaticMoveControl`</td><td>水中生物</td><td>游泳控制</td></tr><tr><td>`FlightMoveControl`</td><td>飞行生物</td><td>空中飞行</td></tr><tr><td>`LookControl`</td><td>所有生物</td><td>控制头部转向</td></tr></tbody></table>
+
+<h2 id="图解-障碍物处理">图解：障碍物处理</h2>
+
+<div class="mermaid">
+flowchart TD
+    subgraph "障碍物类型判断"
+        B1["检查方块类型"]
+        B2["BlockState.isSolid()"]
+    end
+    
+    subgraph "PathNodeType"
+        T1["WALKABLE<br/>可通行"]
+        T2["BLOCKED<br/>阻挡"]
+        T3["WATER<br/>需游泳"]
+        T4["DANGER<br/>危险"]
+        T5["DOOR<br/>门"]
+    end
+    
+    B1 --> B2
+    B2 --> T1
+    B2 --> T2
+    B2 --> T3
+    T3 -->|"会游泳"| F1["可以进入"]
+    T3 -->|"不会游泳"| F2["绕路或等待"]
+    
+    style T2 fill:#ef5350
+    style T4 fill:#ff7043
+</div>
+
+<h3 id="障碍物处理代码">障碍物处理代码</h3>
+
+<pre><code>// 自定义障碍物感知
+public class CustomPathNodeMaker extends LandPathNodeMaker {
+    
+    @Override
+    public PathNodeType getDefaultNodeType(WorldView world, int x, int y, int z) {
+        BlockState state = world.getBlockState(new BlockPos(x, y, z));
+        
+        // 自定义逻辑：蜜蜂不能穿过玻璃
+        if (state.isOf(Blocks.GLASS) || state.isOf(Blocks.GLASS_PANE)) {
+            return PathNodeType.BLOCKED;
+        }
+        
+        // 其他使用默认逻辑
+        return super.getDefaultNodeType(world, x, y, z);
+    }
+}</code></pre>
+
+<h2 id="实战演示-追踪和逃跑">实战演示：追踪和逃跑</h2>
+
+<h3 id="僵尸追玩家">僵尸追玩家</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph "感知"
+        S1["传感器发现玩家"]
+    end
+    
+    subgraph "决策"
+        D1{"能攻击?"}
+        D2{"距离够近?"}
+    end
+    
+    subgraph "执行"
+        E1["startMovingTo(player)"]
+        E2["MeleeAttackTask 攻击"]
+    end
+    
+    S1 --> D1
+    D1 -->|"有攻击目标"| D2
+    D2 -->|"不在攻击范围"| E1
+    D2 -->|"在攻击范围"| E2
+    E1 -.->|"每tick更新"| E2
+</div>
+
+<pre><code>// 僵尸追踪任务
+public class ZombieChaseTask extends MultiTickTask&lt;ZombieEntity&gt; {
+    
+    @Override
+    public void tick(ServerWorld world, ZombieEntity zombie) {
+        // 获取攻击目标
+        Optional&lt;LivingEntity&gt; target = zombie.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.ATTACK_TARGET);
+        
+        target.ifPresent(enemy -&gt; {
+            // 计算距离
+            double distance = zombie.squaredDistanceTo(enemy);
+            
+            if (distance &lt; 4.0) {  // 攻击范围 2 格
+                // 停止移动，准备攻击
+                zombie.getNavigation().stop();
+                // 攻击
+                zombie.tryAttack(enemy);
+            } else {
+                // 继续追踪
+                zombie.getNavigation().startMovingTo(enemy, 1.0);
+            }
+        });
+    }
+}</code></pre>
+
+<h3 id="动物逃跑">动物逃跑</h3>
+
+<pre><code>// 兔子逃跑
+public class RabbitFleeTask extends MultiTickTask&lt;RabbitEntity&gt; {
+    
+    @Override
+    public void tick(ServerWorld world, RabbitEntity rabbit) {
+        Optional&lt;LivingEntity&gt; threat = rabbit.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.AVOID_TARGET);
+        
+        threat.ifPresent(danger -&gt; {
+            // 计算逃跑方向（远离威胁）
+            Vec3d away = rabbit.getPos().subtract(danger.getPos()).normalize();
+            Vec3d runTo = rabbit.getPos().add(away.multiply(10));  // 跑10格外
+            
+            // 逃跑！
+            rabbit.getNavigation().startMovingTo(runTo.x, runTo.y, runTo.z, 1.5);
+        });
+    }
+}</code></pre>
+
+<h2 id="重要概念-导航失败处理">重要概念：导航失败处理</h2>
+
+<h3 id="路径计算失败的常见原因">路径计算失败的常见原因</h3>
+
+<table><thead><tr><th>原因</th><th>表现</th><th>处理方式</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>距离太远</td><td>findPathTo 返回 null</td><td>记录 `CANT_REACH_WALK_TARGET_SINCE`</td></tr><tr><td>被困住</td><td>路径全是 BLOCKED</td><td>尝试跳跃或等待</td></tr><tr><td>目标不可达</td><td>无法到达终点</td><td>寻找附近可达点</td></tr></tbody></table>
+
+<h3 id="超时检测">超时检测</h3>
+
+<pre><code>public void tick() {
+    // 超过100tick还没走完
+    if (tickCount - pathStartTime &gt; 100) {
+        // 检查是否真的在移动
+        if (currentPos.squaredDistanceTo(pathStartPos) &lt; expectedDistance) {
+            // 没移动，停止导航
+            navigation.stop();
+            brain.remember(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, world.getTime());
+        }
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>PathNode</strong> 是路径上的一个点（坐标），<strong>Path</strong> 是完整路线</p>
+<p>2. <strong>EntityNavigation</strong> 负责找路和引导移动</p>
+<p>3. <strong>MoveControl</strong> 控制生物的具体运动（速度、方向、跳跃）</p>
+<p>4. 导航会每tick检查是否到达节点，到达后移动到下一个</p>
+<p>5. <strong>PathNodeType</strong> 判断每个位置是否可通行</p>
+<p>6. 导航失败时要记录到记忆中，让AI做出相应调整</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：为什么僵尸能绕过障碍物追你？</p>
+<p>2. <strong>动手题</strong>：写一个让生物在两点之间来回巡逻的代码</p>
+<p>3. <strong>挑战题</strong>：实现一个"找最近的安全位置躲避"的AI</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="./31-activity-schedule.html">第31章 活动与日程</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/ai/pathing/Path.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/pathing/PathNode.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/pathing/EntityNavigation.java</code></p>
+<p>  - <code>net/minecraft/entity/ai/control/MoveControl.java</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Path.java</td><td>`net/minecraft/entity/Path.java`</td><td>路径</td></tr><tr><td>PathNode.java</td><td>`net/minecraft/entity/PathNode.java`</td><td>路径节点</td></tr><tr><td>EntityNavigation.java</td><td>`net/minecraft/entity/ai/Navigation.java`</td><td>实体导航</td></tr><tr><td>PathfindingNodeEvaluator.java</td><td>`net/minecraft/entity/ai/pathing/PathfindingNodeEvaluator.java`</td><td>寻路评估器</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

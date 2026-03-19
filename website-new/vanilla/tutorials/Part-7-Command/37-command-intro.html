@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第37章 命令系统入门 —— 理解 Minecraft 的指令世界 - Minecraft 源码教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #e74c3c 0%, #e74c3c88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../../part-7.html">Part-7</a>
+                        <span>/</span>
+                        <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第37章 命令系统入门 —— 理解 Minecraft 的指令世界</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> Part-7: 命令系统</span>
+                    <span><i class="fas fa-file"></i> 37-command-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是命令-">什么是命令？</a></li><li class="h3"><a href="#命令源-commandsource-">命令源（CommandSource）</a></li><li class="h3"><a href="#命令上下文-commandcontext-">命令上下文（CommandContext）</a></li><li class="h3"><a href="#命令解析流程">命令解析流程</a></li><li><a href="#图解">图解</a></li><li class="h3"><a href="#命令系统架构图">命令系统架构图</a></li><li class="h3"><a href="#生活中的比喻-餐厅点餐系统">生活中的比喻：餐厅点餐系统</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#servercommandsource-的核心字段">ServerCommandSource 的核心字段</a></li><li class="h3"><a href="#命令调度的核心代码">命令调度的核心代码</a></li><li class="h3"><a href="#从上下文获取数据">从上下文获取数据</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-理解命令执行的完整流程">场景：理解命令执行的完整流程</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#练习-1-追踪命令源信息">练习 1：追踪命令源信息</a></li><li class="h3"><a href="#练习-2-检查权限等级">练习 2：检查权限等级</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <div class="part-nav">
+                        <a href="38-brigadier-basics.html" class="tutorial-nav-btn next">
+            <span>下一章</span>
+            <strong>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器 <i class="fas fa-arrow-right"></i></strong>
+        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解命令（Command）是什么</p>
+<p>- 掌握命令源（CommandSource）的概念</p>
+<p>- 了解命令上下文（CommandContext）</p>
+<p>- 明白命令从输入到执行的完整流程</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 完成 <a href="../Part-5-Event/32-event-system.html">第32章 事件系统</a> 或有 Java 基础</p>
+<p>- 了解 Minecraft 游戏基本概念（玩家、服务器）</p>
+<p>- 了解 Minecraft 有命令系统（<code>/tp</code>、<code>/give</code> 等）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是命令-">什么是命令？</h3>
+
+<p><strong>命令（Command）</strong> 是玩家或系统向游戏发送的指令。</p>
+
+<p>想象你去餐厅点菜：</p>
+<p>- <strong>你</strong> = 命令发送者（谁下的命令）</p>
+<p>- <strong>服务员</strong> = 命令系统（接收和处理命令）</p>
+<p>- <strong>菜单</strong> = 已知命令列表</p>
+<p>- <strong>厨师</strong> = 命令执行者（真正做事的人）</p>
+
+<p>在 Minecraft 中，当你输入 <code>/give @p diamond 64</code> 时：</p>
+<pre><code>/give @p diamond 64
+│    │    │      │
+│    │    │      └─ 数量：64个
+│    │    └─ 物品：钻石
+│    └─ 目标：最近的玩家
+└─ 命令名：give（给物品）</code></pre>
+
+<h3 id="命令源-commandsource-">命令源（CommandSource）</h3>
+
+<p><strong>命令源</strong> 是"谁下的命令"，它包含了执行命令所需的所有信息。</p>
+
+<div class="mermaid">
+classDiagram
+    class CommandSource {
+        <<interface>>
+        +getPlayerNames() 玩家列表
+        +getPosition() 位置
+        +getWorld() 世界
+        +hasPermissionLevel(int) 权限检查
+        +sendMessage(Text) 发送消息
+    }
+    
+    class ServerCommandSource {
+        +Vec3d position 坐标
+        +ServerWorld world 世界
+        +int level 权限等级
+        +String name 名称
+        +Text displayName 显示名
+        +Entity entity 执行实体
+        +MinecraftServer server 服务器
+    }
+    
+    CommandSource <|-- ServerCommandSource
+</div>
+
+<h3 id="命令上下文-commandcontext-">命令上下文（CommandContext）</h3>
+
+<p><strong>命令上下文</strong> 就像是你点菜后服务员给你的"小票"——包含了这次命令的所有信息。</p>
+
+<div class="mermaid">
+classDiagram
+    class CommandContext~S~ {
+        +S source 命令源
+        +String input 原始输入
+        +Map~String, Argument~ arguments 参数
+        +getArgument(name) 获取参数
+        +getSource() 获取命令源
+    }
+    
+    class ServerCommandSource {
+        +Vec3d position
+        +ServerWorld world
+        +MinecraftServer server
+    }
+    
+    CommandContext "1" o-- "1" ServerCommandSource
+</div>
+
+<h3 id="命令解析流程">命令解析流程</h3>
+
+<p>当你输入一个命令，Minecraft 内部是这样处理的：</p>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 玩家
+    participant 命令系统
+    participant Brigadier解析器
+    participant 命令执行器
+    
+    玩家->>命令系统: 输入 "/give Steve diamond 64"
+    命令系统->>Brigadier解析器: 发送命令字符串
+    Brigadier解析器->>Brigadier解析器: 1. 解析命令结构
+    Brigadier解析器->>Brigadier解析器: 2. 验证参数类型
+    Brigadier解析器->>Brigadier解析器: 3. 检查权限
+    Brigadier解析器-->>命令执行器: 返回 CommandContext
+    命令执行器->>命令执行器: 4. 执行具体逻辑
+    命令执行器-->>玩家: 5. 返回结果/消息
+</div>
+
+<h2 id="图解">图解</h2>
+
+<h3 id="命令系统架构图">命令系统架构图</h3>
+
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                         玩家输入                                 │
+│                    /give @p diamond 64                           │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     CommandDispatcher                            │
+│                      (命令调度器)                                │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                    命令树 (Command Tree)                   │  │
+│  │                                                            │  │
+│  │                        give                                │  │
+│  │                       /    \                               │  │
+│  │                  targets   item                            │  │
+│  │                    │        |                              │  │
+│  │                  @p       count                            │  │
+│  │                            /                               │  │
+│  │                          64                                │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   CommandContext                                 │
+│                   (命令上下文)                                    │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  source: ServerCommandSource (谁执行的?)                    │  │
+│  │  arguments: {                                             │  │
+│  │    targets: EntitySelector(@p)                           │  │
+│  │    item: ItemStack(diamond)                              │  │
+│  │    count: 64                                              │  │
+│  │  }                                                        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   命令执行 (Execute)                             │
+│  1. 获取目标玩家 (Steve)                                          │
+│  2. 创建64个钻石                                                 │
+│  3. 添加到玩家背包                                                │
+│  4. 发送成功消息                                                  │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="生活中的比喻-餐厅点餐系统">生活中的比喻：餐厅点餐系统</h3>
+
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│                        餐厅类比                                   │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   Minecraft命令          →      餐厅系统                          │
+│   ─────────────────────────────────────────────────────────────  │
+│   命令输入               →      点菜单                           │
+│   /give Steve diamond    →      &quot;我要一份牛排&quot;                    │
+│                                                                  │
+│   CommandDispatcher       →      服务员                           │
+│   (命令调度器)            →      (接收并处理点餐)                  │
+│                                                                  │
+│   CommandContext          →      点餐小票                         │
+│   (命令上下文)            →      (记录：桌号、菜品、数量)          │
+│                                                                  │
+│   ServerCommandSource     →      顾客信息                         │
+│   (命令源)                →      (谁点的、口味要求、VIP等级)        │
+│                                                                  │
+│   命令执行逻辑            →      厨师做菜                          │
+│   /give 的 execute()     →      煎牛排、加调料                   │
+│                                                                  │
+│   反馈消息                →      上菜+问&quot;还需要什么吗？&quot;            │
+│   &quot;已给予 64 个钻石&quot;       →      &quot;您的牛排好了，请慢用&quot;            │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="servercommandsource-的核心字段">ServerCommandSource 的核心字段</h3>
+
+<pre><code>// ServerCommandSource.java - 服务端命令源
+public class ServerCommandSource implements CommandSource {
+    
+    // 命令输出目标（发送消息用）
+    private final CommandOutput output;
+    
+    // 位置（命令执行的地方）
+    private final Vec3d position;
+    
+    // 世界（命令在哪个世界执行）
+    private final ServerWorld world;
+    
+    // 权限等级（0=普通玩家, 4=管理员）
+    private final int level;
+    
+    // 执行者的名字和显示名
+    private final String name;
+    private final Text displayName;
+    
+    // 服务器引用
+    private final MinecraftServer server;
+    
+    // 如果是玩家/实体执行的，保存这个实体
+    private final Entity entity;
+    
+    // 视角旋转
+    private final Vec2f rotation;
+}</code></pre>
+
+<h3 id="命令调度的核心代码">命令调度的核心代码</h3>
+
+<pre><code>// CommandManager.java - 命令管理器
+public class CommandManager {
+    private final CommandDispatcher&lt;ServerCommandSource&gt; dispatcher = new CommandDispatcher();
+    
+    // 执行命令（带 / 前缀）
+    public void executeWithPrefix(ServerCommandSource source, String command) {
+        command = command.startsWith(&quot;/&quot;) ? command.substring(1) : command;
+        this.execute(this.dispatcher.parse(command, source), command);
+    }
+    
+    // 执行命令
+    public void execute(ParseResults&lt;ServerCommandSource&gt; parseResults, String command) {
+        ServerCommandSource source = parseResults.getContext().getSource();
+        // 解析命令
+        ContextChain&lt;ServerCommandSource&gt; contextChain = 
+            CommandManager.checkCommand(parseResults, command, source);
+        
+        if (contextChain != null) {
+            // 执行命令
+            CommandExecutionContext.enqueueCommand(context, command, contextChain, source, ...);
+        }
+    }
+}</code></pre>
+
+<h3 id="从上下文获取数据">从上下文获取数据</h3>
+
+<pre><code>// 从 CommandContext 中提取数据
+public class CommandExample {
+    
+    public static int execute(ServerCommandSource source, CommandContext&lt;?&gt; context) {
+        // 获取命令源
+        ServerCommandSource src = context.getSource();
+        
+        // 获取玩家（如果存在）
+        if (src.getEntity() instanceof ServerPlayerEntity player) {
+            player.sendMessage(Text.literal(&quot;你执行了命令！&quot;));
+        }
+        
+        // 获取坐标
+        Vec3d pos = src.getPosition();
+        
+        // 获取世界
+        ServerWorld world = src.getWorld();
+        
+        // 发送反馈
+        source.sendFeedback(() -&gt; Text.literal(&quot;命令执行成功！&quot;), broadcastToOps);
+        
+        return 1; // 返回成功
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-理解命令执行的完整流程">场景：理解命令执行的完整流程</h3>
+
+<pre><code>public class CommandFlowDemo {
+    
+    /**
+     * 模拟玩家输入 &quot;/teleport Steve 100 64 200&quot; 的完整流程
+     */
+    public static void demonstrateCommandFlow() {
+        
+        // 1. 玩家输入命令字符串
+        String commandInput = &quot;/teleport Steve 100 64 200&quot;;
+        
+        // 2. 假设这是命令源（执行命令的玩家）
+        ServerCommandSource source = new ServerCommandSource(
+            output,           // 输出目标
+            new Vec3d(0, 64, 0),  // 当前坐标
+            new Vec2f(0, 0),   // 视角
+            world,             // 当前世界
+            4,                 // 权限等级4（管理员）
+            &quot;Steve&quot;,           // 名字
+            Text.literal(&quot;Steve&quot;), // 显示名
+            server,            // 服务器
+            entity             // 玩家实体
+        );
+        
+        // 3. CommandDispatcher 解析命令
+        // 分解：teleport → Steve → 100 → 64 → 200
+        // 验证：Steve 是有效的玩家名
+        // 验证：100, 64, 200 是有效的坐标
+        
+        // 4. 创建 CommandContext
+        // context.getArgument(&quot;targets&quot;) → &quot;Steve&quot;
+        // context.getArgument(&quot;pos&quot;) → Vec3d(100, 64, 200)
+        
+        // 5. 执行传送逻辑
+        // player.teleport(world, 100, 64, 200, 0, 0);
+        
+        // 6. 发送成功消息
+        // source.sendMessage(&quot;已传送 Steve 到 (100, 64, 200)&quot;);
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>命令（Command）</strong> 是玩家向游戏发送的指令，如 <code>/give</code>、<code>/tp</code>、<code>/time</code></p>
+
+<p>2. <strong>命令源（CommandSource）</strong> 代表"谁下的命令"，包含：</p>
+<p>   - 执行者的位置、所在世界</p>
+<p>   - 权限等级</p>
+<p>   - 服务器引用</p>
+<p>   - 可以发送消息给执行者</p>
+
+<p>3. <strong>命令上下文（CommandContext）</strong> 包含一次命令执行的所有信息：</p>
+<p>   - 命令源</p>
+<p>   - 解析后的参数</p>
+
+<p>4. <strong>命令解析流程</strong>：</p>
+<p>   <code>`</code></p>
+<p>   玩家输入 → 字符串解析 → 参数验证 → 权限检查 → 执行 → 反馈</p>
+<p>   <code>`</code></p>
+
+<p>5. <strong>Brigadier 是命令解析库</strong>，它将命令字符串解析成结构化的 CommandContext</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="练习-1-追踪命令源信息">练习 1：追踪命令源信息</h3>
+
+<pre><code>// 在命令执行时，输出以下信息：
+// - 执行者的名字
+// - 执行者的坐标
+// - 所在世界的名称
+// - 权限等级
+
+public class DebugCommand {
+    public static int execute(CommandContext&lt;ServerCommandSource&gt; context) {
+        ServerCommandSource source = context.getSource();
+        
+        // TODO: 补全代码，输出上述信息
+        System.out.println(&quot;执行者：&quot; + source.getName());
+        
+        return 1;
+    }
+}</code></pre>
+
+<h3 id="练习-2-检查权限等级">练习 2：检查权限等级</h3>
+
+<pre><code>// 创建一个检查权限的命令
+// 如果玩家权限 &gt;= 2，显示&quot;你有权使用此命令&quot;
+// 否则显示&quot;你没有权限&quot;
+
+public class PermissionCheckCommand {
+    public static int execute(CommandContext&lt;ServerCommandSource&gt; context) {
+        ServerCommandSource source = context.getSource();
+        int level = /* 获取权限等级 */;
+        
+        // TODO: 实现权限检查逻辑
+        
+        return 1;
+    }
+}</code></pre>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <strong>上一章</strong>：<a href="../Part-6-Network/36-sync-mechanism.html">第36章 同步机制</a></p>
+<p>- <strong>下一章</strong>：<a href="./38-brigadier-basics.html">第38章 Brigadier 基础</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/command/CommandSource.java</code> - 命令源接口</p>
+<p>  - <code>net/minecraft/server/command/ServerCommandSource.java</code> - 服务端命令源实现</p>
+<p>  - <code>net/minecraft/server/command/CommandManager.java</code> - 命令管理器</p>
+<p>- <strong>扩展阅读</strong>：</p>
+<p>  - <a href="https://github.com/Mojang/brigadier">Brigadier 官方文档</a></p>
+<p>  - <a href="https://minecraft.fandom.com/wiki/Commands">Minecraft Wiki - Commands</a></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>CommandDispatcher.java</td><td>`com/mojang/brigadier/CommandDispatcher.java`</td><td>命令调度器</td></tr><tr><td>CommandSource.java</td><td>`net/minecraft/command/CommandSource.java`</td><td>命令源接口</td></tr><tr><td>CommandContext.java</td><td>`com/mojang/brigadier/context/CommandContext.java`</td><td>命令上下文</td></tr></tbody></table>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：命令系统、CommandSource、CommandContext、CommandDispatcher、Brigadier</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
