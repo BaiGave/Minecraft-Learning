@@ -227,13 +227,41 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .info-box { border-left: 4px solid ${module.color}; background: ${module.color}15; }
         .info-box i { color: ${module.color}; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { border-left: 4px solid ${module.color}; }
+        .code-block { 
+            border: 2px solid ${module.color} !important;
+            border-left: 2px solid ${module.color} !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-block::before {
+            content: '> ' !important;
+            color: ${module.color} !important;
+        }
+        .code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: 2px solid ${module.color} !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .code-reference-header::before {
+            content: '> ' !important;
+            color: ${module.color} !important;
+        }
+        .code-reference-header::after {
+            display: none !important;
+        }
         .docs-body h2 { border-bottom: 2px solid ${module.color}; }
         .docs-body h2 i { color: ${module.color}; }
         .data-table th { background: ${module.colorGradient}; }
         .prev-next .next { background: ${module.colorGradient}; }
         .prev-next .next:hover { box-shadow: 0 4px 15px ${module.color}66; }
-        .doc-content pre { border-left: 4px solid ${module.color}; }
+        .doc-content pre { border-left: 2px solid ${module.color} !important; }
         .doc-content pre code { color: #d4d4d4; }
         .docs-nav .dropdown-content {
             z-index: 1001;
