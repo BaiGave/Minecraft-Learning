@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -233,8 +242,7 @@
 <h2 id="2. MinecraftClient 主类分析">2. MinecraftClient 主类分析</h2>
 <h3>2.1 类概述</h3>
 <p><code>MinecraftClient</code> 是客户端的核心类，作为<strong>逻辑客户端</strong>管理渲染、声音播放和输入控制。</p>
-<pre class="code-block"><code class="language-312">:315:source/net/minecraft/client/MinecraftClient.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-312">@Environment(value=EnvType.CLIENT)
 public class MinecraftClient
 extends ReentrantThreadExecutor&lt;Runnable&gt;
 implements WindowEventHandler {</code></pre>
@@ -244,8 +252,7 @@ implements WindowEventHandler {</code></pre>
 <li>管理与服务器的连接（集成服务器或远程服务器）</li>
 <li>处理屏幕切换</li></ul></p>
 <h3>2.2 核心组件初始化</h3>
-<pre class="code-block"><code class="language-493">:673:source/net/minecraft/client/MinecraftClient.java
-public MinecraftClient(RunArgs args) {
+<pre class="code-block"><code class="language-493">public MinecraftClient(RunArgs args) {
     super(&quot;Client&quot;);
     instance = this;
     
@@ -293,8 +300,7 @@ public MinecraftClient(RunArgs args) {
 }</code></pre>
 <h3>2.3 游戏主循环</h3>
 <p><code>run()</code> 方法实现游戏主循环：</p>
-<pre class="code-block"><code class="language-818">:855:source/net/minecraft/client/MinecraftClient.java
-public void run() {
+<pre class="code-block"><code class="language-818">public void run() {
     this.thread = Thread.currentThread();
     if (Runtime.getRuntime().availableProcessors() &gt; 4) {
         this.thread.setPriority(10);
@@ -321,8 +327,7 @@ public void run() {
 }</code></pre>
 <h3>2.4 渲染方法</h3>
 <p><code>render()</code> 方法是每帧渲染的核心入口：</p>
-<pre class="code-block"><code class="language-1130">:1234:source/net/minecraft/client/MinecraftClient.java
-private void render(boolean tick) {
+<pre class="code-block"><code class="language-1130">private void render(boolean tick) {
     this.window.setPhase(&quot;Pre render&quot;);
     
     // 1. 处理渲染任务队列
@@ -363,8 +368,7 @@ private void render(boolean tick) {
     this.paused = ...;  // 暂停状态判断
 }</code></pre>
 <h3>2.5 屏幕管理</h3>
-<pre class="code-block"><code class="language-1029">:1065:source/net/minecraft/client/MinecraftClient.java
-public void setScreen(@Nullable Screen screen) {
+<pre class="code-block"><code class="language-1029">public void setScreen(@Nullable Screen screen) {
     if (this.currentScreen != null) {
         this.currentScreen.removed();
     }
@@ -400,16 +404,14 @@ public void setScreen(@Nullable Screen screen) {
 └── LightmapTextureManager (光照贴图)</code></pre>
 <h3>3.2 GameRenderer 分析</h3>
 <p><code>GameRenderer</code> 是主渲染器入口，负责协调所有渲染操作：</p>
-<pre class="code-block"><code class="language-98">:99:source/net/minecraft/client/render/GameRenderer.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-98">@Environment(value=EnvType.CLIENT)
 public class GameRenderer implements AutoCloseable {</code></pre>
 <p><strong>核心职责：</strong>
 <ul><li>第一人称手持物品渲染</li>
 <li>后处理特效（模糊、凋零效果等）</li>
 <li>着色器程序管理</li>
 <li>FOV 和缩放控制</li></ul></p>
-<pre class="code-block"><code class="language-266">:274:source/net/minecraft/client/render/GameRenderer.java
-public GameRenderer(MinecraftClient client, HeldItemRenderer heldItemRenderer, 
+<pre class="code-block"><code class="language-266">public GameRenderer(MinecraftClient client, HeldItemRenderer heldItemRenderer, 
                     ResourceManager resourceManager, BufferBuilderStorage buffers) {
     this.client = client;
     this.resourceManager = resourceManager;
@@ -420,8 +422,7 @@ public GameRenderer(MinecraftClient client, HeldItemRenderer heldItemRenderer,
 }</code></pre>
 <p><strong>着色器程序管理：</strong></p>
 <p>GameRenderer 预加载并管理大量着色器程序：</p>
-<pre class="code-block"><code class="language-442">:470:source/net/minecraft/client/render/GameRenderer.java
-void loadPrograms(ResourceFactory factory) {
+<pre class="code-block"><code class="language-442">void loadPrograms(ResourceFactory factory) {
     // 粒子着色器
     list2.add(Pair.of(new ShaderProgram(factory, &quot;particle&quot;, ...), program -&gt; {
         particleProgram = program;
@@ -440,13 +441,11 @@ void loadPrograms(ResourceFactory factory) {
 }</code></pre>
 <h3>3.3 WorldRenderer 分析</h3>
 <p><code>WorldRenderer</code> 负责渲染游戏世界：</p>
-<pre class="code-block"><code class="language-167">:170:source/net/minecraft/client/render/WorldRenderer.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-167">@Environment(value=EnvType.CLIENT)
 public class WorldRenderer
 implements SynchronousResourceReloader, AutoCloseable {</code></pre>
 <p><strong>核心组件：</strong></p>
-<pre class="code-block"><code class="language-187">:264:source/net/minecraft/client/render/WorldRenderer.java
-private final MinecraftClient client;
+<pre class="code-block"><code class="language-187">private final MinecraftClient client;
 private final EntityRenderDispatcher entityRenderDispatcher;
 private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
 private final BufferBuilderStorage bufferBuilders;
@@ -468,8 +467,7 @@ private final ObjectArrayList&lt;ChunkBuilder.BuiltChunk&gt; builtChunks;
 @Nullable private Framebuffer translucentFramebuffer;
 @Nullable private PostEffectProcessor transparencyPostProcessor;</code></pre>
 <p><strong>天气渲染：</strong></p>
-<pre class="code-block"><code class="language-286">:398:source/net/minecraft/client/render/WorldRenderer.java
-private void renderWeather(LightmapTextureManager manager, float tickDelta, 
+<pre class="code-block"><code class="language-286">private void renderWeather(LightmapTextureManager manager, float tickDelta, 
                            double cameraX, double cameraY, double cameraZ) {
     float f = this.client.world.getRainGradient(tickDelta);
     if (f &lt;= 0.0f) return;
@@ -493,22 +491,19 @@ private void renderWeather(LightmapTextureManager manager, float tickDelta,
 <li><strong>BuiltChunk</strong> - 缓存的区块数据</li>
 <li><strong>VertexBuffer</strong> - GPU 顶点缓冲区</li></ul></p>
 <p><strong>区块排序：</strong></p>
-<pre class="code-block"><code class="language-257">:265:source/net/minecraft/client/render/WorldRenderer.java
-private double lastTranslucentSortX;
+<pre class="code-block"><code class="language-257">private double lastTranslucentSortX;
 private double lastTranslucentSortY;
 private double lastTranslucentSortZ;</code></pre>
 <p><hr></p>
 <h2 id="4. GUI 系统详解">4. GUI 系统详解</h2>
 <h3>4.1 Screen 基类分析</h3>
 <p><code>Screen</code> 是所有 GUI 屏幕的基类：</p>
-<pre class="code-block"><code class="language-62">:65:source/net/minecraft/client/gui/screen/Screen.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-62">@Environment(value=EnvType.CLIENT)
 public abstract class Screen
 extends AbstractParentElement
 implements Drawable {</code></pre>
 <p><strong>核心组件：</strong></p>
-<pre class="code-block"><code class="language-76">:104:source/net/minecraft/client/gui/screen/Screen.java
-protected final Text title;
+<pre class="code-block"><code class="language-76">protected final Text title;
 private final List&lt;Element&gt; children = Lists.newArrayList();
 private final List&lt;Selectable&gt; selectables = Lists.newArrayList();
 protected final List&lt;Drawable&gt; drawables = Lists.newArrayList();
@@ -523,8 +518,7 @@ protected final Executor executor = runnable -&gt; this.client.execute(() -&gt; 
     }
 });</code></pre>
 <p><strong>生命周期方法：</strong></p>
-<pre class="code-block"><code class="language-330">:379:source/net/minecraft/client/gui/screen/Screen.java
-public final void init(MinecraftClient client, int width, int height) {
+<pre class="code-block"><code class="language-330">public final void init(MinecraftClient client, int width, int height) {
     this.client = client;
     this.textRenderer = client.textRenderer;
     this.width = width;
@@ -549,8 +543,7 @@ public void removed() {}
 // 屏幕显示时调用
 public void onDisplayed() {}</code></pre>
 <h3>4.2 渲染流程</h3>
-<pre class="code-block"><code class="language-118">:132:source/net/minecraft/client/gui/screen/Screen.java
-public final void renderWithTooltip(DrawContext context, int mouseX, int mouseY, float delta) {
+<pre class="code-block"><code class="language-118">public final void renderWithTooltip(DrawContext context, int mouseX, int mouseY, float delta) {
     this.render(context, mouseX, mouseY, delta);
     if (this.tooltip != null) {
         context.drawTooltip(this.textRenderer, this.tooltip.tooltip(), 
@@ -568,16 +561,14 @@ public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 }</code></pre>
 <h3>4.3 TitleScreen 分析</h3>
 <p>主菜单屏幕：</p>
-<pre class="code-block"><code class="language-54">:56:source/net/minecraft/client/gui/screen/TitleScreen.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-54">@Environment(value=EnvType.CLIENT)
 public class TitleScreen extends Screen {</code></pre>
 <p><strong>特性：</strong>
 <ul><li>全景背景渲染</li>
 <li>Logo 绘制</li>
 <li>动态渐入效果</li>
 <li>Realms 通知系统</li></ul></p>
-<pre class="code-block"><code class="language-218">:256:source/net/minecraft/client/gui/screen/TitleScreen.java
-@Override
+<pre class="code-block"><code class="language-218">@Override
 public void render(DrawContext context, int mouseX, int mouseY, float delta) {
     if (this.backgroundFadeStart == 0L &amp;&amp; this.doBackgroundFade) {
         this.backgroundFadeStart = Util.getMeasuringTimeMs();
@@ -602,12 +593,10 @@ public void render(DrawContext context, int mouseX, int mouseY, float delta) {
     this.logoDrawer.draw(context, this.width, f);
 }</code></pre>
 <h3>4.4 游戏菜单屏幕</h3>
-<pre class="code-block"><code class="language-37">:39:source/net/minecraft/client/gui/screen/GameMenuScreen.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-37">@Environment(value=EnvType.CLIENT)
 public class GameMenuScreen extends Screen {</code></pre>
 <p><strong>按钮布局：</strong></p>
-<pre class="code-block"><code class="language-81">:112:source/net/minecraft/client/gui/screen/GameMenuScreen.java
-private void initWidgets() {
+<pre class="code-block"><code class="language-81">private void initWidgets() {
     GridWidget gridWidget = new GridWidget();
     GridWidget.Adder adder = gridWidget.createAdder(2);
     
@@ -630,12 +619,10 @@ private void initWidgets() {
 }</code></pre>
 <h3>4.5 InGameHud 分析</h3>
 <p>游戏内 HUD 渲染器：</p>
-<pre class="code-block"><code class="language-86">:87:source/net/minecraft/client/gui/hud/InGameHud.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-86">@Environment(value=EnvType.CLIENT)
 public class InGameHud {</code></pre>
 <p><strong>核心组件：</strong></p>
-<pre class="code-block"><code class="language-134">:165:source/net/minecraft/client/gui/hud/InGameHud.java
-private final MinecraftClient client;
+<pre class="code-block"><code class="language-134">private final MinecraftClient client;
 private final ChatHud chatHud;
 private final DebugHud debugHud;
 private final SubtitlesHud subtitlesHud;
@@ -651,8 +638,7 @@ private int titleFadeInTicks = 10;
 private int titleStayTicks = 70;
 private int titleFadeOutTicks = 20;</code></pre>
 <p><strong>分层渲染架构：</strong></p>
-<pre class="code-block"><code class="language-177">:183:source/net/minecraft/client/gui/hud/InGameHud.java
-LayeredDrawer layeredDrawer = new LayeredDrawer()
+<pre class="code-block"><code class="language-177">LayeredDrawer layeredDrawer = new LayeredDrawer()
     .addLayer(this::renderMiscOverlays)      // 暗角、望远镜等
     .addLayer(this::renderCrosshair)          // 准星
     .addLayer(this::renderMainHud)            // 主HUD
@@ -671,8 +657,7 @@ LayeredDrawer layeredDrawer2 = new LayeredDrawer()
     .addLayer((context, tickCounter) -&gt; this.subtitlesHud.render(context));</code></pre>
 <h3>4.6 InventoryScreen 分析</h3>
 <p>物品栏屏幕：</p>
-<pre class="code-block"><code class="language-29">:32:source/net/minecraft/client/gui/screen/ingame/InventoryScreen.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-29">@Environment(value=EnvType.CLIENT)
 public class InventoryScreen
 extends AbstractInventoryScreen&lt;PlayerScreenHandler&gt;
 implements RecipeBookProvider {</code></pre>
@@ -680,8 +665,7 @@ implements RecipeBookProvider {</code></pre>
 <ul><li>玩家实体渲染</li>
 <li>配方书集成</li>
 <li>物品拖拽</li></ul></p>
-<pre class="code-block"><code class="language-93">:99:source/net/minecraft/client/gui/screen/ingame/InventoryScreen.java
-@Override
+<pre class="code-block"><code class="language-93">@Override
 protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
     int i = this.x;
     int j = this.y;
@@ -694,12 +678,10 @@ protected void drawBackground(DrawContext context, float delta, int mouseX, int 
 <h2 id="5. 输入处理机制">5. 输入处理机制</h2>
 <h3>5.1 键盘输入处理</h3>
 <p><code>Keyboard</code> 类处理所有键盘事件：</p>
-<pre class="code-block"><code class="language-58">:59:source/net/minecraft/client/Keyboard.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-58">@Environment(value=EnvType.CLIENT)
 public class Keyboard {</code></pre>
 <p><strong>Debug 快捷键：</strong></p>
-<pre class="code-block"><code class="language-72">:106:source/net/minecraft/client/Keyboard.java
-private boolean processDebugKeys(int key) {
+<pre class="code-block"><code class="language-72">private boolean processDebugKeys(int key) {
     switch (key) {
         case 69:  // F3+E - 区块信息
             this.client.debugChunkInfo = !this.client.debugChunkInfo;
@@ -717,8 +699,7 @@ private boolean processDebugKeys(int key) {
     return false;
 }</code></pre>
 <p><strong>F3 菜单快捷键：</strong></p>
-<pre class="code-block"><code class="language-128">:256:source/net/minecraft/client/Keyboard.java
-private boolean processF3(int key) {
+<pre class="code-block"><code class="language-128">private boolean processF3(int key) {
     switch (key) {
         case 65:  // F3+A - 重载区块
             this.client.worldRenderer.reload();
@@ -747,12 +728,10 @@ private boolean processF3(int key) {
 }</code></pre>
 <h3>5.2 鼠标输入处理</h3>
 <p><code>Mouse</code> 类管理鼠标输入：</p>
-<pre class="code-block"><code class="language-27">:28:source/net/minecraft/client/Mouse.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-27">@Environment(value=EnvType.CLIENT)
 public class Mouse {</code></pre>
 <p><strong>鼠标按钮处理：</strong></p>
-<pre class="code-block"><code class="language-54">:126:source/net/minecraft/client/Mouse.java
-private void onMouseButton(long window, int button, int action, int mods) {
+<pre class="code-block"><code class="language-54">private void onMouseButton(long window, int button, int action, int mods) {
     // Mac 系统的 Ctrl+点击映射
     if (MinecraftClient.IS_SYSTEM_MAC &amp;&amp; button == 0) {
         if (bl &amp;&amp; (mods &amp; 2) == 2) {
@@ -782,8 +761,7 @@ private void onMouseButton(long window, int button, int action, int mods) {
     }
 }</code></pre>
 <p><strong>鼠标灵敏度计算：</strong></p>
-<pre class="code-block"><code class="language-254">:284:source/net/minecraft/client/Mouse.java
-private void updateMouse(double timeDelta) {
+<pre class="code-block"><code class="language-254">private void updateMouse(double timeDelta) {
     double sensitivity = this.client.options.getMouseSensitivity().getValue() * 0.6 + 0.2;
     double factor = sensitivity * sensitivity * sensitivity;
     double multiplier = factor * 8.0;
@@ -807,11 +785,9 @@ private void updateMouse(double timeDelta) {
 }</code></pre>
 <h3>5.3 键盘输入状态</h3>
 <p><code>KeyboardInput</code> 管理移动相关的按键：</p>
-<pre class="code-block"><code class="language-11">:13:source/net/minecraft/client/input/KeyboardInput.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-11">@Environment(value=EnvType.CLIENT)
 public class KeyboardInput extends Input {</code></pre>
-<pre class="code-block"><code class="language-27">:41:source/net/minecraft/client/input/KeyboardInput.java
-@Override
+<pre class="code-block"><code class="language-27">@Override
 public void tick(boolean slowDown, float slowDownFactor) {
     this.pressingForward = this.settings.forwardKey.isPressed();
     this.pressingBack = this.settings.backKey.isPressed();
@@ -835,14 +811,12 @@ public void tick(boolean slowDown, float slowDownFactor) {
 <h2 id="6. 网络客户端实现">6. 网络客户端实现</h2>
 <h3>6.1 ClientPlayNetworkHandler 分析</h3>
 <p>网络包处理器：</p>
-<pre class="code-block"><code class="language-337">:342:source/net/minecraft/client/network/ClientPlayNetworkHandler.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-337">@Environment(value=EnvType.CLIENT)
 public class ClientPlayNetworkHandler
 extends ClientCommonNetworkHandler
 implements ClientPlayPacketListener, TickablePacketListener {</code></pre>
 <p><strong>核心组件：</strong></p>
-<pre class="code-block"><code class="language-349">:382:source/net/minecraft/client/network/ClientPlayNetworkHandler.java
-private final GameProfile profile;
+<pre class="code-block"><code class="language-349">private final GameProfile profile;
 private ClientWorld world;
 private ClientWorld.Properties worldProperties;
 private final Map&lt;UUID, PlayerListEntry&gt; playerListEntries = Maps.newHashMap();
@@ -865,12 +839,10 @@ private final ChunkBatchSizeCalculator chunkBatchSizeCalculator = new ChunkBatch
 private final PingMeasurer pingMeasurer;</code></pre>
 <h3>6.2 客户端玩家实体</h3>
 <p><code>ClientPlayerEntity</code> 代表本地玩家：</p>
-<pre class="code-block"><code class="language-103">:105:source/net/minecraft/client/network/ClientPlayerEntity.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-103">@Environment(value=EnvType.CLIENT)
 public class ClientPlayerEntity extends AbstractClientPlayerEntity {</code></pre>
 <p><strong>核心组件：</strong></p>
-<pre class="code-block"><code class="language-113">:162:source/net/minecraft/client/network/ClientPlayerEntity.java
-public final ClientPlayNetworkHandler networkHandler;
+<pre class="code-block"><code class="language-113">public final ClientPlayNetworkHandler networkHandler;
 private final StatHandler statHandler;
 private final ClientRecipeBook recipeBook;
 private final List&lt;ClientPlayerTickable&gt; tickables = Lists.newArrayList();
@@ -889,8 +861,7 @@ this.tickables.add(new AmbientSoundPlayer(this, client.getSoundManager()));
 this.tickables.add(new BubbleColumnSoundPlayer(this));
 this.tickables.add(new BiomeEffectSoundPlayer(this, ...));</code></pre>
 <p><strong>移动包发送：</strong></p>
-<pre class="code-block"><code class="language-238">:282:source/net/minecraft/client/network/ClientPlayerEntity.java
-private void sendMovementPackets() {
+<pre class="code-block"><code class="language-238">private void sendMovementPackets() {
     this.sendSprintingPacket();
     
     boolean bl = this.isSneaking();
@@ -927,8 +898,7 @@ private void sendMovementPackets() {
 <h3>6.3 数据包处理</h3>
 <p><strong>区块数据处理：</strong></p>
 <p>ClientPlayNetworkHandler 处理来自服务器的各种数据包：</p>
-<pre class="code-block"><code class="language-283">:296:source/net/minecraft/client/network/ClientPlayNetworkHandler.java
-public void onChunkData(ChunkDataS2CPacket packet) {
+<pre class="code-block"><code class="language-283">public void onChunkData(ChunkDataS2CPacket packet) {
     this.client.getWorldRenderer().onChunkReady(packet.getChunkX(), packet.getChunkZ());
 }
 
@@ -945,12 +915,10 @@ public void onParticle(ParticleS2CPacket packet) {
 <h2 id="7. 关键子系统分析">7. 关键子系统分析</h2>
 <h3>7.1 字体渲染系统</h3>
 <p><code>TextRenderer</code> 负责所有文本渲染：</p>
-<pre class="code-block"><code class="language-44">:45:source/net/minecraft/client/font/TextRenderer.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-44">@Environment(value=EnvType.CLIENT)
 public class TextRenderer {</code></pre>
 <p><strong>核心方法：</strong></p>
-<pre class="code-block"><code class="language-81">:104:source/net/minecraft/client/font/TextRenderer.java
-public int draw(String text, float x, float y, int color, boolean shadow, 
+<pre class="code-block"><code class="language-81">public int draw(String text, float x, float y, int color, boolean shadow, 
                 Matrix4f matrix, VertexConsumerProvider vertexConsumers, 
                 TextLayerType layerType, int backgroundColor, int light) {
     return this.drawInternal(text, x, y, color, shadow, matrix, 
@@ -965,8 +933,7 @@ public int draw(Text text, float x, float y, int color, boolean shadow,
                      vertexConsumers, layerType, backgroundColor, light);
 }</code></pre>
 <p><strong>RTL 支持：</strong></p>
-<pre class="code-block"><code class="language-68">:76:source/net/minecraft/client/font/TextRenderer.java
-public String mirror(String text) {
+<pre class="code-block"><code class="language-68">public String mirror(String text) {
     try {
         Bidi bidi = new Bidi(new ArabicShaping(8).shape(text), 127);
         bidi.setReorderingMode(0);
@@ -977,13 +944,11 @@ public String mirror(String text) {
 }</code></pre>
 <h3>7.2 纹理管理系统</h3>
 <p><code>TextureManager</code> 管理所有纹理资源：</p>
-<pre class="code-block"><code class="language-41">:45:source/net/minecraft/client/texture/TextureManager.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-41">@Environment(value=EnvType.CLIENT)
 public class TextureManager
 implements ResourceReloader, TextureTickListener, AutoCloseable {</code></pre>
 <p><strong>纹理绑定：</strong></p>
-<pre class="code-block"><code class="language-57">:72:source/net/minecraft/client/texture/TextureManager.java
-public void bindTexture(Identifier id) {
+<pre class="code-block"><code class="language-57">public void bindTexture(Identifier id) {
     if (!RenderSystem.isOnRenderThread()) {
         RenderSystem.recordRenderCall(() -&gt; this.bindTextureInner(id));
     } else {
@@ -1001,12 +966,10 @@ private void bindTextureInner(Identifier id) {
 }</code></pre>
 <h3>7.3 声音系统</h3>
 <p><code>SoundManager</code> 管理所有音频播放：</p>
-<pre class="code-block"><code class="language-52">:53:source/net/minecraft/client/sound/SoundManager.java
-@Environment(value=EnvType.CLIENT)
+<pre class="code-block"><code class="language-52">@Environment(value=EnvType.CLIENT)
 public class SoundManager extends SinglePreparationResourceReloader&lt;SoundList&gt; {</code></pre>
 <p><strong>核心方法：</strong></p>
-<pre class="code-block"><code class="language-152">:167:source/net/minecraft/client/sound/SoundManager.java
-public void playNextTick(TickableSoundInstance sound) {
+<pre class="code-block"><code class="language-152">public void playNextTick(TickableSoundInstance sound) {
     this.soundSystem.playNextTick(sound);
 }
 
@@ -1163,6 +1126,25 @@ public void stopAll() {
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

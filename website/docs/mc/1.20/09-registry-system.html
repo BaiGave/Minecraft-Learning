@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -253,8 +262,7 @@ IndexedIterable&lt;T&gt; {
     );
 }</code></pre>
 <h3>2.3 RegistryEntry 接口</h3>
-<pre class="code-block"><code class="language-java">// RegistryEntry - 条目接口
-public interface RegistryEntry&lt;T&gt; {
+<pre class="code-block"><code class="language-java">public interface RegistryEntry&lt;T&gt; {
     
     // 获取类型
     RegistryEntryOwner&lt;T&gt; getOwner();
@@ -270,8 +278,7 @@ public interface RegistryEntry&lt;T&gt; {
     Reference&lt;T&gt; toReference();
 }</code></pre>
 <h3>2.4 RegistryEntry.Reference 引用条目</h3>
-<pre class="code-block"><code class="language-java">// Reference - 引用条目实现
-public static class Reference&lt;T&gt;
+<pre class="code-block"><code class="language-java">public static class Reference&lt;T&gt;
 implements RegistryEntry&lt;T&gt; {
     
     private final RegistryEntryOwner&lt;T&gt; owner;
@@ -330,8 +337,7 @@ implements MutableRegistry&lt;T&gt; {
 }</code></pre>
 <h3>3.2 DefaultedRegistry</h3>
 <p>提供默认值支持的注册表：</p>
-<pre class="code-block"><code class="language-java">// DefaultedRegistry - 带默认值的注册表
-public class DefaultedRegistry&lt;T&gt;
+<pre class="code-block"><code class="language-java">public class DefaultedRegistry&lt;T&gt;
 extends SimpleRegistry&lt;T&gt; {
     
     private final Identifier defaultId;
@@ -350,8 +356,7 @@ extends SimpleRegistry&lt;T&gt; {
     }
 }</code></pre>
 <h3>3.3 注册流程</h3>
-<pre class="code-block"><code class="language-java">// 注册元素
-public static &lt;V, T extends V&gt; T register(
+<pre class="code-block"><code class="language-java">public static &lt;V, T extends V&gt; T register(
     Registry&lt;V&gt; registry, 
     RegistryKey&lt;V&gt; key, 
     T entry
@@ -441,8 +446,7 @@ public class RegistryKey&lt;T&gt; {
     }
 }</code></pre>
 <h3>4.2 RegistryKey 使用示例</h3>
-<pre class="code-block"><code class="language-java">// 定义一个 RegistryKey
-RegistryKey&lt;Block&gt; DIAMOND_BLOCK_KEY = RegistryKey.of(
+<pre class="code-block"><code class="language-java">RegistryKey&lt;Block&gt; DIAMOND_BLOCK_KEY = RegistryKey.of(
     Registries.BLOCK_KEY,           // 注册表键
     Identifier.ofVanilla(&quot;diamond_block&quot;)  // 值标识符
 );
@@ -458,8 +462,7 @@ RegistryKey&lt;Block&gt; STONE_KEY = RegistryKey.of(
     Identifier.ofVanilla(&quot;stone&quot;)
 );</code></pre>
 <h3>4.3 序列化支持</h3>
-<pre class="code-block"><code class="language-java">// Codec 序列化
-public static &lt;T&gt; Codec&lt;RegistryKey&lt;T&gt;&gt; createCodec(
+<pre class="code-block"><code class="language-java">public static &lt;T&gt; Codec&lt;RegistryKey&lt;T&gt;&gt; createCodec(
     RegistryKey&lt;? extends Registry&lt;T&gt;&gt; registry
 ) {
     return Identifier.CODEC.xmap(
@@ -481,8 +484,7 @@ public static &lt;T&gt; PacketCodec&lt;ByteBuf, RegistryKey&lt;T&gt;&gt; createP
 <h2 id="RegistryEntry 注册表条目">RegistryEntry 注册表条目</h2>
 <h3>5.1 RegistryEntry.Reference 引用条目</h3>
 <p>引用条目是指向已注册值的条目：</p>
-<pre class="code-block"><code class="language-java">// 获取引用
-RegistryEntry.Reference&lt;Block&gt; reference = block.getRegistryEntry();
+<pre class="code-block"><code class="language-java">RegistryEntry.Reference&lt;Block&gt; reference = block.getRegistryEntry();
 
 // 获取值
 Block block = reference.value();
@@ -494,16 +496,14 @@ RegistryKey&lt;Block&gt; key = reference.registryKey();
 boolean same = reference1 == reference2;</code></pre>
 <h3>5.2 直接条目（Direct Entry）</h3>
 <p>直接条目用于尚未注册的值：</p>
-<pre class="code-block"><code class="language-java">// 创建直接条目
-RegistryEntry&lt;Block&gt; directEntry = RegistryEntry.direct(block);
+<pre class="code-block"><code class="language-java">RegistryEntry&lt;Block&gt; directEntry = RegistryEntry.direct(block);
 
 // 检查是否为引用类型
 if (entry instanceof RegistryEntry.Reference) {
     // 已注册条目
 }</code></pre>
 <h3>5.3 生命周期追踪</h3>
-<pre class="code-block"><code class="language-java">// RegistryEntryInfo 包含生命周期信息
-public class RegistryEntryInfo {
+<pre class="code-block"><code class="language-java">public class RegistryEntryInfo {
     public static final RegistryEntryInfo DEFAULT = new RegistryEntryInfo(Lifecycle.stable());
     
     private final Lifecycle lifecycle;
@@ -528,8 +528,7 @@ public enum Lifecycle {
 <h2 id="标签系统">标签系统</h2>
 <h3>6.1 TagKey 标签键</h3>
 <p>标签提供动态分组功能：</p>
-<pre class="code-block"><code class="language-java">// 定义标签键
-TagKey&lt;Block&gt; MINEABLE_PICKAXE = TagKey.of(
+<pre class="code-block"><code class="language-java">TagKey&lt;Block&gt; MINEABLE_PICKAXE = TagKey.of(
     RegistryKeys.BLOCK,
     Identifier.ofVanilla(&quot;mineable/pickaxe&quot;)
 );
@@ -541,8 +540,7 @@ boolean isMineable = block.getRegistryEntry().isIn(MINEABLE_PICKAXE);
 boolean hasTag = Registries.BLOCK.getEntry(block)
     .isIn(TagKey.of(RegistryKeys.BLOCK, id));</code></pre>
 <h3>6.2 标签定义</h3>
-<pre class="code-block"><code class="language-java">// 在代码中定义标签
-public class BlockTags {
+<pre class="code-block"><code class="language-java">public class BlockTags {
     
     // 预定义标签
     public static final TagKey&lt;Block&gt; MINEABLE_PICKAXE = 
@@ -570,8 +568,7 @@ public class BlockTags {
     ]
 }</code></pre>
 <h3>6.4 标签查询</h3>
-<pre class="code-block"><code class="language-java">// 获取标签中的所有条目
-Optional&lt;RegistryEntryList.Named&lt;Block&gt;&gt; tag = 
+<pre class="code-block"><code class="language-java">Optional&lt;RegistryEntryList.Named&lt;Block&gt;&gt; tag = 
     Registries.BLOCK.getEntryList(MINEABLE_PICKAXE);
 
 if (tag.isPresent()) {
@@ -649,8 +646,7 @@ public class Registries {
 <h3>7.2 常用注册表</h3>
 <table class="data-table"><thead><tr><th>注册表</th><th>键</th><th>默认值</th></tr></thead><tbody><tr><td>BLOCK</td><td>minecraft:block</td><td>air</td></tr><tr><td>ITEM</td><td>minecraft:item</td><td>air</td></tr><tr><td>FLUID</td><td>minecraft:fluid</td><td>empty</td></tr><tr><td>ENTITY<em>TYPE</td><td>minecraft:entity</em>type</td><td>pig</td></tr><tr><td>BLOCK<em>ENTITY</em>TYPE</td><td>minecraft:block<em>entity</em>type</td><td>furnace</td></tr><tr><td>ENCHANTMENT</td><td>minecraft:enchantment</td><td>-</td></tr><tr><td>POTION</td><td>minecraft:potion</td><td>-</td></tr><tr><td>BIOME</td><td>minecraft:worldgen/biome</td><td>-</td></tr><tr><td>SOUND<em>EVENT</td><td>minecraft:sound</em>event</td><td>-</td></tr></tbody></table>
 <h3>7.3 物品注册</h3>
-<pre class="code-block"><code class="language-java">// 注册物品
-public static final Item DIAMOND = register(
+<pre class="code-block"><code class="language-java">public static final Item DIAMOND = register(
     Registries.ITEM,
     Identifier.ofVanilla(&quot;diamond&quot;),
     new Item(new Item.Settings())
@@ -671,8 +667,7 @@ Item diamond = Registries.ITEM.get(RegistryKeys.ITEM);</code></pre>
 <li>绑定到特定服务器</li>
 <li>示例：生物群系、战利品表、进度</li></ul></p>
 <h3>8.2 DynamicRegistryManager</h3>
-<pre class="code-block"><code class="language-java">// 动态注册表管理器
-public interface DynamicRegistryManager {
+<pre class="code-block"><code class="language-java">public interface DynamicRegistryManager {
     
     // 获取动态注册表
     &lt;T&gt; Registry&lt;T&gt; get(RegistryKey&lt;Registry&lt;T&gt;&gt; key);
@@ -706,8 +701,7 @@ DynamicRegistryManager                RegistryBundle.S2C
         │                              确认资源包</code></pre>
 <h3>8.4 SerializableRegistries</h3>
 <p>可序列化的动态注册表：</p>
-<pre class="code-block"><code class="language-java">// 可序列化的注册表类型
-public class SerializableRegistries {
+<pre class="code-block"><code class="language-java">public class SerializableRegistries {
     
     public static final MapCodec&lt;DynamicRegistryManager&gt; CODEC = ...
     
@@ -740,8 +734,7 @@ public class SerializableRegistries {
 <p><hr></p>
 <h2 id="序列化机制">序列化机制</h2>
 <h3>9.1 Registry 序列化</h3>
-<pre class="code-block"><code class="language-java">// 获取注册表的 Codec
-Codec&lt;Registry&lt;Block&gt;&gt; blockRegistryCodec = Registries.BLOCK.getCodec();
+<pre class="code-block"><code class="language-java">Codec&lt;Registry&lt;Block&gt;&gt; blockRegistryCodec = Registries.BLOCK.getCodec();
 
 // 序列化为 NBT
 NbtCompound nbt = new NbtCompound();
@@ -760,8 +753,7 @@ RegistryEntry.Reference&lt;Block&gt; ref = block.getRegistryEntry();
 RegistryEntry.Reference.serialize(entryCodec, NbtOps.INSTANCE, ref);</code></pre>
 <h3>9.2 RegistryOps</h3>
 <p>RegistryOps 提供带注册表感知的序列化/反序列化：</p>
-<pre class="code-block"><code class="language-java">// 创建 RegistryOps
-RegistryOps&lt;NbtElement&gt; ops = registryManager.getOps(NbtOps.INSTANCE);
+<pre class="code-block"><code class="language-java">RegistryOps&lt;NbtElement&gt; ops = registryManager.getOps(NbtOps.INSTANCE);
 
 // 序列化带引用的数据
 NbtElement nbt = entryCodec.encodeStart(ops, reference).getOrThrow();
@@ -769,8 +761,7 @@ NbtElement nbt = entryCodec.encodeStart(ops, reference).getOrThrow();
 // 反序列化
 RegistryEntry&lt;Block&gt; entry = entryCodec.parse(ops, nbt).getOrThrow();</code></pre>
 <h3>9.3 标签序列化</h3>
-<pre class="code-block"><code class="language-java">// 序列化标签
-TagKey&lt;Block&gt; tag = TagKey.of(RegistryKeys.BLOCK, id);
+<pre class="code-block"><code class="language-java">TagKey&lt;Block&gt; tag = TagKey.of(RegistryKeys.BLOCK, id);
 
 // 获取标签对应的条目列表
 Optional&lt;RegistryEntryList.Named&lt;Block&gt;&gt; tagList = 
@@ -783,8 +774,7 @@ Codec&lt;RegistryEntryList.Named&lt;Block&gt;&gt; tagCodec =
 <h2 id="客户端服务端同步">客户端服务端同步</h2>
 <h3>10.1 RegistryWrapper</h3>
 <p>RegistryWrapper 提供只读的注册表视图：</p>
-<pre class="code-block"><code class="language-java">// 获取只读包装器
-RegistryWrapper&lt;Block&gt; wrapper = blockRegistry.getReadOnlyWrapper();
+<pre class="code-block"><code class="language-java">RegistryWrapper&lt;Block&gt; wrapper = blockRegistry.getReadOnlyWrapper();
 
 // 查询
 Optional&lt;RegistryEntry.Reference&lt;Block&gt;&gt; entry = 
@@ -800,8 +790,7 @@ wrapper.streamEntries().forEach(entry -&gt; {
 Optional&lt;RegistryEntryList.Named&lt;Block&gt;&gt; tag = 
     wrapper.getOptional(tagKey);</code></pre>
 <h3>10.2 RegistryEntryLookup</h3>
-<pre class="code-block"><code class="language-java">// 注册表条目查询接口
-public interface RegistryEntryLookup&lt;T&gt; {
+<pre class="code-block"><code class="language-java">public interface RegistryEntryLookup&lt;T&gt; {
     
     // 获取条目
     Optional&lt;RegistryEntry.Reference&lt;T&gt;&gt; getOptional(RegistryKey&lt;T&gt; key);
@@ -824,8 +813,7 @@ Optional&lt;RegistryEntryList.Named&lt;Block&gt;&gt; mineable =
     lookup.getOptional(TagKey.of(RegistryKeys.BLOCK,
         Identifier.ofVanilla(&quot;mineable/pickaxe&quot;)));</code></pre>
 <h3>10.3 网络同步</h3>
-<pre class="code-block"><code class="language-java">// 同步数据包
-public class RegistryDataS2CPacket implements Packet&lt;ClientConfigurationPacketListener&gt; {
+<pre class="code-block"><code class="language-java">public class RegistryDataS2CPacket implements Packet&lt;ClientConfigurationPacketListener&gt; {
     
     private final DynamicRegistryManager.Data data;
     
@@ -845,8 +833,7 @@ public class RegistryDataS2CPacket implements Packet&lt;ClientConfigurationPacke
 <p><hr></p>
 <h2 id="关键代码引用">关键代码引用</h2>
 <h3>11.1 注册新物品</h3>
-<pre class="code-block"><code class="language-java">// 完整注册流程
-public static final Item MY_ITEM = register(
+<pre class="code-block"><code class="language-java">public static final Item MY_ITEM = register(
     Registries.ITEM,
     Identifier.ofVanilla(&quot;my_item&quot;),
     new Item(new Item.Settings()
@@ -856,8 +843,7 @@ public static final Item MY_ITEM = register(
     )
 );</code></pre>
 <h3>11.2 创建 RegistryKey</h3>
-<pre class="code-block"><code class="language-java">// 方块键
-RegistryKey&lt;Block&gt; key = RegistryKey.of(
+<pre class="code-block"><code class="language-java">RegistryKey&lt;Block&gt; key = RegistryKey.of(
     RegistryKeys.BLOCK,
     Identifier.ofVanilla(&quot;diamond_block&quot;)
 );
@@ -874,8 +860,7 @@ RegistryKey&lt;World&gt; dimensionKey = RegistryKey.of(
     Identifier.ofVanilla(&quot;the_end&quot;)
 );</code></pre>
 <h3>11.3 使用 RegistryEntry</h3>
-<pre class="code-block"><code class="language-java">// 获取物品的注册表条目
-RegistryEntry&lt;Item&gt; entry = Items.DIAMOND.getRegistryEntry();
+<pre class="code-block"><code class="language-java">RegistryEntry&lt;Item&gt; entry = Items.DIAMOND.getRegistryEntry();
 
 // 检查是否为特定物品
 if (entry.matches(RegistryKey.of(RegistryKeys.ITEM, 
@@ -891,8 +876,7 @@ if (entry.isIn(ItemTags.LOG)) {
 // 获取值
 Item item = entry.value();</code></pre>
 <h3>11.4 遍历注册表</h3>
-<pre class="code-block"><code class="language-java">// 遍历所有方块
-for (Block block : Registries.BLOCK) {
+<pre class="code-block"><code class="language-java">for (Block block : Registries.BLOCK) {
     // 处理每个方块
 }
 
@@ -909,8 +893,7 @@ for (Identifier id : Registries.BLOCK.getIds()) {
     // 处理
 }</code></pre>
 <h3>11.5 创建自定义注册表</h3>
-<pre class="code-block"><code class="language-java">// 在 RegistryKeys 中定义注册表键
-public static final RegistryKey&lt;Registry&lt;MyData&gt;&gt; MY_DATA_KEY = 
+<pre class="code-block"><code class="language-java">public static final RegistryKey&lt;Registry&lt;MyData&gt;&gt; MY_DATA_KEY = 
     RegistryKey.ofRegistry(
         Identifier.of(&quot;mymod&quot;, &quot;my_data&quot;)
     );
@@ -1011,6 +994,25 @@ Registry.register(
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

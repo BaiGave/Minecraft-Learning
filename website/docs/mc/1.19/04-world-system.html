@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -236,8 +245,7 @@ public abstract class World
     implements WorldAccess,
                AutoCloseable {</code></pre>
 <h4>2.1.1 核心字段</h4>
-<pre class="code-block"><code class="language-java">// 世界标识
-public static final RegistryKey&lt;World&gt; OVERWORLD = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;overworld&quot;));
+<pre class="code-block"><code class="language-java">public static final RegistryKey&lt;World&gt; OVERWORLD = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;overworld&quot;));
 public static final RegistryKey&lt;World&gt; NETHER = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;the_nether&quot;));
 public static final RegistryKey&lt;World&gt; END = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;the_end&quot;));
 
@@ -568,8 +576,7 @@ public BlockState setBlockState(BlockPos pos, BlockState state, boolean moved) {
 }</code></pre>
 <h3>3.3 调色板系统 (PalettedContainer)</h3>
 <p>Minecraft 使用<strong>调色板压缩</strong>来存储区块数据，显著减少内存占用。</p>
-<pre class="code-block"><code class="language-java">// 调色板类型
-public interface Palette&lt;T&gt; {
+<pre class="code-block"><code class="language-java">public interface Palette&lt;T&gt; {
     int getIndex(T object);
     T get(int index);
     void read(DataBitsReader reader);
@@ -606,8 +613,7 @@ public class ArrayPalette&lt;T&gt; implements Palette&lt;T&gt; {
     WORLD_SURFACE;         // 世界表面（空气与固体交界）
 }</code></pre>
 <h3>4.2 高度图数据结构</h3>
-<pre class="code-block"><code class="language-java">// Heightmap 存储为 long[] 数组
-// 每个条目存储一个柱的Y坐标
+<pre class="code-block"><code class="language-java">// 每个条目存储一个柱的Y坐标
 // 使用前导零计数(LZC)编码压缩
 
 public class Heightmap {
@@ -847,8 +853,7 @@ public void addChunkTickSchedulers(ServerWorld world) {
     }
 }</code></pre>
 <h3>8.2 光照计算</h3>
-<pre class="code-block"><code class="language-java">// 天空光照：从最高点向下传播
-// 方块光照：从光源向外衰减
+<pre class="code-block"><code class="language-java">// 方块光照：从光源向外衰减
 public int getLight(LightType type, BlockPos pos) {
     if (pos.getY() &lt; world.getBottomY() || pos.getY() &gt;= world.getTopY()) {
         return type == LightType.SKY ? 15 : 0;
@@ -933,8 +938,7 @@ public int getLight(LightType type, BlockPos pos) {
 <p><hr></p>
 <h2 id="10. 系统间交互">10. 系统间交互</h2>
 <h3>10.1 世界与实体系统</h3>
-<pre class="code-block"><code class="language-java">// World.java
-public List&lt;Entity&gt; getOtherEntities(@Nullable Entity except, Box box, 
+<pre class="code-block"><code class="language-java">public List&lt;Entity&gt; getOtherEntities(@Nullable Entity except, Box box, 
                                      Predicate&lt;? super Entity&gt; predicate) {
     this.getProfiler().visit(&quot;getEntities&quot;);
     ArrayList&lt;Entity&gt; list = Lists.newArrayList();
@@ -946,8 +950,7 @@ public List&lt;Entity&gt; getOtherEntities(@Nullable Entity except, Box box,
     return list;
 }</code></pre>
 <h3>10.2 世界与生物群系</h3>
-<pre class="code-block"><code class="language-java">// World.java
-public boolean hasRain(BlockPos pos) {
+<pre class="code-block"><code class="language-java">public boolean hasRain(BlockPos pos) {
     if (!this.isRaining()) {
         return false;
     }
@@ -1037,6 +1040,25 @@ public boolean hasRain(BlockPos pos) {
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

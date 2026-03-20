@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -219,13 +228,11 @@
     └── ServerHandshakeNetworkHandler.java</code></pre>
 <h3>1.2 设计模式</h3>
 <p>服务端采用<strong>模板方法模式</strong>：</p>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:211-216
-public abstract class MinecraftServer
+<pre class="code-block"><code class="language-java">public abstract class MinecraftServer
 extends ReentrantThreadExecutor&lt;ServerTask&gt;
 implements QueryableServer, ChunkErrorHandler, CommandOutput, AutoCloseable</code></pre>
 <p><code>MinecraftServer</code> 是抽象基类，定义了服务端的核心流程：</p>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:359
-protected abstract boolean setupServer() throws IOException;  // 子类实现
+<pre class="code-block"><code class="language-java">protected abstract boolean setupServer() throws IOException;  // 子类实现
 
 // MinecraftServer.java:661
 protected void runServer() {
@@ -238,8 +245,7 @@ protected void runServer() {
 <p><hr></p>
 <h2 id="2. 主类分析 (MinecraftServer)">2. 主类分析 (MinecraftServer)</h2>
 <h3>2.1 核心成员变量</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:235-306
-public abstract class MinecraftServer {
+<pre class="code-block"><code class="language-java">public abstract class MinecraftServer {
     // 存储与会话
     protected final LevelStorage.Session session;
     protected final PlayerSaveHandler saveHandler;
@@ -269,8 +275,7 @@ public abstract class MinecraftServer {
     private final Thread serverThread;
 }</code></pre>
 <h3>2.2 静态工厂方法</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:308-319
-public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread, S&gt; serverFactory) {
+<pre class="code-block"><code class="language-java">public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread, S&gt; serverFactory) {
     AtomicReference&lt;MinecraftServer&gt; atomicReference = new AtomicReference&lt;&gt;();
     Thread thread = new Thread(() -&gt; ((MinecraftServer)atomicReference.get()).runServer(), &quot;Server thread&quot;);
     thread.setUncaughtExceptionHandler((thread, throwable) -&gt; LOGGER.error(&quot;Uncaught exception&quot;, throwable));
@@ -287,8 +292,7 @@ public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread
 <li>服务器线程名称固定为 "Server thread"</li>
 <li>多核系统上提升线程优先级到 8</li></ul></p>
 <h3>2.3 构造与初始化</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:321-347
-public MinecraftServer(Thread serverThread, LevelStorage.Session session, 
+<pre class="code-block"><code class="language-java">public MinecraftServer(Thread serverThread, LevelStorage.Session session, 
                        ResourcePackManager dataPackManager, SaveLoader saveLoader,
                        Proxy proxy, DataFixer dataFixer, ApiServices apiServices,
                        WorldGenerationProgressListenerFactory factory) {
@@ -357,8 +361,7 @@ public MinecraftServer(Thread serverThread, LevelStorage.Session session,
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘</code></pre>
 <h3>3.2 Tick 循环核心实现</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:661-736
-protected void runServer() {
+<pre class="code-block"><code class="language-java">protected void runServer() {
     try {
         if (this.setupServer()) {  // 初始化服务器
             this.tickStartTimeNanos = Util.getMeasuringTimeNano();
@@ -408,8 +411,7 @@ protected void runServer() {
     }
 }</code></pre>
 <h3>3.3 Tick 方法</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:887-914
-public void tick(BooleanSupplier shouldKeepTicking) {
+<pre class="code-block"><code class="language-java">public void tick(BooleanSupplier shouldKeepTicking) {
     long startTime = Util.getMeasuringTimeNano();
     ++this.ticks;
     
@@ -436,8 +438,7 @@ public void tick(BooleanSupplier shouldKeepTicking) {
     averageTickTime = averageTickTime * 0.8f + tickDuration * 0.2f;
 }</code></pre>
 <h3>3.4 世界Tick</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:967-1007
-public void tickWorlds(BooleanSupplier shouldKeepTicking) {
+<pre class="code-block"><code class="language-java">public void tickWorlds(BooleanSupplier shouldKeepTicking) {
     // 禁用所有玩家的网络刷新
     getPlayerManager().getPlayerList().forEach(player -&gt; 
         player.networkHandler.disableFlush());
@@ -477,8 +478,7 @@ public void tickWorlds(BooleanSupplier shouldKeepTicking) {
     }
 }</code></pre>
 <h3>3.5 关闭流程</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:583-624
-public void shutdown() {
+<pre class="code-block"><code class="language-java">public void shutdown() {
     LOGGER.info(&quot;Stopping server&quot;);
     this.getNetworkIo().stop();        // 停止网络
     
@@ -523,8 +523,7 @@ public void shutdown() {
 <li>消息广播</li>
 <li>统计与进度追踪</li></ul></p>
 <h3>4.2 核心数据结构</h3>
-<pre class="code-block"><code class="language-java">// PlayerManager.java:119-146
-public abstract class PlayerManager {
+<pre class="code-block"><code class="language-java">public abstract class PlayerManager {
     private final MinecraftServer server;
     private final List&lt;ServerPlayerEntity&gt; players;          // 玩家列表
     private final Map&lt;UUID, ServerPlayerEntity&gt; playerMap;   // UUID索引
@@ -545,8 +544,7 @@ public abstract class PlayerManager {
     private int simulationDistance;
 }</code></pre>
 <h3>4.3 玩家连接处理</h3>
-<pre class="code-block"><code class="language-java">// PlayerManager.java:155-240
-public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, 
+<pre class="code-block"><code class="language-java">public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, 
                            ConnectedClientData clientData) {
     GameProfile profile = player.getGameProfile();
     
@@ -595,8 +593,7 @@ public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity play
     bossBarManager.onPlayerConnect(player);
 }</code></pre>
 <h3>4.4 连接检查</h3>
-<pre class="code-block"><code class="language-java">// PlayerManager.java:347-371
-@Nullable
+<pre class="code-block"><code class="language-java">@Nullable
 public Text checkCanJoin(SocketAddress address, GameProfile profile) {
     // 检查封禁玩家列表
     if (this.bannedProfiles.contains(profile)) {
@@ -628,8 +625,7 @@ public Text checkCanJoin(SocketAddress address, GameProfile profile) {
     return null;  // 允许加入
 }</code></pre>
 <h3>4.5 玩家重生</h3>
-<pre class="code-block"><code class="language-java">// PlayerManager.java:394-437
-public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive, 
+<pre class="code-block"><code class="language-java">public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive, 
                                        Entity.RemovalReason reason) {
     // 获取重生目标
     TeleportTarget target = player.getRespawnTarget(alive, TeleportTarget.NO_OP);
@@ -660,8 +656,7 @@ public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive
     return newPlayer;
 }</code></pre>
 <h3>4.6 消息广播</h3>
-<pre class="code-block"><code class="language-java">// PlayerManager.java:683-774
-public void broadcast(Text message, boolean overlay) {
+<pre class="code-block"><code class="language-java">public void broadcast(Text message, boolean overlay) {
     this.server.sendMessage(message);  // 发送到控制台
     for (ServerPlayerEntity player : this.players) {
         player.sendMessageToClient(message, overlay);
@@ -684,8 +679,7 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
 <p><hr></p>
 <h2 id="5. 世界管理">5. 世界管理</h2>
 <h3>5.1 世界创建</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:387-435
-protected void createWorlds(WorldGenerationProgressListener listener) {
+<pre class="code-block"><code class="language-java">protected void createWorlds(WorldGenerationProgressListener listener) {
     ServerWorldProperties properties = saveProperties.getMainWorldProperties();
     boolean isDebugWorld = saveProperties.isDebugWorld();
     
@@ -734,8 +728,7 @@ protected void createWorlds(WorldGenerationProgressListener listener) {
     }
 }</code></pre>
 <h3>5.2 出生点设置</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:437-471
-private static void setupSpawn(ServerWorld world, ServerWorldProperties properties,
+<pre class="code-block"><code class="language-java">private static void setupSpawn(ServerWorld world, ServerWorldProperties properties,
                                boolean bonusChest, boolean debugWorld) {
     if (debugWorld) {
         properties.setSpawnPos(BlockPos.ORIGIN.up(80), 0.0f);
@@ -779,8 +772,7 @@ private static void setupSpawn(ServerWorld world, ServerWorldProperties properti
     }
 }</code></pre>
 <h3>5.3 准备开始区域</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:484-515
-private void prepareStartRegion(WorldGenerationProgressListener listener) {
+<pre class="code-block"><code class="language-java">private void prepareStartRegion(WorldGenerationProgressListener listener) {
     ServerWorld overworld = getOverworld();
     BlockPos spawn = overworld.getSpawnPos();
     
@@ -848,8 +840,7 @@ private void prepareStartRegion(WorldGenerationProgressListener listener) {
                                 │   - 实体同步            │
                                 └─────────────────────────┘</code></pre>
 <h3>6.2 握手处理</h3>
-<pre class="code-block"><code class="language-java">// ServerHandshakeNetworkHandler.java:33-75
-@Override
+<pre class="code-block"><code class="language-java">@Override
 public void onHandshake(HandshakeC2SPacket packet) {
     switch (packet.intendedState()) {
         case LOGIN:
@@ -890,8 +881,7 @@ private void login(HandshakeC2SPacket packet, boolean transfer) {
     }
 }</code></pre>
 <h3>6.3 登录流程</h3>
-<pre class="code-block"><code class="language-java">// ServerLoginNetworkHandler.java:138-237
-@Override
+<pre class="code-block"><code class="language-java">@Override
 public void onHello(LoginHelloC2SPacket packet) {
     Validate.validState(this.state == State.HELLO, &quot;Unexpected hello packet&quot;);
     this.profileName = packet.name();
@@ -948,8 +938,7 @@ public void onKey(LoginKeyC2SPacket packet) {
     verifier.start();
 }</code></pre>
 <h3>6.4 游戏玩法网络处理</h3>
-<pre class="code-block"><code class="language-java">// ServerPlayNetworkHandler.java:266-322
-@Override
+<pre class="code-block"><code class="language-java">@Override
 public void tick() {
     // 同步玩家位置
     syncWithPlayerPosition();
@@ -974,8 +963,7 @@ public void tick() {
     }
 }</code></pre>
 <h3>6.5 网络I/O管理</h3>
-<pre class="code-block"><code class="language-java">// ServerNetworkIo.java:73-109
-public void bind(@Nullable InetAddress address, int port) throws IOException {
+<pre class="code-block"><code class="language-java">public void bind(@Nullable InetAddress address, int port) throws IOException {
     EventLoopGroup group;
     Class&lt;? extends ServerChannel&gt; channelClass;
     
@@ -1036,8 +1024,7 @@ public void bind(@Nullable InetAddress address, int port) throws IOException {
             │
             └── DedicatedPlayerManager</code></pre>
 <h3>7.2 整合服务器 (IntegratedServer)</h3>
-<pre class="code-block"><code class="language-java">// IntegratedServer.java:46-67
-@Environment(EnvType.CLIENT)
+<pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
 public class IntegratedServer extends MinecraftServer {
     private final MinecraftClient client;
     private boolean paused = true;      // 可暂停
@@ -1092,8 +1079,7 @@ public class IntegratedServer extends MinecraftServer {
     }
 }</code></pre>
 <h3>7.3 独立服务器 (MinecraftDedicatedServer)</h3>
-<pre class="code-block"><code class="language-java">// MinecraftDedicatedServer.java:72-206
-public class MinecraftDedicatedServer extends MinecraftServer 
+<pre class="code-block"><code class="language-java">public class MinecraftDedicatedServer extends MinecraftServer 
     implements DedicatedServer {
     
     private final List&lt;PendingServerCommand&gt; commandQueue = 
@@ -1162,8 +1148,7 @@ public class MinecraftDedicatedServer extends MinecraftServer
 <hr></p>
 <h2 id="8. Tick 系统分析">8. Tick 系统分析</h2>
 <h3>8.1 ServerTickManager</h3>
-<pre class="code-block"><code class="language-java">// ServerTickManager.java:14-122
-public class ServerTickManager extends TickManager {
+<pre class="code-block"><code class="language-java">public class ServerTickManager extends TickManager {
     private long sprintTicks = 0L;           // 加速Tick数
     private long scheduledSprintTicks = 0L;  // 计划加速数
     private boolean wasFrozen = false;       // 冻结前状态
@@ -1203,15 +1188,13 @@ public class ServerTickManager extends TickManager {
     }
 }</code></pre>
 <h3>8.2 Tick同步</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:780-783
-private boolean shouldKeepTicking() {
+<pre class="code-block"><code class="language-java">private boolean shouldKeepTicking() {
     return hasRunningTasks() || 
            Util.getMeasuringTimeNano() &lt; 
                (waitingForNextTick ? tickEndTimeNanos : tickStartTimeNanos);
 }</code></pre>
 <h3>8.3 过载检测</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:677-682
-long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
+<pre class="code-block"><code class="language-java">long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
 if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
     long missedTicks = elapsed / targetTickTime;
     LOGGER.warn(&quot;Can&#39;t keep up! Running {}ms or {} ticks behind&quot;,
@@ -1221,8 +1204,7 @@ if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
 <p><hr></p>
 <h2 id="9. 命令系统">9. 命令系统</h2>
 <h3>9.1 命令管理器</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:1584-1586
-public CommandManager getCommandManager() {
+<pre class="code-block"><code class="language-java">public CommandManager getCommandManager() {
     return this.resourceManagerHolder.dataPackContents.getCommandManager();
 }
 
@@ -1231,8 +1213,7 @@ public void sendCommandTree(ServerPlayerEntity player) {
     getCommandManager().sendCommandTree(player);
 }</code></pre>
 <h3>9.2 命令源</h3>
-<pre class="code-block"><code class="language-java">// MinecraftServer.java:1591-1594
-public ServerCommandSource getCommandSource() {
+<pre class="code-block"><code class="language-java">public ServerCommandSource getCommandSource() {
     ServerWorld world = getOverworld();
     return new ServerCommandSource(
         this,
@@ -1247,8 +1228,7 @@ public ServerCommandSource getCommandSource() {
     );
 }</code></pre>
 <h3>9.3 独立服务器命令队列</h3>
-<pre class="code-block"><code class="language-java">// MinecraftDedicatedServer.java:294-302
-public void enqueueCommand(String command, ServerCommandSource source) {
+<pre class="code-block"><code class="language-java">public void enqueueCommand(String command, ServerCommandSource source) {
     commandQueue.add(new PendingServerCommand(command, source));
 }
 
@@ -1357,6 +1337,25 @@ PROTOCOL_SWITCHING -&gt; ACCEPTED (进入配置阶段)</code></pre>
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

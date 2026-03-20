@@ -41,7 +41,6 @@ const modules = {
         versions: ['1.21', '1.20', '1.19', '1.18'],
         defaultVersion: '1.21',
         docsDir: 'docs/mc',
-        sourceDir: 'D:/Projects/mc/analysis',
         theme: 'mc'
     },
 
@@ -193,7 +192,8 @@ const config = {
         mermaid: true,
         copyCode: true,
         progressBar: true,
-        darkMode: true
+        darkMode: true,
+        syntaxHighlight: true
     },
 
     // Markdown 解析选项

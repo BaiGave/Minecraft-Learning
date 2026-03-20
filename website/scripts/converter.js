@@ -58,19 +58,64 @@ function parseMarkdown(text) {
 
     // 预处理：保留代码块（包括 mermaid）
     const codeBlocks = [];
-    html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+    html = html.replace(/```([^\n]*)\n?([\s\S]*?)```/g, (match, langTag, code) => {
         const index = codeBlocks.length;
-        const langLower = (lang || '').toLowerCase();
-        const codeContent = code.trim();
-        
-        // 区分 mermaid 和其他代码块
-        if (langLower === 'mermaid') {
+
+        // 解析语言标签，支持多种写法：
+        //   java                          → 语言=java，无路径行
+        //   java:118:180:D:/X.java        → 语言=java，路径行已嵌入代码第一行
+        //   startLine                     → 特殊标记：语言=text，代码第一行是 :行号:行号:路径
+        //   startLine:118:180:D:/X.java   → 同上，路径行在标签里
+        let lang = 'text';
+        let codeContent = code.replace(/\r\n/g, '\n').trimEnd();
+
+        if (langTag.trim()) {
+            const parts = langTag.trim().split(':');
+            const first = parts[0].toLowerCase();
+
+            // startLine / line / linenumbers / filepath 等特殊标记 → 提取路径行后跳过
+            const pathMarkers = ['startline', 'line', 'linenumbers', 'filepath', 'source', 'srclines'];
+            if (pathMarkers.includes(first)) {
+                // 路径信息在代码第一行（:118:180:D:/.../X.java），去掉该行
+                const nlIdx = codeContent.indexOf('\n');
+                if (nlIdx !== -1) codeContent = codeContent.slice(nlIdx + 1);
+                // 尝试从 parts 里找 .java/.js/.glsl 等扩展名，映射为语言
+                const extMap = {
+                    'java': 'java', 'py': 'python', 'js': 'javascript', 'ts': 'typescript',
+                    'glsl': 'glsl', 'frag': 'glsl', 'vert': 'glsl', 'fs': 'glsl', 'vs': 'glsl',
+                    'json': 'json', 'xml': 'xml', 'yaml': 'yaml', 'yml': 'yaml',
+                    'toml': 'toml', 'md': 'markdown', 'sh': 'bash', 'bat': 'batch',
+                    'kt': 'kotlin', 'cs': 'csharp', 'cpp': 'cpp', 'c': 'c',
+                    'h': 'c', 'hpp': 'cpp', 'rs': 'rust', 'go': 'go', 'sql': 'sql',
+                    'properties': 'properties', 'txt': 'text'
+                };
+                for (const p of parts.slice(1)) {
+                    const m = p.match(/\.([a-z]{2,8})$/i);
+                    if (m && extMap[m[1].toLowerCase()]) {
+                        lang = extMap[m[1].toLowerCase()];
+                        break;
+                    }
+                }
+            } else {
+                lang = parts[0] || 'text';
+                // java/python/... 正常语言，后面若有 :行号:行号:路径，也去掉代码第一行
+                const line0 = codeContent.split('\n')[0];
+                if (
+                    (line0.length > 1 && line0.charAt(1) === ':' && /[A-Za-z]/.test(line0.charAt(0))) ||
+                    (line0.startsWith('/') && line0.includes('/'))
+                ) {
+                    const nlIdx = codeContent.indexOf('\n');
+                    if (nlIdx !== -1) codeContent = codeContent.slice(nlIdx + 1);
+                }
+            }
+        }
+
+        if (lang.toLowerCase() === 'mermaid') {
             codeBlocks.push({ type: 'mermaid', lang: 'mermaid', code: codeContent });
         } else {
-            codeBlocks.push({ type: 'code', lang: lang || 'text', code: codeContent });
+            codeBlocks.push({ type: 'code', lang: lang, code: codeContent });
         }
-        
-        // 使用 HTML 注释作为占位符，避免被其他 Markdown 语法影响
+
         return `\n<!--CODEBLOCK_${index}-->\n`;
     });
 
@@ -208,6 +253,8 @@ function generateDocHTML(doc, module, navItems, version = null) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    ${config.features.syntaxHighlight ? `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">` : ''}
     <style>
         /* 主题样式 */
         .docs-nav { background: ${module.color}; }
@@ -227,19 +274,25 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .info-box { border-left: 4px solid ${module.color}; background: ${module.color}15; }
         .info-box i { color: ${module.color}; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -264,7 +317,8 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .prev-next .next { background: ${module.colorGradient}; }
         .prev-next .next:hover { box-shadow: 0 4px 15px ${module.color}66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -349,6 +403,25 @@ function generateDocHTML(doc, module, navItems, version = null) {
     </div>
 
     <script src="${relativePath}/script.js"></script>
+    ${config.features.syntaxHighlight ? `<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>` : ''}
     ${config.features.mermaid ? `
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>` : ''}
@@ -635,8 +708,20 @@ function convertModule(moduleKey, specificVersion = null) {
         return;
     }
 
-    if (!module.sourceDir || !fs.existsSync(module.sourceDir)) {
-        console.log(`跳过 ${module.name}: 源目录不存在 (${module.sourceDir})`);
+    const websiteRoot = path.resolve(__dirname, '..');
+    // 源文件统一从 website/ 同级的 content/ 目录读取，格式：
+    //   有版本: content/{slug}/{version}/analysis/
+    //   无版本: content/{slug}/analysis/
+    let sourceDir;
+    if (module.versions && module.versions.length > 0) {
+        const version = specificVersion || module.defaultVersion || module.versions[0];
+        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'analysis');
+    } else {
+        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'analysis');
+    }
+
+    if (!fs.existsSync(sourceDir)) {
+        console.log(`跳过 ${module.name}: 源目录不存在 (${sourceDir})`);
         return;
     }
 
@@ -644,7 +729,6 @@ function convertModule(moduleKey, specificVersion = null) {
     console.log(`\n转换 ${module.name}...`);
 
     // 转换为绝对路径
-    const websiteRoot = path.resolve(__dirname, '..');
     const outputDir = path.resolve(websiteRoot, module.docsDir);
 
     // 确保输出目录存在
@@ -669,10 +753,10 @@ function convertModule(moduleKey, specificVersion = null) {
             fs.writeFileSync(path.join(versionDir, 'index.html'), indexContent);
 
             // 转换该版本的所有文档
-            const files = getMarkdownFiles(module.sourceDir);
+            const files = getMarkdownFiles(sourceDir);
 
             files.forEach(file => {
-                const sourcePath = path.join(module.sourceDir, file);
+                const sourcePath = path.join(sourceDir, file);
                 const content = fs.readFileSync(sourcePath, 'utf-8');
                 const { metadata, content: markdownContent } = parseFrontmatter(content);
 
@@ -697,10 +781,10 @@ function convertModule(moduleKey, specificVersion = null) {
         const indexContent = generateModuleIndex(module, navItems);
         fs.writeFileSync(path.join(outputDir, 'index.html'), indexContent);
 
-        const files = getMarkdownFiles(module.sourceDir);
+        const files = getMarkdownFiles(sourceDir);
 
         files.forEach(file => {
-            const sourcePath = path.join(module.sourceDir, file);
+            const sourcePath = path.join(sourceDir, file);
             const content = fs.readFileSync(sourcePath, 'utf-8');
             const { metadata, content: markdownContent } = parseFrontmatter(content);
 
@@ -750,7 +834,10 @@ function main() {
             } else {
                 console.log(`    版本: 无版本分支`);
             }
-            console.log(`    源目录: ${module.sourceDir}`);
+            let displaySource = module.versions && module.versions.length > 0
+                ? `content/${module.slug}/{version}/analysis/`
+                : `content/${module.slug}/analysis/`;
+            console.log(`    源目录: ${displaySource}`);
         });
     } else if (target === 'refresh-home') {
         // 重新生成首页

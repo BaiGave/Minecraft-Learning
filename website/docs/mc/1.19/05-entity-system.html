@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -237,8 +246,7 @@ public abstract class Entity
                ScoreHolder,
                AttachmentTarget {</code></pre>
 <h4>2.1.1 核心字段</h4>
-<pre class="code-block"><code class="language-java">// 实体标识
-private final EntityType&lt;?&gt; type;
+<pre class="code-block"><code class="language-java">private final EntityType&lt;?&gt; type;
 private int id = CURRENT_ID.incrementAndGet();  // 网络ID
 protected UUID uuid = MathHelper.randomUuid(this.random);  // 持久化UUID
 
@@ -269,8 +277,7 @@ private ImmutableList&lt;Entity&gt; passengerList = ImmutableList.of();
 @Nullable
 private Entity vehicle;</code></pre>
 <h4>2.1.2 实体生命周期</h4>
-<pre class="code-block"><code class="language-java">// 创建实体
-public Entity(EntityType&lt;?&gt; type, World world) {
+<pre class="code-block"><code class="language-java">public Entity(EntityType&lt;?&gt; type, World world) {
     this.type = type;
     this.world = world;
     this.dimensions = type.getDimensions();
@@ -364,8 +371,7 @@ public void move(MovementType movementType, Vec3d movement) {
     this.getWorld().getProfiler().pop();
 }</code></pre>
 <h4>2.1.4 数据追踪系统</h4>
-<pre class="code-block"><code class="language-java">// TrackedData - 需要同步的数据
-protected static final TrackedData&lt;Byte&gt; FLAGS = DataTracker.registerData(Entity.class, TrackedDataHandlerRegistry.BYTE);
+<pre class="code-block"><code class="language-java">protected static final TrackedData&lt;Byte&gt; FLAGS = DataTracker.registerData(Entity.class, TrackedDataHandlerRegistry.BYTE);
 protected static final int ON_FIRE_FLAG_INDEX = 0;
 private static final int SNEAKING_FLAG_INDEX = 1;
 private static final int SPRINTING_FLAG_INDEX = 3;
@@ -398,8 +404,7 @@ public boolean getFlag(int index) {
     return (this.dataTracker.get(FLAGS) &amp; 1 &lt;&lt; index) != 0;
 }</code></pre>
 <h4>2.1.5 骑乘系统</h4>
-<pre class="code-block"><code class="language-java">// 添加乘客
-public void addPassenger(Entity passenger) {
+<pre class="code-block"><code class="language-java">public void addPassenger(Entity passenger) {
     if (passenger.getVehicle() != this) {
         throw new IllegalStateException(&quot;Use method startRiding&quot;);
     }
@@ -447,8 +452,7 @@ public abstract class LivingEntity
     extends Entity
     implements Attackable {</code></pre>
 <h4>2.2.1 核心字段</h4>
-<pre class="code-block"><code class="language-java">// 属性系统
-private final AttributeContainer attributes;
+<pre class="code-block"><code class="language-java">private final AttributeContainer attributes;
 private final Map&lt;RegistryEntry&lt;StatusEffect&gt;, StatusEffectInstance&gt; activeStatusEffects;
 
 // 生命值
@@ -507,8 +511,7 @@ public static DefaultAttributeContainer.Builder createLivingAttributes() {
         // ... 更多属性
 }</code></pre>
 <h4>2.2.3 伤害系统</h4>
-<pre class="code-block"><code class="language-java">// 造成伤害
-public boolean damage(DamageSource source, float amount) {
+<pre class="code-block"><code class="language-java">public boolean damage(DamageSource source, float amount) {
     if (this.isInvulnerableTo(source)) {
         return false;
     }
@@ -564,8 +567,7 @@ protected boolean applyDamage(DamageSource source, float damage) {
     return true;
 }</code></pre>
 <h4>2.2.4 药水效果系统</h4>
-<pre class="code-block"><code class="language-java">// 添加药水效果
-public void addStatusEffect(StatusEffectInstance effect) {
+<pre class="code-block"><code class="language-java">public void addStatusEffect(StatusEffectInstance effect) {
     this.addStatusEffect(effect, EntityPoses.DEFAULT);
 }
 
@@ -678,8 +680,7 @@ public class Brain&lt;E extends LivingEntity&gt; {
     private Activity defaultActivity = Activity.IDLE;
 }</code></pre>
 <h3>3.2 记忆系统 (Memory)</h3>
-<pre class="code-block"><code class="language-java">// 记忆模块类型
-public class MemoryModuleType&lt;T&gt; {
+<pre class="code-block"><code class="language-java">public class MemoryModuleType&lt;T&gt; {
     private final Codec&lt;T&gt; codec;
     // ...
 }
@@ -716,8 +717,7 @@ public &lt;U&gt; Optional&lt;U&gt; getOptionalRegisteredMemory(MemoryModuleType&
     return optional.map(Memory::getValue);
 }</code></pre>
 <h3>3.3 传感器系统 (Sensor)</h3>
-<pre class="code-block"><code class="language-java">// 传感器基类
-public abstract class Sensor&lt;E extends LivingEntity&gt; {
+<pre class="code-block"><code class="language-java">public abstract class Sensor&lt;E extends LivingEntity&gt; {
     private static final int DEFAULT_MAX_VISIBLE = 128;
     
     public abstract void sense(ServerWorld world, E entity);
@@ -747,8 +747,7 @@ public class NearestLivingEntitiesSensor extends Sensor&lt;LivingEntity&gt; {
     }
 }</code></pre>
 <h3>3.4 活动系统 (Activity)</h3>
-<pre class="code-block"><code class="language-java">// 活动类型
-public class Activity {
+<pre class="code-block"><code class="language-java">public class Activity {
     public static final Activity CORE = new Activity(&quot;core&quot;);
     public static final Activity IDLE = new Activity(&quot;idle&quot;);
     public static final Activity WORK = new Activity(&quot;work&quot;);
@@ -795,8 +794,7 @@ public void refreshActivities(long timeOfDay, long time) {
     }
 }</code></pre>
 <h3>3.5 任务系统 (Task)</h3>
-<pre class="code-block"><code class="language-java">// 任务基类
-public abstract class Task&lt;E extends LivingEntity&gt; {
+<pre class="code-block"><code class="language-java">public abstract class Task&lt;E extends LivingEntity&gt; {
     private final int minRunTime;
     private final int maxRunTime;
     protected MultiTickTask.Status status = MultiTickTask.Status.STOPPED;
@@ -839,8 +837,7 @@ public enum Status {
 <p><hr></p>
 <h2 id="4. 实体类型系统 (EntityType)">4. 实体类型系统 (EntityType)</h2>
 <h3>4.1 EntityType 类结构</h3>
-<pre class="code-block"><code class="language-java">// 实体类型注册
-public class EntityType&lt;T extends Entity&gt; {
+<pre class="code-block"><code class="language-java">public class EntityType&lt;T extends Entity&gt; {
     public static final MapCodec&lt;EntityType&lt;?&gt;&gt; CODEC = RecordCodecBuilder.mapCodec(
         instance -&gt; instance.group(
             Registries.ENTITY_TYPE.getEntryCodec().fieldOf(&quot;type&quot;).forGetter(EntityType::getCodecId),
@@ -892,8 +889,7 @@ public class EntityType&lt;T extends Entity&gt; {
 <p><hr></p>
 <h2 id="5. 移动控制系统">5. 移动控制系统</h2>
 <h3>5.1 移动控制类型</h3>
-<pre class="code-block"><code class="language-java">// 基础移动控制
-public abstract class MoveControl {
+<pre class="code-block"><code class="language-java">public abstract class MoveControl {
     protected final MobEntity entity;
     protected double targetX;
     protected double targetY;
@@ -927,8 +923,7 @@ public class FlightMoveControl implements MoveControl {
     }
 }</code></pre>
 <h3>5.2 路径导航</h3>
-<pre class="code-block"><code class="language-java">// 路径节点
-public class PathNode {
+<pre class="code-block"><code class="language-java">public class PathNode {
     public int x, y, z;
     public float penalty;
     public PathNode previous;
@@ -1137,8 +1132,7 @@ public void writeNbt(NbtCompound nbt) {
     public static final EntityAttribute SPAWN_REINFORCEMENTS_CHANCE;
 }</code></pre>
 <h3>8.2 属性修饰符</h3>
-<pre class="code-block"><code class="language-java">// 修饰符操作
-public enum Operation {
+<pre class="code-block"><code class="language-java">public enum Operation {
     ADD_VALUE,           // 加法
     MULTIPLY_BASE,       // 乘法（基于基础值）
     MULTIPLY_TOTAL       // 乘法（基于最终值）
@@ -1200,8 +1194,7 @@ public class EntityAttributeModifier {
     }
 }</code></pre>
 <h3>9.2 常用追踪数据</h3>
-<pre class="code-block"><code class="language-java">// Entity级别
-FLAGS              - 实体标志位（燃烧、下潜等）
+<pre class="code-block"><code class="language-java">FLAGS              - 实体标志位（燃烧、下潜等）
 AIR                - 剩余空气时间
 CUSTOM_NAME        - 自定义名称
 NAME_VISIBLE       - 名称可见性
@@ -1316,6 +1309,25 @@ SLEEPING_POSITION - 睡眠位置</code></pre>
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

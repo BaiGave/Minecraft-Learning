@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -284,8 +293,7 @@ public interface Packet&lt;T extends PacketListener&gt; {
     }
 }</code></pre>
 <h3>2.2 PacketType 定义</h3>
-<pre class="code-block"><code class="language-java">// 数据包类型定义了数据包的ID和编解码器
-public interface PacketType&lt;T extends Packet&lt;?&gt;&gt; {
+<pre class="code-block"><code class="language-java">public interface PacketType&lt;T extends Packet&lt;?&gt;&gt; {
     
     // 数据包ID (状态内唯一)
     int getId();
@@ -362,8 +370,7 @@ extends ByteBuf {
 <h3>4.2 常用读写方法</h3>
 <table class="data-table"><thead><tr><th>类型</th><th>读方法</th><th>写方法</th></tr></thead><tbody><tr><td>VarInt</td><td><code>readVarInt()</code></td><td><code>writeVarInt(int)</code></td></tr><tr><td>VarLong</td><td><code>readVarLong()</code></td><td><code>writeVarLong(long)</code></td></tr><tr><td>String</td><td><code>readString()</code></td><td><code>writeString(String)</code></td></tr><tr><td>Identifier</td><td><code>readIdentifier()</code></td><td><code>writeIdentifier(Identifier)</code></td></tr><tr><td>UUID</td><td><code>readUuid()</code></td><td><code>writeUuid(UUID)</code></td></tr><tr><td>BlockPos</td><td><code>readBlockPos()</code></td><td><code>writeBlockPos(BlockPos)</code></td></tr><tr><td>NBT</td><td><code>readNbt()</code></td><td><code>writeNbt(NbtCompound)</code></td></tr><tr><td>Enum</td><td><code>readEnumConstant(Class)</code></td><td><code>writeEnumConstant(Enum)</code></td></tr><tr><td>Optional</td><td><code>readOptional(Reader)</code></td><td><code>writeOptional(Optional, Writer)</code></td></tr><tr><td>Collection</td><td><code>readCollection(factory, reader)</code></td><td><code>writeCollection(Collection, writer)</code></td></tr><tr><td>Map</td><td><code>readMap(...)</code></td><td><code>writeMap(...)</code></td></tr></tbody></table>
 <h3>4.3 Registry 相关方法</h3>
-<pre class="code-block"><code class="language-java">// 读取注册表引用
-RegistryEntry.Reference&lt;T&gt; readRegistryEntry(RegistryKey&lt;Registry&lt;T&gt;&gt; registry);
+<pre class="code-block"><code class="language-java">RegistryEntry.Reference&lt;T&gt; readRegistryEntry(RegistryKey&lt;Registry&lt;T&gt;&gt; registry);
 
 // 写入注册表引用
 void writeRegistryEntry(RegistryEntry.Reference&lt;T&gt; entry);
@@ -375,8 +382,7 @@ RegistryKey&lt;T&gt; readRegistryKey(RegistryKey&lt;Registry&lt;T&gt;&gt; regist
 void writeRegistryKey(RegistryKey&lt;T&gt; key);</code></pre>
 <h3>4.4 VarInt 编码</h3>
 <p>Minecraft 使用 VarInt（可变长度整数）来节省带宽：</p>
-<pre class="code-block"><code class="language-java">// VarInt 编码规则
-// - 值 0-127: 1 字节
+<pre class="code-block"><code class="language-java">// - 值 0-127: 1 字节
 // - 值 128-16383: 2 字节
 // - 值 16384-2097151: 3 字节
 // - 值 2097152-268435455: 4 字节
@@ -403,8 +409,7 @@ public int readVarInt() {
 <strong>S2C (服务端到客户端) - Play 阶段：</strong></p>
 <table class="data-table"><thead><tr><th>数据包</th><th>ID</th><th>描述</th></tr></thead><tbody><tr><td>SpawnEntityS2CPacket</td><td>0x00</td><td>生成实体</td></tr><tr><td>SpawnEntityS2CPacket</td><td>0x01</td><td>玩家列表</td></tr><tr><td>BlockEntityUpdateS2CPacket</td><td>0x09</td><td>方块实体更新</td></tr><tr><td>BlockChangedS2CPacket</td><td>0x0B</td><td>方块变化</td></tr><tr><td>ChunkBatchFinishedS2CPacket</td><td>0x25</td><td>区块批次完成</td></tr><tr><td>ChunkBatchStartS2CPacket</td><td>0x24</td><td>区块批次开始</td></tr><tr><td>ChunkRenderDistanceCenterS2CPacket</td><td>0x49</td><td>区块渲染距离中心</td></tr><tr><td>GameEventS2CPacket</td><td>0x1F</td><td>游戏事件</td></tr><tr><td>LevelParticlesS2CPacket</td><td>0x22</td><td>等级粒子</td></tr><tr><td>EntityEventS2CPacket</td><td>0x1E</td><td>实体事件</td></tr><tr><td>ExplosionS2CPacket</td><td>0x1C</td><td>爆炸</td></tr><tr><td>WorldEventS2CPacket</td><td>0x23</td><td>世界事件</td></tr><tr><td>WorldParticlesS2CPacket</td><td>0x26</td><td>世界粒子</td></tr></tbody></table>
 <h3>5.2 数据包注册</h3>
-<pre class="code-block"><code class="language-java">// PlayPackets.java 中的数据包注册
-public final class PlayPackets {
+<pre class="code-block"><code class="language-java">public final class PlayPackets {
     
     // 客户端bound数据包
     public static final PacketType&lt;SpawnEntityS2CPacket&gt; SPAWN_ENTITY = 
@@ -424,8 +429,7 @@ public final class PlayPackets {
     // ... 更多数据包
 }</code></pre>
 <h3>5.3 自定义数据包示例</h3>
-<pre class="code-block"><code class="language-java">// 定义数据包
-public class MyCustomPacketS2C implements Packet&lt;ClientPlayPacketListener&gt; {
+<pre class="code-block"><code class="language-java">public class MyCustomPacketS2C implements Packet&lt;ClientPlayPacketListener&gt; {
     
     private final String message;
     
@@ -460,8 +464,7 @@ public class MyCustomPacketS2C implements Packet&lt;ClientPlayPacketListener&gt;
 <p><hr></p>
 <h2 id="序列化机制">序列化机制</h2>
 <h3>6.1 PacketCodec 系统</h3>
-<pre class="code-block"><code class="language-java">// PacketCodec 接口
-public interface PacketCodec&lt;B, T&gt; {
+<pre class="code-block"><code class="language-java">public interface PacketCodec&lt;B, T&gt; {
     
     // 解码
     T decode(B buf);
@@ -481,8 +484,7 @@ public static &lt;B, T&gt; PacketCodec&lt;B, Collection&lt;T&gt;&gt; collect(
     PacketCodec&lt;B, T&gt; codec
 ) { ... }</code></pre>
 <h3>6.2 ItemStack 序列化</h3>
-<pre class="code-block"><code class="language-java">// ItemStack 的网络编解码器
-public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKET_CODEC = 
+<pre class="code-block"><code class="language-java">public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKET_CODEC = 
     new PacketCodec&lt;RegistryByteBuf, ItemStack&gt;() {
         
         @Override
@@ -511,8 +513,7 @@ public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKE
     };</code></pre>
 <h3>6.3 RegistryByteBuf</h3>
 <p>RegistryByteBuf 是支持注册表感知的数据包缓冲区：</p>
-<pre class="code-block"><code class="language-java">// RegistryByteBuf 继承 PacketByteBuf 并添加注册表功能
-public class RegistryByteBuf extends PacketByteBuf {
+<pre class="code-block"><code class="language-java">public class RegistryByteBuf extends PacketByteBuf {
     
     // 获取注册表管理器
     public RegistryWrapper.Impl&lt;?&gt; getRegistryManager();
@@ -604,8 +605,7 @@ public class RegistryByteBuf extends PacketByteBuf {
    │
    └─= 游戏数据包交换 = = = = = = = =</code></pre>
 <h3>7.2 客户端登录流程</h3>
-<pre class="code-block"><code class="language-java">// ClientLoginNetworkHandler 中的流程
-public void onHello(LoginHelloC2SPacket packet) {
+<pre class="code-block"><code class="language-java">public void onHello(LoginHelloC2SPacket packet) {
     // 1. 验证服务器
     // 2. 准备加密 (如果需要)
     // 3. 发送登录开始包
@@ -625,8 +625,7 @@ public void onFinished(FinishConfigurationS2CPacket packet) {
 <p><hr></p>
 <h2 id="关键代码引用">关键代码引用</h2>
 <h3>8.1 创建数据包</h3>
-<pre class="code-block"><code class="language-java">// 创建数据包实例
-SpawnEntityS2CPacket packet = new SpawnEntityS2CPacket(
+<pre class="code-block"><code class="language-java">SpawnEntityS2CPacket packet = new SpawnEntityS2CPacket(
     entity,
     0, // yaw
     EntitySpawnS2CPacket data
@@ -635,8 +634,7 @@ SpawnEntityS2CPacket packet = new SpawnEntityS2CPacket(
 // 发送数据包
 serverPlayer.networkHandler.sendPacket(packet);</code></pre>
 <h3>8.2 处理数据包</h3>
-<pre class="code-block"><code class="language-java">// 服务端监听器
-public class ServerPlayPacketListenerImpl implements ServerPlayPacketListener {
+<pre class="code-block"><code class="language-java">public class ServerPlayPacketListenerImpl implements ServerPlayPacketListener {
     
     @Override
     public void onPlayerMove(PlayerMoveC2SPacket packet) {
@@ -658,16 +656,14 @@ public class ServerPlayPacketListenerImpl implements ServerPlayPacketListener {
     }
 }</code></pre>
 <h3>8.3 网络状态切换</h3>
-<pre class="code-block"><code class="language-java">// 切换到 PLAY 状态
-public void switchToPlay() {
+<pre class="code-block"><code class="language-java">public void switchToPlay() {
     this.connection.transitionTo(NetworkState.PLAY);
     
     // 发送登录数据包
     this.connection.send(new LoginPlayS2CPacket(...));
 }</code></pre>
 <h3>8.4 数据包ID映射</h3>
-<pre class="code-block"><code class="language-java">// 获取数据包ID
-int packetId = PlayPackets.SPAWN_ENTITY.getId();
+<pre class="code-block"><code class="language-java">int packetId = PlayPackets.SPAWN_ENTITY.getId();
 
 // 发送原始数据包
 connection.send(packetId, buf -&gt; {
@@ -678,8 +674,7 @@ connection.send(packetId, buf -&gt; {
 <p><hr></p>
 <h2 id="协议版本管理">协议版本管理</h2>
 <h3>9.1 版本常量</h3>
-<pre class="code-block"><code class="language-java">// SharedConstants.java
-public class SharedConstants {
+<pre class="code-block"><code class="language-java">public class SharedConstants {
     public static final int PROTOCOL_VERSION = 765; // 1.21
     
     // 版本历史
@@ -689,8 +684,7 @@ public class SharedConstants {
     // 1.21: 765
 }</code></pre>
 <h3>9.2 版本兼容性检查</h3>
-<pre class="code-block"><code class="language-java">// 握手时版本检查
-public void onHandshake(HandshakeC2SPacket packet) {
+<pre class="code-block"><code class="language-java">public void onHandshake(HandshakeC2SPacket packet) {
     int protocolVersion = packet.getProtocolVersion();
     
     if (protocolVersion != SharedConstants.PROTOCOL_VERSION) {
@@ -796,6 +790,25 @@ public void onHandshake(HandshakeC2SPacket packet) {
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

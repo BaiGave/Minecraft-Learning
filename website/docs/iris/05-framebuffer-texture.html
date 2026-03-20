@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #E07A5F; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
         .info-box i { color: #E07A5F; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -173,9 +182,7 @@
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>RenderTargets</code></td><td><code>targets/RenderTargets.java</code></td></tr><tr><td><code>RenderTarget</code></td><td><code>targets/RenderTarget.java</code></td></tr><tr><td><code>DepthTexture</code></td><td><code>targets/DepthTexture.java</code></td></tr><tr><td><code>GlFramebuffer</code></td><td><code>gl/framebuffer/GlFramebuffer.java</code></td></tr><tr><td><code>GlTexture</code></td><td><code>gl/texture/GlTexture.java</code></td></tr></tbody></table>
 <hr></p>
 <h2 id="2. RenderTargets 核心结构">2. RenderTargets 核心结构</h2>
-<pre class="code-block"><code class="language-startLine">:20:75:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
-public class RenderTargets {
-    // 主渲染目标数组 (colortex0-15)
+<pre class="code-block"><code class="language-java">    // 主渲染目标数组 (colortex0-15)
     private final RenderTarget[] targets;
     
     // 深度纹理
@@ -200,9 +207,7 @@ public class RenderTargets {
 <p><hr></p>
 <h2 id="3. 渲染目标管理">3. 渲染目标管理</h2>
 <h3>3.1 创建渲染目标</h3>
-<pre class="code-block"><code class="language-startLine">:110:129:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
-public RenderTarget getOrCreate(int index) {
-    if (targets[index] != null) return targets[index];
+<pre class="code-block"><code class="language-java">    if (targets[index] != null) return targets[index];
     
     create(index);
     return targets[index];
@@ -223,9 +228,7 @@ private void create(int index) {
         .build();
 }</code></pre>
 <h3>3.2 尺寸调整</h3>
-<pre class="code-block"><code class="language-startLine">:147:207:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
-public boolean resizeIfNeeded(int newDepthBufferVersion, int newDepthTextureId, 
-                               int newWidth, int newHeight, 
+<pre class="code-block"><code class="language-java">                               int newWidth, int newHeight, 
                                DepthBufferFormat newDepthFormat, 
                                PackDirectives packDirectives) {
     boolean sizeChanged = newWidth != cachedWidth || newHeight != cachedHeight;
@@ -251,9 +254,7 @@ public boolean resizeIfNeeded(int newDepthBufferVersion, int newDepthTextureId,
 <p><hr></p>
 <h2 id="4. 深度纹理管理">4. 深度纹理管理</h2>
 <h3>4.1 DepthTexture</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/DepthTexture.java
-public class DepthTexture {
-    private final int textureId;
+<pre class="code-block"><code class="language-java">    private final int textureId;
     private final int width;
     private final int height;
     private final DepthBufferFormat format;
@@ -293,9 +294,7 @@ public class DepthTexture {
     }
 }</code></pre>
 <h3>4.2 深度复制</h3>
-<pre class="code-block"><code class="language-startLine">:209:231:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
-public void copyPreTranslucentDepth() {
-    if (translucentDepthDirty) {
+<pre class="code-block"><code class="language-java">    if (translucentDepthDirty) {
         // 直接从源复制
         translucentDepthDirty = false;
         RenderSystem.bindTexture(noTranslucents.getTextureId());
@@ -313,9 +312,7 @@ public void copyPreTranslucentDepth() {
 <p><hr></p>
 <h2 id="5. GlFramebuffer">5. GlFramebuffer</h2>
 <h3>5.1 创建帧缓冲</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/gl/framebuffer/GlFramebuffer.java
-public class GlFramebuffer {
-    private final int framebufferId;
+<pre class="code-block"><code class="language-java">    private final int framebufferId;
     
     public GlFramebuffer() {
         this.framebufferId = GlStateManager.glGenFramebuffers();
@@ -352,9 +349,7 @@ public class GlFramebuffer {
     }
 }</code></pre>
 <h3>5.2 帧缓冲工厂方法</h3>
-<pre class="code-block"><code class="language-startLine">:298:372:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
-public GlFramebuffer createGbufferFramebuffer(ImmutableSet&lt;Integer&gt; stageWritesToAlt, 
-                                           int[] drawBuffers) {
+<pre class="code-block"><code class="language-java">                                           int[] drawBuffers) {
     if (drawBuffers.length == 0) {
         return createEmptyFramebuffer();
     }
@@ -402,9 +397,7 @@ private GlFramebuffer createColorFramebuffer(ImmutableSet&lt;Integer&gt; stageWr
 <p><hr></p>
 <h2 id="6. 缓冲翻转系统">6. 缓冲翻转系统</h2>
 <h3>6.1 BufferFlipper</h3>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/BufferFlipper.java
-public class BufferFlipper {
-    // 记录每个缓冲的翻转状态
+<pre class="code-block"><code class="language-java">    // 记录每个缓冲的翻转状态
     private final Map&lt;Integer, Boolean&gt; flipped = new HashMap&lt;&gt;();
     
     public void flip(int buffer) {
@@ -424,9 +417,7 @@ public class BufferFlipper {
     }
 }</code></pre>
 <h3>6.2 使用示例</h3>
-<pre class="code-block"><code class="language-startLine">:95:175:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/CompositeRenderer.java
-for (int i = 0; i &lt; sources.length; i++) {
-    ProgramSource source = sources[i];
+<pre class="code-block"><code class="language-java">    ProgramSource source = sources[i];
     
     // 获取翻转状态快照
     ImmutableSet&lt;Integer&gt; flipped = bufferFlipper.snapshot();
@@ -449,8 +440,7 @@ for (int i = 0; i &lt; sources.length; i++) {
 <p><hr></p>
 <h2 id="7. 纹理缩放">7. 纹理缩放</h2>
 <h3>7.1 缩放覆盖</h3>
-<pre class="code-block"><code class="language-java">// PackRenderTargetDirectives
-public Vector2i getTextureScaleOverride(int index, int width, int height) {
+<pre class="code-block"><code class="language-java">public Vector2i getTextureScaleOverride(int index, int width, int height) {
     RenderTargetSettings settings = renderTargetSettings.get(index);
     
     if (settings.hasScaleOverride()) {
@@ -465,9 +455,7 @@ public Vector2i getTextureScaleOverride(int index, int width, int height) {
 }</code></pre>
 <p><hr></p>
 <h2 id="8. 深度复制策略">8. 深度复制策略</h2>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/gl/texture/DepthCopyStrategy.java
-public interface DepthCopyStrategy {
-    void copy(GlFramebuffer source, int sourceDepth, 
+<pre class="code-block"><code class="language-java">    void copy(GlFramebuffer source, int sourceDepth, 
               GlFramebuffer dest, int destDepth, 
               int width, int height);
     
@@ -496,9 +484,7 @@ public class DirectAccessCopyStrategy implements DepthCopyStrategy {
 }</code></pre>
 <p><hr></p>
 <h2 id="9. 纹理格式">9. 纹理格式</h2>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/gl/texture/DepthBufferFormat.java
-public enum DepthBufferFormat {
-    NONE(0, 0, false),
+<pre class="code-block"><code class="language-java">    NONE(0, 0, false),
     DEPTH32(0x8B53, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, false),
     DEPTH24_STENCIL8(0x88F0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, true),
     DEPTH32F_STENCIL8(0x8CAD, GL_DEPTH32F_STENCIL8, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, true);
@@ -533,6 +519,25 @@ public enum DepthBufferFormat {
     </div>
 
     <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -316,8 +325,7 @@ FabricItemStack {
 }</code></pre>
 <h3>2.3 ItemStack 组件系统</h3>
 <p>Minecraft 1.21 引入的组件系统是物品数据的核心存储机制。</p>
-<pre class="code-block"><code class="language-java">// 组件操作示例
-ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+<pre class="code-block"><code class="language-java">ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
 
 // 设置组件
 stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(&quot;My Sword&quot;));
@@ -393,8 +401,7 @@ implements FabricBlockEntityType {
 <table class="data-table"><thead><tr><th>类型</th><th>ID</th><th>关联方块</th></tr></thead><tbody><tr><td>FURNACE</td><td>furnace</td><td>熔炉</td></tr><tr><td>CHEST</td><td>chest</td><td>箱子</td></tr><tr><td>TRAPPED<em>CHEST</td><td>trapped</em>chest</td><td>陷阱箱</td></tr><tr><td>ENDER<em>CHEST</td><td>ender</em>chest</td><td>末影箱</td></tr><tr><td>JUKEBOX</td><td>jukebox</td><td>唱片机</td></tr><tr><td>DISPENSER</td><td>dispenser</td><td>发射器</td></tr><tr><td>DROPPER</td><td>dropper</td><td>投掷器</td></tr><tr><td>SIGN</td><td>sign</td><td>所有木质告示牌</td></tr><tr><td>HANGING<em>SIGN</td><td>hanging</em>sign</td><td>所有悬挂告示牌</td></tr><tr><td>MOB<em>SPAWNER</td><td>mob</em>spawner</td><td>刷怪笼</td></tr><tr><td>PISTON</td><td>piston</td><td>活塞</td></tr><tr><td>BREWING<em>STAND</td><td>brewing</em>stand</td><td>酿造台</td></tr><tr><td>ENCHANTING<em>TABLE</td><td>enchanting</em>table</td><td>附魔台</td></tr><tr><td>BEACON</td><td>beacon</td><td>信标</td></tr><tr><td>SKULL</td><td>skull</td><td>头颅</td></tr><tr><td>HOPPER</td><td>hopper</td><td>漏斗</td></tr><tr><td>COMPARATOR</td><td>comparator</td><td>比较器</td></tr><tr><td>SHULKER<em>BOX</td><td>shulker</em>box</td><td>潜影盒</td></tr><tr><td>CAMPFIRE</td><td>campfire</td><td>营火</td></tr><tr><td>BEEHIVE</td><td>beehive</td><td>蜂巢</td></tr><tr><td>SCULK<em>SENSOR</td><td>sculk</em>sensor</td><td>幽匿感测体</td></tr><tr><td>TRIAL<em>SPAWNER</td><td>trial</em>spawner</td><td>试用刷怪笼</td></tr><tr><td>VAULT</td><td>vault</td><td>保险箱</td></tr></tbody></table>
 <h3>3.4 NBT 数据持久化</h3>
 <p>BlockEntity 使用 NBT 格式进行数据持久化：</p>
-<pre class="code-block"><code class="language-java">// 写入NBT
-public final NbtCompound createNbt(RegistryWrapper.WrapperLookup registryLookup) {
+<pre class="code-block"><code class="language-java">public final NbtCompound createNbt(RegistryWrapper.WrapperLookup registryLookup) {
     NbtCompound nbtCompound = new NbtCompound();
     this.writeNbt(nbtCompound, registryLookup);
     Components.CODEC.encodeStart(registryLookup.getOps(NbtOps.INSTANCE), this.components)
@@ -412,8 +419,7 @@ public static BlockEntity createFromNbt(BlockPos pos, BlockState state,
 }</code></pre>
 <h3>3.5 客户端同步机制</h3>
 <p>BlockEntity 的数据不会自动同步到客户端，需要显式声明：</p>
-<pre class="code-block"><code class="language-java">// 返回同步数据包
-@Nullable
+<pre class="code-block"><code class="language-java">@Nullable
 public Packet&lt;ClientPlayPacketListener&gt; toUpdatePacket() {
     return BlockEntityUpdateS2CPacket.create(this);
 }
@@ -426,8 +432,7 @@ public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryL
 <h2 id="组件系统">组件系统</h2>
 <h3>4.1 ComponentMap 架构</h3>
 <p>Minecraft 1.21 的组件系统是对原有 NBT 数据的抽象封装。</p>
-<pre class="code-block"><code class="language-java">// 组件类型定义
-public interface ComponentType&lt;T&gt; {
+<pre class="code-block"><code class="language-java">public interface ComponentType&lt;T&gt; {
     Codec&lt;T&gt; getCodec();
     PacketCodec&lt;RegistryByteBuf, T&gt; getPacketCodec();
 }
@@ -453,14 +458,12 @@ public interface ComponentHolder {
 <h2 id="状态管理系统">状态管理系统</h2>
 <h3>5.1 StateManager 架构</h3>
 <p>StateManager 负责管理方块的所有可能状态。</p>
-<pre class="code-block"><code class="language-java">// 状态管理器构建
-StateManager.Builder&lt;Block, BlockState&gt; builder = 
+<pre class="code-block"><code class="language-java">StateManager.Builder&lt;Block, BlockState&gt; builder = 
     new StateManager.Builder&lt;Block, BlockState&gt;(this);
 this.appendProperties(builder);
 this.stateManager = builder.build(Block::getDefaultState, BlockState::new);</code></pre>
 <h3>5.2 常用属性类型</h3>
-<pre class="code-block"><code class="language-java">// 布尔属性
-BooleanProperty FACING = BooleanProperty.of(&quot;facing&quot;);
+<pre class="code-block"><code class="language-java">BooleanProperty FACING = BooleanProperty.of(&quot;facing&quot;);
 
 // 整数属性
 IntProperty POWER = IntProperty.of(&quot;power&quot;, 0, 15);
@@ -472,8 +475,7 @@ EnumProperty&lt;Direction&gt; FACING = EnumProperty.of(&quot;facing&quot;, Direc
 DirectionProperty HORIZONTAL_FACING = DirectionProperty.create(&quot;facing&quot;, 
     Direction.Type.HORIZONTAL);</code></pre>
 <h3>5.3 状态转换</h3>
-<pre class="code-block"><code class="language-java">// 获取属性值
-BlockState state = world.getBlockState(pos);
+<pre class="code-block"><code class="language-java">BlockState state = world.getBlockState(pos);
 Direction facing = state.get(FacingBlock.FACING);
 
 // 设置属性值
@@ -487,8 +489,7 @@ boolean equals = state1.equals(state2);</code></pre>
 <p><hr></p>
 <h2 id="关键代码引用">关键代码引用</h2>
 <h3>方块注册</h3>
-<pre class="code-block"><code class="language-java">// 注册方块
-Registry.register(Registries.BLOCK, 
+<pre class="code-block"><code class="language-java">Registry.register(Registries.BLOCK, 
     Identifier.ofVanilla(&quot;diamond_block&quot;), 
     DIAMOND_BLOCK);
 
@@ -499,8 +500,7 @@ Block block = Registries.BLOCK.get(Identifier.ofVanilla(&quot;diamond_block&quot
 RegistryKey&lt;Block&gt; key = RegistryKey.of(Registries.BLOCK_KEY, 
     Identifier.ofVanilla(&quot;diamond_block&quot;));</code></pre>
 <h3>物品注册</h3>
-<pre class="code-block"><code class="language-java">// 注册物品
-Registry.register(Registries.ITEM, 
+<pre class="code-block"><code class="language-java">Registry.register(Registries.ITEM, 
     Identifier.ofVanilla(&quot;diamond&quot;), 
     DIAMOND);
 
@@ -512,8 +512,7 @@ if (stack.isOf(Items.DIAMOND)) {
     // 是钻石
 }</code></pre>
 <h3>方块实体操作</h3>
-<pre class="code-block"><code class="language-java">// 获取方块实体
-BlockEntity be = world.getBlockEntity(pos);
+<pre class="code-block"><code class="language-java">BlockEntity be = world.getBlockEntity(pos);
 
 // 检查类型
 if (be instanceof ChestBlockEntity chest) {
@@ -612,6 +611,25 @@ serverWorld.getChunkManager().markForUpdate(pos);</code></pre>
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #F2CC8F; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
         .info-box i { color: #F2CC8F; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -203,13 +212,10 @@
 <h2 id="2. 架构设计模式">2. 架构设计模式</h2>
 <h3>2.1 服务加载模式 (Service Loader Pattern)</h3>
 <p>Sodium 使用 Java SPI (Service Provider Interface) 实现平台无关代码：</p>
-<pre class="code-block"><code class="language-startLine">:1:25:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/Services.java
-public static &lt;T&gt; T load(Class&lt;T&gt; clazz) {
-    return ServicesLoader.load(clazz, clazz.getClassLoader());
+<pre class="code-block"><code class="language-java">    return ServicesLoader.load(clazz, clazz.getClassLoader());
 }</code></pre>
 <p><strong>平台服务接口定义</strong>：</p>
-<pre class="code-block"><code class="language-java">// common 模块定义接口
-public interface PlatformBlockAccess {
+<pre class="code-block"><code class="language-java">public interface PlatformBlockAccess {
     PlatformBlockAccess INSTANCE = Services.load(PlatformBlockAccess.class);
     
     int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos);
@@ -223,8 +229,7 @@ public class FabricBlockAccess implements PlatformBlockAccess { ... }
 public class NeoForgeBlockAccess implements PlatformBlockAccess { ... }</code></pre>
 <h3>2.2 Mixin 注入模式</h3>
 <p>使用 Mixin 框架进行字节码注入：</p>
-<pre class="code-block"><code class="language-json">// frapi/src/main/resources/frapi.mixins.json
-{
+<pre class="code-block"><code class="language-json">{
   &quot;required&quot;: true,
   &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin.frapi&quot;,
   &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
@@ -319,9 +324,7 @@ RenderSectionManager.onSectionAdded()
 <ul><li>创建专用工作线程池</li>
 <li>使用无锁数据结构（<code>ChunkJobQueue</code>）</li>
 <li>支持任务窃取负载均衡</li></ul></p>
-<pre class="code-block"><code class="language-startLine">:38:65:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkBuilder.java
-public class ChunkBuilder {
-    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+<pre class="code-block"><code class="language-java">    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
         int count = getOptimalThreadCount();
         for (int i = 0; i &lt; count; i++) {
             Thread thread = new Thread(worker, &quot;Chunk Render Task Executor #&quot; + i);
@@ -387,6 +390,25 @@ accessible field net.minecraft.world/level/Level/watching</code></pre>
     </div>
 
     <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

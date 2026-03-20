@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #E07A5F; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
         .info-box i { color: #E07A5F; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -173,9 +182,7 @@
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ShaderPack</code></td><td><code>shaderpack/ShaderPack.java</code></td></tr><tr><td><code>ProgramSet</code></td><td><code>shaderpack/programs/ProgramSet.java</code></td></tr><tr><td><code>ProgramSource</code></td><td><code>shaderpack/programs/ProgramSource.java</code></td></tr><tr><td><code>IdMap</code></td><td><code>shaderpack/IdMap.java</code></td></tr><tr><td><code>ShaderProperties</code></td><td><code>shaderpack/properties/ShaderProperties.java</code></td></tr><tr><td><code>IncludeProcessor</code></td><td><code>shaderpack/include/IncludeProcessor.java</code></td></tr><tr><td><code>JcppProcessor</code></td><td><code>shaderpack/preprocessor/JcppProcessor.java</code></td></tr></tbody></table>
 <hr></p>
 <h2 id="2. ShaderPack 核心结构">2. ShaderPack 核心结构</h2>
-<pre class="code-block"><code class="language-startLine">:68:100:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
-public class ShaderPack {
-    // 程序集
+<pre class="code-block"><code class="language-java">    // 程序集
     private final ProgramSet base;
     
     // ID 映射
@@ -203,9 +210,7 @@ public class ShaderPack {
     private final List&lt;ImageInformation&gt; irisCustomImages;
 }</code></pre>
 <h3>2.1 加载流程</h3>
-<pre class="code-block"><code class="language-startLine">:89:150:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
-public ShaderPack(Path root, Map&lt;String, String&gt; changedConfigs, 
-                  ImmutableList&lt;StringPair&gt; environmentDefines) {
+<pre class="code-block"><code class="language-java">                  ImmutableList&lt;StringPair&gt; environmentDefines) {
     // 1. 扫描着色器源文件
     IncludeGraph graph = new IncludeGraph(root, starts.build());
     
@@ -241,9 +246,7 @@ public ShaderPack(Path root, Map&lt;String, String&gt; changedConfigs,
 <p><hr></p>
 <h2 id="3. 程序管理">3. 程序管理</h2>
 <h3>3.1 ProgramSet</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/programs/ProgramSet.java
-public class ProgramSet implements ProgramSetInterface {
-    private final AbsolutePackPath basePath;
+<pre class="code-block"><code class="language-java">    private final AbsolutePackPath basePath;
     private final Function&lt;AbsolutePackPath, String&gt; sourceProvider;
     private final ShaderProperties shaderProperties;
     
@@ -254,9 +257,7 @@ public class ProgramSet implements ProgramSetInterface {
     public ComputeSource[] getSetup(ProgramArrayId id) { ... }
 }</code></pre>
 <h3>3.2 ProgramSource</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/programs/ProgramSource.java
-public class ProgramSource {
-    private final String name;
+<pre class="code-block"><code class="language-java">    private final String name;
     private final AbsolutePackPath path;
     
     // 着色器源代码
@@ -305,9 +306,7 @@ public class ProgramSource {
 <p><hr></p>
 <h2 id="4. Include 处理器">4. Include 处理器</h2>
 <h3>4.1 IncludeGraph</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/include/IncludeGraph.java
-public class IncludeGraph {
-    private final Map&lt;AbsolutePackPath, FileNode&gt; nodes = new HashMap&lt;&gt;();
+<pre class="code-block"><code class="language-java">    private final Map&lt;AbsolutePackPath, FileNode&gt; nodes = new HashMap&lt;&gt;();
     private final Map&lt;AbsolutePackPath, IOException&gt; failures = new HashMap&lt;&gt;();
     
     public IncludeGraph(Path root, ImmutableList&lt;AbsolutePackPath&gt; starts) {
@@ -340,9 +339,7 @@ public class IncludeGraph {
     }
 }</code></pre>
 <h3>4.2 IncludeProcessor</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/include/IncludeProcessor.java
-public class IncludeProcessor {
-    private final IncludeGraph graph;
+<pre class="code-block"><code class="language-java">    private final IncludeGraph graph;
     
     public ImmutableList&lt;String&gt; getIncludedFile(AbsolutePackPath path) {
         FileNode node = graph.getNode(path);
@@ -368,9 +365,7 @@ public class IncludeProcessor {
 <p><hr></p>
 <h2 id="5. GLSL 预处理器">5. GLSL 预处理器</h2>
 <h3>5.1 JcppProcessor</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/preprocessor/JcppProcessor.java
-public class JcppProcessor {
-    private static final JCPP pp = new JCPP();
+<pre class="code-block"><code class="language-java">    private static final JCPP pp = new JCPP();
     
     static {
         pp.addInput(new PropertiesCommentListener());
@@ -409,9 +404,7 @@ public class JcppProcessor {
 <p><hr></p>
 <h2 id="6. ID 映射">6. ID 映射</h2>
 <h3>6.1 IdMap</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/IdMap.java
-public class IdMap {
-    // 方块属性
+<pre class="code-block"><code class="language-java">    // 方块属性
     private final Int2ObjectMap&lt;Properties&gt; blockProperties;
     private final int[][] blockStateIds;
     
@@ -437,9 +430,7 @@ public class IdMap {
     }
 }</code></pre>
 <h3>6.2 加载流程</h3>
-<pre class="code-block"><code class="language-startLine">:100:180:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/IdMap.java
-public IdMap(Path root, ShaderPackOptions options, 
-             Iterable&lt;StringPair&gt; environmentDefines) {
+<pre class="code-block"><code class="language-java">             Iterable&lt;StringPair&gt; environmentDefines) {
     // 1. 加载 blocks.properties
     Properties blockProps = loadProperties(root, &quot;blocks.properties&quot;);
     
@@ -474,9 +465,7 @@ shadowDistanceRenderMul=1.0
 fogMode=exp2
 oldLighting=true</code></pre>
 <h3>7.2 解析</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/properties/ShaderProperties.java
-public class ShaderProperties {
-    // 阴影设置
+<pre class="code-block"><code class="language-java">    // 阴影设置
     private final float shadowDistance;
     private final int shadowMapResolution;
     
@@ -503,9 +492,7 @@ dimension.overworld=world0
 dimension.nether=world-1
 dimension.end=world1</code></pre>
 <h3>8.2 ProgramSet 切换</h3>
-<pre class="code-block"><code class="language-startLine">:526:556:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
-public ProgramSet getProgramSet(NamespacedId dimension) {
-    ProgramSetInterface overrides = this.overrides.computeIfAbsent(dimension, dim -&gt; {
+<pre class="code-block"><code class="language-java">    ProgramSetInterface overrides = this.overrides.computeIfAbsent(dimension, dim -&gt; {
         if (dimensionMap.containsKey(dimension)) {
             String name = dimensionMap.get(dimension);
             if (dimensionIds.contains(name)) {
@@ -527,9 +514,7 @@ public ProgramSet getProgramSet(NamespacedId dimension) {
 }</code></pre>
 <p><hr></p>
 <h2 id="9. 功能标志">9. 功能标志</h2>
-<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/features/FeatureFlags.java
-public enum FeatureFlags {
-    // 必需标志
+<pre class="code-block"><code class="language-java">    // 必需标志
     SSBO,           // Shader Storage Buffer Objects
     CULL,           // 背面剔除
     SEPARATE_HARDWARE_SAMPLERS,  // 分离硬件采样器
@@ -570,6 +555,25 @@ public enum FeatureFlags {
     </div>
 
     <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

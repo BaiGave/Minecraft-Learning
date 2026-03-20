@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #F2CC8F; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
         .info-box i { color: #F2CC8F; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -354,8 +363,7 @@ void main() {
 <p><hr></p>
 <h2 id="5. 雾函数实现">5. 雾函数实现</h2>
 <h3>5.1 Fog.glsl</h3>
-<pre class="code-block"><code class="language-glsl">// 雾函数实现
-vec4 applyFog(vec4 color, float viewDepth, 
+<pre class="code-block"><code class="language-glsl">vec4 applyFog(vec4 color, float viewDepth, 
               float fogStart, float fogEnd, 
               vec4 fogColor, float fogShape) {
     
@@ -378,9 +386,7 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
 <p><hr></p>
 <h2 id="6. 顶点格式">6. 顶点格式</h2>
 <h3>6.1 Vanilla 格式（24 bytes）</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType.java
-public enum ChunkVertexType {
-    VANILLA(24) {
+<pre class="code-block"><code class="language-java">    VANILLA(24) {
         @Override
         public ChunkVertexEncoder createEncoder() {
             return (ptr, materialBits, vertices, sectionIndex) -&gt; {
@@ -404,9 +410,7 @@ public enum ChunkVertexType {
     }
 }</code></pre>
 <h3>6.2 IMMIX 格式（16 bytes，优化格式）</h3>
-<pre class="code-block"><code class="language-startLine">:60:120:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexType.java
-    IMMIX(16) {
-        @Override
+<pre class="code-block"><code class="language-java">        @Override
         public ChunkVertexEncoder createEncoder() {
             return (ptr, materialBits, vertices, sectionIndex) -&gt; {
                 for (Vertex vertex : vertices) {
@@ -433,9 +437,7 @@ public enum ChunkVertexType {
     }
 }</code></pre>
 <h3>6.3 顶点编码工具</h3>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/vertex/format/ChunkVertexEncoder.java
-public interface ChunkVertexEncoder {
-    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
+<pre class="code-block"><code class="language-java">    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
     
     class Vertex {
         public float x, y, z;
@@ -473,9 +475,7 @@ public interface ChunkVertexEncoder {
 <p><hr></p>
 <h2 id="7. 着色器管理">7. 着色器管理</h2>
 <h3>7.1 ChunkShader</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/shader/ChunkShader.java
-public class ChunkShader implements AutoCloseable {
-    private final GlShader vertexShader;
+<pre class="code-block"><code class="language-java">    private final GlShader vertexShader;
     private final GlShader fragmentShader;
     private final GlProgram program;
     
@@ -515,9 +515,7 @@ public class ChunkShader implements AutoCloseable {
     }
 }</code></pre>
 <h3>7.2 ShaderLoader</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/gl/shader/ShaderLoader.java
-public class ShaderLoader {
-    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
+<pre class="code-block"><code class="language-java">    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
     
     public GlShader loadVertexShader(String name) {
         String source = loadShaderSource(&quot;blocks/&quot; + name);
@@ -543,9 +541,7 @@ public class ShaderLoader {
 <p><hr></p>
 <h2 id="8. 着色器常量">8. 着色器常量</h2>
 <h3>8.1 ShaderConstants</h3>
-<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/gl/shader/ShaderConstants.java
-public class ShaderConstants {
-    // 着色器宏定义
+<pre class="code-block"><code class="language-java">    // 着色器宏定义
     public static final String USE_FOG = &quot;USE_FOG&quot;;
     public static final String USE_FRAGMENT_DISCARD = &quot;USE_FRAGMENT_DISCARD&quot;;
     public static final String USE_VERTEX_COMPRESSION = &quot;USE_VERTEX_COMPRESSION&quot;;
@@ -604,6 +600,25 @@ public class ShaderConstants {
     </div>
 
     <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

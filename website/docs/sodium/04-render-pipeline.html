@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #F2CC8F; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
         .info-box i { color: #F2CC8F; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -174,9 +183,7 @@
 <hr></p>
 <h2 id="2. 渲染 Pass 系统">2. 渲染 Pass 系统</h2>
 <h3>2.1 Pass 类型定义</h3>
-<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/terrain/TerrainRenderPass.java
-public class TerrainRenderPass {
-    public final String name;
+<pre class="code-block"><code class="language-java">    public final String name;
     public final ChunkSectionLayer layer;
     public final boolean isTranslucent;
     public final boolean isCutout;
@@ -188,9 +195,7 @@ public class TerrainRenderPass {
     public final int renderOrder;
 }</code></pre>
 <h3>2.2 默认 Pass 配置</h3>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/terrain/DefaultTerrainRenderPasses.java
-public class DefaultTerrainRenderPasses {
-    public static final TerrainRenderPass SOLID = new TerrainRenderPass(
+<pre class="code-block"><code class="language-java">    public static final TerrainRenderPass SOLID = new TerrainRenderPass(
         &quot;solid&quot;,
         ChunkSectionLayer.SOLID,
         false,
@@ -259,9 +264,7 @@ public class DefaultTerrainRenderPasses {
 <p><hr></p>
 <h2 id="3. SodiumWorldRenderer">3. SodiumWorldRenderer</h2>
 <h3>3.1 类结构</h3>
-<pre class="code-block"><code class="language-startLine">:1:100:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/SodiumWorldRenderer.java
-public class SodiumWorldRenderer {
-    private final Minecraft client;
+<pre class="code-block"><code class="language-java">    private final Minecraft client;
     private final RenderSectionManager sectionManager;
     private final DefaultChunkRenderer chunkRenderer;
     private final EntityColorCache entityColorCache;
@@ -278,9 +281,7 @@ public class SodiumWorldRenderer {
     private int lastFrameIndex;
 }</code></pre>
 <h3>3.2 渲染入口</h3>
-<pre class="code-block"><code class="language-startLine">:200:300:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/SodiumWorldRenderer.java
-public void render(LevelRenderer levelRenderer, 
-                   float tickDelta, 
+<pre class="code-block"><code class="language-java">                   float tickDelta, 
                    long limitTimeNano,
                    boolean renderBlockOutline,
                    Camera camera,
@@ -338,9 +339,7 @@ private void renderWorld(LevelRenderer levelRenderer,
 <h2 id="4. RenderSectionManager">4. RenderSectionManager</h2>
 <h3>4.1 职责概述</h3>
 <p><code>RenderSectionManager</code> 负责管理世界中的所有区块渲染单元，协调区块加载、卸载、可见性计算和渲染列表更新。</p>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java
-public class RenderSectionManager implements ChunkTracker {
-    private final ClientWorld level;
+<pre class="code-block"><code class="language-java">    private final ClientWorld level;
     private final RenderSection[] sections;
     
     // 区块可见性状态
@@ -360,9 +359,7 @@ public class RenderSectionManager implements ChunkTracker {
     private int cameraSectionX, cameraSectionY, cameraSectionZ;
 }</code></pre>
 <h3>4.2 区块更新流程</h3>
-<pre class="code-block"><code class="language-startLine">:100:200:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java
-public void onSectionAdded(int sectionX, int sectionY, int sectionZ) {
-    // 1. 获取或创建 RenderSection
+<pre class="code-block"><code class="language-java">    // 1. 获取或创建 RenderSection
     RenderSection section = getOrCreateSection(sectionX, sectionY, sectionZ);
     
     // 2. 更新邻居的可见性数据
@@ -393,9 +390,7 @@ private void scheduleRebuild(RenderSection section, BuildReason reason) {
     this.chunkBuilder.submit(section, priority);
 }</code></pre>
 <h3>4.3 可见性更新</h3>
-<pre class="code-block"><code class="language-startLine">:200:300:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/RenderSectionManager.java
-public void update(Camera camera, OcclusionCuller culler) {
-    // 1. 更新相机位置
+<pre class="code-block"><code class="language-java">    // 1. 更新相机位置
     updateCameraPosition(camera);
     
     // 2. 执行遮挡剔除
@@ -427,9 +422,7 @@ private void updateCameraPosition(Camera camera) {
 <p><hr></p>
 <h2 id="5. 渲染列表迭代器">5. 渲染列表迭代器</h2>
 <h3>5.1 ChunkRenderListIterable</h3>
-<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/lists/ChunkRenderListIterable.java
-public interface ChunkRenderListIterable extends Iterable&lt;ChunkRenderList&gt; {
-    // 获取可见的渲染列表数量
+<pre class="code-block"><code class="language-java">    // 获取可见的渲染列表数量
     int getVisibleListCount();
     
     // 获取特定 Pass 的列表
@@ -447,9 +440,7 @@ public class ChunkRenderListIterableImpl implements ChunkRenderListIterable {
 <p><hr></p>
 <h2 id="6. 命令列表封装">6. 命令列表封装</h2>
 <h3>6.1 CommandList 接口</h3>
-<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/gl/device/CommandList.java
-public interface CommandList extends AutoCloseable {
-    void uploadData(GlBuffer buffer, ByteBuffer data);
+<pre class="code-block"><code class="language-java">    void uploadData(GlBuffer buffer, ByteBuffer data);
     
     void bindBuffer(GlBuffer buffer);
     void unbindBuffer();
@@ -479,9 +470,7 @@ public interface CommandList extends AutoCloseable {
     void blendFunc(int srcFactor, int dstFactor);
 }</code></pre>
 <h3>6.2 RenderDevice 实现</h3>
-<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/gl/device/RenderDevice.java
-public class RenderDevice {
-    private static final ThreadLocal&lt;RenderDevice&gt; INSTANCE = 
+<pre class="code-block"><code class="language-java">    private static final ThreadLocal&lt;RenderDevice&gt; INSTANCE = 
         ThreadLocal.withInitial(() -&gt; new RenderDevice());
     
     private CommandList commandList;
@@ -561,6 +550,25 @@ SodiumWorldRenderer.setupTerrain()     BlockEntityRendererDispatcher.render()
     </div>
 
     <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>

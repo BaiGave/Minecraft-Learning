@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
         /* 主题样式 */
         .docs-nav { background: #5B8C5A; }
@@ -28,19 +30,25 @@
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        .code-block { 
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
+        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
         }
-        .code-block::before,
-        .code-block::after {
-            display: none !important;
-        }
-        .code-block pre::before {
+        pre.code-block::before {
             content: '> ' !important;
             color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
         }
         .code-reference {
             border: none !important;
@@ -65,7 +73,8 @@
         .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
         .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code { color: #d4d4d4; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
         .docs-nav .dropdown-content {
             z-index: 1001;
             background: white;
@@ -240,8 +249,7 @@
 └─────────────────────────────────────────────────────────────────────┘</code></pre>
 <h3>2.2 核心组件</h3>
 <p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/Schemas.java</code></p>
-<pre class="code-block"><code class="language-java">// Schemas 类管理所有的数据模式版本
-public class Schemas {
+<pre class="code-block"><code class="language-java">public class Schemas {
     
     // 版本号到模式的映射
     private final Int2ObjectMap&lt;Schema&gt; versions;
@@ -260,8 +268,7 @@ public class Schemas {
 <li><strong>TypeCache</strong>：类型缓存优化</li>
 <li><strong>FunctionAdapter</strong>：函数适配</li>
 <li><strong> optic</strong>：光学系统（类似 lens，用于数据导航）</li></ul></p>
-<pre class="code-block"><code class="language-java">// DataFixerBuilder 用于构建修复器
-DataFixerBuilder builder = new DataFixerBuilder(DataFixerConstants.DATA_VERSION);
+<pre class="code-block"><code class="language-java">DataFixerBuilder builder = new DataFixerBuilder(DataFixerConstants.DATA_VERSION);
 
 // 添加版本范围
 builder.addSchema(1343, factory);
@@ -276,8 +283,7 @@ DataFixer fixerUpper = builder.build();</code></pre>
 <p>Schema 定义了数据的结构和验证规则，每个游戏版本对应一个 Schema。</p>
 <p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/schema/</code></p>
 <h3>3.2 Schema 定义示例</h3>
-<pre class="code-block"><code class="language-java">// Schema1460.java - 1.14.4 版本的 Schema
-public class Schema1460 extends Schema {
+<pre class="code-block"><code class="language-java">public class Schema1460 extends Schema {
     
     public Schema1460(int versionKey, Schema parent) {
         super(versionKey, parent);
@@ -305,8 +311,7 @@ public class Schema1460 extends Schema {
 }</code></pre>
 <h3>3.3 DSL 类型定义</h3>
 <p>DataFixer 使用领域特定语言（DSL）定义数据结构：</p>
-<pre class="code-block"><code class="language-java">// 基本类型
-DSL::remainder  // 保留所有未处理的字段
+<pre class="code-block"><code class="language-java">DSL::remainder  // 保留所有未处理的字段
 DSL::optionalFields  // 可选字段
 DSL::fields  // 必需字段
 DSL::choice  // 联合类型
@@ -362,8 +367,7 @@ Schema 3705 (1.21)</code></pre>
     └── EntityBlockStateFix  (实体方块状态)</code></pre>
 <h3>4.3 ChoiceFix</h3>
 <p>ChoiceFix 用于处理类型分支：</p>
-<pre class="code-block"><code class="language-java">// ChoiceFix.java 简化示意
-public class ChoiceFix extends Fix {
+<pre class="code-block"><code class="language-java">public class ChoiceFix extends Fix {
     
     private final Type&lt;?&gt; type;
     private final List&lt;Pair&lt;TypeChoiceFix, UnaryOperator&gt;&gt; choices;
@@ -381,8 +385,7 @@ public class ChoiceFix extends Fix {
     }
 }</code></pre>
 <h3>4.4 注册修复</h3>
-<pre class="code-block"><code class="language-java">// 在 Schema 中注册修复
-public class Schema1629 extends Schema {
+<pre class="code-block"><code class="language-java">public class Schema1629 extends Schema {
     
     @Override
     public void registerFixes(FixerUpper upper) {
@@ -404,8 +407,7 @@ public class Schema1629 extends Schema {
 <p><hr></p>
 <h2 id="版本管理">版本管理</h2>
 <h3>5.1 版本常量</h3>
-<pre class="code-block"><code class="language-java">// SharedConstants.java
-public class SharedConstants {
+<pre class="code-block"><code class="language-java">public class SharedConstants {
     
     // 当前数据版本
     public static final int CURRENT_DATA_VERSION = 3705;
@@ -428,8 +430,7 @@ public class SharedConstants {
     // 1.21: 3705
 }</code></pre>
 <h3>5.2 数据版本检查</h3>
-<pre class="code-block"><code class="language-java">// LevelDataGeneratorOptionsFix.java
-public class LevelDataGeneratorOptionsFix extends ChoiceFix {
+<pre class="code-block"><code class="language-java">public class LevelDataGeneratorOptionsFix extends ChoiceFix {
     
     private static final int MIN_VERSION = 1494;
     private static final int MAX_VERSION = 1629;
@@ -450,8 +451,7 @@ public class LevelDataGeneratorOptionsFix extends ChoiceFix {
 }</code></pre>
 <h3>5.3 增量修复</h3>
 <p>DataFixer 支持增量修复，可以从任意版本迁移到当前版本：</p>
-<pre class="code-block"><code class="language-java">// 假设玩家存档是版本 2000
-// 当前版本是 3705
+<pre class="code-block"><code class="language-java">// 当前版本是 3705
 
 // 修复器会按顺序执行：
 // 2000 -&gt; 2001 -&gt; 2002 -&gt; ... -&gt; 3705
@@ -505,8 +505,7 @@ public Dynamic&lt;?&gt; update(
        ▼
 7. 加载世界</code></pre>
 <h3>6.2 NBT 数据修复</h3>
-<pre class="code-block"><code class="language-java">// 使用 DataFixer 修复 NBT
-public NbtCompound fixNbt(NbtCompound nbt, int fromVersion, int toVersion) {
+<pre class="code-block"><code class="language-java">public NbtCompound fixNbt(NbtCompound nbt, int fromVersion, int toVersion) {
     
     // 将 NBT 转换为 Dynamic
     Dynamic&lt;NbtElement&gt; dynamic = Dynamic.convert(
@@ -530,8 +529,7 @@ public NbtCompound fixNbt(NbtCompound nbt, int fromVersion, int toVersion) {
 }</code></pre>
 <h3>6.3 Chunk 数据修复</h3>
 <p>Chunk 数据修复是性能关键路径：</p>
-<pre class="code-block"><code class="language-java">// Chunk 数据修复流程
-public ProtoChunk fixChunk(
+<pre class="code-block"><code class="language-java">public ProtoChunk fixChunk(
     ProtoChunk chunk, 
     int version
 ) {
@@ -559,8 +557,7 @@ public ProtoChunk fixChunk(
 <h2 id="常见修复类型">常见修复类型</h2>
 <h3>7.1 方块名扁平化 (1.13)</h3>
 <p>将数字 ID 转换为命名空间 ID：</p>
-<pre class="code-block"><code class="language-java">// BlockNameFlatteningFix.java
-public class BlockNameFlatteningFix extends ChoiceFix {
+<pre class="code-block"><code class="language-java">public class BlockNameFlatteningFix extends ChoiceFix {
     
     // 映射表: 数字ID -&gt; 字符串ID
     // 1 -&gt; &quot;minecraft:air&quot;
@@ -577,8 +574,7 @@ public class BlockNameFlatteningFix extends ChoiceFix {
 }</code></pre>
 <h3>7.2 物品堆叠组件化 (1.20.5)</h3>
 <p>将物品的 NBT 数据转换为组件系统：</p>
-<pre class="code-block"><code class="language-java">// ItemStackComponentizationFix.java
-public class ItemStackComponentizationFix extends Fix {
+<pre class="code-block"><code class="language-java">public class ItemStackComponentizationFix extends Fix {
     
     @Override
     public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
@@ -597,8 +593,7 @@ public class ItemStackComponentizationFix extends Fix {
     }
 }</code></pre>
 <h3>7.3 实体方块状态修复</h3>
-<pre class="code-block"><code class="language-java">// EntityBlockStateFix.java
-public class EntityBlockStateFix extends ChoiceFix {
+<pre class="code-block"><code class="language-java">public class EntityBlockStateFix extends ChoiceFix {
     
     // 修复格式变化
     // 旧: {BlockState: &quot;minecraft:facing=north&quot;}
@@ -625,16 +620,14 @@ public class EntityBlockStateFix extends ChoiceFix {
     }
 }</code></pre>
 <h3>7.4 UUID 修复</h3>
-<pre class="code-block"><code class="language-java">// EntityUuidFix.java
-// 修复数字数组格式的 UUID 为字符串格式
+<pre class="code-block"><code class="language-java">// 修复数字数组格式的 UUID 为字符串格式
 
 // 旧格式: [Long, Long] (两个长整数)
 // 新格式: String (标准 UUID 字符串)
 
 // 格式: &quot;xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&quot;</code></pre>
 <h3>7.5 命名空间重命名</h3>
-<pre class="code-block"><code class="language-java">// AdvancementRenameFix.java
-// 修复进度 ID 的命名空间
+<pre class="code-block"><code class="language-java">// 修复进度 ID 的命名空间
 
 // 旧: &quot;achievements.mineStone&quot;
 // 新: &quot;minecraft:adventure/mine_a_block&quot;</code></pre>
@@ -675,8 +668,7 @@ public class EntityBlockStateFix extends ChoiceFix {
     public static final TypeReference RECIPE = new TypeReference(&quot;Recipe&quot;);
 }</code></pre>
 <h3>8.2 类型定义使用</h3>
-<pre class="code-block"><code class="language-java">// 在 Schema 中使用类型引用
-public void registerTypes(SchemaFactory factory) {
+<pre class="code-block"><code class="language-java">public void registerTypes(SchemaFactory factory) {
     
     // 定义玩家类型
     factory.registerSimple(
@@ -709,8 +701,7 @@ public void registerTypes(SchemaFactory factory) {
 <p><hr></p>
 <h2 id="实际应用场景">实际应用场景</h2>
 <h3>9.1 加载旧存档</h3>
-<pre class="code-block"><code class="language-java">// ServerLifecycleHooks.java
-public ServerWorld loadWorld(
+<pre class="code-block"><code class="language-java">public ServerWorld loadWorld(
     ServerWorld world, 
     SaveProperties properties, 
     WorldDetails worldDetails
@@ -728,8 +719,7 @@ public ServerWorld loadWorld(
     return new ServerWorld(...);
 }</code></pre>
 <h3>9.2 修复世界难度</h3>
-<pre class="code-block"><code class="language-java">// LevelDataGeneratorOptionsFix.java
-public class LevelDataGeneratorOptionsFix extends ChoiceFix {
+<pre class="code-block"><code class="language-java">public class LevelDataGeneratorOptionsFix extends ChoiceFix {
     
     @Override
     public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
@@ -742,8 +732,7 @@ public class LevelDataGeneratorOptionsFix extends ChoiceFix {
     }
 }</code></pre>
 <h3>9.3 修复物品附魔</h3>
-<pre class="code-block"><code class="language-java">// ItemStackEnchantmentFix.java
-public class ItemStackEnchantmentFix extends ChoiceFix {
+<pre class="code-block"><code class="language-java">public class ItemStackEnchantmentFix extends ChoiceFix {
     
     // 1.13+ 格式: {Enchantments: [{id: &quot;minecraft:sharpness&quot;, lvl: 1}]}
     // 1.12  格式: {ench: [{id: 16, lvl: 1}]} (数字ID)
@@ -774,8 +763,7 @@ public class ItemStackEnchantmentFix extends ChoiceFix {
 <p><hr></p>
 <h2 id="关键代码引用">关键代码引用</h2>
 <h3>10.1 创建 DataFixer</h3>
-<pre class="code-block"><code class="language-java">// DataFixers.java
-public static DataFixerUpper createUpperFixer() {
+<pre class="code-block"><code class="language-java">public static DataFixerUpper createUpperFixer() {
     DataFixerBuilder builder = new DataFixerBuilder(
         SharedConstants.CURRENT_DATA_VERSION
     );
@@ -789,8 +777,7 @@ public static DataFixerUpper createUpperFixer() {
     return builder.build();
 }</code></pre>
 <h3>10.2 使用 FixerUpper</h3>
-<pre class="code-block"><code class="language-java">// 修复 NBT 数据
-DynamicOps&lt;NbtElement&gt; ops = NbtOps.INSTANCE;
+<pre class="code-block"><code class="language-java">DynamicOps&lt;NbtElement&gt; ops = NbtOps.INSTANCE;
 
 // 将 NBT 转换为 Dynamic
 Dynamic&lt;NbtElement&gt; dynamic = Dynamic.convert(ops, input);
@@ -805,8 +792,7 @@ dynamic = fixerUpper.update(
 // 转换回 NBT
 NbtCompound result = (NbtCompound) dynamic.getValue();</code></pre>
 <h3>10.3 自定义 Fix</h3>
-<pre class="code-block"><code class="language-java">// 创建自定义修复
-public class MyCustomFix extends Fix {
+<pre class="code-block"><code class="language-java">public class MyCustomFix extends Fix {
     
     private final Map&lt;String, String&gt; renames;
     
@@ -912,6 +898,25 @@ public class MySchema extends Schema {
     </div>
 
     <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
