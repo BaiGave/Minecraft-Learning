@@ -154,36 +154,322 @@
 <p><hr></p>
 <h2 id="1. 服务端架构概述">1. 服务端架构概述</h2>
 <h3>1.1 模块层次结构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-text">net.minecraft.server
+├── MinecraftServer.java          # 核心抽象基类
+├── PlayerManager.java            # 玩家管理抽象类
+├── ServerNetworkIo.java          # 网络I/O管理
+├── ServerTickManager.java        # Tick管理器
+├── Main.java                     # 独立服务器入口
+│
+├── dedicated/                    # 独立服务器模块
+│   ├── MinecraftDedicatedServer.java
+│   ├── DedicatedPlayerManager.java
+│   ├── DedicatedServer.java
+│   └── ServerPropertiesHandler.java
+│
+├── integrated/                   # 整合服务器模块(单人游戏)
+│   ├── IntegratedServer.java
+│   └── IntegratedPlayerManager.java
+│
+└── network/                      # 网络处理模块
+    ├── ServerLoginNetworkHandler.java
+    ├── ServerPlayNetworkHandler.java
+    └── ServerHandshakeNetworkHandler.java</code></pre>
 <h3>1.2 设计模式</h3>
 <p>服务端采用<strong>模板方法模式</strong>：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:211-216
+public abstract class MinecraftServer
+extends ReentrantThreadExecutor&lt;ServerTask&gt;
+implements QueryableServer, ChunkErrorHandler, CommandOutput, AutoCloseable</code></pre>
 <p><code>MinecraftServer</code> 是抽象基类，定义了服务端的核心流程：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:359
+protected abstract boolean setupServer() throws IOException;  // 子类实现
+
+// MinecraftServer.java:661
+protected void runServer() {
+    if (this.setupServer()) {
+        while (this.running) {
+            this.tick(...);
+        }
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="2. 主类分析 (MinecraftServer)">2. 主类分析 (MinecraftServer)</h2>
 <h3>2.1 核心成员变量</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:235-306
+public abstract class MinecraftServer {
+    // 存储与会话
+    protected final LevelStorage.Session session;
+    protected final PlayerSaveHandler saveHandler;
+    
+    // 网络
+    private final ServerNetworkIo networkIo;
+    
+    // 世界管理
+    private final Map&lt;RegistryKey&lt;World&gt;, ServerWorld&gt; worlds;
+    
+    // 玩家管理
+    private PlayerManager playerManager;
+    
+    // 配置状态
+    private volatile boolean running = true;
+    private int ticks;
+    private int ticksUntilAutosave = 6000;  // 约5分钟
+    
+    // 性能监控
+    private final long[] tickTimes = new long[100];
+    private float averageTickTime;
+    
+    // Tick管理
+    private final ServerTickManager tickManager;
+    
+    // 服务器线程
+    private final Thread serverThread;
+}</code></pre>
 <h3>2.2 静态工厂方法</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:308-319
+public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread, S&gt; serverFactory) {
+    AtomicReference&lt;MinecraftServer&gt; atomicReference = new AtomicReference&lt;&gt;();
+    Thread thread = new Thread(() -&gt; ((MinecraftServer)atomicReference.get()).runServer(), &quot;Server thread&quot;);
+    thread.setUncaughtExceptionHandler((thread, throwable) -&gt; LOGGER.error(&quot;Uncaught exception&quot;, throwable));
+    if (Runtime.getRuntime().availableProcessors() &gt; 4) {
+        thread.setPriority(8);  // 高优先级线程
+    }
+    MinecraftServer server = serverFactory.apply(thread);
+    atomicReference.set(server);
+    thread.start();
+    return server;
+}</code></pre>
 <p><strong>设计要点</strong>：
 <ul><li>使用 <code>AtomicReference</code> 解决线程初始化时序问题</li>
 <li>服务器线程名称固定为 "Server thread"</li>
 <li>多核系统上提升线程优先级到 8</li></ul></p>
 <h3>2.3 构造与初始化</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:321-347
+public MinecraftServer(Thread serverThread, LevelStorage.Session session, 
+                       ResourcePackManager dataPackManager, SaveLoader saveLoader,
+                       Proxy proxy, DataFixer dataFixer, ApiServices apiServices,
+                       WorldGenerationProgressListenerFactory factory) {
+    super(&quot;Server&quot;);
+    
+    this.combinedDynamicRegistries = saveLoader.combinedDynamicRegistries();
+    this.saveProperties = saveLoader.saveProperties();
+    
+    // 验证主世界维度数据存在
+    if (!this.combinedDynamicRegistries.getCombinedRegistryManager()
+        .get(RegistryKeys.DIMENSION).contains(DimensionOptions.OVERWORLD)) {
+        throw new IllegalStateException(&quot;Missing Overworld dimension data&quot;);
+    }
+    
+    this.networkIo = new ServerNetworkIo(this);
+    this.tickManager = new ServerTickManager(this);
+    this.session = session;
+    this.saveHandler = session.createSaveHandler();
+    this.commandFunctionManager = new CommandFunctionManager(...);
+    this.structureTemplateManager = new StructureTemplateManager(...);
+}</code></pre>
 <p><hr></p>
 <h2 id="3. 服务器生命周期">3. 服务器生命周期</h2>
 <h3>3.1 启动流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>6</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                         Main.main()                              │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              选项解析与配置文件加载                       │    │
+│  │  - server.properties                                     │    │
+│  │  - eula.txt                                              │    │
+│  │  - 命令行参数                                             │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                 MinecraftServer.startServer()            │    │
+│  │  - 创建服务器线程                                        │    │
+│  │  - 调用 runServer()                                      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              setupServer() (子类实现)                    │    │
+│  │  - 网络绑定                                              │    │
+│  │  - 生成密钥对                                            │    │
+│  │  - 加载世界                                              │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    Tick 循环                             │    │
+│  │  while (running) {                                      │    │
+│  │      tick();     // 处理一个游戏刻                      │    │
+│  │      wait(50ms); // 等待下一个刻                       │    │
+│  │  }                                                      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                   shutdown()                             │    │
+│  │  - 保存所有数据                                          │    │
+│  │  - 关闭所有连接                                         │    │
+│  │  - 关闭世界                                             │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
 <h3>3.2 Tick 循环核心实现</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>7</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:661-736
+protected void runServer() {
+    try {
+        if (this.setupServer()) {  // 初始化服务器
+            this.tickStartTimeNanos = Util.getMeasuringTimeNano();
+            
+            while (this.running) {
+                long targetTickTime;
+                
+                // 检测服务器过载
+                if (tickManager.isSprinting() &amp;&amp; tickManager.sprint()) {
+                    targetTickTime = 0L;  // 加速模式
+                } else {
+                    targetTickTime = tickManager.getNanosPerTick();  // 50ms
+                    
+                    // 检测卡顿
+                    long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
+                    if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
+                        LOGGER.warn(&quot;Can&#39;t keep up! Running {}ms or {} ticks behind&quot;,
+                            elapsed / TimeHelper.MILLI_IN_NANOS, elapsed / targetTickTime);
+                    }
+                }
+                
+                this.tickStartTimeNanos += targetTickTime;
+                this.startTickMetrics();
+                
+                // 执行Tick
+                this.profiler.push(&quot;tick&quot;);
+                this.tick(shouldKeepTicking);
+                this.profiler.swap(&quot;nextTickWait&quot;);
+                
+                // 等待下一个Tick
+                this.waitingForNextTick = true;
+                this.tickEndTimeNanos = Math.max(Util.getMeasuringTimeNano() + targetTickTime, tickStartTimeNanos);
+                
+                this.runTasksTillTickEnd();  // 处理异步任务
+                this.profiler.pop();
+                this.pushFullTickLog();
+                this.endTickMetrics();
+            }
+        }
+    } catch (Throwable e) {
+        // 崩溃报告处理
+        CrashReport report = createCrashReport(e);
+        // 保存到 crash-reports 目录
+    } finally {
+        this.stopped = true;
+        this.shutdown();  // 清理资源
+    }
+}</code></pre>
 <h3>3.3 Tick 方法</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>8</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:887-914
+public void tick(BooleanSupplier shouldKeepTicking) {
+    long startTime = Util.getMeasuringTimeNano();
+    ++this.ticks;
+    
+    this.tickManager.step();           // Tick管理器步进
+    this.tickWorlds(shouldKeepTicking); // 更新所有世界
+    
+    // 定期更新服务器元数据
+    if (startTime - lastPlayerSampleUpdate &gt;= PLAYER_SAMPLE_UPDATE_INTERVAL_NANOS) {
+        this.lastPlayerSampleUpdate = startTime;
+        this.metadata = this.createMetadata();
+    }
+    
+    // 自动保存
+    --this.ticksUntilAutosave;
+    if (this.ticksUntilAutosave &lt;= 0) {
+        this.ticksUntilAutosave = this.getAutosaveInterval();
+        this.saveAll(true, false, false);
+    }
+    
+    // 更新Tick时间统计
+    long tickDuration = Util.getMeasuringTimeNano() - startTime;
+    recentTickTimesNanos = recentTickTimesNanos - tickTimes[ticks % 100] + tickDuration;
+    tickTimes[ticks % 100] = tickDuration;
+    averageTickTime = averageTickTime * 0.8f + tickDuration * 0.2f;
+}</code></pre>
 <h3>3.4 世界Tick</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>9</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:967-1007
+public void tickWorlds(BooleanSupplier shouldKeepTicking) {
+    // 禁用所有玩家的网络刷新
+    getPlayerManager().getPlayerList().forEach(player -&gt; 
+        player.networkHandler.disableFlush());
+    
+    // 执行数据包函数
+    profiler.push(&quot;commandFunctions&quot;);
+    getCommandFunctionManager().tick();
+    
+    // Tick所有世界
+    profiler.swap(&quot;levels&quot;);
+    for (ServerWorld serverWorld : this.getWorlds()) {
+        profiler.push(serverWorld.toString());
+        
+        // 每20tick同步一次时间
+        if (ticks % 20 == 0) {
+            sendTimeUpdatePackets(serverWorld);
+        }
+        
+        // 世界Tick
+        serverWorld.tick(shouldKeepTicking);
+        profiler.pop();
+    }
+    
+    // 处理网络连接
+    profiler.swap(&quot;connection&quot;);
+    getNetworkIo().tick();
+    
+    // 更新玩家延迟
+    profiler.swap(&quot;players&quot;);
+    playerManager.updatePlayerLatency();
+    
+    // 发送区块数据
+    profiler.swap(&quot;send chunks&quot;);
+    for (ServerPlayerEntity player : playerManager.getPlayerList()) {
+        player.networkHandler.chunkDataSender.sendChunkBatches(player);
+        player.networkHandler.enableFlush();
+    }
+}</code></pre>
 <h3>3.5 关闭流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>10</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:583-624
+public void shutdown() {
+    LOGGER.info(&quot;Stopping server&quot;);
+    this.getNetworkIo().stop();        // 停止网络
+    
+    if (this.playerManager != null) {
+        LOGGER.info(&quot;Saving players&quot;);
+        this.playerManager.saveAllPlayerData();
+        this.playerManager.disconnectAllPlayers();
+    }
+    
+    LOGGER.info(&quot;Saving worlds&quot;);
+    for (ServerWorld serverWorld : this.getWorlds()) {
+        serverWorld.savingDisabled = false;
+    }
+    
+    // 等待区块保存完成
+    while (worlds.values().stream()
+        .anyMatch(world -&gt; world.getChunkManager().chunkLoadingManager.shouldDelayShutdown())) {
+        for (ServerWorld world : worlds) {
+            world.getChunkManager().removePersistentTickets();
+            world.getChunkManager().tick(() -&gt; true, false);
+        }
+        runTasksTillTickEnd();
+    }
+    
+    this.save(false, true, false);    // 最终保存
+    
+    // 关闭所有世界
+    for (ServerWorld serverWorld : this.getWorlds()) {
+        serverWorld.close();
+    }
+    
+    this.session.close();              // 关闭存储会话
+}</code></pre>
 <p><hr></p>
 <h2 id="4. 玩家管理系统 (PlayerManager)">4. 玩家管理系统 (PlayerManager)</h2>
 <h3>4.1 概述</h3>
@@ -195,61 +481,748 @@
 <li>消息广播</li>
 <li>统计与进度追踪</li></ul></p>
 <h3>4.2 核心数据结构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>11</em>_</p>
+<pre class="code-block"><code class="language-java">// PlayerManager.java:119-146
+public abstract class PlayerManager {
+    private final MinecraftServer server;
+    private final List&lt;ServerPlayerEntity&gt; players;          // 玩家列表
+    private final Map&lt;UUID, ServerPlayerEntity&gt; playerMap;   // UUID索引
+    
+    // 访问控制
+    private final BannedPlayerList bannedProfiles;           // 封禁玩家
+    private final BannedIpList bannedIps;                    // 封禁IP
+    private final OperatorList ops;                          // OP列表
+    private final Whitelist whitelist;                       // 白名单
+    
+    // 玩家数据
+    private final Map&lt;UUID, ServerStatHandler&gt; statisticsMap;
+    private final Map&lt;UUID, PlayerAdvancementTracker&gt; advancementTrackers;
+    
+    // 配置
+    private boolean whitelistEnabled;
+    private int viewDistance;
+    private int simulationDistance;
+}</code></pre>
 <h3>4.3 玩家连接处理</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>12</em>_</p>
+<pre class="code-block"><code class="language-java">// PlayerManager.java:155-240
+public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, 
+                           ConnectedClientData clientData) {
+    GameProfile profile = player.getGameProfile();
+    
+    // 从UserCache获取/缓存玩家信息
+    UserCache userCache = this.server.getUserCache();
+    if (userCache != null) {
+        String name = userCache.getByUuid(profile.getId())
+            .map(GameProfile::getName).orElse(profile.getName());
+        userCache.add(profile);
+    }
+    
+    // 加载玩家数据
+    Optional&lt;NbtCompound&gt; playerData = loadPlayerData(player);
+    
+    // 确定出生世界
+    RegistryKey&lt;World&gt; respawnDim = playerData
+        .flatMap(nbt -&gt; DimensionType.worldFromDimensionNbt(...))
+        .orElse(World.OVERWORLD);
+    ServerWorld spawnWorld = server.getWorld(respawnDim) ?: server.getOverworld();
+    player.setServerWorld(spawnWorld);
+    
+    // 创建网络处理器
+    ServerPlayNetworkHandler handler = new ServerPlayNetworkHandler(
+        server, connection, player, clientData);
+    connection.transitionInbound(..., handler);
+    
+    // 发送初始数据包
+    handler.sendPacket(new GameJoinS2CPacket(...));
+    handler.sendPacket(new DifficultyS2CPacket(...));
+    handler.sendPacket(new PlayerAbilitiesS2CPacket(...));
+    handler.sendPacket(new SynchronizeRecipesS2CPacket(...));
+    
+    // 发送命令树
+    sendCommandTree(player);
+    
+    // 发送记分板
+    sendScoreboard(serverWorld.getScoreboard(), player);
+    
+    // 加入玩家列表
+    this.players.add(player);
+    this.playerMap.put(player.getUuid(), player);
+    this.sendToAll(PlayerListS2CPacket.entryFromPlayer(List.of(player)));
+    
+    // 触发连接事件
+    serverWorld.onPlayerConnected(player);
+    bossBarManager.onPlayerConnect(player);
+}</code></pre>
 <h3>4.4 连接检查</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>13</em>_</p>
+<pre class="code-block"><code class="language-java">// PlayerManager.java:347-371
+@Nullable
+public Text checkCanJoin(SocketAddress address, GameProfile profile) {
+    // 检查封禁玩家列表
+    if (this.bannedProfiles.contains(profile)) {
+        BannedPlayerEntry entry = bannedProfiles.get(profile);
+        MutableText reason = Text.translatable(&quot;multiplayer.disconnect.banned.reason&quot;, 
+            entry.getReason());
+        if (entry.getExpiryDate() != null) {
+            reason.append(Text.translatable(&quot;multiplayer.disconnect.banned.expiration&quot;, 
+                DATE_FORMATTER.format(entry.getExpiryDate())));
+        }
+        return reason;
+    }
+    
+    // 检查白名单
+    if (!this.isWhitelisted(profile)) {
+        return Text.translatable(&quot;multiplayer.disconnect.not_whitelisted&quot;);
+    }
+    
+    // 检查封禁IP
+    if (this.bannedIps.isBanned(address)) {
+        return Text.translatable(&quot;multiplayer.disconnect.banned_ip.reason&quot;, ...);
+    }
+    
+    // 检查服务器人数
+    if (players.size() &gt;= maxPlayers &amp;&amp; !canBypassPlayerLimit(profile)) {
+        return Text.translatable(&quot;multiplayer.disconnect.server_full&quot;);
+    }
+    
+    return null;  // 允许加入
+}</code></pre>
 <h3>4.5 玩家重生</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>14</em>_</p>
+<pre class="code-block"><code class="language-java">// PlayerManager.java:394-437
+public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive, 
+                                       Entity.RemovalReason reason) {
+    // 获取重生目标
+    TeleportTarget target = player.getRespawnTarget(alive, TeleportTarget.NO_OP);
+    ServerWorld targetWorld = target.world();
+    
+    // 创建新玩家实体
+    ServerPlayerEntity newPlayer = new ServerPlayerEntity(
+        server, targetWorld, player.getGameProfile(), player.getClientOptions());
+    newPlayer.networkHandler = player.networkHandler;  // 复用网络连接
+    newPlayer.copyFrom(player, alive);
+    newPlayer.setId(player.getId());
+    
+    // 设置位置
+    Vec3d pos = target.pos();
+    newPlayer.refreshPositionAndAngles(pos.x, pos.y, pos.z, 
+        target.yaw(), target.pitch());
+    
+    // 发送重生包
+    newPlayer.networkHandler.sendPacket(new PlayerRespawnS2CPacket(
+        newPlayer.createCommonPlayerSpawnInfo(targetWorld), 
+        alive ? KEEP_ATTRIBUTES : 0));
+    
+    // 更新列表
+    this.players.remove(player);
+    this.players.add(newPlayer);
+    this.playerMap.put(newPlayer.getUuid(), newPlayer);
+    
+    return newPlayer;
+}</code></pre>
 <h3>4.6 消息广播</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>15</em>_</p>
+<pre class="code-block"><code class="language-java">// PlayerManager.java:683-774
+public void broadcast(Text message, boolean overlay) {
+    this.server.sendMessage(message);  // 发送到控制台
+    for (ServerPlayerEntity player : this.players) {
+        player.sendMessageToClient(message, overlay);
+    }
+}
+
+// 聊天消息广播
+public void broadcast(SignedMessage message, ServerPlayerEntity sender, 
+                      MessageType.Parameters params) {
+    // 验证消息签名
+    boolean secure = verify(message);
+    this.server.logChatMessage(message.getContent(), params, secure ? null : &quot;Not Secure&quot;);
+    
+    SentMessage sent = SentMessage.of(message);
+    for (ServerPlayerEntity player : this.players) {
+        boolean shouldFilter = shouldFilterMessagesSentTo.test(player);
+        player.sendChatMessage(sent, shouldFilter, params);
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="5. 世界管理">5. 世界管理</h2>
 <h3>5.1 世界创建</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>16</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:387-435
+protected void createWorlds(WorldGenerationProgressListener listener) {
+    ServerWorldProperties properties = saveProperties.getMainWorldProperties();
+    boolean isDebugWorld = saveProperties.isDebugWorld();
+    
+    // 获取维度配置
+    Registry&lt;DimensionOptions&gt; registry = combinedDynamicRegistries
+        .getCombinedRegistryManager().get(RegistryKeys.DIMENSION);
+    
+    // 主世界特殊生成器
+    DimensionOptions overworld = registry.get(DimensionOptions.OVERWORLD);
+    ServerWorld mainWorld = new ServerWorld(
+        this, workerExecutor, session, properties,
+        World.OVERWORLD, overworld, listener, isDebugWorld,
+        BiomeAccess.hashSeed(seed), specialSpawners, true, null);
+    worlds.put(World.OVERWORLD, mainWorld);
+    
+    // 初始化计分板和数据命令存储
+    initScoreboard(mainWorld.getPersistentStateManager());
+    dataCommandStorage = new DataCommandStorage(persistentStateManager);
+    
+    // 设置世界边界监听器
+    WorldBorder border = mainWorld.getWorldBorder();
+    border.addListener(new WorldBorderListener.WorldBorderSyncer(...));
+    
+    // 为未初始化的世界设置出生点
+    if (!serverWorldProperties.isInitialized()) {
+        setupSpawn(mainWorld, serverWorldProperties, 
+            generatorOptions.hasBonusChest(), isDebugWorld);
+        serverWorldProperties.setInitialized(true);
+    }
+    
+    // 创建其他维度世界(下界、末地)
+    for (Entry&lt;RegistryKey&lt;DimensionOptions&gt;, DimensionOptions&gt; entry : registry.getEntrySet()) {
+        if (entry.getKey() == DimensionOptions.OVERWORLD) continue;
+        
+        RegistryKey&lt;World&gt; worldKey = RegistryKey.of(RegistryKeys.WORLD, 
+            entry.getKey().getValue());
+        ServerWorld dimWorld = new ServerWorld(
+            this, workerExecutor, session, unmodifiableProps,
+            worldKey, entry.getValue(), listener, isDebugWorld,
+            BiomeAccess.hashSeed(seed), ImmutableList.of(), 
+            false, randomSequencesState);
+        
+        border.addListener(new WorldBorderListener.WorldBorderSyncer(
+            dimWorld.getWorldBorder()));
+        worlds.put(worldKey, dimWorld);
+    }
+}</code></pre>
 <h3>5.2 出生点设置</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>17</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:437-471
+private static void setupSpawn(ServerWorld world, ServerWorldProperties properties,
+                               boolean bonusChest, boolean debugWorld) {
+    if (debugWorld) {
+        properties.setSpawnPos(BlockPos.ORIGIN.up(80), 0.0f);
+        return;
+    }
+    
+    // 找到最佳出生位置
+    ChunkPos spawnChunk = new ChunkPos(
+        world.getChunkManager().getNoiseConfig()
+            .getMultiNoiseSampler().findBestSpawnPosition());
+    
+    int spawnHeight = world.getChunkManager().getChunkGenerator()
+        .getSpawnHeight(world);
+    if (spawnHeight &lt; world.getBottomY()) {
+        BlockPos pos = spawnChunk.getStartPos();
+        spawnHeight = world.getTopY(Heightmap.Type.WORLD_SURFACE, 
+            pos.getX() + 8, pos.getZ() + 8);
+    }
+    
+    // 螺旋搜索安全位置
+    int j = 0, k = 0, l = 0, m = -1;
+    for (int n = 0; n &lt; MathHelper.square(11); ++n) {
+        BlockPos testPos;
+        if (j &gt;= -5 &amp;&amp; j &lt;= 5 &amp;&amp; k &gt;= -5 &amp;&amp; k &lt;= 5 &amp;&amp;
+            (testPos = SpawnLocating.findServerSpawnPoint(world, 
+                new ChunkPos(spawnChunk.x + j, spawnChunk.z + k))) != null) {
+            properties.setSpawnPos(testPos, 0.0f);
+            break;
+        }
+        // 螺旋路径计算
+        if (j == k || (j &lt; 0 &amp;&amp; j == -k) || (j &gt; 0 &amp;&amp; j == 1 - k)) {
+            int temp = l; l = -m; m = temp;
+        }
+        j += l; k += m;
+    }
+    
+    // 生成奖励箱
+    if (bonusChest) {
+        featureRegistry.getEntry(MiscConfiguredFeatures.BONUS_CHEST)
+            .ifPresent(feature -&gt; feature.generate(...));
+    }
+}</code></pre>
 <h3>5.3 准备开始区域</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>18</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:484-515
+private void prepareStartRegion(WorldGenerationProgressListener listener) {
+    ServerWorld overworld = getOverworld();
+    BlockPos spawn = overworld.getSpawnPos();
+    
+    listener.start(new ChunkPos(spawn));
+    
+    // 等待出生点区块加载完成
+    int radius = getGameRules().getInt(GameRules.SPAWN_CHUNK_RADIUS);
+    int totalChunks = radius &gt; 0 ? MathHelper.square(
+        WorldGenerationProgressListener.getStartRegionSize(radius)) : 0;
+    
+    while (overworld.getChunkManager().getTotalChunksLoadedCount() &lt; totalChunks) {
+        tickStartTimeNanos = Util.getMeasuringTimeNano() + 
+            PREPARE_START_REGION_TICK_DELAY_NANOS;
+        runTasksTillTickEnd();
+    }
+    
+    // 恢复强制加载的区块
+    for (ServerWorld world : worlds.values()) {
+        ForcedChunkState forced = world.getPersistentStateManager()
+            .get(ForcedChunkState.getPersistentStateType(), &quot;chunks&quot;);
+        if (forced != null) {
+            for (long chunkPos : forced.getChunks()) {
+                world.getChunkManager().setChunkForced(
+                    new ChunkPos(chunkPos), true);
+            }
+        }
+    }
+    
+    listener.stop();
+    updateMobSpawnOptions();
+}</code></pre>
 <p><hr></p>
 <h2 id="6. 网络协议实现">6. 网络协议实现</h2>
 <h3>6.1 网络架构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>19</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                      客户端连接                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   ServerHandshakeNetworkHandler                  │
+│                         握手协议                                  │
+│   - 协议版本检查                                                 │
+│   - 状态切换 (STATUS / LOGIN / TRANSFER)                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+┌─────────────────────────┐     ┌─────────────────────────┐
+│  ServerQueryNetworkHandler │     │  ServerLoginNetworkHandler │
+│       状态查询            │     │       登录协议           │
+│   - 服务器信息             │     │   - 离线/在线验证        │
+│   - Ping测试              │     │   - 加密握手            │
+└─────────────────────────┘     │   - 重复登录检测         │
+                                └─────────────────────────┘
+                                                  │
+                                                  ▼
+                                ┌─────────────────────────┐
+                                │ ServerPlayNetworkHandler │
+                                │       游戏协议           │
+                                │   - 玩家移动同步        │
+                                │   - 方块交互            │
+                                │   - 物品交互            │
+                                │   - 聊天消息            │
+                                │   - 实体同步            │
+                                └─────────────────────────┘</code></pre>
 <h3>6.2 握手处理</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>20</em>_</p>
+<pre class="code-block"><code class="language-java">// ServerHandshakeNetworkHandler.java:33-75
+@Override
+public void onHandshake(HandshakeC2SPacket packet) {
+    switch (packet.intendedState()) {
+        case LOGIN:
+            login(packet, false);
+            break;
+        case STATUS:
+            // 处理服务器信息查询
+            ServerMetadata metadata = server.getServerMetadata();
+            connection.transitionOutbound(QueryStates.S2C);
+            if (server.acceptsStatusQuery() &amp;&amp; metadata != null) {
+                connection.transitionInbound(QueryStates.C2S,
+                    new ServerQueryNetworkHandler(metadata, connection));
+            } else {
+                connection.disconnect(IGNORING_STATUS_REQUEST_MESSAGE);
+            }
+            break;
+        case TRANSFER:
+            if (!server.acceptsTransfers()) {
+                connection.disconnect(...);
+            }
+            login(packet, true);
+            break;
+    }
+}
+
+private void login(HandshakeC2SPacket packet, boolean transfer) {
+    connection.transitionOutbound(LoginStates.S2C);
+    
+    // 协议版本检查
+    if (packet.protocolVersion() != SharedConstants.getGameVersion()
+        .getProtocolVersion()) {
+        connection.send(new LoginDisconnectS2CPacket(
+            Text.translatable(&quot;multiplayer.disconnect.outdated_client&quot;, ...)));
+        connection.disconnect(text);
+    } else {
+        connection.transitionInbound(LoginStates.C2S,
+            new ServerLoginNetworkHandler(server, connection, transfer));
+    }
+}</code></pre>
 <h3>6.3 登录流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>21</em>_</p>
+<pre class="code-block"><code class="language-java">// ServerLoginNetworkHandler.java:138-237
+@Override
+public void onHello(LoginHelloC2SPacket packet) {
+    Validate.validState(this.state == State.HELLO, &quot;Unexpected hello packet&quot;);
+    this.profileName = packet.name();
+    
+    // 主机玩家直接通过
+    GameProfile hostProfile = server.getHostProfile();
+    if (hostProfile != null &amp;&amp; profileName.equalsIgnoreCase(hostProfile.getName())) {
+        startVerify(hostProfile);
+        return;
+    }
+    
+    // 在线模式需要加密
+    if (server.isOnlineMode() &amp;&amp; !connection.isLocal()) {
+        this.state = State.KEY;
+        connection.send(new LoginHelloS2CPacket(&quot;&quot;,
+            server.getKeyPair().getPublic().getEncoded(), nonce, true));
+    } else {
+        startVerify(Uuids.getOfflinePlayerProfile(profileName));
+    }
+}
+
+@Override
+public void onKey(LoginKeyC2SPacket packet) {
+    // 验证Nonce
+    PrivateKey privateKey = server.getKeyPair().getPrivate();
+    if (!packet.verifySignedNonce(nonce, privateKey)) {
+        throw new IllegalStateException(&quot;Protocol error&quot;);
+    }
+    
+    // 设置加密
+    SecretKey secretKey = packet.decryptSecretKey(privateKey);
+    Cipher encryptCipher = NetworkEncryptionUtils.cipherFromKey(2, secretKey);
+    Cipher decryptCipher = NetworkEncryptionUtils.cipherFromKey(1, secretKey);
+    connection.setupEncryption(encryptCipher, decryptCipher);
+    
+    // 异步验证
+    Thread verifier = new Thread(&quot;User Authenticator #&quot; + nextId.incrementAndGet()) {
+        @Override
+        public void run() {
+            ProfileResult result = server.getSessionService()
+                .hasJoinedServer(playerName, serverId, clientAddress);
+            
+            if (result != null) {
+                // 验证成功
+                startVerify(result.profile());
+            } else if (server.isSingleplayer()) {
+                // 单人模式允许离线
+                startVerify(Uuids.getOfflinePlayerProfile(playerName));
+            } else {
+                disconnect(Text.translatable(&quot;multiplayer.disconnect.unverified_username&quot;));
+            }
+        }
+    };
+    verifier.start();
+}</code></pre>
 <h3>6.4 游戏玩法网络处理</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>22</em>_</p>
+<pre class="code-block"><code class="language-java">// ServerPlayNetworkHandler.java:266-322
+@Override
+public void tick() {
+    // 同步玩家位置
+    syncWithPlayerPosition();
+    player.playerTick();
+    
+    // 检测飞行作弊
+    if (floating &amp;&amp; !player.isSleeping() &amp;&amp; !player.hasVehicle() &amp;&amp; !player.isDead()) {
+        if (++floatingTicks &gt; getMaxAllowedFloatingTicks(player)) {
+            disconnect(Text.translatable(&quot;multiplayer.disconnect.flying&quot;));
+            return;
+        }
+    }
+    
+    // 基础Tick
+    baseTick();
+    
+    // 检测闲置
+    if (server.getPlayerIdleTimeout() &gt; 0 &amp;&amp;
+        Util.getMeasuringTimeMs() - player.getLastActionTime() &gt; 
+            server.getPlayerIdleTimeout() * 60000) {
+        disconnect(Text.translatable(&quot;multiplayer.disconnect.idling&quot;));
+    }
+}</code></pre>
 <h3>6.5 网络I/O管理</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>23</em>_</p>
+<pre class="code-block"><code class="language-java">// ServerNetworkIo.java:73-109
+public void bind(@Nullable InetAddress address, int port) throws IOException {
+    EventLoopGroup group;
+    Class&lt;? extends ServerChannel&gt; channelClass;
+    
+    // 选择IO模型
+    if (Epoll.isAvailable() &amp;&amp; server.isUsingNativeTransport()) {
+        channelClass = EpollServerSocketChannel.class;
+        group = EPOLL_CHANNEL.get();
+        LOGGER.info(&quot;Using epoll channel type&quot;);
+    } else {
+        channelClass = NioServerSocketChannel.class;
+        group = DEFAULT_CHANNEL.get();
+        LOGGER.info(&quot;Using default channel type&quot;);
+    }
+    
+    new ServerBootstrap()
+        .channel(channelClass)
+        .childHandler(new ChannelInitializer&lt;Channel&gt;() {
+            @Override
+            protected void initChannel(Channel ch) {
+                // 设置TCP选项
+                ch.config().setOption(ChannelOption.TCP_NODELAY, true);
+                
+                // 添加超时处理器
+                ChannelPipeline pipeline = ch.pipeline()
+                    .addLast(&quot;timeout&quot;, new ReadTimeoutHandler(30));
+                
+                // 可选的查询处理器
+                if (server.acceptsStatusQuery()) {
+                    pipeline.addLast(&quot;legacy_query&quot;, 
+                        new LegacyQueryHandler(server));
+                }
+                
+                // 网络压缩
+                int rateLimit = server.getRateLimit();
+                ClientConnection conn = rateLimit &gt; 0 ?
+                    new RateLimitedConnection(rateLimit) :
+                    new ClientConnection(NetworkSide.SERVERBOUND);
+                
+                // 启动握手处理器
+                conn.setInitialPacketListener(
+                    new ServerHandshakeNetworkHandler(server, conn));
+            }
+        })
+        .group(group)
+        .localAddress(address, port)
+        .bind().syncUninterruptibly();
+}</code></pre>
 <p><hr></p>
 <h2 id="7. 整合服务器 vs 独立服务器">7. 整合服务器 vs 独立服务器</h2>
 <h3>7.1 类层次结构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>24</em>_</p>
+<pre class="code-block"><code class="language-text">MinecraftServer (抽象基类)
+    │
+    ├── IntegratedServer (整合服务器)
+    │       │
+    │       └── IntegratedPlayerManager
+    │
+    └── MinecraftDedicatedServer (独立服务器)
+            │
+            └── DedicatedPlayerManager</code></pre>
 <h3>7.2 整合服务器 (IntegratedServer)</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>25</em>_</p>
+<pre class="code-block"><code class="language-java">// IntegratedServer.java:46-67
+@Environment(EnvType.CLIENT)
+public class IntegratedServer extends MinecraftServer {
+    private final MinecraftClient client;
+    private boolean paused = true;      // 可暂停
+    private int lanPort = -1;           // LAN端口
+    @Nullable private GameMode forcedGameMode;
+    @Nullable private LanServerPinger lanPinger;
+    
+    @Override
+    public boolean setupServer() {
+        setOnlineMode(true);           // 在线模式
+        setPvpEnabled(true);
+        setFlightEnabled(true);
+        generateKeyPair();
+        loadWorld();
+        return true;
+    }
+    
+    @Override
+    public boolean isPaused() {
+        return this.paused;  // 客户端暂停时服务器也暂停
+    }
+    
+    @Override
+    public void tick(BooleanSupplier shouldKeepTicking) {
+        boolean wasPaused = paused;
+        paused = MinecraftClient.getInstance().isPaused();
+        
+        // 暂停时保存游戏
+        if (!wasPaused &amp;&amp; paused) {
+            LOGGER.info(&quot;Saving and pausing game...&quot;);
+            saveAll(false, false, false);
+            return;
+        }
+        
+        super.tick(shouldKeepTicking);
+        
+        // 动态调整视距
+        int viewDist = Math.max(2, client.options.getViewDistance().getValue());
+        if (viewDist != playerManager.getViewDistance()) {
+            playerManager.setViewDistance(viewDist);
+        }
+    }
+    
+    @Override
+    public boolean openToLan(@Nullable GameMode gameMode, boolean cheatsAllowed, int port) {
+        // 打开LAN游戏
+        getNetworkIo().bind(null, port);
+        lanPort = port;
+        lanPinger = new LanServerPinger(getServerMotd(), &quot;&quot; + port);
+        lanPinger.start();
+        return true;
+    }
+}</code></pre>
 <h3>7.3 独立服务器 (MinecraftDedicatedServer)</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>26</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftDedicatedServer.java:72-206
+public class MinecraftDedicatedServer extends MinecraftServer 
+    implements DedicatedServer {
+    
+    private final List&lt;PendingServerCommand&gt; commandQueue = 
+        Collections.synchronizedList(Lists.newArrayList());
+    @Nullable private QueryResponseHandler queryResponseHandler;
+    @Nullable private RconListener rconServer;
+    private final ServerPropertiesLoader propertiesLoader;
+    private final TextFilterer filterer;
+    
+    @Override
+    public boolean setupServer() throws IOException {
+        // 启动控制台输入处理线程
+        Thread consoleThread = new Thread(&quot;Server console handler&quot;) {
+            @Override
+            public void run() {
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(System.in, StandardCharsets.UTF_8));
+                while (!isStopped() &amp;&amp; isRunning()) {
+                    String line = reader.readLine();
+                    if (line != null) {
+                        enqueueCommand(line, getCommandSource());
+                    }
+                }
+            }
+        };
+        consoleThread.setDaemon(true);
+        consoleThread.start();
+        
+        // 加载配置
+        ServerPropertiesHandler props = propertiesLoader.getPropertiesHandler();
+        setOnlineMode(props.onlineMode);
+        setPvpEnabled(props.pvp);
+        setFlightEnabled(props.allowFlight);
+        
+        // 绑定网络
+        InetAddress addr = serverIp.isEmpty() ? null : InetAddress.getByName(serverIp);
+        getNetworkIo().bind(addr, serverPort);
+        
+        // 启动Watchdog
+        if (getMaxTickTime() &gt; 0) {
+            Thread watchdog = new Thread(new DedicatedServerWatchdog(this));
+            watchdog.setName(&quot;Server Watchdog&quot;);
+            watchdog.setDaemon(true);
+            watchdog.start();
+        }
+        
+        return true;
+    }
+    
+    @Override
+    public boolean isDedicated() {
+        return true;
+    }
+    
+    @Override
+    public boolean isWorldAllowed(World world) {
+        // 下界可能需要单独启用
+        if (world.getRegistryKey() == World.NETHER) {
+            return getProperties().allowNether;
+        }
+        return true;
+    }
+}</code></pre>
 <h3>7.4 关键差异对比</h3>
 <table class="data-table"><thead><tr><th>特性</th><th>整合服务器</th><th>独立服务器</th></tr></thead><tbody><tr><td>运行环境</td><td>客户端内</td><td>独立JVM</td></tr><tr><td>可暂停</td><td>是 (跟随游戏)</td><td>否</td></tr><tr><td>控制台</td><td>无</td><td>有 (stdin)</td></tr><tr><td>玩家上限</td><td>8</td><td>配置决定</td></tr><tr><td>出生点保护</td><td>无</td><td>有 (spawn-protection)</td></tr><tr><td>白名单</td><td>无</td><td>有</td></tr><tr><td>RCON</td><td>无</td><td>有</td></tr><tr><td>Query</td><td>无</td><td>有</td></tr><tr><td>GUI</td><td>无</td><td>可选 (Swing)</td></tr><tr><td>Watchdog</td><td>无</td><td>有</td></tr></tbody></table>
 <hr></p>
 <h2 id="8. Tick 系统分析">8. Tick 系统分析</h2>
 <h3>8.1 ServerTickManager</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>27</em>_</p>
+<pre class="code-block"><code class="language-java">// ServerTickManager.java:14-122
+public class ServerTickManager extends TickManager {
+    private long sprintTicks = 0L;           // 加速Tick数
+    private long scheduledSprintTicks = 0L;  // 计划加速数
+    private boolean wasFrozen = false;       // 冻结前状态
+    
+    @Override
+    public void setFrozen(boolean frozen) {
+        super.setFrozen(frozen);
+        sendUpdateTickRatePacket();  // 通知客户端
+    }
+    
+    // 单步执行 (调试用)
+    public boolean step(int ticks) {
+        if (!isFrozen()) return false;
+        this.stepTicks = ticks;
+        sendStepPacket();
+        return true;
+    }
+    
+    // 加速模式
+    public boolean startSprint(int ticks) {
+        this.scheduledSprintTicks = ticks;
+        this.sprintTicks = ticks;
+        this.wasFrozen = isFrozen();
+        setFrozen(false);
+        return true;
+    }
+    
+    // 加速Tick
+    public boolean sprint() {
+        if (!shouldTick) return false;
+        if (sprintTicks &gt; 0) {
+            --sprintTicks;
+            return true;
+        }
+        finishSprinting();
+        return false;
+    }
+}</code></pre>
 <h3>8.2 Tick同步</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>28</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:780-783
+private boolean shouldKeepTicking() {
+    return hasRunningTasks() || 
+           Util.getMeasuringTimeNano() &lt; 
+               (waitingForNextTick ? tickEndTimeNanos : tickStartTimeNanos);
+}</code></pre>
 <h3>8.3 过载检测</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>29</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:677-682
+long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
+if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
+    long missedTicks = elapsed / targetTickTime;
+    LOGGER.warn(&quot;Can&#39;t keep up! Running {}ms or {} ticks behind&quot;,
+        elapsed / TimeHelper.MILLI_IN_NANOS, missedTicks);
+    tickStartTimeNanos += missedTicks * targetTickTime;
+}</code></pre>
 <p><hr></p>
 <h2 id="9. 命令系统">9. 命令系统</h2>
 <h3>9.1 命令管理器</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>30</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:1584-1586
+public CommandManager getCommandManager() {
+    return this.resourceManagerHolder.dataPackContents.getCommandManager();
+}
+
+// 发送命令树
+public void sendCommandTree(ServerPlayerEntity player) {
+    getCommandManager().sendCommandTree(player);
+}</code></pre>
 <h3>9.2 命令源</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>31</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftServer.java:1591-1594
+public ServerCommandSource getCommandSource() {
+    ServerWorld world = getOverworld();
+    return new ServerCommandSource(
+        this,
+        Vec3d.of(world.getSpawnPos()),
+        Vec2f.ZERO,
+        world,
+        4,
+        &quot;Server&quot;,
+        Text.literal(&quot;Server&quot;),
+        this,
+        null
+    );
+}</code></pre>
 <h3>9.3 独立服务器命令队列</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>32</em>_</p>
+<pre class="code-block"><code class="language-java">// MinecraftDedicatedServer.java:294-302
+public void enqueueCommand(String command, ServerCommandSource source) {
+    commandQueue.add(new PendingServerCommand(command, source));
+}
+
+public void executeQueuedCommands() {
+    while (!commandQueue.isEmpty()) {
+        PendingServerCommand cmd = commandQueue.remove(0);
+        getCommandManager().executeWithPrefix(cmd.source, cmd.command);
+    }
+}
+
+// tickWorlds中调用
+@Override
+public void tickWorlds(BooleanSupplier shouldKeepTicking) {
+    super.tickWorlds(shouldKeepTicking);
+    executeQueuedCommands();
+}</code></pre>
 <p><hr></p>
 <h2 id="10. 关键代码引用">10. 关键代码引用</h2>
 <h3>10.1 MinecraftServer.java 关键方法</h3>
@@ -257,7 +1230,13 @@
 <h3>10.2 PlayerManager.java 关键方法</h3>
 <table class="data-table"><thead><tr><th>方法</th><th>行号</th><th>描述</th></tr></thead><tbody><tr><td><code>onPlayerConnect()</code></td><td>155-240</td><td>处理玩家连接</td></tr><tr><td><code>checkCanJoin()</code></td><td>347-371</td><td>检查能否加入</td></tr><tr><td><code>respawnPlayer()</code></td><td>394-437</td><td>玩家重生</td></tr><tr><td><code>remove()</code></td><td>321-344</td><td>移除玩家</td></tr><tr><td><code>broadcast()</code></td><td>683-774</td><td>消息广播</td></tr><tr><td><code>saveAllPlayerData()</code></td><td>571-575</td><td>保存所有玩家数据</td></tr></tbody></table>
 <h3>10.3 ServerLoginNetworkHandler.java 状态机</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>33</em>_</p>
+<pre class="code-block"><code class="language-text">HELLO -&gt; KEY (在线模式)
+KEY -&gt; AUTHENTICATING
+AUTHENTICATING -&gt; VERIFYING
+VERIFYING -&gt; WAITING_FOR_DUPE_DISCONNECT / SUCCESS
+WAITING_FOR_DUPE_DISCONNECT -&gt; SUCCESS
+SUCCESS -&gt; PROTOCOL_SWITCHING
+PROTOCOL_SWITCHING -&gt; ACCEPTED (进入配置阶段)</code></pre>
 <h3>10.4 DedicatedPlayerManager.java 特有功能</h3>
 <p><ul><li>白名单管理 (<code>setWhitelistEnabled</code>)</li>
 <li>OP管理 (<code>addToOperators</code>, <code>removeFromOperators</code>)</li>
@@ -271,9 +1250,51 @@
 <p><hr></p>
 <h2 id="附录: 数据流图">附录: 数据流图</h2>
 <h3>玩家登录流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>34</em>_</p>
+<pre class="code-block"><code class="language-text">Client                    Server                      Database
+  │                          │                            │
+  │──── Handshake ──────────▶│                            │
+  │                          │                            │
+  │──── LoginHello ─────────▶│                            │
+  │                          │── Online Mode? ──────────▶│
+  │                          │◀── Authentication ────────│
+  │◀─── LoginHello ──────────│                            │
+  │                          │                            │
+  │──── LoginKey ───────────▶│                            │
+  │                          │── Validate ───────────────▶│
+  │                          │◀── Profile ────────────────│
+  │◀─── LoginSuccess ────────│                            │
+  │                          │                            │
+  │──── Configuration ───────▶│                            │
+  │◀─── Configuration ───────│                            │
+  │                          │                            │
+  │──── PlayPackets ────────▶│── Load Player ────────────▶│
+  │                          │◀── PlayerData ────────────│
+  │◀─── GameJoin ────────────│                            │
+  │◀─── Chunks/Data ─────────│                            │</code></pre>
 <h3>Tick流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>35</em>_</p>
+<pre class="code-block"><code class="language-text">Server Thread
+    │
+    ├── startTickMetrics()
+    │
+    ├── tick() ──────────────▶ tickManager.step()
+    │                           tickWorlds()
+    │                              │
+    │                              ├── PlayerManager (disable flush)
+    │                              ├── CommandFunctionManager.tick()
+    │                              ├── for each World:
+    │                              │      World.tick()
+    │                              ├── NetworkIo.tick()
+    │                              ├── PlayerManager.updatePlayerLatency()
+    │                              └── for each Player:
+    │                                     ChunkDataSender.sendChunkBatches()
+    │                                     enableFlush()
+    │
+    ├── waitForNextTick()
+    │
+    ├── runTasksTillTickEnd()
+    │      └── ReentrantThreadExecutor.runTasks()
+    │
+    └── endTickMetrics()</code></pre>
 <p><hr></p>
 <p><em>文档版本: 1.0</em>
 <em>Minecraft版本: 1.21</em>

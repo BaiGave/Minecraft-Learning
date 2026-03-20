@@ -70,8 +70,8 @@ function parseMarkdown(text) {
             codeBlocks.push({ type: 'code', lang: lang || 'text', code: codeContent });
         }
         
-        // 使用更安全的占位符，避免被其他处理影响
-        return `\n__CODEBLOCK_PLACEHOLDER_${index}__\n`;
+        // 使用 HTML 注释作为占位符，避免被其他 Markdown 语法影响
+        return `\n<!--CODEBLOCK_${index}-->\n`;
     });
 
     // 行内代码（排除代码块中的）
@@ -129,15 +129,6 @@ function parseMarkdown(text) {
     // 有序列表
     html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
 
-    // 换行处理（保留段落）- 先保护代码块占位符
-    // 将占位符临时替换为特殊标记，避免被段落处理影响
-    const placeholderMap = {};
-    html = html.replace(/__CODEBLOCK_PLACEHOLDER_(\d+)__/g, (match, index) => {
-        const key = `__TEMP_CODEBLOCK_${index}__`;
-        placeholderMap[key] = match;
-        return key;
-    });
-
     // 段落处理
     html = html.replace(/\n\n+/g, '</p>\n<p>');
     html = '<p>' + html + '</p>';
@@ -154,22 +145,15 @@ function parseMarkdown(text) {
     html = html.replace(/(<\/ul>)<\/p>/g, '$1');
     html = html.replace(/<p>(<ol>)/g, '$1');
     html = html.replace(/(<\/ol>)<\/p>/g, '$1');
-    
-    // 确保代码块占位符不被包装在 <p> 标签中
-    html = html.replace(/<p>(__TEMP_CODEBLOCK_\d+__)<\/p>/g, '$1');
-    html = html.replace(/<p>(.*?)(__TEMP_CODEBLOCK_\d+__)(.*?)<\/p>/g, '<p>$1</p>$2<p>$3</p>');
-
-    // 恢复占位符
-    Object.keys(placeholderMap).forEach(key => {
-        html = html.replace(key, placeholderMap[key]);
-    });
+    html = html.replace(/<p>(<!--CODEBLOCK_\d+-->)<\/p>/g, '$1');
+    html = html.replace(/<p>(.*?)(<!--CODEBLOCK_\d+-->)(.*?)<\/p>/g, '<p>$1</p>$2<p>$3</p>');
 
     // 包装列表
     html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
     // 恢复代码块
     codeBlocks.forEach((block, index) => {
-        const placeholder = `__CODEBLOCK_PLACEHOLDER_${index}__`;
+        const placeholder = `<!--CODEBLOCK_${index}-->`;
         
         if (block.type === 'mermaid') {
             // Mermaid 图表

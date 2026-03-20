@@ -132,27 +132,143 @@
 <hr></p>
 <h2 id="1. 项目结构">1. 项目结构</h2>
 <h3>1.1 模块划分</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-text">D:/Projects/sodium/
+├── common/              # 核心渲染引擎（平台无关）
+│   ├── src/main/java/
+│   │   └── net/caffeinemc/mods/sodium/
+│   │       ├── client/         # 客户端代码
+│   │       │   ├── SodiumClientMod.java
+│   │       │   ├── render/    # 渲染系统
+│   │       │   ├── gui/       # GUI 配置
+│   │       │   ├── config/    # 配置系统
+│   │       │   └── services/  # 平台服务接口
+│   │       └── mixin/         # Mixin 注入
+│   ├── src/api/         # 公共 API
+│   └── main/resources/  # 资源文件
+├── fabric/              # Fabric 模组加载器集成
+│   └── src/main/java/
+│       └── net/caffeinemc/mods/sodium/fabric/
+├── neoforge/            # NeoForge 模组加载器集成
+│   └── src/main/java/
+│       └── net/caffeinemc/mods/sodium/neoforge/
+├── frapi/               # Fabric Renderer API 实现
+├── buildSrc/            # Gradle 构建配置
+├── settings.gradle.kts  # 项目设置
+└── gradle.properties    # Gradle 属性</code></pre>
 <h3>1.2 核心模块职责</h3>
 <table class="data-table"><thead><tr><th>模块</th><th>职责</th></tr></thead><tbody><tr><td><strong>common</strong></td><td>包含所有渲染优化逻辑、遮挡剔除、多线程构建、批处理渲染</td></tr><tr><td><strong>fabric</strong></td><td>Fabric 平台的 Mixin 配置、平台特定实现、服务注册</td></tr><tr><td><strong>neoforge</strong></td><td>NeoForge 平台的事件处理、配置集成</td></tr><tr><td><strong>frapi</strong></td><td>为第三方 mod 提供渲染 API 访问接口</td></tr></tbody></table>
 <hr></p>
 <h2 id="2. 架构设计模式">2. 架构设计模式</h2>
 <h3>2.1 服务加载模式 (Service Loader Pattern)</h3>
 <p>Sodium 使用 Java SPI (Service Provider Interface) 实现平台无关代码：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:25:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/Services.java
+public static &lt;T&gt; T load(Class&lt;T&gt; clazz) {
+    return ServicesLoader.load(clazz, clazz.getClassLoader());
+}</code></pre>
 <p><strong>平台服务接口定义</strong>：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-java">// common 模块定义接口
+public interface PlatformBlockAccess {
+    PlatformBlockAccess INSTANCE = Services.load(PlatformBlockAccess.class);
+    
+    int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos);
+    boolean shouldSkipRender(BlockState state);
+}
+
+// fabric 模块提供实现
+public class FabricBlockAccess implements PlatformBlockAccess { ... }
+
+// neoforge 模块提供实现
+public class NeoForgeBlockAccess implements PlatformBlockAccess { ... }</code></pre>
 <h3>2.2 Mixin 注入模式</h3>
 <p>使用 Mixin 框架进行字节码注入：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-json">// frapi/src/main/resources/frapi.mixins.json
+{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin.frapi&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
+  &quot;mixins&quot;: [
+    &quot;BakedModelMixin&quot;,
+    &quot;ModelBlockRendererMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
 <h3>2.3 多层架构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    渲染优化层 (Mixin)                         │
+│  • LevelRendererMixin - 替换主渲染器                         │
+│  • GameRendererMixin - 注入性能统计                          │
+│  • BlockEntityRendererMixin - 区块实体渲染                   │
+├─────────────────────────────────────────────────────────────┤
+│                    渲染管线层 (Pipeline)                      │
+│  • SodiumWorldRenderer - 世界渲染协调                        │
+│  • RenderSectionManager - 区块管理                            │
+│  • ChunkBuilder - 异步构建                                    │
+├─────────────────────────────────────────────────────────────┤
+│                    平台抽象层 (Services)                      │
+│  • PlatformBlockAccess - 方块访问                            │
+│  • PlatformLevelAccess - 世界访问                             │
+│  • PlatformModelAccess - 模型访问                            │
+├─────────────────────────────────────────────────────────────┤
+│                    平台实现层                                │
+│  • FabricBlockAccess / NeoForgeBlockAccess                  │
+│  • FabricLevelAccess / NeoForgeLevelAccess                  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
 <h2 id="3. 核心组件交互">3. 核心组件交互</h2>
 <h3>3.1 渲染流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-text">Minecraft Tick Loop
+        │
+        ▼
+GameRenderer.render() ─────► SodiumWorldRenderer.render()
+        │                           │
+        │                    ┌──────┴──────┐
+        │                    ▼             ▼
+        │              setupTerrain()  renderWorld()
+        │                    │             │
+        │                    ▼             ▼
+        │            OcclusionCuller   DefaultChunkRenderer
+        │                    │             │
+        │                    ▼             ▼
+        │            RenderSectionManager ◄──────────────┐
+        │                    │                          │
+        │                    ▼                          │
+        │            ChunkBuilder (Worker Threads)       │
+        │                    │                          │
+        │                    ▼                          │
+        │            ChunkMesh → GlBuffer               │
+        │                                               │
+        └───────────────────────────────────────────────┘</code></pre>
 <h3>3.2 区块更新流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>6</em>_</p>
+<pre class="code-block"><code class="language-text">Chunk Load/Unload Event
+        │
+        ▼
+RenderSectionManager.onSectionAdded()
+        │
+        ├──► Check if in render distance
+        │
+        ├──► Create/Update RenderSection
+        │
+        └──► Queue ChunkBuilder task
+                    │
+                    ▼
+            Worker Thread Pool
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+    Thread #1   Thread #2   Thread #N
+        │           │           │
+        ▼           ▼           ▼
+   Mesh Build  Mesh Build  Mesh Build
+        │           │           │
+        └───────────┴───────────┘
+                    │
+                    ▼
+            ChunkRenderStorage
+                    │
+                    ▼
+            GPU Buffer Upload</code></pre>
 <p><hr></p>
 <h2 id="4. 关键设计决策">4. 关键设计决策</h2>
 <h3>4.1 为什么选择多线程？</h3>
@@ -161,7 +277,21 @@
 <ul><li>创建专用工作线程池</li>
 <li>使用无锁数据结构（<code>ChunkJobQueue</code>）</li>
 <li>支持任务窃取负载均衡</li></ul></p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>7</em>_</p>
+<pre class="code-block"><code class="language-startLine">:38:65:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/compile/executor/ChunkBuilder.java
+public class ChunkBuilder {
+    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+        int count = getOptimalThreadCount();
+        for (int i = 0; i &lt; count; i++) {
+            Thread thread = new Thread(worker, &quot;Chunk Render Task Executor #&quot; + i);
+            thread.setPriority(Math.max(0, Thread.NORM_PRIORITY - 2));
+        }
+    }
+    
+    private static int getOptimalThreadCount() {
+        int processors = Runtime.getRuntime().availableProcessors();
+        return Math.max(1, Math.min(processors - 2, 10));
+    }
+}</code></pre>
 <h3>4.2 遮挡剔除的必要性</h3>
 <p><strong>问题</strong>：渲染不可见的区块浪费 GPU 和 CPU 资源。</p>
 <p><strong>解决方案</strong>：
@@ -177,10 +307,16 @@
 <p><hr></p>
 <h2 id="5. 版本兼容性策略">5. 版本兼容性策略</h2>
 <h3>5.1 源码集分离</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>8</em>_</p>
+<pre class="code-block"><code class="language-text">common/src/
+├── main/        # 核心逻辑
+├── api/         # API 定义
+├── boot/        # 早期初始化
+└── desktop/     # 桌面平台代码</code></pre>
 <h3>5.2 Access Widener</h3>
 <p>定义需要访问的私有成员：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>9</em>_</p>
+<pre class="code-block"><code class="language-text">sodium-common.accesswidener
+accessible class net.minecraft.world.level/BlockAndTintGetter
+accessible field net.minecraft.world/level/Level/watching</code></pre>
 <h3>5.3 平台特定 Mixin</h3>
 <p>每个平台有独立的 Mixin 配置文件，避免代码冲突。</p>
 <p><hr></p>

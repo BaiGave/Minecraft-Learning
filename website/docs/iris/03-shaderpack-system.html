@@ -131,28 +131,233 @@
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ShaderPack</code></td><td><code>shaderpack/ShaderPack.java</code></td></tr><tr><td><code>ProgramSet</code></td><td><code>shaderpack/programs/ProgramSet.java</code></td></tr><tr><td><code>ProgramSource</code></td><td><code>shaderpack/programs/ProgramSource.java</code></td></tr><tr><td><code>IdMap</code></td><td><code>shaderpack/IdMap.java</code></td></tr><tr><td><code>ShaderProperties</code></td><td><code>shaderpack/properties/ShaderProperties.java</code></td></tr><tr><td><code>IncludeProcessor</code></td><td><code>shaderpack/include/IncludeProcessor.java</code></td></tr><tr><td><code>JcppProcessor</code></td><td><code>shaderpack/preprocessor/JcppProcessor.java</code></td></tr></tbody></table>
 <hr></p>
 <h2 id="2. ShaderPack 核心结构">2. ShaderPack 核心结构</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-startLine">:68:100:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
+public class ShaderPack {
+    // 程序集
+    private final ProgramSet base;
+    
+    // ID 映射
+    private final IdMap idMap;
+    
+    // 语言映射
+    private final LanguageMap languageMap;
+    
+    // 自定义纹理
+    private final EnumMap&lt;TextureStage, Object2ObjectMap&lt;String, CustomTextureData&gt;&gt; customTextureDataMap;
+    private final CustomTextureData customNoiseTexture;
+    
+    // 自定义 Uniform
+    public final CustomUniforms.Builder customUniforms;
+    
+    // 选项和菜单
+    private final ShaderPackOptions shaderPackOptions;
+    private final OptionMenuContainer menuContainer;
+    private final ProfileSet.ProfileResult profile;
+    
+    // 功能标志
+    private final Set&lt;FeatureFlags&gt; activeFeatures;
+    
+    // Iris 自定义图像
+    private final List&lt;ImageInformation&gt; irisCustomImages;
+}</code></pre>
 <h3>2.1 加载流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-startLine">:89:150:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
+public ShaderPack(Path root, Map&lt;String, String&gt; changedConfigs, 
+                  ImmutableList&lt;StringPair&gt; environmentDefines) {
+    // 1. 扫描着色器源文件
+    IncludeGraph graph = new IncludeGraph(root, starts.build());
+    
+    // 2. 加载语言文件
+    this.languageMap = new LanguageMap(root.resolve(&quot;lang&quot;));
+    
+    // 3. 解析选项
+    this.shaderPackOptions = new ShaderPackOptions(graph, changedConfigs);
+    
+    // 4. 加载属性
+    this.shaderProperties = loadProperties(root, &quot;shaders.properties&quot;)
+        .map(source -&gt; new ShaderProperties(source, shaderPackOptions, finalEnvironmentDefines))
+        .orElseGet(ShaderProperties::empty);
+    
+    // 5. 检测功能标志
+    activeFeatures = new HashSet&lt;&gt;();
+    for (FeatureFlags flag : shaderProperties.getRequiredFeatureFlags()) {
+        activeFeatures.add(FeatureFlags.getValue(flag));
+    }
+    
+    // 6. 加载程序集
+    this.sourceProvider = (path) -&gt; {
+        // GLSL 预处理
+        String source = JcppProcessor.glslPreprocessSource(source, environmentDefines);
+        return source;
+    };
+    
+    this.base = new ProgramSet(AbsolutePackPath.fromAbsolutePath(&quot;/&quot;), sourceProvider, ...);
+    
+    // 7. 加载 ID 映射
+    this.idMap = new IdMap(root, shaderPackOptions, environmentDefines);
+}</code></pre>
 <p><hr></p>
 <h2 id="3. 程序管理">3. 程序管理</h2>
 <h3>3.1 ProgramSet</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/programs/ProgramSet.java
+public class ProgramSet implements ProgramSetInterface {
+    private final AbsolutePackPath basePath;
+    private final Function&lt;AbsolutePackPath, String&gt; sourceProvider;
+    private final ShaderProperties shaderProperties;
+    
+    // 各阶段的程序
+    public ProgramSource[] getComposite(ProgramArrayId id) { ... }
+    public ProgramSource[] getShadowComposite(ProgramArrayId id) { ... }
+    public ComputeSource[] getCompute(ProgramArrayId id) { ... }
+    public ComputeSource[] getSetup(ProgramArrayId id) { ... }
+}</code></pre>
 <h3>3.2 ProgramSource</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/programs/ProgramSource.java
+public class ProgramSource {
+    private final String name;
+    private final AbsolutePackPath path;
+    
+    // 着色器源代码
+    private final Optional&lt;String&gt; vertexSource;
+    private final Optional&lt;String&gt; fragmentSource;
+    private final Optional&lt;String&gt; geometrySource;
+    private final Optional&lt;String&gt; computeSource;
+    
+    // 指令
+    private final ProgramDirectives directives;
+    
+    public Optional&lt;String&gt; getVertexSource() { return vertexSource; }
+    public Optional&lt;String&gt; getFragmentSource() { return fragmentSource; }
+    public ProgramDirectives getDirectives() { return directives; }
+}</code></pre>
 <h3>3.3 ProgramArrayId</h3>
 <p>程序数组标识符：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-java">public enum ProgramArrayId {
+    // Composite
+    Begin,
+    Prepare,
+    Deferred,
+    Composite,
+    
+    // Shadow
+    ShadowSolid,
+    ShadowCutout,
+    ShadowTranslucent,
+    ShadowComposite,
+    
+    // Terrain
+    TerrainSolid,
+    TerrainCutout,
+    TerrainTranslucent,
+    TerrainEntity,
+    
+    // Special
+    SkyBasic,
+    SkyTextured,
+    Clouds,
+    Weather,
+    Water,
+    
+    // ...
+}</code></pre>
 <p><hr></p>
 <h2 id="4. Include 处理器">4. Include 处理器</h2>
 <h3>4.1 IncludeGraph</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/include/IncludeGraph.java
+public class IncludeGraph {
+    private final Map&lt;AbsolutePackPath, FileNode&gt; nodes = new HashMap&lt;&gt;();
+    private final Map&lt;AbsolutePackPath, IOException&gt; failures = new HashMap&lt;&gt;();
+    
+    public IncludeGraph(Path root, ImmutableList&lt;AbsolutePackPath&gt; starts) {
+        // 1. 遍历所有着色器文件
+        for (AbsolutePackPath path : starts) {
+            traverseAndBuildGraph(root, path);
+        }
+    }
+    
+    private void traverseAndBuildGraph(Path root, AbsolutePackPath path) {
+        FileNode node = new FileNode(path);
+        
+        // 2. 解析 #include 指令
+        String content = readFile(root.resolve(path));
+        for (String line : content.split(&quot;\n&quot;)) {
+            if (line.startsWith(&quot;#include&quot;)) {
+                String includePath = parseInclude(line);
+                AbsolutePackPath includeAbsPath = resolveInclude(path, includePath);
+                
+                // 3. 递归处理
+                if (!nodes.containsKey(includeAbsPath)) {
+                    traverseAndBuildGraph(root, includeAbsPath);
+                }
+                
+                node.addDependency(includeAbsPath);
+            }
+        }
+        
+        nodes.put(path, node);
+    }
+}</code></pre>
 <h3>4.2 IncludeProcessor</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>6</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/include/IncludeProcessor.java
+public class IncludeProcessor {
+    private final IncludeGraph graph;
+    
+    public ImmutableList&lt;String&gt; getIncludedFile(AbsolutePackPath path) {
+        FileNode node = graph.getNode(path);
+        if (node == null) {
+            return null;
+        }
+        
+        List&lt;String&gt; result = new ArrayList&lt;&gt;();
+        for (AbsolutePackPath dep : node.getDependencies()) {
+            // 递归包含依赖
+            ImmutableList&lt;String&gt; depContent = getIncludedFile(dep);
+            if (depContent != null) {
+                result.addAll(depContent);
+            }
+        }
+        
+        // 添加自身内容
+        result.addAll(node.getContent());
+        
+        return ImmutableList.copyOf(result);
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="5. GLSL 预处理器">5. GLSL 预处理器</h2>
 <h3>5.1 JcppProcessor</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>7</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/preprocessor/JcppProcessor.java
+public class JcppProcessor {
+    private static final JCPP pp = new JCPP();
+    
+    static {
+        pp.addInput(new PropertiesCommentListener());
+        pp.addInput(new PropertyCollectingListener());
+    }
+    
+    public static String glslPreprocessSource(String source, 
+                                               Iterable&lt;StringPair&gt; environmentDefines) {
+        // 1. 设置输入
+        Reader reader = new StringReader(source);
+        SimpleCharStream chars = new SimpleCharStream(reader);
+        JCPP.PPTokenManager tm = pp.new PPTokenManager(chars);
+        
+        // 2. 配置预处理器
+        CPreprocessor张艺驰 mc = new CPreprocessor();
+        mc.addInput(new GlslCollectingListener());
+        
+        // 3. 添加环境定义
+        for (StringPair define : environmentDefines) {
+            mc.addMacro(define.getFirst(), define.getSecond());
+        }
+        
+        // 4. 处理
+        mc.run();
+        
+        // 5. 返回处理后的源代码
+        return mc.getOutput();
+    }
+}</code></pre>
 <h3>5.2 支持的预处理指令</h3>
 <p><ul><li><code>#define</code> - 宏定义</li>
 <li><code>#ifdef</code> / <code>#ifndef</code> - 条件编译</li>
@@ -162,24 +367,142 @@
 <p><hr></p>
 <h2 id="6. ID 映射">6. ID 映射</h2>
 <h3>6.1 IdMap</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>8</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/IdMap.java
+public class IdMap {
+    // 方块属性
+    private final Int2ObjectMap&lt;Properties&gt; blockProperties;
+    private final int[][] blockStateIds;
+    
+    // 实体 ID
+    private final Int2IntMap entityIdMap;
+    
+    // 物品 ID
+    private final Int2IntMap itemIdMap;
+    
+    // 皮革盔甲颜色
+    private final Int2IntMap leatherArmorColors;
+    
+    public Int2IntMap getEntityIdMap() {
+        return entityIdMap;
+    }
+    
+    public Int2IntMap getItemIdMap() {
+        return itemIdMap;
+    }
+    
+    public Int2ObjectMap&lt;Properties&gt; getBlockProperties() {
+        return blockProperties;
+    }
+}</code></pre>
 <h3>6.2 加载流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>9</em>_</p>
+<pre class="code-block"><code class="language-startLine">:100:180:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/IdMap.java
+public IdMap(Path root, ShaderPackOptions options, 
+             Iterable&lt;StringPair&gt; environmentDefines) {
+    // 1. 加载 blocks.properties
+    Properties blockProps = loadProperties(root, &quot;blocks.properties&quot;);
+    
+    // 2. 解析方块映射
+    blockProperties = new Int2ObjectArrayMap&lt;&gt;();
+    for (Map.Entry&lt;Object, Object&gt; entry : blockProps.entrySet()) {
+        String key = (String) entry.getKey();
+        String value = (String) entry.getValue();
+        
+        if (key.startsWith(&quot;block.&quot;)) {
+            BlockEntry blockEntry = BlockEntry.parse(key.substring(6), value);
+            int blockId = getBlockId(blockEntry.getBlockName());
+            blockProperties.put(blockId, blockEntry);
+        }
+    }
+    
+    // 3. 加载 entity.properties
+    Properties entityProps = loadProperties(root, &quot;entity.properties&quot;);
+    entityIdMap = parseIdMap(entityProps);
+    
+    // 4. 加载 item.properties
+    Properties itemProps = loadProperties(root, &quot;item.properties&quot;);
+    itemIdMap = parseIdMap(itemProps);
+}</code></pre>
 <p><hr></p>
 <h2 id="7. ShaderProperties">7. ShaderProperties</h2>
 <h3>7.1 属性文件格式</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>10</em>_</p>
+<pre class="code-block"><code class="language-text"># shaders.properties
+shadowMapResolution=2048
+shadowDistance=64.0
+shadowDistanceRenderMul=1.0
+fogMode=exp2
+oldLighting=true</code></pre>
 <h3>7.2 解析</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>11</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/properties/ShaderProperties.java
+public class ShaderProperties {
+    // 阴影设置
+    private final float shadowDistance;
+    private final int shadowMapResolution;
+    
+    // 雾设置
+    private final FogMode fogMode;
+    private final float fogStart;
+    private final float fogEnd;
+    
+    // 渲染设置
+    private final boolean oldLighting;
+    private final boolean separateEntityDraws;
+    
+    // 粒子渲染
+    private final ParticleRenderingSettings particleRendering;
+    
+    // 自定义纹理
+    private final Map&lt;TextureStage, Map&lt;String, String&gt;&gt; customTextures;
+}</code></pre>
 <p><hr></p>
 <h2 id="8. 维度支持">8. 维度支持</h2>
 <h3>8.1 维度属性</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>12</em>_</p>
+<pre class="code-block"><code class="language-text"># dimension.properties
+dimension.overworld=world0
+dimension.nether=world-1
+dimension.end=world1</code></pre>
 <h3>8.2 ProgramSet 切换</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>13</em>_</p>
+<pre class="code-block"><code class="language-startLine">:526:556:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shaderpack/ShaderPack.java
+public ProgramSet getProgramSet(NamespacedId dimension) {
+    ProgramSetInterface overrides = this.overrides.computeIfAbsent(dimension, dim -&gt; {
+        if (dimensionMap.containsKey(dimension)) {
+            String name = dimensionMap.get(dimension);
+            if (dimensionIds.contains(name)) {
+                // 加载维度特定的程序集
+                return new ProgramSet(
+                    AbsolutePackPath.fromAbsolutePath(&quot;/&quot; + name),
+                    sourceProvider, shaderProperties, this);
+            }
+        }
+        return ProgramSetInterface.Empty.INSTANCE;
+    });
+    
+    // 如果没有覆盖，返回基础程序集
+    if (overrides instanceof ProgramSet) {
+        return (ProgramSet) overrides;
+    } else {
+        return base;
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="9. 功能标志">9. 功能标志</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>14</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/features/FeatureFlags.java
+public enum FeatureFlags {
+    // 必需标志
+    SSBO,           // Shader Storage Buffer Objects
+    CULL,           // 背面剔除
+    SEPARATE_HARDWARE_SAMPLERS,  // 分离硬件采样器
+    
+    // 可选标志
+    CUSTOM_IMAGES,  // 自定义图像
+    FIXED_SUN,      // 固定太阳位置
+    NO_PREVIEW_RENDER,  // 禁用预览渲染
+    
+    // 检测
+    GBUFFERS_GEOMETRY,  // 几何着色器
+    GBUFFERS_TEXT,       // 文本渲染
+    GBUFFERS_ENTITIES_COLOR,  // 实体颜色
+    HAND_TRANSLUCENT;   // 手部半透明
+}</code></pre>
 <p><hr></p>
 <h2 id="10. 相关文档">10. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>

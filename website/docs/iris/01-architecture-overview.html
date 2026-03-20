@@ -132,26 +132,157 @@
 <hr></p>
 <h2 id="1. 项目结构">1. 项目结构</h2>
 <h3>1.1 核心模块</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-text">D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/
+├── pipeline/                    # 渲染管线核心
+│   ├── IrisRenderingPipeline.java    # 主渲染管线
+│   ├── CompositeRenderer.java         # 合成渲染器
+│   ├── FinalPassRenderer.java         # 最终 Pass 渲染
+│   ├── SodiumTerrainPipeline.java    # Sodium 地形集成
+│   └── WorldRenderingPhase.java      # 渲染阶段
+├── shaderpack/                  # 着色器包系统
+│   ├── ShaderPack.java              # 着色器包加载器
+│   ├── programs/                   # 程序管理
+│   ├── properties/                 # 属性解析
+│   └── preprocessor/               # GLSL 预处理器
+├── shadows/                     # 阴影系统
+│   ├── ShadowRenderer.java          # 阴影渲染器
+│   ├── ShadowCompositeRenderer.java # 阴影合成
+│   └── frustum/                   # 视锥体剔除
+├── targets/                      # 渲染目标
+│   ├── RenderTargets.java           # 多渲染目标管理
+│   ├── RenderTarget.java            # 单个渲染目标
+│   └── DepthTexture.java            # 深度纹理
+├── uniforms/                     # Uniform 管理
+│   ├── CommonUniforms.java         # 通用 Uniform
+│   ├── CameraUniforms.java         # 相机 Uniform
+│   ├── BiomeUniforms.java          # 生物群系 Uniform
+│   └── custom/                     # 自定义 Uniform
+├── gl/                           # OpenGL 封装
+│   ├── program/                    # 程序管理
+│   ├── shader/                     # 着色器编译
+│   ├── buffer/                     # 缓冲区
+│   └── texture/                    # 纹理管理
+└── mixin/                        # Mixin 注入
+    ├── MixinGameRenderer.java
+    ├── MixinLevelRenderer.java
+    └── ...</code></pre>
 <h3>1.2 源码统计</h3>
 <table class="data-table"><thead><tr><th>模块</th><th>文件数</th><th>说明</th></tr></thead><tbody><tr><td>pipeline</td><td>~20</td><td>渲染管线核心</td></tr><tr><td>shaderpack</td><td>~80</td><td>着色器包加载解析</td></tr><tr><td>shadows</td><td>~15</td><td>阴影系统</td></tr><tr><td>targets</td><td>~10</td><td>帧缓冲管理</td></tr><tr><td>uniforms</td><td>~30</td><td>Uniform 管理</td></tr><tr><td>gl</td><td>~50</td><td>OpenGL 封装</td></tr><tr><td>mixin</td><td>~100</td><td>Mixin 注入</td></tr><tr><td>其他</td><td>~50</td><td>GUI、粒子、兼容层</td></tr></tbody></table>
 <hr></p>
 <h2 id="2. 核心架构设计">2. 核心架构设计</h2>
 <h3>2.1 分层架构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    应用层 (Application)                     │
+│  • ShaderPackScreen (GUI)                                   │
+│  • Config (配置管理)                                        │
+│  • UpdateChecker (更新检查)                                 │
+├─────────────────────────────────────────────────────────────┤
+│                    管线层 (Pipeline)                         │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              IrisRenderingPipeline                     │  │
+│  │  • 管理整个渲染流程                                     │  │
+│  │  • 协调 GBuffer、阴影、Composite Pass                 │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │
+│  │ SodiumTerrain│  │   Shadow    │  │   Composite    │   │
+│  │  Pipeline    │  │   Renderer   │  │   Renderer      │   │
+│  └─────────────┘  └─────────────┘  └─────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│                    着色器包层 (ShaderPack)                   │
+│  • ShaderPack (包加载)                                      │
+│  • ProgramSet (程序集)                                     │
+│  • IdMap (ID 映射)                                         │
+│  • ShaderProperties (属性)                                  │
+├─────────────────────────────────────────────────────────────┤
+│                    OpenGL 封装层                             │
+│  • Program (着色器程序)                                     │
+│  • GlFramebuffer (帧缓冲)                                   │
+│  • GlTexture (纹理)                                         │
+│  • ShaderStorageBuffer (SSBO)                               │
+├─────────────────────────────────────────────────────────────┤
+│                    Minecraft / Sodium                         │
+│  • LevelRenderer (原版渲染器)                               │
+│  • SodiumWorldRenderer (Sodium 渲染器)                     │
+└─────────────────────────────────────────────────────────────┘</code></pre>
 <h3>2.2 渲染流程</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                    完整渲染流程                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. beginLevelRendering()                                       │
+│     ├── 清除帧缓冲                                               │
+│     ├── Setup 计算                                              │
+│     └── Begin Pass (天空、雾气等)                                │
+│                                                                  │
+│  2. renderShadows()                                            │
+│     ├── ShadowRenderer.renderShadows()                          │
+│     │   ├── 创建阴影视锥体                                      │
+│     │   ├── 渲染地形到阴影贴图                                  │
+│     │   ├── 渲染实体到阴影贴图                                  │
+│     │   └── ShadowComposite Pass                               │
+│     └── Prepare Pass                                            │
+│                                                                  │
+│  3. 地形渲染 (Sodium Terrain Pipeline)                          │
+│     ├── GBuffer 渲染                                            │
+│     │   ├── gbuffers_textured_lit                              │
+│     │   ├── gbuffers_terrain                                   │
+│     │   ├── gbuffers_water                                     │
+│     │   └── gbuffers_entities                                   │
+│     └── Deferred Pass                                           │
+│                                                                  │
+│  4. beginTranslucents()                                        │
+│     ├── 复制深度纹理 (depthtex1)                               │
+│     └── Deferred Pass (半透明内容)                              │
+│                                                                  │
+│  5. finalizeLevelRendering()                                   │
+│     ├── Composite Passes                                        │
+│     │   ├── composite1...N                                      │
+│     │   └── shadowcomp1...N                                    │
+│     └── Final Pass (最终合成)                                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
 <h2 id="3. 关键设计模式">3. 关键设计模式</h2>
 <h3>3.1 观察者模式</h3>
 <p><code>FrameUpdateNotifier</code> 用于通知 Uniform 更新：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:30:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/FrameUpdateNotifier.java
+public class FrameUpdateNotifier {
+    private final Set&lt;Runnable&gt; listeners = new HashSet&lt;&gt;();
+    
+    public void onNewFrame() {
+        for (Runnable listener : listeners) {
+            listener.run();
+        }
+    }
+    
+    public void addListener(Runnable listener) {
+        listeners.add(listener);
+    }
+}</code></pre>
 <h3>3.2 策略模式</h3>
 <p>不同的视锥体剔除策略：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/shadows/frustum/advanced/AdvancedShadowCullingFrustum.java
+public class AdvancedShadowCullingFrustum implements Frustum {
+    // 高级视锥体剔除：考虑邻居区块遮挡
+}
+
+public class NonCullingFrustum implements Frustum {
+    // 不剔除：所有内容都渲染
+}</code></pre>
 <h3>3.3 工厂模式</h3>
 <p><code>ShaderCreator</code> 创建着色器程序：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/programs/ShaderCreator.java
+public class ShaderCreator {
+    public static ExtendedShader create(ShaderRenderingPipeline pipeline, ...) {
+        // 创建带扩展功能的着色器
+    }
+    
+    public static FallbackShader createFallback(...) {
+        // 创建后备着色器
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="4. 技术栈">4. 技术栈</h2>
 <table class="data-table"><thead><tr><th>组件</th><th>技术</th></tr></thead><tbody><tr><td>语言</td><td>Java 21</td></tr><tr><td>字节码注入</td><td>Mixin</td></tr><tr><td>图形 API</td><td>OpenGL 3.3+</td></tr><tr><td>第三方库</td></tr><tr><td>- GLSL 转换</td><td>glsl-transformer</td></tr><tr><td>- 预处理</td><td>jcpp (JCPP)</td></tr><tr><td>- JSON 解析</td><td>ANTLR4</td></tr><tr><td>构建工具</td><td>Gradle 8.10.x</td></tr></tbody></table>

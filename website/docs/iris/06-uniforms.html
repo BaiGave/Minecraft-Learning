@@ -131,39 +131,339 @@
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>CommonUniforms</code></td><td><code>uniforms/CommonUniforms.java</code></td></tr><tr><td><code>CameraUniforms</code></td><td><code>uniforms/CameraUniforms.java</code></td></tr><tr><td><code>BiomeUniforms</code></td><td><code>uniforms/BiomeUniforms.java</code></td></tr><tr><td><code>MatrixUniforms</code></td><td><code>uniforms/MatrixUniforms.java</code></td></tr><tr><td><code>CustomUniforms</code></td><td><code>uniforms/custom/CustomUniforms.java</code></td></tr></tbody></table>
 <hr></p>
 <h2 id="2. Uniform 更新频率">2. Uniform 更新频率</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:20:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/gl/uniform/UniformUpdateFrequency.java
+public enum UniformUpdateFrequency {
+    /** 仅设置一次 */
+    ONCE,
+    
+    /** 每帧更新 */
+    PER_FRAME,
+    
+    /** 每游戏刻更新 */
+    PER_TICK,
+    
+    /** 自定义更新 */
+    CUSTOM
+}</code></pre>
 <p><hr></p>
 <h2 id="3. CommonUniforms">3. CommonUniforms</h2>
 <p>提供着色器需要的所有通用 Uniform：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-startLine">:111:171:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/CommonUniforms.java
+public static void addCommonUniforms(DynamicUniformHolder uniforms, IdMap idMap, 
+                                    PackDirectives directives, FrameUpdateNotifier updateNotifier, 
+                                    FogMode fogMode) {
+    addNonDynamicUniforms(uniforms, idMap, directives, updateNotifier);
+    addDynamicUniforms(uniforms, fogMode);
+}
+
+public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap, 
+                                       PackDirectives directives, FrameUpdateNotifier updateNotifier) {
+    // 相机 Uniform
+    CameraUniforms.addCameraUniforms(uniforms, updateNotifier);
+    
+    // 视口 Uniform
+    ViewportUniforms.addViewportUniforms(uniforms);
+    
+    // 世界时间 Uniform
+    WorldTimeUniforms.addWorldTimeUniforms(uniforms);
+    
+    // 系统时间 Uniform
+    SystemTimeUniforms.addSystemTimeUniforms(uniforms);
+    
+    // 生物群系 Uniform
+    BiomeUniforms.addBiomeUniforms(uniforms);
+    
+    // 天体 Uniform
+    new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
+    
+    // Iris 特有 Uniform
+    IrisExclusiveUniforms.addIrisExclusiveUniforms(uniforms);
+    
+    // 时间 Uniform
+    IrisTimeUniforms.addTimeUniforms(uniforms);
+    
+    // 矩阵 Uniform
+    MatrixUniforms.addMatrixUniforms(uniforms, directives);
+    
+    // ID 映射 Uniform
+    IdMapUniforms.addIdMapUniforms(updateNotifier, uniforms, idMap, directives.isOldHandLight());
+}</code></pre>
 <h3>3.1 动态 Uniform</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-startLine">:63:109:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/CommonUniforms.java
+public static void addDynamicUniforms(DynamicUniformHolder uniforms, FogMode fogMode) {
+    // 雾 Uniform
+    FogUniforms.addFogUniforms(uniforms, fogMode);
+    IrisInternalUniforms.addFogUniforms(uniforms, fogMode);
+    
+    // 实体 ID
+    uniforms.uniform1i(&quot;entityId&quot;, 
+        CapturedRenderingState.INSTANCE::getCurrentRenderedEntity, 
+        StateUpdateNotifiers.fallbackEntityNotifier);
+    
+    // 纹理尺寸
+    uniforms.uniform2i(&quot;atlasSize&quot;, () -&gt; {
+        int glId = RenderSystem.getShaderTexture(0);
+        AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
+        if (texture instanceof TextureAtlas atlas) {
+            return new Vector2i(atlasAccessor.callGetWidth(), atlasAccessor.callGetHeight());
+        }
+        return ZERO_VECTOR_2i;
+    }, listener -&gt; {});
+    
+    // 混合函数
+    uniforms.uniform4i(&quot;blendFunc&quot;, () -&gt; {
+        GlStateManager.BlendState blend = GlStateManagerAccessor.getBLEND();
+        if (((BooleanStateAccessor) blend.mode).isEnabled()) {
+            return new Vector4i(blend.srcRgb, blend.dstRgb, blend.srcAlpha, blend.dstAlpha);
+        }
+        return ZERO_VECTOR_4i;
+    }, StateUpdateNotifiers.blendFuncNotifier);
+    
+    // 渲染阶段
+    uniforms.uniform1i(&quot;renderStage&quot;, 
+        () -&gt; GbufferPrograms.getCurrentPhase().ordinal(), 
+        StateUpdateNotifiers.phaseChangeNotifier);
+}</code></pre>
 <p><hr></p>
 <h2 id="4. 相机 Uniform">4. 相机 Uniform</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/CameraUniforms.java
+public class CameraUniforms {
+    public static void addCameraUniforms(UniformHolder uniforms, FrameUpdateNotifier updateNotifier) {
+        // 世界空间相机位置
+        uniforms.uniform3d(PER_FRAME, &quot;cameraPosition&quot;, CameraUniforms::getCameraPosition);
+        
+        // 平滑相机位置
+        uniforms.uniform3d(PER_FRAME, &quot;cameraPositionSmooth&quot;, CameraUniforms::getCameraPositionSmooth);
+        
+        // 相机变换矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;modelViewMatrix&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelView);
+        
+        // 投影矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;projectionMatrix&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjection);
+    }
+    
+    private static Vector3d getCameraPosition() {
+        Vector3d pos = CapturedRenderingState.INSTANCE.getCameraPosition();
+        // 应用偏移
+        return new Vector3d(pos.x - CameraUniforms.getDiffX(), 
+                          pos.y - CameraUniforms.getDiffY(), 
+                          pos.z - CameraUniforms.getDiffZ());
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="5. 天体 Uniform">5. 天体 Uniform</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/CelestialUniforms.java
+public class CelestialUniforms {
+    private final float sunPathRotation;
+    
+    public void addCelestialUniforms(UniformHolder uniforms) {
+        uniforms.uniform1f(PER_FRAME, &quot;sunAngle&quot;, this::getSunAngle);
+        uniforms.uniform1f(PER_FRAME, &quot;moonAngle&quot;, this::getMoonAngle);
+        uniforms.uniform1f(PER_FRAME, &quot;sunPathRotation&quot;, () -&gt; sunPathRotation);
+        
+        // 太阳位置 (世界空间)
+        uniforms.uniform3d(PER_FRAME, &quot;sunPosition&quot;, this::getSunPosition);
+        uniforms.uniform3d(PER_FRAME, &quot;moonPosition&quot;, this::getMoonPosition);
+    }
+    
+    private double getSunAngle() {
+        // 获取天空角度
+        float skyAngle = getLevel().getTimeOfDay(CapturedRenderingState.INSTANCE.getTickDelta());
+        
+        // 调整到 [0, 1) 范围
+        if (skyAngle &lt; 0.25f) {
+            return skyAngle + 0.75f;
+        } else {
+            return skyAngle - 0.25f;
+        }
+    }
+    
+    private Vector3d getSunPosition() {
+        Vector3d cameraPos = CameraUniforms.getCameraPosition();
+        
+        // 计算太阳相对于相机的位置
+        double sunAngle = getSunAngle() * 2 * Math.PI;
+        double sunHeight = Math.sin(sunAngle);
+        double sunX = Math.cos(sunAngle);
+        double sunZ = Math.sin(sunAngle);
+        
+        return new Vector3d(
+            cameraPos.x + sunX * 1000,
+            cameraPos.y + sunHeight * 1000,
+            cameraPos.z + sunZ * 1000
+        );
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="6. 矩阵 Uniform">6. 矩阵 Uniform</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/MatrixUniforms.java
+public class MatrixUniforms {
+    public static void addMatrixUniforms(UniformHolder uniforms, PackDirectives directives) {
+        // GBuffer 矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferModelView&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelView);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferModelViewInverse&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelViewInverse);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferProjection&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjection);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferProjectionInverse&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjectionInverse);
+        
+        // 阴影矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;shadowModelView&quot;, 
+            ShadowRenderer::getShadowModelView);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;shadowProjection&quot;, 
+            ShadowRenderer::getShadowProjection);
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="7. 自定义 Uniform">7. 自定义 Uniform</h2>
 <h3>7.1 CustomUniforms</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>6</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:80:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/custom/CustomUniforms.java
+public class CustomUniforms {
+    private final Map&lt;String, CustomUniformHolder&gt; uniforms = new HashMap&lt;&gt;();
+    private final Builder builder;
+    
+    public static class Builder {
+        private final List&lt;CustomUniformDefinition&gt; definitions = new ArrayList&lt;&gt;();
+        
+        public Builder uniform1f(String name, Supplier&lt;Float&gt; supplier) {
+            definitions.add(new CustomUniformDefinition(name, Type.FLOAT, () -&gt; new float[]{supplier.get()}));
+            return this;
+        }
+        
+        public Builder uniform2f(String name, Supplier&lt;Vector2f&gt; supplier) {
+            definitions.add(new CustomUniformDefinition(name, Type.VECTOR_2, () -&gt; {
+                Vector2f v = supplier.get();
+                return new float[]{v.x, v.y};
+            }));
+            return this;
+        }
+        
+        public CustomUniforms build(UniformFactory factory) {
+            for (CustomUniformDefinition def : definitions) {
+                CustomUniformHolder holder = factory.createHolder(def);
+                uniforms.put(def.name, holder);
+            }
+            return new CustomUniforms(uniforms);
+        }
+    }
+    
+    public void push(Program program) {
+        for (CustomUniformHolder holder : uniforms.values()) {
+            holder.push(program);
+        }
+    }
+    
+    public void update() {
+        for (CustomUniformHolder holder : uniforms.values()) {
+            holder.update();
+        }
+    }
+}</code></pre>
 <h3>7.2 缓存的 Uniform</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>7</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/custom/cached/CachedUniform.java
+public class CachedUniform&lt;T&gt; {
+    private final Supplier&lt;T&gt; supplier;
+    private final UniformPusher&lt;T&gt; pusher;
+    private T cachedValue;
+    private boolean hasUpdated = false;
+    
+    public CachedUniform(Supplier&lt;T&gt; supplier, UniformPusher&lt;T&gt; pusher) {
+        this.supplier = supplier;
+        this.pusher = pusher;
+    }
+    
+    public void update() {
+        T newValue = supplier.get();
+        if (!hasUpdated || !equals(cachedValue, newValue)) {
+            cachedValue = newValue;
+            hasUpdated = true;
+        }
+    }
+    
+    public void push(int location) {
+        if (hasUpdated) {
+            pusher.push(location, cachedValue);
+        }
+    }
+    
+    private static boolean equals(Object a, Object b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="8. CapturedRenderingState">8. CapturedRenderingState</h2>
 <p>捕获的渲染状态：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>8</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:60:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/uniforms/CapturedRenderingState.java
+public class CapturedRenderingState {
+    public static final CapturedRenderingState INSTANCE = new CapturedRenderingState();
+    
+    private Matrix4f gbufferModelView;
+    private Matrix4f gbufferModelViewInverse;
+    private Matrix4f gbufferProjection;
+    private Matrix4f gbufferProjectionInverse;
+    
+    private Vector3d cameraPosition;
+    private Vector3d fogColor;
+    
+    private float tickDelta;
+    
+    private int currentRenderedEntity;
+    
+    private CapturedRenderingState() {}
+    
+    public void captureMatrices(Matrix4f modelView, Matrix4f projection) {
+        this.gbufferModelView = new Matrix4f(modelView);
+        this.gbufferProjection = new Matrix4f(projection);
+        this.gbufferModelViewInverse = new Matrix4f(modelView).invert();
+        this.gbufferProjectionInverse = new Matrix4f(projection).invert();
+    }
+    
+    public void captureCameraPosition(Vector3d position) {
+        this.cameraPosition = position;
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="9. UniformHolder">9. UniformHolder</h2>
 <h3>9.1 创建 Uniform</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>9</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/gl/uniform/UniformHolder.java
+public interface UniformHolder {
+    // 单值 Uniform
+    UniformHolder uniform1i(String name, Supplier&lt;Integer&gt; supplier, ...);
+    UniformHolder uniform1f(String name, Supplier&lt;Float&gt; supplier, ...);
+    UniformHolder uniform1b(String name, Supplier&lt;Boolean&gt; supplier, ...);
+    
+    // 向量 Uniform
+    UniformHolder uniform2i(String name, Supplier&lt;Vector2i&gt; supplier, ...);
+    UniformHolder uniform2f(String name, Supplier&lt;Vector2f&gt; supplier, ...);
+    UniformHolder uniform3d(String name, Supplier&lt;Vector3d&gt; supplier, ...);
+    UniformHolder uniform4f(String name, Supplier&lt;Vector4f&gt; supplier, ...);
+    
+    // 矩阵 Uniform
+    UniformHolder uniformMatrix4f(boolean transpose, String name, Supplier&lt;Matrix4f&gt; supplier, ...);
+}</code></pre>
 <p><hr></p>
 <h2 id="10. Uniform 推送机制">10. Uniform 推送机制</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>10</em>_</p>
+<pre class="code-block"><code class="language-startLine">:250:310:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/CompositeRenderer.java
+public void renderAll() {
+    FullScreenQuadRenderer.INSTANCE.begin();
+    
+    for (Pass renderPass : passes) {
+        // ...
+        
+        renderPass.program.use();
+        
+        // 推送自定义 Uniform
+        this.customUniforms.push(renderPass.program);
+        
+        // ...
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="11. 相关文档">11. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>

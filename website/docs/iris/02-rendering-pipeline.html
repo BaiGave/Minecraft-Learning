@@ -131,40 +131,317 @@
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>IrisRenderingPipeline</code></td><td><code>pipeline/IrisRenderingPipeline.java</code></td></tr><tr><td><code>CompositeRenderer</code></td><td><code>pipeline/CompositeRenderer.java</code></td></tr><tr><td><code>FinalPassRenderer</code></td><td><code>pipeline/FinalPassRenderer.java</code></td></tr><tr><td><code>SodiumTerrainPipeline</code></td><td><code>pipeline/SodiumTerrainPipeline.java</code></td></tr></tbody></table>
 <hr></p>
 <h2 id="2. 渲染阶段 (WorldRenderingPhase)">2. 渲染阶段 (WorldRenderingPhase)</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>0</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:40:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/WorldRenderingPhase.java
+public enum WorldRenderingPhase {
+    NONE,           // 无阶段
+    
+    // 主世界渲染阶段
+    SKY,            // 天空渲染
+    SKIP,           // 跳过
+    TERRAIN,        // 地形
+    ENTITIES,       // 实体
+    BLOCK_ENTITIES, // 方块实体
+    TRANSLUCENT,    // 半透明
+    
+    // 合成阶段
+    SHADOW,         // 阴影
+    PREPARE,        // 准备
+    DEFERRED,       // 延迟
+    TRANSLUCENT_SORT, // 半透明排序
+    COMPOSITE,      // 合成
+    FINAL,          // 最终
+    AFTER_SKY,      // 天空之后
+}</code></pre>
 <p><hr></p>
 <h2 id="3. IrisRenderingPipeline 核心结构">3. IrisRenderingPipeline 核心结构</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>1</em>_</p>
+<pre class="code-block"><code class="language-startLine">:118:180:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/IrisRenderingPipeline.java
+public class IrisRenderingPipeline implements WorldRenderingPipeline {
+    // 渲染目标管理
+    private final RenderTargets renderTargets;
+    
+    // 着色器映射
+    private final ShaderMap shaderMap;
+    
+    // 自定义 Uniform
+    private final CustomUniforms customUniforms;
+    
+    // 阴影系统
+    private final ShadowRenderer shadowRenderer;
+    private final ShadowCompositeRenderer shadowCompositeRenderer;
+    private final ShadowRenderTargets shadowRenderTargets;
+    
+    // Composite 渲染器 (按阶段分组)
+    private final CompositeRenderer beginRenderer;
+    private final CompositeRenderer prepareRenderer;
+    private final CompositeRenderer deferredRenderer;
+    private final CompositeRenderer compositeRenderer;
+    private final FinalPassRenderer finalPassRenderer;
+    
+    // 深度采样
+    private final CenterDepthSampler centerDepthSampler;
+    
+    // Sodium 地形管线
+    private final SodiumTerrainPipeline sodiumTerrainPipeline;
+}</code></pre>
 <h3>3.1 渲染目标结构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>2</em>_</p>
+<pre class="code-block"><code class="language-startLine">:42:75:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
+public class RenderTargets {
+    // 主渲染目标数组 (colortex0-15)
+    private final RenderTarget[] targets;
+    
+    // 深度纹理
+    private final DepthTexture noTranslucents;   // depthtex1 (不含半透明)
+    private final DepthTexture noHand;           // depthtex2 (不含手)
+    
+    // 深度帧缓冲
+    private final GlFramebuffer depthSourceFb;
+    private final GlFramebuffer noTranslucentsDestFb;
+    private final GlFramebuffer noHandDestFb;
+}</code></pre>
 <p><hr></p>
 <h2 id="4. 渲染流程详解">4. 渲染流程详解</h2>
 <h3>4.1 beginLevelRendering()</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>3</em>_</p>
+<pre class="code-block"><code class="language-startLine">:848:1015:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/IrisRenderingPipeline.java
+public void beginLevelRendering() {
+    isRenderingWorld = true;
+    
+    // 1. 清除自定义图像
+    for (GlImage image : clearImages) {
+        ARBClearTexture.glClearTexImage(...);
+    }
+    
+    // 2. 阴影 Pass (如果启用)
+    if (shadowRenderTargets != null) {
+        // - 清除深度缓冲
+        // - 执行阴影计算着色器
+        // - 清除颜色缓冲
+    }
+    
+    // 3. 更新帧 Uniform
+    updateNotifier.onNewFrame();
+    customUniforms.update();
+    
+    // 4. 调整渲染目标大小
+    if (changed) {
+        // 重建帧缓冲
+    }
+    
+    // 5. 清除渲染目标
+    for (ClearPass clearPass : passes) {
+        clearPass.execute(fogColor);
+    }
+    
+    // 6. 切换到主帧缓冲
+    main.bindWrite(true);
+    
+    // 7. 执行 Setup 计算
+    for (ComputeProgram program : setup) {
+        program.use();
+        program.dispatch(1, 1);
+    }
+    
+    // 8. Begin Pass
+    isBeforeTranslucent = true;
+    beginRenderer.renderAll();
+    
+    // 9. 渲染地平线
+    horizonRenderer.renderHorizon(...);
+}</code></pre>
 <h3>4.2 renderShadows()</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>4</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1018:1024:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/IrisRenderingPipeline.java
+public void renderShadows(LevelRendererAccessor worldRenderer, Camera playerCamera) {
+    // 阴影渲染
+    if (shadowRenderer != null) {
+        this.shadowRenderer.renderShadows(worldRenderer, playerCamera);
+    }
+    
+    // Prepare Pass
+    prepareRenderer.renderAll();
+}</code></pre>
 <h3>4.3 beginTranslucents()</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>5</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1052:1078:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/IrisRenderingPipeline.java
+public void beginTranslucents() {
+    isBeforeTranslucent = false;
+    
+    // 复制深度纹理 (不含半透明)
+    renderTargets.copyPreTranslucentDepth();
+    
+    // Deferred Pass
+    deferredRenderer.renderAll();
+    
+    // 启用混合
+    RenderSystem.enableBlend();
+}</code></pre>
 <h3>4.4 finalizeLevelRendering()</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>6</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1081:1085:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/IrisRenderingPipeline.java
+public void finalizeLevelRendering() {
+    isRenderingWorld = false;
+    
+    // Composite Pass
+    compositeRenderer.renderAll();
+    
+    // Final Pass
+    finalPassRenderer.renderFinalPass();
+}</code></pre>
 <p><hr></p>
 <h2 id="5. CompositeRenderer">5. CompositeRenderer</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>7</em>_</p>
+<pre class="code-block"><code class="language-startLine">:59:100:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/CompositeRenderer.java
+public class CompositeRenderer {
+    private final RenderTargets renderTargets;
+    private final ImmutableList&lt;Pass&gt; passes;
+    private final TextureAccess noiseTexture;
+    private final CenterDepthSampler centerDepthSampler;
+    private final CustomUniforms customUniforms;
+    
+    public void renderAll() {
+        RenderSystem.disableBlend();
+        FullScreenQuadRenderer.INSTANCE.begin();
+        
+        for (Pass renderPass : passes) {
+            // 1. 执行计算着色器
+            for (ComputeProgram computeProgram : renderPass.computes) {
+                if (computeProgram != null) {
+                    computeProgram.use();
+                    this.customUniforms.push(computeProgram);
+                    computeProgram.dispatch(main.width, main.height);
+                }
+            }
+            
+            // 2. 内存屏障
+            IrisRenderSystem.memoryBarrier(...);
+            
+            // 3. 设置视口
+            RenderSystem.viewport(beginWidth, beginHeight, ...);
+            
+            // 4. 绑定帧缓冲
+            renderPass.framebuffer.bind();
+            renderPass.program.use();
+            
+            // 5. 设置混合模式
+            if (renderPass.blendModeOverride != null) {
+                renderPass.blendModeOverride.apply();
+            }
+            
+            // 6. 上传 Uniform
+            this.customUniforms.push(renderPass.program);
+            
+            // 7. 渲染全屏四边形
+            FullScreenQuadRenderer.INSTANCE.renderQuad();
+        }
+        
+        FullScreenQuadRenderer.INSTANCE.end();
+    }
+}</code></pre>
 <h3>5.1 Pass 结构</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>8</em>_</p>
+<pre class="code-block"><code class="language-startLine">:434:455:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/pipeline/CompositeRenderer.java
+private static class Pass {
+    int[] drawBuffers;                    // 绘制缓冲
+    int viewWidth;                        // 视口宽度
+    int viewHeight;                       // 视口高度
+    Program program;                      // 着色器程序
+    BlendModeOverride blendModeOverride;  // 混合模式覆盖
+    ComputeProgram[] computes;            // 计算着色器
+    GlFramebuffer framebuffer;           // 帧缓冲
+    ViewportData viewportScale;          // 视口缩放
+}</code></pre>
 <p><hr></p>
 <h2 id="6. GBuffer 系统">6. GBuffer 系统</h2>
 <h3>6.1 渲染目标布局</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>9</em>_</p>
+<pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────┐
+│                    Minecraft 帧缓冲                           │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │                  Depth Texture (depthtex0)              │  │
+│  │                    深度 + 模板                           │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │                  Color Texture (colortex0)              │  │
+│  │                    场景颜色                             │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│                    Iris 中间缓冲                            │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐        │
+│  │  depthtex1   │ │  depthtex2   │ │  colortex1   │  ...   │
+│  │ 不含半透明   │ │   不含手    │ │  自定义1     │        │
+│  └──────────────┘ └──────────────┘ └──────────────┘        │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│                    阴影贴图                                  │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │              Shadow Map (shadowmap)                      │  │
+│  │                    深度 + 颜色                           │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘</code></pre>
 <h3>6.2 深度纹理复制</h3>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>10</em>_</p>
+<pre class="code-block"><code class="language-startLine">:209:230:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/RenderTargets.java
+public void copyPreTranslucentDepth() {
+    if (translucentDepthDirty) {
+        // 直接从主深度纹理复制
+        RenderSystem.bindTexture(noTranslucents.getTextureId());
+        depthSourceFb.bindAsReadBuffer();
+        IrisRenderSystem.copyTexImage2D(..., cachedWidth, cachedHeight, 0);
+    } else {
+        // 使用优化策略复制
+        copyStrategy.copy(depthSourceFb, getDepthTexture(), 
+                        noTranslucentsDestFb, noTranslucents.getTextureId(),
+                        getCurrentWidth(), getCurrentHeight());
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="7. BufferFlipper (缓冲翻转)">7. BufferFlipper (缓冲翻转)</h2>
 <p>用于在主/备用纹理之间切换：</p>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>11</em>_</p>
+<pre class="code-block"><code class="language-startLine">:1:50:D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/targets/BufferFlipper.java
+public class BufferFlipper {
+    private final Map&lt;Integer, Boolean&gt; flipped = new HashMap&lt;&gt;();
+    
+    public void flip(int buffer) {
+        flipped.compute(buffer, (k, v) -&gt; v == null || !v);
+    }
+    
+    public ImmutableSet&lt;Integer&gt; snapshot() {
+        // 返回所有&quot;翻转&quot;状态的缓冲
+    }
+}</code></pre>
 <p><hr></p>
 <h2 id="8. 渲染阶段顺序">8. 渲染阶段顺序</h2>
-<p><em>_CODEBLOCK</em>PLACEHOLDER<em>12</em>_</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                  完整渲染阶段顺序                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  [Setup] ──► Setup Compute                                 │
+│                                                              │
+│  [Begin] ──► Begin Composite Passes                        │
+│             ├── composite0                                   │
+│             ├── composite1                                   │
+│             └── ...                                          │
+│                                                              │
+│  [Shadow] ──► Shadow Render                                  │
+│             ├── Shadow Map Generation                        │
+│             └── ShadowComposite Passes                      │
+│                                                              │
+│  [Prepare] ─► Prepare Composite Passes                       │
+│                                                              │
+│  [Terrain] ─► Terrain Pass (由 Sodium 处理)                  │
+│             ├── Solid                                        │
+│             ├── Cutout                                       │
+│             ├── Translucent                                  │
+│             └── ...                                          │
+│                                                              │
+│  [Deferred] ─► Deferred Composite Passes                    │
+│                                                              │
+│  [Translucent] ─► Translucent Deferred                      │
+│                                                              │
+│  [Composite] ─► Composite Passes                            │
+│             ├── composite1...N                               │
+│             └── shadowcomp1...N                              │
+│                                                              │
+│  [Final] ──► Final Pass                                     │
+│             └── 屏幕输出                                     │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
 <h2 id="9. 相关文档">9. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
