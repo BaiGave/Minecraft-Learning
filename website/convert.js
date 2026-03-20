@@ -9,7 +9,9 @@ const path = require('path');
 // Configuration
 const CONFIG = {
     tutorialsDir: path.join(__dirname, '..', 'tutorials'),
+    analysisDir: path.join(__dirname, '..', 'analysis'),
     outputDir: path.join(__dirname, 'tutorials'),
+    analysisOutputDir: path.join(__dirname, 'analysis'),
     websiteDir: __dirname
 };
 
@@ -435,16 +437,139 @@ function generateHTML(partKey, filename, markdownContent) {
 </html>`;
 }
 
+// Generate HTML for analysis files
+function generateAnalysisHTML(filename, markdownContent) {
+    const { title, subtitle, content, headings } = parseMarkdown(markdownContent);
+
+    // Generate TOC
+    let tocHtml = '';
+    headings.forEach(h => {
+        if (h.level <= 2) {
+            tocHtml += `<li><a href="#${h.id}">${h.text}</a></li>`;
+        } else {
+            tocHtml += `<li class="h3"><a href="#${h.id}">${h.text}</a></li>`;
+        }
+    });
+
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Minecraft 源码分析</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../tutorial.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 源码教程</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../index.html">首页</a></li>
+                <li><a href="../catalog.html">目录</a></li>
+                <li><a href="../roadmap.html">路线图</a></li>
+                <li><a href="../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #2c3e50 0%, #2c3e5088 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        <a href="../index.html">首页</a>
+                        <span>/</span>
+                        <a href="../catalog.html">目录</a>
+                        <span>/</span>
+                        <a href="../analysis.html">源码分析</a>
+                        <span>/</span>
+                        <span>${title}</span>
+                    </div>
+                </div>
+                <h1 class="tutorial-title">${title}</h1>
+                ${subtitle ? `<p class="tutorial-subtitle">${subtitle}</p>` : ''}
+                <div class="tutorial-meta">
+                    <span><i class="fas fa-book"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> ${filename.replace('.md', '')}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        ${tocHtml || '<li><span style="color: var(--text-secondary);">暂无目录</span></li>'}
+                    </ul>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                ${content}
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script src="../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>`;
+}
+
 // Main conversion function
 function convertAll() {
     console.log('Starting Markdown to HTML conversion...\n');
 
-    // Ensure output directory
+    // Ensure output directories
     ensureDir(CONFIG.outputDir);
+    ensureDir(CONFIG.analysisOutputDir);
 
     let totalConverted = 0;
 
-    // Process each part
+    // Process tutorials
     for (const [partKey, part] of Object.entries(PARTS)) {
         const partDir = path.join(CONFIG.tutorialsDir, partKey);
         const outputPartDir = path.join(CONFIG.outputDir, partKey);
@@ -478,8 +603,30 @@ function convertAll() {
         console.log('');
     }
 
+    // Process analysis files
+    if (fs.existsSync(CONFIG.analysisDir)) {
+        console.log('Processing analysis files...');
+        const analysisFiles = fs.readdirSync(CONFIG.analysisDir).filter(f => f.endsWith('.md'));
+
+        for (const file of analysisFiles) {
+            const inputPath = path.join(CONFIG.analysisDir, file);
+            const outputPath = path.join(CONFIG.analysisOutputDir, file.replace('.md', '.html'));
+
+            const content = readFile(inputPath);
+            if (!content) continue;
+
+            const html = generateAnalysisHTML(file, content);
+            fs.writeFileSync(outputPath, html, 'utf8');
+            totalConverted++;
+
+            console.log(`  ✓ ${file} → ${file.replace('.md', '.html')}`);
+        }
+        console.log('');
+    }
+
     console.log(`\nConversion complete! ${totalConverted} files converted.`);
-    console.log(`Output directory: ${CONFIG.outputDir}`);
+    console.log(`Tutorials output: ${CONFIG.outputDir}`);
+    console.log(`Analysis output: ${CONFIG.analysisOutputDir}`);
 }
 
 // Run conversion
