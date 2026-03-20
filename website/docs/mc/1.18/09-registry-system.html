@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>09 registry system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        .code-block { border-left: 4px solid #5B8C5A; }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border-left: 4px solid #5B8C5A; }
+        .doc-content pre code { color: #d4d4d4; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">1.18</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-client-module.html" class="">
+            <i class="fas fa-desktop"></i>
+            客户端模块
+        </a>
+<a href="03-server-module.html" class="">
+            <i class="fas fa-server"></i>
+            服务端模块
+        </a>
+<a href="04-world-system.html" class="">
+            <i class="fas fa-globe"></i>
+            世界系统
+        </a>
+<a href="05-entity-system.html" class="">
+            <i class="fas fa-paw"></i>
+            实体系统
+        </a>
+<a href="06-block-item-system.html" class="">
+            <i class="fas fa-box"></i>
+            方块物品
+        </a>
+<a href="07-network-protocol.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络协议
+        </a>
+<a href="08-datafixer-system.html" class="">
+            <i class="fas fa-database"></i>
+            数据修复
+        </a>
+<a href="09-registry-system.html" class="active">
+            <i class="fas fa-archive"></i>
+            注册表系统
+        </a>
+<a href="10-package-structure.html" class="">
+            <i class="fas fa-folder"></i>
+            包结构
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../docs/mc/index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../docs/mc/index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>09 registry system</span>
+                </nav>
+                <h1>09 registry system</h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.18</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 注册表（Registry）系统分析</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#概述">概述</a></li>
+<li><a href="#核心接口">核心接口</a></li>
+<li><a href="#注册表实现">注册表实现</a></li>
+<li><a href="#registrykey-资源定位符">RegistryKey 资源定位符</a></li>
+<li><a href="#registryentry-注册表条目">RegistryEntry 注册表条目</a></li>
+<li><a href="#标签系统">标签系统</a></li>
+<li><a href="#内置注册表">内置注册表</a></li>
+<li><a href="#动态注册表">动态注册表</a></li>
+<li><a href="#序列化机制">序列化机制</a></li>
+<li><a href="#客户端服务端同步">客户端服务端同步</a></li>
+<li><a href="#关键代码引用">关键代码引用</a></li></ul></p>
+<p><hr></p>
+<h2 id="概述">概述</h2>
+<p>Minecraft 的注册表系统是游戏的核心数据管理框架，用于注册和组织游戏中的各种元素（方块、物品、实体、附魔等）。该系统采用层次化设计，支持静态注册（内置）和动态注册（数据包）。</p>
+<p><strong>核心设计原则：</strong>
+<ul><li><strong>单例模式</strong>：每种游戏元素类型只有一个全局注册表</li>
+<li><strong>三层标识</strong>：Identifier → RegistryKey → RegistryEntry</li>
+<li><strong>冻结机制</strong>：静态注册表在初始化后冻结，防止运行时修改</li>
+<li><strong>生命周期追踪</strong>：记录注册表内容的生命周期状态</li></ul></p>
+<p><hr></p>
+<h2 id="核心接口">核心接口</h2>
+<h3>2.1 Registry 接口</h3>
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/registry/Registry.java</code></p>
+<p>§§§CODE<em>BLOCK</em>0§§§</p>
+<h3>2.2 MutableRegistry 接口</h3>
+<p>§§§CODE<em>BLOCK</em>1§§§</p>
+<h3>2.3 RegistryEntry 接口</h3>
+<p>§§§CODE<em>BLOCK</em>2§§§</p>
+<h3>2.4 RegistryEntry.Reference 引用条目</h3>
+<p>§§§CODE<em>BLOCK</em>3§§§</p>
+<p><hr></p>
+<h2 id="注册表实现">注册表实现</h2>
+<h3>3.1 SimpleRegistry</h3>
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/registry/SimpleRegistry.java</code></p>
+<p>§§§CODE<em>BLOCK</em>4§§§</p>
+<h3>3.2 DefaultedRegistry</h3>
+<p>提供默认值支持的注册表：</p>
+<p>§§§CODE<em>BLOCK</em>5§§§</p>
+<h3>3.3 注册流程</h3>
+<p>§§§CODE<em>BLOCK</em>6§§§</p>
+<p><hr></p>
+<h2 id="RegistryKey 资源定位符">RegistryKey 资源定位符</h2>
+<h3>4.1 RegistryKey 类</h3>
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/registry/RegistryKey.java</code></p>
+<p>§§§CODE<em>BLOCK</em>7§§§</p>
+<h3>4.2 RegistryKey 使用示例</h3>
+<p>§§§CODE<em>BLOCK</em>8§§§</p>
+<h3>4.3 序列化支持</h3>
+<p>§§§CODE<em>BLOCK</em>9§§§</p>
+<p><hr></p>
+<h2 id="RegistryEntry 注册表条目">RegistryEntry 注册表条目</h2>
+<h3>5.1 RegistryEntry.Reference 引用条目</h3>
+<p>引用条目是指向已注册值的条目：</p>
+<p>§§§CODE<em>BLOCK</em>10§§§</p>
+<h3>5.2 直接条目（Direct Entry）</h3>
+<p>直接条目用于尚未注册的值：</p>
+<p>§§§CODE<em>BLOCK</em>11§§§</p>
+<h3>5.3 生命周期追踪</h3>
+<p>§§§CODE<em>BLOCK</em>12§§§</p>
+<p><hr></p>
+<h2 id="标签系统">标签系统</h2>
+<h3>6.1 TagKey 标签键</h3>
+<p>标签提供动态分组功能：</p>
+<p>§§§CODE<em>BLOCK</em>13§§§</p>
+<h3>6.2 标签定义</h3>
+<p>§§§CODE<em>BLOCK</em>14§§§</p>
+<h3>6.3 标签在数据包中的定义</h3>
+<p>§§§CODE<em>BLOCK</em>15§§§</p>
+<h3>6.4 标签查询</h3>
+<p>§§§CODE<em>BLOCK</em>16§§§</p>
+<p><hr></p>
+<h2 id="内置注册表">内置注册表</h2>
+<h3>7.1 Registries 类</h3>
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/registry/Registries.java</code></p>
+<p>§§§CODE<em>BLOCK</em>17§§§</p>
+<h3>7.2 常用注册表</h3>
+<table class="data-table"><thead><tr><th>注册表</th><th>键</th><th>默认值</th></tr></thead><tbody><tr><td>BLOCK</td><td>minecraft:block</td><td>air</td></tr><tr><td>ITEM</td><td>minecraft:item</td><td>air</td></tr><tr><td>FLUID</td><td>minecraft:fluid</td><td>empty</td></tr><tr><td>ENTITY<em>TYPE</td><td>minecraft:entity</em>type</td><td>pig</td></tr><tr><td>BLOCK<em>ENTITY</em>TYPE</td><td>minecraft:block<em>entity</em>type</td><td>furnace</td></tr><tr><td>ENCHANTMENT</td><td>minecraft:enchantment</td><td>-</td></tr><tr><td>POTION</td><td>minecraft:potion</td><td>-</td></tr><tr><td>BIOME</td><td>minecraft:worldgen/biome</td><td>-</td></tr><tr><td>SOUND<em>EVENT</td><td>minecraft:sound</em>event</td><td>-</td></tr></tbody></table>
+<h3>7.3 物品注册</h3>
+<p>§§§CODE<em>BLOCK</em>18§§§</p>
+<p><hr></p>
+<h2 id="动态注册表">动态注册表</h2>
+<h3>8.1 动态注册 vs 静态注册</h3>
+<p><strong>静态注册表：</strong>
+<ul><li>值在游戏代码中硬编码</li>
+<li>初始化后冻结</li>
+<li>示例：<code>Registries.BLOCK</code>, <code>Registries.ITEM</code></li></ul></p>
+<p><strong>动态注册表：</strong>
+<ul><li>值可通过数据包添加/替换</li>
+<li>绑定到特定服务器</li>
+<li>示例：生物群系、战利品表、进度</li></ul></p>
+<h3>8.2 DynamicRegistryManager</h3>
+<p>§§§CODE<em>BLOCK</em>19§§§</p>
+<h3>8.3 服务器/客户端同步</h3>
+<p>§§§CODE<em>BLOCK</em>20§§§</p>
+<h3>8.4 SerializableRegistries</h3>
+<p>可序列化的动态注册表：</p>
+<p>§§§CODE<em>BLOCK</em>21§§§</p>
+<p><hr></p>
+<h2 id="序列化机制">序列化机制</h2>
+<h3>9.1 Registry 序列化</h3>
+<p>§§§CODE<em>BLOCK</em>22§§§</p>
+<h3>9.2 RegistryOps</h3>
+<p>RegistryOps 提供带注册表感知的序列化/反序列化：</p>
+<p>§§§CODE<em>BLOCK</em>23§§§</p>
+<h3>9.3 标签序列化</h3>
+<p>§§§CODE<em>BLOCK</em>24§§§</p>
+<p><hr></p>
+<h2 id="客户端服务端同步">客户端服务端同步</h2>
+<h3>10.1 RegistryWrapper</h3>
+<p>RegistryWrapper 提供只读的注册表视图：</p>
+<p>§§§CODE<em>BLOCK</em>25§§§</p>
+<h3>10.2 RegistryEntryLookup</h3>
+<p>§§§CODE<em>BLOCK</em>26§§§</p>
+<h3>10.3 网络同步</h3>
+<p>§§§CODE<em>BLOCK</em>27§§§</p>
+<p><hr></p>
+<h2 id="关键代码引用">关键代码引用</h2>
+<h3>11.1 注册新物品</h3>
+<p>§§§CODE<em>BLOCK</em>28§§§</p>
+<h3>11.2 创建 RegistryKey</h3>
+<p>§§§CODE<em>BLOCK</em>29§§§</p>
+<h3>11.3 使用 RegistryEntry</h3>
+<p>§§§CODE<em>BLOCK</em>30§§§</p>
+<h3>11.4 遍历注册表</h3>
+<p>§§§CODE<em>BLOCK</em>31§§§</p>
+<h3>11.5 创建自定义注册表</h3>
+<p>§§§CODE<em>BLOCK</em>32§§§</p>
+<p><hr></p>
+<h2 id="架构图">架构图</h2>
+<p>§§§CODE<em>BLOCK</em>33§§§</p>
+<p><hr></p>
+<h2 id="总结">总结</h2>
+<p>Minecraft 1.21 的注册表系统展现了高度模块化和可扩展的设计：</p>
+<p><ul><li><strong>三层标识系统</strong>：Identifier → RegistryKey → RegistryEntry 提供灵活的访问方式</li>
+<li><strong>生命周期追踪</strong>：支持实验性和稳定内容的区分管理</li>
+<li><strong>冻结机制</strong>：静态注册表在初始化后冻结，保证一致性</li>
+<li><strong>标签分组</strong>：TagKey 提供跨注册表的灵活分组能力</li>
+<li><strong>动态注册支持</strong>：数据包可以添加/替换动态注册表的内容</li>
+<li><strong>序列化优化</strong>：Codec 和 RegistryOps 提供高效的序列化和反序列化</li>
+<li><strong>网络同步</strong>：支持动态注册表在服务器和客户端之间的同步</li></ul></p>
+<p>这套系统是 Minecraft Mod API 的核心基础设施，为数据包系统和 Mod 加载器提供了统一的数据管理框架。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-datafixer-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            数据修复
+        </a><a href="10-package-structure.html" class="next">
+            包结构
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05 shader system - Sodium 优化</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #F2CC8F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #F2CC8F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
+        .info-box i { color: #F2CC8F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        .code-block { border-left: 4px solid #F2CC8F; }
+        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
+        .docs-body h2 i { color: #F2CC8F; }
+        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
+        .doc-content pre { border-left: 4px solid #F2CC8F; }
+        .doc-content pre code { color: #d4d4d4; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">v1.0</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk 渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-eye-slash"></i>
+            遮挡剔除
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="05-shader-system.html" class="active">
+            <i class="fas fa-palette"></i>
+            着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-plug"></i>
+            平台集成
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../docs/sodium/index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>05 shader system</span>
+                </nav>
+                <h1>05 shader system</h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 着色器系统</h1>
+<blockquote><p>自定义 GLSL 着色器与顶点格式优化</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Sodium 使用自定义 GLSL 着色器实现高级渲染效果，包括抗锯齿、雾渲染优化和顶点压缩。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ChunkShader</code></td><td><code>common/.../render/chunk/shader/ChunkShader.java</code></td></tr><tr><td><code>ShaderConstants</code></td><td><code>common/.../gl/shader/ShaderConstants.java</code></td></tr><tr><td><code>ShaderLoader</code></td><td><code>common/.../gl/shader/ShaderLoader.java</code></td></tr><tr><td><code>GlShader</code></td><td><code>common/.../gl/shader/GlShader.java</code></td></tr></tbody></table>
+<strong>着色器文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>rendertype<em>solid.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>solid.fsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype<em>cutout.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>translucent.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 着色器资源结构">2. 着色器资源结构</h2>
+<h3>2.1 资源路径</h3>
+<p>§§§CODE<em>BLOCK</em>0§§§</p>
+<p><hr></p>
+<h2 id="3. 顶点着色器">3. 顶点着色器</h2>
+<h3>3.1 Solid 顶点着色器</h3>
+<p>§§§CODE<em>BLOCK</em>1§§§</p>
+<p><hr></p>
+<h2 id="4. 片段着色器">4. 片段着色器</h2>
+<h3>4.1 Solid 片段着色器</h3>
+<p>§§§CODE<em>BLOCK</em>2§§§</p>
+<p><hr></p>
+<h2 id="5. 雾函数实现">5. 雾函数实现</h2>
+<h3>5.1 Fog.glsl</h3>
+<p>§§§CODE<em>BLOCK</em>3§§§</p>
+<p><hr></p>
+<h2 id="6. 顶点格式">6. 顶点格式</h2>
+<h3>6.1 Vanilla 格式（24 bytes）</h3>
+<p>§§§CODE<em>BLOCK</em>4§§§</p>
+<h3>6.2 IMMIX 格式（16 bytes，优化格式）</h3>
+<p>§§§CODE<em>BLOCK</em>5§§§</p>
+<h3>6.3 顶点编码工具</h3>
+<p>§§§CODE<em>BLOCK</em>6§§§</p>
+<p><hr></p>
+<h2 id="7. 着色器管理">7. 着色器管理</h2>
+<h3>7.1 ChunkShader</h3>
+<p>§§§CODE<em>BLOCK</em>7§§§</p>
+<h3>7.2 ShaderLoader</h3>
+<p>§§§CODE<em>BLOCK</em>8§§§</p>
+<p><hr></p>
+<h2 id="8. 着色器常量">8. 着色器常量</h2>
+<h3>8.1 ShaderConstants</h3>
+<p>§§§CODE<em>BLOCK</em>9§§§</p>
+<h3>8.2 Uniform 定义</h3>
+<p>§§§CODE<em>BLOCK</em>10§§§</p>
+<p><hr></p>
+<h2 id="9. 性能优化特性">9. 性能优化特性</h2>
+<table class="data-table"><thead><tr><th>特性</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>顶点压缩</strong></td><td>Half-float 代替 float</td><td>减少 33% 带宽</td></tr><tr><td><strong>Include 预处理</strong></td><td>GLSL #include</td><td>代码复用</td></tr><tr><td><strong>Uniform 缓存</strong></td><td>预缓存位置</td><td>减少查询</td></tr><tr><td><strong>批量 Uniform</strong></td><td>std140 布局</td><td>减少设置调用</td></tr><tr><td><strong>RGSS 抗锯齿</strong></td><td>着色器内采样</td><td>平滑边缘</td></tr></tbody></table>
+<hr></p>
+<h2 id="10. OpenGL 要求">10. OpenGL 要求</h2>
+<table class="data-table"><thead><tr><th>要求</th><th>版本</th><th>说明</th></tr></thead><tbody><tr><td><strong>最低版本</strong></td><td>OpenGL 3.3</td><td>基本的顶点属性</td></tr><tr><td><strong>推荐版本</strong></td><td>OpenGL 4.5</td><td>SPIR-V 支持</td></tr><tr><td><strong>可选扩展</strong></td><td>GL<em>ARB</em>gl<em>spirv</td><td>SPIR-V 着色器</td></tr><tr><td><strong>可选扩展</strong></td><td>GL</em>ARB<em>vertex</em>attrib_64bit</td><td>64-bit 属性</td></tr></tbody></table>
+<hr></p>
+<h2 id="11. 相关文档">11. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-chunk-render-system.md">02-chunk-render-system.md</a> - 区块渲染系统</li>
+<li><a href="04-render-pipeline.md">04-render-pipeline.md</a> - 渲染管线</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-render-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            渲染管线
+        </a><a href="06-platform-integration.html" class="next">
+            平台集成
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

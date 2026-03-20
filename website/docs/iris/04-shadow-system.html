@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 shadow system - Iris 光影</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #E07A5F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #E07A5F 0, #F2CC8F 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #E07A5F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #E07A5F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
+        .info-box i { color: #E07A5F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        .code-block { border-left: 4px solid #E07A5F; }
+        .docs-body h2 { border-bottom: 2px solid #E07A5F; }
+        .docs-body h2 i { color: #E07A5F; }
+        .data-table th { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
+        .doc-content pre { border-left: 4px solid #E07A5F; }
+        .doc-content pre code { color: #d4d4d4; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">v1.0</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-palette"></i>
+            ShaderPack 系统
+        </a>
+<a href="04-shadow-system.html" class="active">
+            <i class="fas fa-cube"></i>
+            阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-layer-group"></i>
+            帧缓冲与纹理
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            Uniform 管理
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../docs/iris/index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../docs/iris/index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>04 shadow system</span>
+                </nav>
+                <h1>04 shadow system</h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris 阴影系统</h1>
+<blockquote><p>视锥体剔除、阴影渲染与高级优化</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Iris 的阴影系统是光影效果的核心，通过先进的视锥体剔除算法和优化的阴影贴图生成，实现高质量的动态阴影。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ShadowRenderer</code></td><td><code>shadows/ShadowRenderer.java</code></td></tr><tr><td><code>ShadowCompositeRenderer</code></td><td><code>shadows/ShadowCompositeRenderer.java</code></td></tr><tr><td><code>ShadowRenderTargets</code></td><td><code>shadows/ShadowRenderTargets.java</code></td></tr><tr><td><code>ShadowMatrices</code></td><td><code>shadows/ShadowMatrices.java</code></td></tr><tr><td><code>AdvancedShadowCullingFrustum</code></td><td><code>shadows/frustum/advanced/AdvancedShadowCullingFrustum.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. ShadowRenderer 核心结构">2. ShadowRenderer 核心结构</h2>
+<p>§§§CODE<em>BLOCK</em>0§§§</p>
+<p><hr></p>
+<h2 id="3. 渲染流程">3. 渲染流程</h2>
+<h3>3.1 renderShadows()</h3>
+<p>§§§CODE<em>BLOCK</em>1§§§</p>
+<p><hr></p>
+<h2 id="4. 视锥体剔除系统">4. 视锥体剔除系统</h2>
+<h3>4.1 视锥体类型</h3>
+<p>§§§CODE<em>BLOCK</em>2§§§</p>
+<h3>4.2 高级视锥体剔除</h3>
+<p>§§§CODE<em>BLOCK</em>3§§§</p>
+<h3>4.3 BoxCuller</h3>
+<p>用于高效检测盒子是否在视锥体内：</p>
+<p>§§§CODE<em>BLOCK</em>4§§§</p>
+<p><hr></p>
+<h2 id="5. 阴影矩阵计算">5. 阴影矩阵计算</h2>
+<h3>5.1 正交投影矩阵</h3>
+<p>§§§CODE<em>BLOCK</em>5§§§</p>
+<p><hr></p>
+<h2 id="6. 阴影采样配置">6. 阴影采样配置</h2>
+<h3>6.1 深度采样设置</h3>
+<p>§§§CODE<em>BLOCK</em>6§§§</p>
+<p><hr></p>
+<h2 id="7. ShadowRenderTargets">7. ShadowRenderTargets</h2>
+<p>§§§CODE<em>BLOCK</em>7§§§</p>
+<p><hr></p>
+<h2 id="8. 剔除模式枚举">8. 剔除模式枚举</h2>
+<p>§§§CODE<em>BLOCK</em>8§§§</p>
+<p><hr></p>
+<h2 id="9. 性能优化">9. 性能优化</h2>
+<h3>9.1 剔除策略选择</h3>
+<table class="data-table"><thead><tr><th>策略</th><th>适用场景</th><th>性能</th></tr></thead><tbody><tr><td><strong>None</strong></td><td>调试/特殊效果</td><td>最慢</td></tr><tr><td><strong>Distance</strong></td><td>远距离阴影</td><td>快</td></tr><tr><td><strong>Advanced</strong></td><td>标准使用</td><td>中等</td></tr><tr><td><strong>Voxelization</strong></td><td>体素化光影包</td><td>智能</td></tr></tbody></table>
+<h3>9.2 优化技术</h3>
+<p><ul><li><strong>实体剔除</strong>：单独的实体视锥体，可以比地形更近</li>
+<li><strong>区块剔除</strong>：基于距离的快速剔除</li>
+<li><strong>Mipmap 生成</strong>：可选的阴影贴图 Mipmap</li>
+<li><strong>硬件过滤</strong>：GPU 端的 PCF 过滤</li></ul></p>
+<p><hr></p>
+<h2 id="10. 相关文档">10. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-rendering-pipeline.md">02-rendering-pipeline.md</a> - 渲染管线</li>
+<li><a href="03-shaderpack-system.md">03-shaderpack-system.md</a> - 着色器包系统</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-shaderpack-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            ShaderPack 系统
+        </a><a href="05-framebuffer-texture.html" class="next">
+            帧缓冲与纹理
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>
