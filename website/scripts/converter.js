@@ -228,8 +228,8 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .info-box i { color: ${module.color}; }
         .info-table td:first-child { font-weight: 600; color: #666; }
         .code-block { 
-            border: 2px solid ${module.color} !important;
-            border-left: 2px solid ${module.color} !important;
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
             border-radius: 0 !important;
             background: #1a1a1a !important;
         }
@@ -242,7 +242,8 @@ function generateDocHTML(doc, module, navItems, version = null) {
             color: #ffffff !important;
         }
         .code-reference {
-            border: 2px solid ${module.color} !important;
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
             border-radius: 0 !important;
             background: #1a1a1a !important;
         }
@@ -262,7 +263,7 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .data-table th { background: ${module.colorGradient}; }
         .prev-next .next { background: ${module.colorGradient}; }
         .prev-next .next:hover { box-shadow: 0 4px 15px ${module.color}66; }
-        .doc-content pre { border-left: 2px solid ${module.color} !important; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code { color: #d4d4d4; }
         .docs-nav .dropdown-content {
             z-index: 1001;
