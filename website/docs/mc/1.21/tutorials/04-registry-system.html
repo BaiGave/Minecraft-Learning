@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 registry system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="active">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>04 registry system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    04 registry system
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第四章：注册表系统（Registry System）</h1>
+<blockquote><p>⭐ <strong>这是 Minecraft 源码中最重要的系统！学完这章，你就能理解MC如何管理所有的游戏内容。</strong></p></blockquote>
+<blockquote><p>⚠️ <strong>注意</strong>：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。部分代码经过简化以便于理解。</p></blockquote>
+<p><hr></p>
+<h2 id="目标">目标</h2>
+<p>学完本章后，你将理解：</p>
+<p><ul><li><strong>注册表是什么</strong> - MC用来管理所有游戏元素的"图书馆"</li>
+<li><strong>三层结构</strong> - Identifier → RegistryKey → RegistryEntry 的关系</li>
+<li><strong>如何查找游戏内容</strong> - 找到石头方块、钻石剑在哪里定义</li>
+<li><strong>如何注册新内容</strong> - Mod开发的核心技能</li></ul></p>
+<p><hr></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>了解 Java 的基本语法（类、接口、泛型）</li>
+<li>知道什么是 <code>Map</code>（键值对存储）</li></ul></p>
+<p><hr></p>
+<h2 id="核心概念：用比喻理解注册表">核心概念：用比喻理解注册表</h2>
+<h3>比喻：图书馆的索引系统</h3>
+<p>想象 Minecraft 是一个<strong>巨大的图书馆</strong>，里面有：</p>
+<table class="data-table"><thead><tr><th>图书馆概念</th><th>Minecraft 对应</th></tr></thead><tbody><tr><td>图书馆</td><td><code>Registries</code>（所有注册表的总入口）</td></tr><tr><td>书架</td><td><code>Registry</code>（每种类型的注册表，如 BLOCK、ITEM）</td></tr><tr><td>书架上的书</td><td>注册表中的具体内容（如石头、钻石剑、猪）</td></tr><tr><td>书的编号</td><td><code>Identifier</code>（如 <code>minecraft:stone</code>）</td></tr><tr><td>借书证</td><td><code>RegistryKey</code>（精确指向某本书）</td></tr><tr><td>书的副本</td><td><code>RegistryEntry</code>（实际的书本对象）</td></tr></tbody></table>
+<h3>为什么需要这三层？</h3>
+<div class="mermaid">flowchart LR
+    subgraph 现实例子["现实例子"]
+        A1["图书编号<br/>如 'CS-001'"] --> A2["图书馆系统<br/>知道在哪排书架"]
+        A2 --> A3["实际的书本<br/>你手里拿的书"]
+    end
+    
+    subgraph Minecraft对应["Minecraft对应"]
+        B1["Identifier<br/>'minecraft:stone'"] --> B2["RegistryKey<br/>指向BLOCK注册表"]
+        B2 --> B3["RegistryEntry<br/>实际的Block对象"]
+    end
+    
+    style B1 fill:#ffd93d,color:#000
+    style B2 fill:#4d96ff,color:#fff
+    style B3 fill:#6bcb77,color:#fff</div>
+<p><hr></p>
+<h2 id="图解：注册表三层结构">图解：注册表三层结构</h2>
+<div class="mermaid">flowchart TB
+    subgraph ROOT["Registries - 根注册表<br/>所有注册表的总入口"]
+        direction TB
+        ROOT1["静态注册表<br/>游戏内置内容"]
+        ROOT2["动态注册表<br/>数据包可修改"]
+    end
+    
+    subgraph Registries静态["内置注册表示例"]
+        BLOCK["Registry&lt;Block&gt;<br/>方块注册表"]
+        ITEM["Registry&lt;Item&gt;<br/>物品注册表"]
+        ENTITY["Registry&lt;EntityType&gt;<br/>实体类型注册表"]
+        BIOME["Registry&lt;Biome&gt;<br/>生物群系注册表"]
+    end
+    
+    subgraph 三层结构["三层结构详解"]
+        ID["Identifier<br/>标识符<br/>'minecraft:stone'"]
+        KEY["RegistryKey&lt;T&gt;<br/>注册键<br/>指向具体注册表"]
+        ENTRY["RegistryEntry&lt;T&gt;<br/>注册条目<br/>实际对象引用"]
+    end
+    
+    ROOT --> Registries静态
+    Registries静态 --> BLOCK
+    Registries静态 --> ITEM
+    
+    ID -->|"创建"| KEY
+    KEY -->|"查询"| ENTRY
+    
+    BLOCK -->|"包含"| STONE["Stone方块"]
+    ITEM -->|"包含"| DIAMOND["Diamond剑"]
+    
+    style ROOT fill:#9b59b6,color:#fff
+    style BLOCK fill:#ff6b6b,color:#fff
+    style ID fill:#ffd93d,color:#000
+    style KEY fill:#4d96ff,color:#fff
+    style ENTRY fill:#6bcb77,color:#fff</div>
+<p><hr></p>
+<h2 id="第一层：Identifier（标识符）">第一层：Identifier（标识符）</h2>
+<h3>是什么？</h3>
+<p><code>Identifier</code> 是 Minecraft 中<strong>唯一标识符</strong>，格式为 <code>命名空间:路径</code>。</p>
+<h3>生活中的例子</h3>
+<p>就像网购时的<strong>快递单号</strong>：<code>顺丰-SF123456789</code></p>
+<p><ul><li><code>顺丰</code> = 命名空间（namespace）</li>
+<li><code>SF123456789</code> = 路径（path）</li></ul></p>
+<h3>Minecraft 中的例子</h3>
+<table class="data-table"><thead><tr><th>Identifier</th><th>命名空间</th><th>路径</th></tr></thead><tbody><tr><td><code>minecraft:stone</code></td><td>minecraft</td><td>stone</td></tr><tr><td><code>minecraft:diamond<em>sword</code></td><td>minecraft</td><td>diamond</em>sword</td></tr><tr><td><code>minecraft:pig</code></td><td>minecraft</td><td>pig</td></tr><tr><td><code>minecraft:the<em>nether</code></td><td>minecraft</td><td>the</em>nether</td></tr><tr><td><code>fabric:stone</code></td><td>fabric</td><td>stone</td></tr></tbody></table>
+<h3>源码解析</h3>
+<pre class="code-block"><code class="language-12">public static final String DEFAULT_NAMESPACE = &quot;minecraft&quot;;  // 默认命名空间
+public static final char NAMESPACE_SEPARATOR = &#39;:&#39;;          // 分隔符</code></pre>
+<pre class="code-block"><code class="language-139">public static Identifier of(String namespace, String path) {
+    return Identifier.ofValidated(namespace, path);
+}
+
+public static Identifier ofVanilla(String path) {
+    // 快捷方法：自动使用 minecraft 命名空间
+    return new Identifier(DEFAULT_NAMESPACE, path);
+}</code></pre>
+<h3>命名空间规则</h3>
+<div class="mermaid">flowchart LR
+    subgraph 命名空间类型["命名空间类型"]
+        MC["minecraft<br/>原版内容"]
+        FABRIC["fabric/mod_id<br/>Mod内容"]
+        REALMS["realms<br/>服务器内容"]
+    end
+    
+    subgraph 命名规则["命名规则"]
+        VALID["✅ 可用字符<br/>a-z, 0-9, _, -, ."]
+        INVALID["❌ 不可用<br/>大写字母, 中文, 空格"]
+    end
+    
+    MC --> VALID
+    FABRIC --> VALID
+    REALMS --> VALID</div>
+<p><hr></p>
+<h2 id="第二层：RegistryKey（注册键）">第二层：RegistryKey（注册键）</h2>
+<h3>是什么？</h3>
+<p><code>RegistryKey</code> = Registry（注册表类型）+ Identifier（具体内容）</p>
+<p>就像图书馆里的<strong>借书证</strong>，上面写着：
+<ul><li>在哪个图书馆？（REGISTRY）</li>
+<li>要借哪本书？（IDENTIFIER）</li></ul></p>
+<h3>源码解析</h3>
+<pre class="code-block"><code class="language-58">public static &lt;T&gt; RegistryKey&lt;T&gt; of(
+    RegistryKey&lt;? extends Registry&lt;T&gt;&gt; registry,  // 在哪个注册表
+    Identifier value                              // 什么标识符
+) {
+    return RegistryKey.of(registry.value, value);
+}</code></pre>
+<h3>创建 RegistryKey 的例子</h3>
+<pre class="code-block"><code class="language-java">RegistryKey&lt;Block&gt; STONE_KEY = RegistryKey.of(
+    Registries.BLOCK.getKey(),      // 方块注册表
+    Identifier.ofVanilla(&quot;stone&quot;)  // &quot;minecraft:stone&quot;
+);
+
+// 等价于
+RegistryKey&lt;Block&gt; STONE_KEY = RegistryKey.of(
+    RegistryKeys.BLOCK,
+    new Identifier(&quot;minecraft&quot;, &quot;stone&quot;)
+);</code></pre>
+<h3>RegistryKeys 预定义常量</h3>
+<pre class="code-block"><code class="language-116">public class RegistryKeys {
+    public static final RegistryKey&lt;Registry&lt;Block&gt;&gt; BLOCK = of(&quot;block&quot;);
+    public static final RegistryKey&lt;Registry&lt;Item&gt;&gt; ITEM = of(&quot;item&quot;);
+    public static final RegistryKey&lt;Registry&lt;EntityType&lt;?&gt;&gt;&gt; ENTITY_TYPE = of(&quot;entity_type&quot;);
+    public static final RegistryKey&lt;Registry&lt;Biome&gt;&gt; BIOME = of(&quot;worldgen/biome&quot;);
+    public static final RegistryKey&lt;Registry&lt;World&gt;&gt; WORLD = of(&quot;dimension&quot;);
+    // ... 还有80多个注册键
+}</code></pre>
+<p><hr></p>
+<h2 id="第三层：RegistryEntry（注册条目）">第三层：RegistryEntry（注册条目）</h2>
+<h3>是什么？</h3>
+<p><code>RegistryEntry</code> 是注册表中的<strong>实际对象引用</strong>。</p>
+<p>类比：借书证上写的书，最终指向<strong>书架上真正的书</strong>。</p>
+<h3>两种类型</h3>
+<div class="mermaid">flowchart TB
+    subgraph RegistryEntry["RegistryEntry<T>"]
+        direction TB
+        REF["Reference 引用条目<br/>已注册到注册表的对象"]
+        DIR["Direct 直接条目<br/>临时创建的引用"]
+    end
+    
+    REF -->|"用途"| REF_USE["⭐ 正常使用<br/>所有已注册内容"]
+    DIR -->|"用途"| DIR_USE["数据包临时内容<br/>不需预先注册"]
+    
+    style REF fill:#6bcb77,color:#fff
+    style DIR fill:#ffd93d,color:#000</div>
+<h3>源码中的 RegistryEntry</h3>
+<pre class="code-block"><code class="language-40">public interface RegistryEntry&lt;T&gt; {
+    T value();                    // 获取实际对象
+    boolean hasKeyAndValue();     // 是否有键值对
+    Optional&lt;RegistryKey&lt;T&gt;&gt; getKey();  // 获取注册键
+}</code></pre>
+<p><hr></p>
+<h2 id="注册表查找流程图">注册表查找流程图</h2>
+<div class="mermaid">flowchart TD
+    subgraph 起点["查找石头方块"]
+        START["我想找到石头方块"]
+    end
+    
+    subgraph 第一步["创建 Identifier"]
+        ID1["Identifier<br/>ofVanilla('stone')"]
+        ID2["结果: 'minecraft:stone'"]
+        START --> ID1
+        ID1 --> ID2
+    end
+    
+    subgraph 第二步["创建 RegistryKey"]
+        KEY1["RegistryKey.of<br/>BLOCK, 'stone'"]
+        KEY2["结果: RegistryKey<Block>"]
+        ID2 --> KEY1
+        KEY1 --> KEY2
+    end
+    
+    subgraph 第三步["从注册表查询"]
+        REG["Registries.BLOCK"]
+        QUERY["blockRegistry.get<br/>registryKey"]
+        KEY2 --> REG
+        KEY2 --> QUERY
+    end
+    
+    subgraph 第四步["获取 RegistryEntry"]
+        ENTRY["RegistryEntry<Block>"]
+        VALUE["Block 对象<br/>Stone 方块实例"]
+        QUERY --> ENTRY
+        ENTRY --> VALUE
+    end
+    
+    subgraph 快捷方法["一步到位"]
+        FAST["Registries.BLOCK<br/>.get<br/>'stone'"]
+        VALUE2["Stone 方块"]
+        START2["直接获取"] 
+        START2 --> FAST
+        FAST --> VALUE2
+    end
+    
+    style START fill:#ffd93d,color:#000
+    style VALUE fill:#6bcb77,color:#fff
+    style VALUE2 fill:#6bcb77,color:#fff</div>
+<p><hr></p>
+<h2 id="内置注册表列表">内置注册表列表</h2>
+<p>Minecraft 内置了 <strong>80+ 个注册表</strong>，最常用的有：</p>
+<table class="data-table"><thead><tr><th>注册表</th><th>源码字段</th><th>管理的类型</th></tr></thead><tbody><tr><td>BLOCK</td><td><code>Registries.BLOCK</code></td><td>方块（石头、泥土、草方块...）</td></tr><tr><td>ITEM</td><td><code>Registries.ITEM</code></td><td>物品（钻石剑、金苹果...）</td></tr><tr><td>ENTITY<em>TYPE</td><td><code>Registries.ENTITY</em>TYPE</code></td><td>实体类型（猪、牛、僵尸...）</td></tr><tr><td>BIOME</td><td><code>Registries.BIOME</code></td><td>生物群系（平原、森林、沙漠...）</td></tr><tr><td>SOUND<em>EVENT</td><td><code>Registries.SOUND</em>EVENT</code></td><td>音效</td></tr><tr><td>POTION</td><td><code>Registries.POTION</code></td><td>药水</td></tr><tr><td>PARTICLE<em>TYPE</td><td><code>Registries.PARTICLE</em>TYPE</code></td><td>粒子效果</td></tr><tr><td>ENCHANTMENT</td><td><code>Registries.ENCHANTMENT</code></td><td>附魔</td></tr><tr><td>ITEM<em>GROUP</td><td><code>Registries.ITEM</em>GROUP</code></td><td>创造模式物品栏</td></tr></tbody></table>
+<h3>源码中的注册表定义</h3>
+<pre class="code-block"><code class="language-134">public class Registries {
+    // 方块注册表 - 默认值是空气方块
+    public static final DefaultedRegistry&lt;Block&gt; BLOCK = 
+        Registries.createIntrusive(RegistryKeys.BLOCK, &quot;air&quot;, registry -&gt; Blocks.AIR);
+    
+    // 物品注册表 - 默认值是空气物品
+    public static final DefaultedRegistry&lt;Item&gt; ITEM = 
+        Registries.createIntrusive(RegistryKeys.ITEM, &quot;air&quot;, registry -&gt; Items.AIR);
+    
+    // 实体类型注册表 - 默认值是猪
+    public static final DefaultedRegistry&lt;EntityType&lt;?&gt;&gt; ENTITY_TYPE = 
+        Registries.createIntrusive(RegistryKeys.ENTITY_TYPE, &quot;pig&quot;, registry -&gt; EntityType.PIG);
+}</code></pre>
+<p><hr></p>
+<h2 id="实战：找到石头方块的注册代码">实战：找到石头方块的注册代码</h2>
+<h3>步骤1：找到 Blocks.java</h3>
+<pre class="code-block"><code class="language-text">source/net/minecraft/block/Blocks.java</code></pre>
+<h3>步骤2：找到 STONE 常量</h3>
+<pre class="code-block"><code class="language-java">public class Blocks {
+    // 每个方块都调用 register 方法注册
+    public static final Block STONE = register(
+        &quot;stone&quot;,                    // 标识符路径
+        new Block(AbstractBlock.Settings...)  // 方块属性
+    );
+}</code></pre>
+<h3>步骤3：理解注册流程</h3>
+<div class="mermaid">sequenceDiagram
+    participant B as Blocks.java
+    participant R as Registry静态注册
+    participant I as Identifier
+    
+    B->>I: ofVanilla("stone")
+    Note over I: "minecraft:stone"
+    
+    I->>R: Registry.register(Registries.BLOCK, id, STONE)
+    Note over R: 添加到 BLOCK 注册表
+    
+    R-->>B: 注册完成</div>
+<p><hr></p>
+<h2 id="如何注册一个新方块（Mod开发基础）">如何注册一个新方块（Mod开发基础）</h2>
+<h3>方法1：使用 Registry.register</h3>
+<pre class="code-block"><code class="language-java">public class MyMod {
+    public static final Block MY_CUSTOM_BLOCK = 
+        Registry.register(
+            Registries.BLOCK,                          // 注册到方块注册表
+            Identifier.of(&quot;mymod&quot;, &quot;magic_block&quot;),     // ID: mymod:magic_block
+            new Block(AbstractBlock.Settings.of(Material.STONE))  // 创建方块
+        );
+}</code></pre>
+<h3>关键点说明</h3>
+<div class="mermaid">flowchart LR
+    subgraph 注册三要素["注册三要素"]
+        A["Registries.XXX<br/>注册到哪个表"]
+        B["Identifier<br/>叫什么名字"]
+        C["new XXX<br/>实际对象"]
+    end
+    
+    A -->|"组合"| REG["Registry.register()"]
+    B -->|"组合"| REG
+    C -->|"组合"| REG
+    
+    REG -->|"返回"| RESULT["已注册的实例"]
+    
+    style A fill:#4d96ff,color:#fff
+    style B fill:#ffd93d,color:#000
+    style C fill:#6bcb77,color:#fff</div>
+<h3>常见错误</h3>
+<table class="data-table"><thead><tr><th>错误</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td><code>Registry is frozen</code></td><td>注册表已冻结</td><td>在正确的时机注册</td></tr><tr><td><code>Missing default</code></td><td>默认值不存在</td><td>DefaultedRegistry 需要默认值</td></tr><tr><td><code>Intrusive holder</code></td><td>条件注册导致崩溃</td><td>对象创建也要条件化</td></tr></tbody></table>
+<hr></p>
+<h2 id="DefaultedRegistry（带默认值的注册表）">DefaultedRegistry（带默认值的注册表）</h2>
+<p>有些注册表有一个<strong>默认值</strong>，当找不到某个ID时返回这个默认值。</p>
+<div class="mermaid">flowchart LR
+    subgraph DefaultedRegistry["DefaultedRegistry<T>"]
+        D["默认值<br/>如 'air'"]
+        O1["其他内容<br/>stone, grass..."]
+        O2["其他内容<br/>dirt, sand..."]
+    end
+    
+    查询1["查询不存在的 ID"] -->|"找不到"| 返回["返回默认值 air"]
+    查询2["查询 stone"] -->|"找到"| STONE["返回 stone"]
+    
+    style D fill:#ff6b6b,color:#fff</div>
+<h3>源码示例</h3>
+<pre class="code-block"><code class="language-140">public static final DefaultedRegistry&lt;Block&gt; BLOCK = 
+    Registries.createIntrusive(
+        RegistryKeys.BLOCK, 
+        &quot;air&quot;,                    // 默认值 ID
+        registry -&gt; Blocks.AIR    // 默认值对象
+    );
+
+// 普通 Registry - 没有默认值
+public static final Registry&lt;Potion&gt; POTION = 
+    Registries.create(RegistryKeys.POTION, Potions::registerAndGetDefault);</code></pre>
+<p><hr></p>
+<h2 id="常用代码片段">常用代码片段</h2>
+<h3>1. 获取物品</h3>
+<pre class="code-block"><code class="language-java">Item diamond = Registries.ITEM.get(Identifier.ofVanilla(&quot;diamond&quot;));
+
+// 方法2：通过 RegistryKey
+RegistryKey&lt;Item&gt; diamondKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.ofVanilla(&quot;diamond&quot;));
+Item diamond2 = Registries.ITEM.get(diamondKey);
+
+// 方法3：通过 getOrThrow（推荐，更安全）
+Item diamond3 = Registries.ITEM.getOrThrow(diamondKey);</code></pre>
+<h3>2. 检查是否存在</h3>
+<pre class="code-block"><code class="language-java">Identifier id = Identifier.ofVanilla(&quot;stone&quot;);
+boolean exists = Registries.BLOCK.containsId(id);  // true
+
+Identifier fakeId = Identifier.ofVanilla(&quot;fake_block&quot;);
+boolean fakeExists = Registries.BLOCK.containsId(fakeId);  // false</code></pre>
+<h3>3. 遍历所有内容</h3>
+<pre class="code-block"><code class="language-java">for (Block block : Registries.BLOCK) {
+    System.out.println(Registries.BLOCK.getId(block));
+}
+
+// 流式遍历
+Registries.BLOCK.stream()
+    .filter(block -&gt; block.getDefaultState().isSolid())
+    .forEach(System.out::println);</code></pre>
+<h3>4. 创建 RegistryEntry 引用</h3>
+<pre class="code-block"><code class="language-java">RegistryEntry&lt;Block&gt; stoneEntry = Registries.BLOCK.getEntry(Identifier.ofVanilla(&quot;stone&quot;));
+stoneEntry.ifPresent(entry -&gt; {
+    Block block = entry.value();
+    System.out.println(block);
+});</code></pre>
+<p><hr></p>
+<h2 id="Registry 接口方法速查">Registry 接口方法速查</h2>
+<pre class="code-block"><code class="language-java">registry.get(Identifier)           // 通过 ID 获取
+registry.get(RegistryKey)          // 通过键获取
+registry.getOrThrow(RegistryKey)   // 获取，不存在抛异常
+
+// 查询
+registry.containsId(Identifier)    // 是否包含该 ID
+registry.contains(RegistryKey)     // 是否包含该键
+registry.getId(T)                  // 获取对象的 ID
+registry.getKey(T)                 // 获取对象的键
+
+// 遍历
+registry.forEach()                // 遍历所有
+registry.stream()                  // 流式处理
+registry.getIds()                  // 获取所有 ID
+registry.getKeys()                 // 获取所有键
+
+// 注册
+Registry.register(registry, id, value)  // 注册新值</code></pre>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<div class="mermaid">flowchart TB
+    subgraph 核心要点["本章核心要点"]
+        E1["1. Identifier = 命名空间 + 路径<br/>如 'minecraft:stone'"]
+        E2["2. RegistryKey = 注册表 + 标识符<br/>精确指向某个内容"]
+        E3["3. RegistryEntry = 注册表中的引用<br/>实际对象的句柄"]
+        E4["4. Registries 包含所有内置注册表<br/>BLOCK、ITEM、ENTITY_TYPE..."]
+        E5["5. 注册 = 把对象放到注册表中<br/>需要三要素：注册表、ID、对象"]
+    end
+    
+    style E1 fill:#ffd93d,color:#000
+    style E2 fill:#4d96ff,color:#fff
+    style E3 fill:#6bcb77,color:#fff
+    style E4 fill:#ff6b6b,color:#fff
+    style E5 fill:#9b59b6,color:#fff</div>
+<h3>记住这个顺序</h3>
+<pre class="code-block"><code class="language-text">Identifier (String) 
+    ↓ 创建
+RegistryKey&lt;T&gt; (指向哪个注册表 + 标识符)
+    ↓ 查询
+RegistryEntry&lt;T&gt; (注册表中的引用)
+    ↓ 获取值
+T (实际对象，如 Block、Item)</code></pre>
+<p><hr></p>
+<h2 id="练习">练习</h2>
+<h3>练习1：查找代码</h3>
+<p>在源码中找到以下内容：</p>
+<p><ul><li>找到 <code>diamond_sword</code> 物品的注册代码</li>
+<li>找到 <code>pig</code> 实体类型的注册代码</li>
+<li>找到 <code>plains</code> 生物群系的注册代码</li></ul></p>
+<h3>练习2：理解输出</h3>
+<p>阅读以下代码，说出输出结果：</p>
+<pre class="code-block"><code class="language-java">Identifier id = Identifier.of(&quot;fabric&quot;, &quot;my_item&quot;);
+RegistryKey&lt;Item&gt; key = RegistryKey.of(RegistryKeys.ITEM, id);
+System.out.println(&quot;ID: &quot; + id);
+System.out.println(&quot;Namespace: &quot; + id.getNamespace());
+System.out.println(&quot;Path: &quot; + id.getPath());
+System.out.println(&quot;Key: &quot; + key.getValue());</code></pre>
+<h3>练习3：模拟注册</h3>
+<p>假设你要创建一个 Mod，想添加一个"魔法水晶"方块，写出注册代码（不需要实际运行，理解思路即可）。</p>
+<p><hr></p>
+<h2 id="相关链接">相关链接</h2>
+<h3>源码文件</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th><th>作用</th></tr></thead><tbody><tr><td><code>Registries.java</code></td><td><code>net/minecraft/registry/Registries.java</code></td><td>所有内置注册表</td></tr><tr><td><code>RegistryKey.java</code></td><td><code>net/minecraft/registry/RegistryKey.java</code></td><td>注册键定义</td></tr><tr><td><code>Identifier.java</code></td><td><code>net/minecraft/util/Identifier.java</code></td><td>标识符定义</td></tr><tr><td><code>Registry.java</code></td><td><code>net/minecraft/registry/Registry.java</code></td><td>注册表接口</td></tr><tr><td><code>RegistryEntry.java</code></td><td><code>net/minecraft/registry/entry/RegistryEntry.java</code></td><td>注册条目</td></tr><tr><td><code>RegistryKeys.java</code></td><td><code>net/minecraft/registry/RegistryKeys.java</code></td><td>预定义注册键常量</td></tr></tbody></table>
+<h3>进阶阅读</h3>
+<blockquote><p>⚠️ <strong>注意</strong>：以下链接指向的文档可能尚未完成或位置可能变化</p></blockquote>
+<ul><li>下一章：<a href="./05-client-server-arch.md">第五章：客户端-服务端架构</a> - 理解客户端和服务端如何共享注册表</li>
+<li>下一章：<a href="./06-shared-constants.md">第六章：共享常量</a> - 了解游戏的基本数值设定</li>
+<li>进阶主题：数据包系统 - 理解动态注册表如何被数据包修改</li></ul></p>
+<p><hr></p>
+<blockquote><p>📝 <strong>提示</strong>：注册表系统是 Minecraft 源码的核心，几乎所有系统都会用到它。确保你完全理解这章内容后再继续！</p></blockquote>
+<p><hr></p>
+<p><em>文档版本：Minecraft 1.21, Protocol 767, World Version 3953</em>
+<em>最后更新：2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-sourcecode-guide.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            源码查找指南
+        </a><a href="05-client-server-arch.html" class="next">
+            客户端-服务端
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

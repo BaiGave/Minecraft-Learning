@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>25 damage system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="active">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>25 damage system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    25 damage system
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第25章 伤害系统——攻击与防御的机制</h1>
+<blockquote><p><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p></blockquote>
+<h2 id="目标">目标</h2>
+<p><ul><li>理解伤害如何计算</li>
+<li>掌握 DamageSource（伤害来源）</li>
+<li>了解护甲计算机制</li>
+<li>了解附魔保护机制</li></ul></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>了解 LivingEntity（第22章）</li>
+<li>了解实体属性系统（第24章）</li></ul></p>
+<h2 id="核心概念">核心概念</h2>
+<h3>什么是伤害系统？</h3>
+<p><strong>伤害系统</strong> 是 Minecraft 中决定"攻击造成多少伤害"的机制。它涉及到攻击者、被攻击者、武器、防具、药水效果等多个因素。</p>
+<pre class="code-block"><code class="language-text">伤害计算流程：
+
+攻击者 ──→ 武器伤害 ──→ 附魔加成 ──→ 基础伤害
+                                    │
+                                    ▼
+                              护甲减伤 ──→ 韧性减伤 ──→ 吸收值减伤 ──→ 最终伤害
+                                    │
+                                    ▼
+                              生命值扣除 ──→ 受伤动画 ──→ 死亡判定</code></pre>
+<h3>生活中的比喻</h3>
+<pre class="code-block"><code class="language-text">伤害系统就像打架：
+
+- 攻击者 = 出拳的人
+- 武器 = 拳头硬度（拳头 vs 刀子）
+- 附魔 = 武术技巧加成
+- 护甲 = 防具保护
+- 韧性 = 防具质量
+- 吸收值 = 额外血量
+
+最终扣血 = 攻击伤害 - 防具保护</code></pre>
+<h3>伤害来源分类</h3>
+<table class="data-table"><thead><tr><th>伤害类型</th><th>中文名</th><th>示例</th><th>特点</th></tr></thead><tbody><tr><td>mobAttack</td><td>生物攻击</td><td>被僵尸打</td><td>可格挡</td></tr><tr><td>playerAttack</td><td>玩家攻击</td><td>被玩家打</td><td>可格挡</td></tr><tr><td>projectile</td><td>抛射物</td><td>被箭射</td><td>可格挡</td></tr><tr><td>fallDamage</td><td>摔落伤害</td><td>跳崖</td><td>护甲不保护</td></tr><tr><td>inFire</td><td>火焰伤害</td><td>站在火里</td><td>护甲保护</td></tr><tr><td>onFire</td><td>燃烧伤害</td><td>着火持续掉血</td><td>护甲保护</td></tr><tr><td>drowning</td><td>溺水伤害</td><td>在水下太久</td><td>护甲不保护</td></tr><tr><td>magic</td><td>魔法伤害</td><td>药水伤害</td><td>部分保护</td></tr><tr><td>explosion</td><td>爆炸伤害</td><td>苦力怕爆炸</td><td>护甲保护</td></tr><tr><td>wither</td><td>凋零伤害</td><td>凋零效果</td><td>部分保护</td></tr><tr><td>generic</td><td>一般伤害</td><td>kill 命令</td><td>无敌也死</td></tr></tbody></table>
+<h2 id="图解">图解</h2>
+<h3>伤害计算流程图</h3>
+<div class="mermaid">flowchart TD
+    A[开始伤害计算] --> B{伤害类型检查}
+
+    B -->|实体攻击| C[获取武器基础伤害]
+    B -->|环境伤害| D[使用默认伤害值]
+    B -->|魔法伤害| E[使用魔法伤害值]
+
+    C --> F{有附魔?}
+    D --> F
+    E --> F
+
+    F -->|是| G[应用附魔伤害加成]
+    F -->|否| H[继续下一步]
+
+    G --> H
+
+    H --> I{护甲保护?}
+
+    I -->|是| J[计算护甲减伤]
+    I -->|否| K[继续下一步]
+
+    J --> L[计算韧性减伤]
+    K --> L
+
+    L --> M[计算附魔保护]
+
+    M --> N{有吸收值?}
+
+    N -->|是| O[先扣吸收值]
+    N -->|否| P[直接扣生命值]
+
+    O --> P
+
+    P --> Q{生命值 <= 0?}
+
+    Q -->|是| R[触发死亡]
+    Q -->|否| S[播放受伤动画]</div>
+<h3>护甲减伤公式</h3>
+<pre class="code-block"><code class="language-text">护甲减伤公式：
+
+减伤百分比 = (护甲值 × 4) / (护甲值 × 4 + 8)
+
+护甲韧性影响（高伤害时）：
+
+有效护甲 = 护甲值 + (4 × 护甲韧性) / (护甲韧性 + 4)
+减伤百分比 = (有效护甲 × 4) / (有效护甲 × 4 + 8)</code></pre>
+<h3>附魔保护计算</h3>
+<div class="mermaid">flowchart LR
+    A[受伤伤害] --> B{伤害类型匹配?}
+
+    B -->|火焰| C[保护I-V: 火焰保护]
+    B -->|摔落| D[保护I-IV: 摔落保护]
+    B -->|射弹| E[保护I-IV: 弹射物保护]
+    B -->|爆炸| F[保护I-IV: 爆炸保护]
+    B -->|魔法| G[保护I-IV: 保护]
+    B -->|通用| H[保护I-IV: 通用保护]
+
+    C --> I[计算保护等级]
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+
+    I --> J[保护值 = 等级 × 1.5]
+    J --> K[最终伤害 = 原始伤害 - 保护值]</div>
+<h2 id="核心代码">核心代码</h2>
+<blockquote><p><strong>注意</strong>：以下代码基于 CFR 反编译结果，可能与实际源码略有差异。</p></blockquote>
+<h3>DamageSource（伤害来源）</h3>
+<pre class="code-block"><code class="language-java">public class DamageSource {
+
+    // 伤害来源类型
+    private final RegistryEntry&lt;DamageType&gt; type;
+
+    // 攻击者（造成伤害的实体）
+    @Nullable
+    private final Entity attacker;
+
+    // 伤害来源（武器/工具）
+    @Nullable
+    private final Entity source;
+
+    // 伤害位置（用于爆炸等）
+    @Nullable
+    private final Vec3d position;
+
+    // 创建伤害来源
+    public DamageSource(RegistryEntry&lt;DamageType&gt; type, @Nullable Entity source,
+                       @Nullable Entity attacker) {
+        this.type = type;
+        this.source = source;
+        this.attacker = attacker;
+    }
+
+    // 获取攻击者
+    @Nullable
+    public Entity getAttacker() {
+        return this.attacker;
+    }
+
+    // 获取武器
+    @Nullable
+    public ItemStack getWeaponStack() {
+        if (this.source != null) {
+            return this.source.getWeaponStack();
+        }
+        return null;
+    }
+
+    // 是否是直接攻击
+    public boolean isDirect() {
+        return this.attacker == this.source;
+    }
+}</code></pre>
+<h3>DamageSources（伤害来源工厂）</h3>
+<pre class="code-block"><code class="language-java">public class DamageSources {
+
+    // 生物攻击
+    public DamageSource mobAttack(LivingEntity attacker) {
+        return new DamageSource(DamageTypes.MOB_ATTACK, attacker, attacker);
+    }
+
+    // 玩家攻击
+    public DamageSource playerAttack(PlayerEntity attacker) {
+        return new DamageSource(DamageTypes.PLAYER_ATTACK, attacker, attacker);
+    }
+
+    // 射弹攻击
+    public DamageSource projectile(ProjectileEntity projectile, @Nullable Entity attacker) {
+        return new DamageSource(DamageTypes.PROJECTILE, projectile, attacker);
+    }
+
+    // 火焰伤害
+    public DamageSource inFire() {
+        return new DamageSource(DamageTypes.IN_FIRE);
+    }
+
+    // 燃烧伤害
+    public DamageSource onFire() {
+        return new DamageSource(DamageTypes.ON_FIRE);
+    }
+
+    // 摔落伤害
+    public DamageSource fall() {
+        return new DamageSource(DamageTypes.FALL);
+    }
+
+    // 溺水伤害
+    public DamageSource drown() {
+        return new DamageSource(DamageTypes.DROWN);
+    }
+
+    // 魔法伤害
+    public DamageSource magic(@Nullable LivingEntity attacker) {
+        return new DamageSource(DamageTypes.MAGIC, null, attacker);
+    }
+
+    // 凋零伤害
+    public DamageSource wither() {
+        return new DamageSource(DamageTypes.WITHER);
+    }
+
+    // 通用伤害（用于 kill 命令）
+    public DamageSource genericKill() {
+        return new DamageSource(DamageTypes.GENERIC);
+    }
+}</code></pre>
+<h3>伤害计算过程</h3>
+<pre class="code-block"><code class="language-java">public abstract class LivingEntity extends Entity {
+
+    // 吸收值（额外血量）
+    private float absorptionAmount;
+
+    // 受到伤害
+    public boolean damage(DamageSource source, float amount) {
+
+        // 1. 检查无敌
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        }
+
+        // 2. 客户端不处理伤害（服务端处理）
+        if (this.getWorld().isClient) {
+            return false;
+        }
+
+        // 3. 重置受伤时间
+        this.hurtTime = this.maxHurtTime = 10;
+
+        // 4. 计算最终伤害
+        float damage = amount;
+
+        // 5. 应用护甲减伤
+        damage = this.applyArmorToDamage(source, damage);
+
+        // 6. 应用附魔保护
+        damage = this.applyEnchantmentDamageProtections(source, damage);
+
+        // 7. 获取韧性减伤
+        float armorToughness = (float)this.getAttributeValue(EntityAttributes.GENERIC_ARMOR_TOUGHNESS);
+        damage = DamageUtil.getDamageLeft(damage, (float)this.getAttributeValue(EntityAttributes.GENERIC_ARMOR), armorToughness);
+
+        // 8. 应用击退抗性
+        damage = this.applyKnockbackResistance(damage, source);
+
+        // 9. 扣除吸收值
+        if (damage &gt; 0) {
+            this.absorptionAmount -= damage;
+            if (this.absorptionAmount &lt; 0) {
+                damage += this.absorptionAmount;
+                this.absorptionAmount = 0;
+            }
+        }
+
+        // 10. 扣除生命值
+        float healthBefore = this.getHealth();
+        this.setHealth(healthBefore - damage);
+
+        // 11. 记录伤害追踪
+        this.damageTracker.trackDamage(source, damage, amount);
+
+        // 12. 播放受伤效果
+        if (damage &gt; 0) {
+            this.applyDamageEffects(source);
+            this.lastDamageTaken = damage;
+            this.lastDamageSource = source;
+            this.lastDamageTime = this.age;
+        }
+
+        // 13. 检查死亡
+        if (damage &gt;= healthBefore) {
+            this.die(source);
+        }
+
+        return true;
+    }
+
+    // 应用护甲减伤
+    protected float applyArmorToDamage(DamageSource source, float damage) {
+        // 检查是否可以通过护甲保护
+        if (!source.isUnblockable() &amp;&amp; !source.isSourceCreativePlayer()) {
+            int armor = (int)this.getAttributeValue(EntityAttributes.GENERIC_ARMOR);
+            float toughness = (float)this.getAttributeValue(EntityAttributes.GENERIC_ARMOR_TOUGHNESS);
+
+            // 护甲减伤公式
+            damage = DamageUtil.getDamageLeft(damage, armor, toughness);
+        }
+        return damage;
+    }
+}</code></pre>
+<h3>护甲减伤公式实现</h3>
+<pre class="code-block"><code class="language-java">public class DamageUtil {
+
+    // 护甲减伤计算
+    public static float getDamageLeft(float damage, float armor, float armorToughness) {
+        // 应用韧性修正
+        float effectiveArmor = Math.min(armor, 20.0f + armorToughness * 4.0f);
+
+        // 护甲减伤百分比公式
+        // 20 点护甲 = 80% 减伤
+        // 10 点护甲 = 40% 减伤
+        // 5 点护甲 = 25% 减伤
+        float damageReduction = effectiveArmor / (effectiveArmor + 8.0f);
+
+        return damage * (1.0f - damageReduction);
+    }
+}</code></pre>
+<h3>附魔保护计算</h3>
+<pre class="code-block"><code class="language-java">public class EnchantmentHelper {
+
+    // 计算附魔保护
+    public static float getProtectionAmount(LivingEntity entity, DamageSource source) {
+        // 检查护甲上的附魔保护
+        Iterable&lt;ItemStack&gt; armor = entity.getArmorItems();
+        float protection = 0;
+
+        for (ItemStack stack : armor) {
+            if (stack.hasEnchantments()) {
+                protection += getProtectionAmount(stack, source);
+            }
+        }
+
+        // 限制最大保护值
+        return Math.min(protection, 25.0f); // 最高25点保护
+    }
+
+    // 获取单个物品的保护值
+    public static float getProtectionAmount(ItemStack stack, DamageSource source) {
+        // 获取物品上的附魔
+        // 根据伤害类型匹配不同的保护附魔
+
+        float totalProtection = 0;
+
+        // 遍历物品上的每个附魔
+        for (Enchantment enchantment : stack.getEnchantments()) {
+            if (enchantment instanceof ProtectionEnchantment protection) {
+                // 检查是否匹配伤害类型
+                if (protection.applicableTo(source)) {
+                    int level = EnchantmentHelper.getLevel(stack, enchantment);
+                    totalProtection += protection.getProtectionAmount(level);
+                }
+            }
+        }
+
+        return totalProtection;
+    }
+}</code></pre>
+<h2 id="实战演示">实战演示</h2>
+<h3>场景：创建自定义伤害来源</h3>
+<pre class="code-block"><code class="language-java">public class MyDamageTypes {
+
+    // 在 BootstrapTypes 中注册
+    public static final RegistryKey&lt;DamageType&gt; CUSTOM_HOLY =
+        RegistryKey.of(RegistryKeys.DAMAGE_TYPE, Identifier.of(&quot;mymod&quot;, &quot;holy&quot;));
+
+    // 创建伤害来源工厂方法
+    public DamageSource holyDamage(LivingEntity attacker) {
+        return new DamageSource(
+            RegistryEntry.of(DamageTypes.CUSTOM_HOLY),
+            attacker,
+            attacker
+        );
+    }
+}</code></pre>
+<h3>场景：创建一个造成真实伤害的武器</h3>
+<pre class="code-block"><code class="language-java">public class TrueDamageSwordItem extends SwordItem {
+
+    public TrueDamageSwordItem(ToolMaterial material, Settings settings) {
+        super(material, settings);
+    }
+
+    @Override
+    public boolean postNbtComponentInit(ItemStack stack) {
+        // 添加真实伤害属性
+        stack.addAttributeModifier(
+            EntityAttributes.GENERIC_ATTACK_DAMAGE,
+            new EntityAttributeModifier(
+                Identifier.of(&quot;true_damage_sword&quot;, &quot;damage&quot;),
+                10.0,  // 10点伤害
+                EntityAttributeModifier.Operation.ADD_VALUE
+            ),
+            EquipmentSlot.MAINHAND
+        );
+        return true;
+    }
+
+    // 重写攻击方法，让伤害不可格挡
+    @Override
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        // 造成额外的真实伤害（不计算护甲）
+        DamageSource source = attacker.getDamageSources().mobAttack(attacker);
+        // 由于护甲已经在 damage 方法中计算，我们需要手动绕过
+        target.setHealth(target.getHealth() - 5.0f);
+        return true;
+    }
+}</code></pre>
+<h3>场景：创建免疫特定伤害的护甲</h3>
+<pre class="code-block"><code class="language-java">public class FireproofArmorItem extends ArmorItem {
+
+    public FireproofArmorItem(ArmorMaterial material, ArmorSlot slot, Settings settings) {
+        super(material, slot, settings);
+    }
+
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public boolean isValidEnchantment(Enchantment enchantment) {
+        // 只能附魔火焰保护
+        return enchantment instanceof FireProtectionEnchantment;
+    }
+}
+
+// 或者通过属性实现
+public class FireproofLivingEntity extends LivingEntity {
+
+    @Override
+    protected boolean isAffectedByArmor(DamageSource source) {
+        // 火焰伤害不能通过护甲减少
+        return !source.isIn(DamageTypeTags.BYPASSES_ARMOR);
+    }
+}</code></pre>
+<h3>场景：计算最终伤害</h3>
+<pre class="code-block"><code class="language-java">public class DamageCalculator {
+
+    // 计算玩家对僵尸造成的伤害
+    public static float calculatePlayerDamage(PlayerEntity player, ZombieEntity zombie) {
+        // 1. 获取武器基础伤害
+        ItemStack weapon = player.getMainHandStack();
+        float baseDamage = weapon.isEmpty() ? 1.0f :
+            (float)weapon.getAttributeValue(EntityAttributes.GENERIC_ATTACK_DAMAGE);
+
+        // 2. 计算附魔加成
+        float enchantBonus = EnchantmentHelper.getAttackDamage(weapon,
+            EntityType.ZOMBIE, player);
+
+        float totalDamage = baseDamage + enchantBonus;
+
+        // 3. 应用难度缩放
+        Difficulty difficulty = player.getWorld().getDifficulty();
+        if (difficulty == Difficulty.EASY) {
+            totalDamage *= 0.5f;
+        } else if (difficulty == Difficulty.HARD) {
+            totalDamage *= 1.5f;
+        }
+
+        // 4. 僵尸的护甲减伤
+        float zombieArmor = (float)zombie.getAttributeValue(EntityAttributes.GENERIC_ARMOR);
+        float zombieToughness = (float)zombie.getAttributeValue(EntityAttributes.GENERIC_ARMOR_TOUGHNESS);
+        float afterArmor = DamageUtil.getDamageLeft(totalDamage, zombieArmor, zombieToughness);
+
+        // 5. 僵尸的附魔保护
+        float protection = EnchantmentHelper.getProtectionAmount(zombie,
+            player.getDamageSources().playerAttack(player));
+        float finalDamage = Math.max(0, afterArmor - protection);
+
+        return finalDamage;
+    }
+}</code></pre>
+<h2 id="小结">小结</h2>
+<p><ul><li><strong>伤害来源（DamageSource）</strong></li>
+</ul>   - 记录是谁造成的伤害
+   - 决定哪些保护附魔有效
+   - 决定是否可以格挡/保护</p>
+<p><ul><li><strong>伤害计算流程</strong></li>
+</ul>   - 基础伤害 → 护甲减伤 → 韧性减伤 → 吸收值 → 生命值扣除</p>
+<p><ul><li><strong>护甲减伤公式</strong></li>
+</ul>   - 减伤百分比 = (护甲 × 4) / (护甲 × 4 + 8)
+   - 20点护甲 = 80%减伤
+   - 韧性可以提高高伤害时的有效护甲</p>
+<p><ul><li><strong>附魔保护</strong></li>
+</ul>   - 不同伤害类型对应不同保护附魔
+   - 每级保护 = 1.5 点保护
+   - 最大25点保护</p>
+<p><ul><li><strong>无敌帧（假）</strong></li>
+</ul>   - 受伤后有一段时间的受伤动画
+   - 可以检查 <code>hurtTime > 0</code> 来判断</p>
+<h2 id="练习">练习</h2>
+<h3>练习 1：创建无敌武器</h3>
+<pre class="code-block"><code class="language-java">// 提示：设置 GENERIC_ATTACK_DAMAGE 属性</code></pre>
+<h3>练习 2：创建护甲套装效果</h3>
+<pre class="code-block"><code class="language-java">// 提示：在装备变化时检查套装数量</code></pre>
+<h3>练习 3：创建火抗药水</h3>
+<pre class="code-block"><code class="language-java">// 提示：修改 isAffectedByArmor 对火焰伤害返回 false</code></pre>
+<h2 id="相关链接">相关链接</h2>
+<h3>源码文件位置</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>DamageSource.java</td><td><code>net/minecraft/entity/damage/DamageSource.java</code></td><td>伤害来源</td></tr><tr><td>EntityDamageHandler.java</td><td><code>net/minecraft/entity/damage/EntityDamageHandler.java</code></td><td>伤害处理</td></tr><tr><td>DamageTypes.java</td><td><code>net/minecraft/world/DamageTypes.java</code></td><td>原版伤害类型</td></tr></tbody></table>
+<ul><li><strong>上一章</strong>：<a href="./24-entity-attributes.md">第24章 实体属性系统</a></li>
+<li><strong>下一章</strong>：<a href="./26-spawn-system.md">第26章 生成系统</a></li>
+<li><strong>相关源码</strong>：</li>
+</ul>  - <code>net/minecraft/entity/damage/DamageSource.java</code> - 伤害来源
+  - <code>net/minecraft/entity/damage/DamageSources.java</code> - 伤害来源工厂
+  - <code>net/minecraft/entity/DamageUtil.java</code> - 伤害计算工具
+  - <code>net/minecraft/enchantment/EnchantmentHelper.java</code> - 附魔计算
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="24-entity-attributes.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            属性系统
+        </a><a href="26-spawn-system.html" class="next">
+            生成系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

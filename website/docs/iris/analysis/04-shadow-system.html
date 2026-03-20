@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 shadow system - Iris 光影</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #E07A5F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #E07A5F 0, #F2CC8F 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #E07A5F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #E07A5F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
+        .info-box i { color: #E07A5F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #E07A5F; }
+        .docs-body h2 i { color: #E07A5F; }
+        .data-table th { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #E07A5F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #E07A5F, #E07A5F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-palette"></i>
+            ShaderPack 系统
+        </a>
+<a href="04-shadow-system.html" class="active">
+            <i class="fas fa-cube"></i>
+            阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-layer-group"></i>
+            帧缓冲与纹理
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            Uniform 管理
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>04 shadow system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    04 shadow system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris 阴影系统</h1>
+<blockquote><p>视锥体剔除、阴影渲染与高级优化</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Iris 的阴影系统是光影效果的核心，通过先进的视锥体剔除算法和优化的阴影贴图生成，实现高质量的动态阴影。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ShadowRenderer</code></td><td><code>shadows/ShadowRenderer.java</code></td></tr><tr><td><code>ShadowCompositeRenderer</code></td><td><code>shadows/ShadowCompositeRenderer.java</code></td></tr><tr><td><code>ShadowRenderTargets</code></td><td><code>shadows/ShadowRenderTargets.java</code></td></tr><tr><td><code>ShadowMatrices</code></td><td><code>shadows/ShadowMatrices.java</code></td></tr><tr><td><code>AdvancedShadowCullingFrustum</code></td><td><code>shadows/frustum/advanced/AdvancedShadowCullingFrustum.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. ShadowRenderer 核心结构">2. ShadowRenderer 核心结构</h2>
+<pre class="code-block"><code class="language-java">    // 阴影距离参数
+    private final float halfPlaneLength;        // 半平面长度
+    private final float nearPlane, farPlane;     // 近/远裁剪平面
+    private final float voxelDistance;           // 体素距离
+    private final float renderDistanceMultiplier; // 渲染距离乘数
+    private final int resolution;                // 阴影贴图分辨率
+    private final float intervalSize;            // 区间大小
+    
+    // 渲染控制
+    private final boolean shouldRenderTerrain;      // 渲染地形阴影
+    private final boolean shouldRenderTranslucent;  // 渲染半透明阴影
+    private final boolean shouldRenderEntities;     // 渲染实体阴影
+    private final boolean shouldRenderPlayer;      // 渲染玩家阴影
+    
+    // 剔除状态
+    private final ShadowCullState packCullingState;  // 光影包剔除模式
+    private FrustumHolder terrainFrustumHolder;      // 地形视锥体
+    private FrustumHolder entityFrustumHolder;        // 实体视锥体
+    
+    // 渲染缓冲
+    private final RenderBuffers buffers;
+}</code></pre>
+<p><hr></p>
+<h2 id="3. 渲染流程">3. 渲染流程</h2>
+<h3>3.1 renderShadows()</h3>
+<pre class="code-block"><code class="language-java">    // 1. 检查阴影距离
+    if (IrisVideoSettings.getOverriddenShadowDistance(...) == 0) {
+        return;
+    }
+    
+    ACTIVE = true;
+    
+    // 2. 创建阴影相机
+    PoseStack modelView = createShadowModelView(this.sunPathRotation, this.intervalSize);
+    MODELVIEW = new Matrix4f(modelView.last().pose());
+    
+    // 3. 创建视锥体
+    terrainFrustumHolder = createShadowFrustum(renderDistanceMultiplier, terrainFrustumHolder);
+    FRUSTUM = terrainFrustumHolder.getFrustum();
+    
+    // 4. 设置投影矩阵
+    Matrix4f shadowProjection = ShadowMatrices.createOrthoMatrix(
+        halfPlaneLength, nearPlane, farPlane);
+    PROJECTION = shadowProjection;
+    
+    // 5. 禁用背面剔除（防止山峰无阴影）
+    RenderSystem.disableCull();
+    
+    // 6. 渲染不透明地形
+    if (shouldRenderTerrain) {
+        levelRenderer.invokeRenderSectionLayer(RenderType.solid(), ...);
+        levelRenderer.invokeRenderSectionLayer(RenderType.cutout(), ...);
+        levelRenderer.invokeRenderSectionLayer(RenderType.cutoutMipped(), ...);
+    }
+    
+    // 7. 渲染实体
+    if (shouldRenderEntities) {
+        renderEntities(...);
+    }
+    
+    // 8. 渲染方块实体
+    if (shouldRenderBlockEntities) {
+        ShadowRenderingState.renderBlockEntities(...);
+    }
+    
+    // 9. 复制半透明深度
+    copyPreTranslucentDepth();
+    
+    // 10. 渲染半透明地形
+    if (shouldRenderTranslucent) {
+        levelRenderer.invokeRenderSectionLayer(RenderType.translucent(), ...);
+    }
+    
+    // 11. 生成 Mipmap
+    generateMipmaps();
+    
+    // 12. 恢复状态
+    RenderSystem.enableCull();
+    ACTIVE = false;
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 视锥体剔除系统">4. 视锥体剔除系统</h2>
+<h3>4.1 视锥体类型</h3>
+<pre class="code-block"><code class="language-java">    // 根据配置选择不同的剔除策略
+    
+    if (packCullingState == ShadowCullState.DISTANCE) {
+        // 距离剔除
+        return new BoxCullingFrustum(distance);
+    }
+    
+    if (packHasVoxelization) {
+        // 体素化检测：高级剔除
+        return new AdvancedShadowCullingFrustum(...);
+    }
+    
+    // 标准高级剔除
+    return new AdvancedShadowCullingFrustum(...);
+}</code></pre>
+<h3>4.2 高级视锥体剔除</h3>
+<pre class="code-block"><code class="language-java">    private final Vector3f shadowLightVectorFromOrigin;
+    private final BoxCuller culler;
+    
+    public AdvancedShadowCullingFrustum(Matrix4f modelView, Matrix4f projection,
+                                        Vector3f shadowLightVector, BoxCuller culler) {
+        super(modelView, projection);
+        this.shadowLightVectorFromOrigin = shadowLightVector;
+        this.culler = culler;
+    }
+    
+    @Override
+    public boolean isBoxVisible(double minX, double minY, double minZ,
+                               double maxX, double maxY, double maxZ) {
+        // 1. 检查 Box 与阴影光源的方向
+        Vector4f boxCenter = new Vector4f(
+            (float)(minX + maxX) / 2,
+            (float)(minY + maxY) / 2,
+            (float)(minZ + maxZ) / 2, 1.0f);
+        
+        // 2. 计算盒子中心到光源的方向
+        Vector4f toLight = shadowLightVectorFromOrigin.mul(boxCenter.w(), boxCenter);
+        
+        // 3. 如果盒子在光源的反方向，提前剔除
+        if (toLight.dot(boxCenter) &lt; 0) {
+            return false;
+        }
+        
+        // 4. 检查邻居遮挡
+        return culler.isCulled(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+}</code></pre>
+<h3>4.3 BoxCuller</h3>
+<p>用于高效检测盒子是否在视锥体内：</p>
+<pre class="code-block"><code class="language-java">    private final double distance;
+    private double offsetX, offsetY, offsetZ;
+    
+    public BoxCuller(double distance) {
+        this.distance = distance;
+    }
+    
+    public void setPosition(double x, double y, double z) {
+        this.offsetX = x;
+        this.offsetY = y;
+        this.offsetZ = z;
+    }
+    
+    public boolean isCulled(double minX, double minY, double minZ,
+                           double maxX, double maxY, double maxZ) {
+        // 球形距离检测
+        double centerX = (minX + maxX) / 2;
+        double centerY = (minY + maxY) / 2;
+        double centerZ = (minZ + maxZ) / 2;
+        
+        double dx = centerX - offsetX;
+        double dy = centerY - offsetY;
+        double dz = centerZ - offsetZ;
+        
+        // 球形距离
+        double distSq = dx * dx + dy * dy + dz * dz;
+        double maxDistSq = distance + Math.sqrt(
+            (maxX - minX) * (maxX - minX) +
+            (maxY - minY) * (maxY - minY) +
+            (maxZ - minZ) * (maxZ - minZ)
+        ) / 2;
+        
+        return distSq &gt; maxDistSq * maxDistSq;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 阴影矩阵计算">5. 阴影矩阵计算</h2>
+<h3>5.1 正交投影矩阵</h3>
+<pre class="code-block"><code class="language-java">    public static Matrix4f createOrthoMatrix(float size, float near, float far) {
+        Matrix4f ortho = new Matrix4f();
+        
+        // 正交投影参数
+        float range = far - near;
+        
+        ortho.m00(1.0f / size);    // (right - left) / 2
+        ortho.m11(1.0f / size);    // (top - bottom) / 2
+        ortho.m22(-2.0f / range);   // -2 / (far - near)
+        ortho.m33(1.0f);
+        ortho.m23(-(far + near) / range);  // -(far + near) / (far - near)
+        
+        return ortho;
+    }
+    
+    public static void createModelViewMatrix(PoseStack matrices, float shadowAngle,
+                                            float intervalSize, float sunPathRotation,
+                                            double cameraX, double cameraY, double cameraZ) {
+        matrices.pushPose();
+        
+        // 1. 移动到相机位置
+        matrices.translate(-cameraX, -cameraY, -cameraZ);
+        
+        // 2. 旋转到光源方向
+        float sunAngle = getSunAngle();
+        matrices.mulPose(Vector3f.YN.rotationDegrees(sunAngle * 360.0f));
+        
+        // 3. 应用区间旋转
+        if (intervalSize &gt; 1) {
+            matrices.mulPose(Vector3f.XN.rotationDegrees(
+                Math.floor(sunAngle * intervalSize) * (360.0f / intervalSize)));
+        }
+        
+        matrices.translate(cameraX, cameraY, cameraZ);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 阴影采样配置">6. 阴影采样配置</h2>
+<h3>6.1 深度采样设置</h3>
+<pre class="code-block"><code class="language-java">                                   PackShadowDirectives.DepthSamplingSettings settings) {
+    // 1. 硬件过滤
+    if (settings.getHardwareFiltering() &amp;&amp; !separateHardwareSamplers) {
+        // 启用硬件 PCF
+        IrisRenderSystem.texParameteri(glTextureId, GL_TEXTURE_2D, 
+            GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    }
+    
+    // 2. Swizzle (修复旧光影包兼容)
+    IrisRenderSystem.texParameteriv(glTextureId, GL_TEXTURE_2D, 
+        GL_TEXTURE_SWIZZLE_RGBA,
+        new int[]{GL_RED, GL_RED, GL_RED, GL_ONE});
+    
+    // 3. 过滤模式
+    if (!settings.getNearest()) {
+        IrisRenderSystem.texParameteri(glTextureId, GL_TEXTURE_2D, 
+            GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        IrisRenderSystem.texParameteri(glTextureId, GL_TEXTURE_2D, 
+            GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    } else {
+        IrisRenderSystem.texParameteri(glTextureId, GL_TEXTURE_2D, 
+            GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        IrisRenderSystem.texParameteri(glTextureId, GL_TEXTURE_2D, 
+            GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    
+    // 4. Mipmap
+    if (settings.getMipmap()) {
+        int filteringMode = settings.getNearest() ? 
+            GL_NEAREST_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR;
+        mipmapPasses.add(new MipmapPass(glTextureId, filteringMode));
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. ShadowRenderTargets">7. ShadowRenderTargets</h2>
+<pre class="code-block"><code class="language-java">    private final DepthTexture depthTexture;
+    private final RenderTarget[] colorTargets;
+    private final GlFramebuffer depthSourceFb;
+    
+    public ShadowRenderTargets(IrisRenderingPipeline pipeline, int resolution, 
+                              PackShadowDirectives directives) {
+        // 1. 创建深度纹理
+        this.depthTexture = new DepthTexture(&quot;shadowmap&quot;, resolution, resolution);
+        
+        // 2. 创建颜色目标
+        int colorBufferCount = directives.getColorBuffersEnabled();
+        this.colorTargets = new RenderTarget[colorBufferCount];
+        
+        for (int i = 0; i &lt; colorBufferCount; i++) {
+            this.colorTargets[i] = new RenderTarget(...);
+        }
+        
+        // 3. 创建帧缓冲
+        this.depthSourceFb = createFramebuffer();
+    }
+    
+    public void copyPreTranslucentDepth() {
+        // 复制半透明深度
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. 剔除模式枚举">8. 剔除模式枚举</h2>
+<pre class="code-block"><code class="language-java">    DEFAULT,           // 默认：根据是否检测到体素化自动选择
+    DISTANCE,          // 仅距离剔除
+    REVERSED,          // 反转剔除（用于特定光影包）
+    ADVANCED,          // 高级剔除
+    NONE;              // 无剔除
+}</code></pre>
+<p><hr></p>
+<h2 id="9. 性能优化">9. 性能优化</h2>
+<h3>9.1 剔除策略选择</h3>
+<table class="data-table"><thead><tr><th>策略</th><th>适用场景</th><th>性能</th></tr></thead><tbody><tr><td><strong>None</strong></td><td>调试/特殊效果</td><td>最慢</td></tr><tr><td><strong>Distance</strong></td><td>远距离阴影</td><td>快</td></tr><tr><td><strong>Advanced</strong></td><td>标准使用</td><td>中等</td></tr><tr><td><strong>Voxelization</strong></td><td>体素化光影包</td><td>智能</td></tr></tbody></table>
+<h3>9.2 优化技术</h3>
+<p><ul><li><strong>实体剔除</strong>：单独的实体视锥体，可以比地形更近</li>
+<li><strong>区块剔除</strong>：基于距离的快速剔除</li>
+<li><strong>Mipmap 生成</strong>：可选的阴影贴图 Mipmap</li>
+<li><strong>硬件过滤</strong>：GPU 端的 PCF 过滤</li></ul></p>
+<p><hr></p>
+<h2 id="10. 相关文档">10. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-rendering-pipeline.md">02-rendering-pipeline.md</a> - 渲染管线</li>
+<li><a href="03-shaderpack-system.md">03-shaderpack-system.md</a> - 着色器包系统</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-shaderpack-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            ShaderPack 系统
+        </a><a href="05-framebuffer-texture.html" class="next">
+            帧缓冲与纹理
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

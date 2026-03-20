@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 render pipeline - Sodium 优化</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #F2CC8F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #F2CC8F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
+        .info-box i { color: #F2CC8F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
+        .docs-body h2 i { color: #F2CC8F; }
+        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #F2CC8F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #F2CC8F, #F2CC8F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk 渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-eye-slash"></i>
+            遮挡剔除
+        </a>
+<a href="04-render-pipeline.html" class="active">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-palette"></i>
+            着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-plug"></i>
+            平台集成
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>04 render pipeline</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    04 render pipeline
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 渲染管线</h1>
+<blockquote><p>从 Minecraft Tick 到 GPU 渲染的完整流程</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Sodium 的渲染管线负责协调所有渲染组件，将 Minecraft 世界转换为 GPU 可识别的绘制命令。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>SodiumWorldRenderer</code></td><td><code>common/.../render/SodiumWorldRenderer.java</code></td></tr><tr><td><code>RenderSectionManager</code></td><td><code>common/.../render/chunk/RenderSectionManager.java</code></td></tr><tr><td><code>TerrainRenderPass</code></td><td><code>common/.../render/chunk/terrain/TerrainRenderPass.java</code></td></tr><tr><td><code>DefaultTerrainRenderPasses</code></td><td><code>common/.../render/chunk/terrain/DefaultTerrainRenderPasses.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 渲染 Pass 系统">2. 渲染 Pass 系统</h2>
+<h3>2.1 Pass 类型定义</h3>
+<pre class="code-block"><code class="language-java">    public final String name;
+    public final ChunkSectionLayer layer;
+    public final boolean isTranslucent;
+    public final boolean isCutout;
+    
+    // 着色器程序名称
+    public final String shaderProgram;
+    
+    // 渲染顺序（越大越后渲染）
+    public final int renderOrder;
+}</code></pre>
+<h3>2.2 默认 Pass 配置</h3>
+<pre class="code-block"><code class="language-java">    public static final TerrainRenderPass SOLID = new TerrainRenderPass(
+        &quot;solid&quot;,
+        ChunkSectionLayer.SOLID,
+        false,
+        false,
+        &quot;rendertype_solid&quot;,
+        0
+    );
+    
+    public static final TerrainRenderPass CUTOUT_MIPPED = new TerrainRenderPass(
+        &quot;cutout_mipped&quot;,
+        ChunkSectionLayer.CUTOUT_MIPPED,
+        false,
+        true,
+        &quot;rendertype_cutout_mipped&quot;,
+        1
+    );
+    
+    public static final TerrainRenderPass CUTOUT = new TerrainRenderPass(
+        &quot;cutout&quot;,
+        ChunkSectionLayer.CUTOUT,
+        false,
+        true,
+        &quot;rendertype_cutout&quot;,
+        2
+    );
+    
+    public static final TerrainRenderPass TRANSLUCENT = new TerrainRenderPass(
+        &quot;translucent&quot;,
+        ChunkSectionLayer.TRANSLUCENT,
+        true,     // 半透明
+        true,
+        &quot;rendertype_translucent&quot;,
+        3
+    );
+    
+    public static final TerrainRenderPass TIGER = new TerrainRenderPass(
+        &quot;tiger&quot;,
+        ChunkSectionLayer.TIGER,
+        false,
+        true,
+        &quot;rendertype_tiger&quot;,
+        4
+    );
+    
+    // 按渲染顺序排列
+    public static final TerrainRenderPass[] ORDERED_PASSES = {
+        SOLID,
+        CUTOUT_MIPPED,
+        CUTOUT,
+        TRANSLUCENT,
+        TIGER
+    };
+}</code></pre>
+<h3>2.3 Pass 渲染顺序</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    渲染 Pass 顺序                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. SOLID          → 不透明方块（石头、草方块等）              │
+│  2. CUTOUT_MIPPED  → 有纹理但支持 Mipmap（树叶等）           │
+│  3. CUTOUT         → 精细裁剪纹理（花、栅栏等）              │
+│  4. TRANSLUCENT    → 半透明方块（冰、染色玻璃等）            │
+│  5. TIGER          → 特殊 Pass（树叶等需二次渲染）          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="3. SodiumWorldRenderer">3. SodiumWorldRenderer</h2>
+<h3>3.1 类结构</h3>
+<pre class="code-block"><code class="language-java">    private final Minecraft client;
+    private final RenderSectionManager sectionManager;
+    private final DefaultChunkRenderer chunkRenderer;
+    private final EntityColorCache entityColorCache;
+    
+    // 相机状态
+    private Camera camera;
+    private Vec3 lastCameraPos;
+    private int lastCameraSectionX;
+    private int lastCameraSectionY;
+    private int lastCameraSectionZ;
+    
+    // 帧计数
+    private int frameIndex;
+    private int lastFrameIndex;
+}</code></pre>
+<h3>3.2 渲染入口</h3>
+<pre class="code-block"><code class="language-java">                   float tickDelta, 
+                   long limitTimeNano,
+                   boolean renderBlockOutline,
+                   Camera camera,
+                   MatrixStack matrixStack) {
+    
+    // 1. 更新相机状态
+    this.camera = camera;
+    updateCamera(tickDelta);
+    
+    // 2. 设置地形渲染
+    this.setupTerrain(camera, tickDelta);
+    
+    // 3. 渲染世界
+    this.renderWorld(levelRenderer, tickDelta, matrixStack);
+    
+    // 4. 渲染实体（使用原始渲染器）
+    this.renderEntities(levelRenderer, tickDelta, matrixStack);
+}
+
+private void setupTerrain(Camera camera, float tickDelta) {
+    // 相机位置
+    Vec3 cameraPos = camera.getPosition();
+    
+    // 检测相机移动
+    boolean cameraMoved = checkCameraMoved(cameraPos);
+    
+    if (cameraMoved) {
+        // 相机移动，触发遮挡剔除重新计算
+        this.sectionManager.update(camera, this.occlusionCuller);
+    }
+    
+    // 处理区块加载/卸载
+    this.sectionManager.processChunkUpdates();
+    
+    // 触发新的构建任务
+    this.chunkBuilder.resume();
+}
+
+private void renderWorld(LevelRenderer levelRenderer, 
+                        float tickDelta, 
+                        MatrixStack matrixStack) {
+    
+    ChunkRenderMatrices matrices = ChunkRenderMatrices.of(matrixStack);
+    
+    // 遍历所有 Pass
+    for (TerrainRenderPass pass : DefaultTerrainRenderPasses.ORDERED_PASSES) {
+        // 选择对应着色器
+        ChunkShader shader = this.shaderManager.getShader(pass);
+        
+        // 渲染该 Pass
+        this.chunkRenderer.render(matrices, commandList, renderLists, pass, shader);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4. RenderSectionManager">4. RenderSectionManager</h2>
+<h3>4.1 职责概述</h3>
+<p><code>RenderSectionManager</code> 负责管理世界中的所有区块渲染单元，协调区块加载、卸载、可见性计算和渲染列表更新。</p>
+<pre class="code-block"><code class="language-java">    private final ClientWorld level;
+    private final RenderSection[] sections;
+    
+    // 区块可见性状态
+    private final ChunkVisibility visibility;
+    private final OcclusionCuller occlusionCuller;
+    
+    // 渲染列表
+    private final ChunkRenderList[] renderLists;
+    private final RenderRegion[] regions;
+    
+    // 区块追踪
+    private final ChunkTracker tracker;
+    private final ChunkUpdateQueue updateQueue;
+    
+    // 相机状态
+    private int cameraX, cameraY, cameraZ;
+    private int cameraSectionX, cameraSectionY, cameraSectionZ;
+}</code></pre>
+<h3>4.2 区块更新流程</h3>
+<pre class="code-block"><code class="language-java">    // 1. 获取或创建 RenderSection
+    RenderSection section = getOrCreateSection(sectionX, sectionY, sectionZ);
+    
+    // 2. 更新邻居的可见性数据
+    updateNeighborVisibility(section);
+    
+    // 3. 加入渲染管理器
+    scheduleRebuild(section, BuildReason.SECTION_BUILT);
+}
+
+public void onSectionRemoved(int sectionX, int sectionY, int sectionZ) {
+    int sectionIndex = encodeSectionIndex(sectionX, sectionY, sectionZ);
+    RenderSection section = sections[sectionIndex];
+    
+    if (section != null) {
+        // 1. 更新邻居的可见性数据
+        updateNeighborVisibility(section);
+        
+        // 2. 从渲染管理器移除
+        section.setDirty();
+    }
+}
+
+private void scheduleRebuild(RenderSection section, BuildReason reason) {
+    // 根据距离确定优先级
+    BuildPriority priority = calculatePriority(section, reason);
+    
+    // 加入构建队列
+    this.chunkBuilder.submit(section, priority);
+}</code></pre>
+<h3>4.3 可见性更新</h3>
+<pre class="code-block"><code class="language-java">    // 1. 更新相机位置
+    updateCameraPosition(camera);
+    
+    // 2. 执行遮挡剔除
+    ChunkVisibility visibility = culler.findVisible(
+        camera,
+        maxRenderDistance,
+        useOcclusionCulling,
+        frameIndex
+    );
+    
+    // 3. 更新渲染列表
+    for (TerrainRenderPass pass : DefaultTerrainRenderPasses.ORDERED_PASSES) {
+        ChunkRenderList list = renderLists[pass.ordinal()];
+        list.update(visibility, cameraSectionX, cameraSectionY, cameraSectionZ);
+    }
+}
+
+private void updateCameraPosition(Camera camera) {
+    Vec3 pos = camera.getPosition();
+    
+    this.cameraX = (int) pos.x;
+    this.cameraY = (int) pos.y;
+    this.cameraZ = (int) pos.z;
+    
+    this.cameraSectionX = SectionPos.blockToSectionCoord(cameraX);
+    this.cameraSectionY = SectionPos.blockToSectionCoord(cameraY);
+    this.cameraSectionZ = SectionPos.blockToSectionCoord(cameraZ);
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 渲染列表迭代器">5. 渲染列表迭代器</h2>
+<h3>5.1 ChunkRenderListIterable</h3>
+<pre class="code-block"><code class="language-java">    // 获取可见的渲染列表数量
+    int getVisibleListCount();
+    
+    // 获取特定 Pass 的列表
+    ChunkRenderList getListForPass(TerrainRenderPass pass);
+}
+
+public class ChunkRenderListIterableImpl implements ChunkRenderListIterable {
+    private final ChunkRenderList[] lists;
+    
+    @Override
+    public Iterator&lt;ChunkRenderList&gt; iterator() {
+        return new FilteredIterator(lists, ChunkRenderList::hasGeometry);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 命令列表封装">6. 命令列表封装</h2>
+<h3>6.1 CommandList 接口</h3>
+<pre class="code-block"><code class="language-java">    void uploadData(GlBuffer buffer, ByteBuffer data);
+    
+    void bindBuffer(GlBuffer buffer);
+    void unbindBuffer();
+    
+    void bindTexture(int unit, GlTexture texture);
+    void unbindTexture(int unit);
+    
+    void bindShader(GlShader shader);
+    void unbindShader();
+    
+    void setUniform(int location, UniformValue value);
+    
+    void drawElements(int mode, int count, int type, long indices);
+    void multiDrawElementsBaseVertex(int mode, int[] counts, int type, 
+                                      long[] indices, int[] baseVertices);
+    
+    void enableCull();
+    void disableCull();
+    void enableDepthTest();
+    void disableDepthTest();
+    
+    void depthFunc(int func);
+    void depthMask(boolean mask);
+    
+    void enableBlend();
+    void disableBlend();
+    void blendFunc(int srcFactor, int dstFactor);
+}</code></pre>
+<h3>6.2 RenderDevice 实现</h3>
+<pre class="code-block"><code class="language-java">    private static final ThreadLocal&lt;RenderDevice&gt; INSTANCE = 
+        ThreadLocal.withInitial(() -&gt; new RenderDevice());
+    
+    private CommandList commandList;
+    private DrawParameters drawParameters;
+    
+    public static RenderDevice get() {
+        return INSTANCE.get();
+    }
+    
+    public void execute(Command task) {
+        task.execute(commandList);
+    }
+    
+    public &lt;R&gt; R transform(Function&lt;CommandList, R&gt; function) {
+        return function.apply(commandList);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. 完整渲染流程">7. 完整渲染流程</h2>
+<h3>7.1 时序图</h3>
+<pre class="code-block"><code class="language-text">Minecraft Render Thread
+        │
+        ▼
+GameRenderer.render()
+        │
+        ├──────────────────────────────────────┐
+        │                                      │
+        ▼                                      ▼
+SodiumWorldRenderer.setupTerrain()     BlockEntityRendererDispatcher.render()
+        │                                      │
+        ├──► OcclusionCuller.findVisible()     │
+        │                                      │
+        ├──► RenderSectionManager.update()      │
+        │                                      │
+        └──► ChunkBuilder.resume()             │
+                │                              │
+                │    [Worker Threads]          │
+                │                              │
+                ▼                              ▼
+        RenderSectionManager.renderWorld()
+                │
+                ▼
+        ┌─────────────────────────────────────┐
+        │  foreach TerrainRenderPass:         │
+        │    DefaultChunkRenderer.render()    │
+        │    ├──► bindShader()                │
+        │    ├──► multiDrawElements()         │
+        │    └──► unbindShader()              │
+        └─────────────────────────────────────┘</code></pre>
+<h3>7.2 每帧执行的操作</h3>
+<table class="data-table"><thead><tr><th>阶段</th><th>操作</th><th>复杂度</th></tr></thead><tbody><tr><td><strong>Setup</strong></td><td>相机移动检测</td><td>O(1)</td></tr><tr><td><strong>Setup</strong></td><td>区块加载/卸载处理</td><td>O(n)</td></tr><tr><td><strong>Setup</strong></td><td>遮挡剔除</td><td>O(v) v=可见区块数</td></tr><tr><td><strong>Build</strong></td><td>网格构建（异步）</td><td>O(b) b=构建中的区块</td></tr><tr><td><strong>Render</strong></td><td>着色器绑定</td><td>O(p) p=Pass数量</td></tr><tr><td><strong>Render</strong></td><td>批处理绘制</td><td>O(r) r=Region数</td></tr></tbody></table>
+<hr></p>
+<h2 id="8. 与原版 Minecraft 的差异">8. 与原版 Minecraft 的差异</h2>
+<table class="data-table"><thead><tr><th>特性</th><th>原版 Minecraft</th><th>Sodium</th></tr></thead><tbody><tr><td>区块渲染</td><td>逐个渲染，每区块一次 Draw Call</td><td>批处理，多区块一次 Draw Call</td></tr><tr><td>网格构建</td><td>主线程</td><td>专用线程池</td></tr><tr><td>可见性计算</td><td>简单距离判断</td><td>完整图遍历 + 遮挡检测</td></tr><tr><td>Pass 排序</td><td>无</td><td>按材质类型排序</td></tr><tr><td>帧预算控制</td><td>无</td><td>基于时间的任务调度</td></tr></tbody></table>
+<hr></p>
+<h2 id="9. 相关文档">9. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-chunk-render-system.md">02-chunk-render-system.md</a> - 区块渲染系统</li>
+<li><a href="03-occlusion-culling.md">03-occlusion-culling.md</a> - 遮挡剔除</li>
+<li><a href="05-shader-system.md">05-shader-system.md</a> - 着色器系统</li>
+<li><a href="06-platform-integration.md">06-platform-integration.md</a> - 平台集成</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-occlusion-culling.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            遮挡剔除
+        </a><a href="05-shader-system.html" class="next">
+            着色器系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

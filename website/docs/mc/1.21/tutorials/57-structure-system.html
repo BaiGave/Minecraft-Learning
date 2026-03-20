@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>57 structure system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="active">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>57 structure system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    57 structure system
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第57章 结构系统 (Structure System)</h1>
+<h2 id="目标">目标</h2>
+<p><ul><li>理解结构系统的概念</li>
+<li>掌握 StructurePiece 的使用方法</li>
+<li>了解 Jigsaw 拼图结构生成器</li>
+<li>认识结构生成的完整流程</li></ul></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>世界生成基础</li>
+<li>生物群系系统</li>
+<li>方块放置系统</li></ul></p>
+<h2 id="核心概念">核心概念</h2>
+<h3>什么是结构系统？</h3>
+<p>把 Minecraft 的结构系统想象成<strong>乐高积木的拼装过程</strong>：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                 结构系统 = 乐高积木                      │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  🔧 基础零件                                            │
+│     └─ StructurePiece = 单个乐高块                     │
+│                                                         │
+│  🧩 拼图连接                                            │
+│     └─ Jigsaw = 乐高凸起和凹槽                        │
+│                                                         │
+│  📦 零件库                                              │
+│     └─ StructurePool = 乐高套装                         │
+│                                                         │
+│  🏗️ 拼装过程                                            │
+│     └─ StructureGenerator = 拼装说明书                 │
+│                                                         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3>Minecraft 中的结构</h3>
+<table class="data-table"><thead><tr><th>结构</th><th>生成方式</th><th>示例</th></tr></thead><tbody><tr><td>沙漠神殿</td><td>预定义</td><td>单一块状结构</td></tr><tr><td>要塞</td><td>Jigsaw</td><td>由多个房间拼接</td></tr><tr><td>村庄</td><td>Jigsaw</td><td>由房屋+道路拼接</td></tr><tr><td>林地府邸</td><td>Jigsaw</td><td>由房间和走廊拼接</td></tr><tr><td>下界要塞</td><td>Jigsaw</td><td>随机走廊组合</td></tr></tbody></table>
+<h2 id="图解：结构系统架构">图解：结构系统架构</h2>
+<div class="mermaid">flowchart TB
+    subgraph 核心类
+        S["Structure<br/>结构基类"]
+        JS["JigsawStructure<br/>拼图结构"]
+        SP["StructurePiece<br/>结构部件"]
+        PSP["PoolStructurePiece<br/>池结构部件"]
+    end
+    
+    subgraph 数据源
+        ST["StructureTemplate<br/>结构模板"]
+        Pool["StructurePool<br/>结构池"]
+        Pools["StructurePools<br/>结构池注册"]
+    end
+    
+    subgraph 生成器
+        SPG["StructurePoolBasedGenerator<br/>生成器"]
+        JBM["JigsawBlock<br/>拼图方块"]
+    end
+    
+    S --> JS
+    JS --> SPG
+    SPG --> PSP
+    PSP --> SP
+    
+    Pool --> SPG
+    Pools --> Pool
+    
+    ST --> PSP
+    JBM --> SPG
+    
+    style S fill:#ffcccc
+    style Pool fill:#ccffcc
+    style SPG fill:#ffffcc</div>
+<h3>Jigsaw 结构生成流程</h3>
+<div class="mermaid">sequenceDiagram
+    participant 世界 as WorldGen
+    participant 结构 as JigsawStructure
+    participant 生成器 as Generator
+    participant 池 as StructurePool
+    participant 模板 as StructureTemplate
+    
+    世界->>结构: 检查生物群系<br/>获取生成位置
+    
+    结构->>池: 获取起始池<br/>start_pool
+    
+    池->>模板: 随机选择一个元素
+    
+    生成器->>生成器: 查找起始拼图<br/>findStartingJigsawPos()
+    
+    Note over 生成器: 第一次拼装：<br/>放置起始模板
+    
+    loop 递归拼装
+        生成器->>生成器: 找到当前模板的<br/>所有Jigsaw方块
+        
+        For 每个Jigsaw方块
+            生成器->>池: 查找目标池<br/>pool="minecraft:xxx"
+            
+            池->>模板: 随机选择一个<br/>目标模板
+            
+            生成器->>生成器: 检查连接匹配<br/>attachmentMatches()
+            
+            alt 匹配成功
+                生成器->>生成器: 计算位置和旋转
+                生成器->>生成器: 添加到Piece列表
+            else 匹配失败
+                生成器->>生成器: 尝试备用池
+            end
+        End
+        
+        生成器->>生成器: 检查是否达到<br/>最大深度/大小
+    end
+    
+    生成器-->>世界: 返回所有StructurePiece
+    世界->>世界: 生成方块到世界中</div>
+<h2 id="StructurePiece 结构部件">StructurePiece 结构部件</h2>
+<h3>基础结构</h3>
+<pre class="code-block"><code class="language-java">public abstract class StructurePiece {
+    // 边界盒 - 定义这个部件占据的空间
+    protected BlockBox boundingBox;
+    
+    // 朝向 - 定义部件的方向
+    @Nullable
+    private Direction facing;
+    
+    // 镜像 - 水平翻转
+    private BlockMirror mirror;
+    
+    // 旋转 - 0°, 90°, 180°, 270°
+    private BlockRotation rotation;
+    
+    // 链长度 - 递归深度
+    protected int chainLength;
+    
+    // 类型标识
+    private final StructurePieceType type;
+}</code></pre>
+<h3>常用方法</h3>
+<pre class="code-block"><code class="language-java">protected BlockPos.Mutable offsetPos(int x, int y, int z) {
+    return new BlockPos.Mutable(
+        applyXTransform(x, z),   // X坐标变换
+        applyYTransform(y),      // Y坐标变换（加上边界盒最小Y）
+        applyZTransform(x, z)    // Z坐标变换
+    );
+}
+
+// 添加方块到世界
+protected void addBlock(StructureWorldAccess world, BlockState block, 
+                        int x, int y, int z, BlockBox box) {
+    BlockPos.Mutable pos = offsetPos(x, y, z);
+    if (!box.contains(pos)) return;  // 必须在边界盒内
+    world.setBlockState(pos, block, Block.NOTIFY_LISTENERS);
+}
+
+// 填充一个矩形区域
+protected void fillWithOutline(StructureWorldAccess world, BlockBox box,
+                               int minX, int minY, int minZ,
+                               int maxX, int maxY, int maxZ,
+                               BlockState outline, BlockState inside) {
+    // 填充空心矩形
+}</code></pre>
+<h3>创建自定义 StructurePiece</h3>
+<pre class="code-block"><code class="language-java">public class MyStructurePiece extends StructurePiece {
+    
+    public MyStructurePiece(StructurePieceType type, int length, 
+                             BlockBox boundingBox) {
+        super(type, length, boundingBox);
+    }
+    
+    public MyStructurePiece(StructurePieceType type, NbtCompound nbt) {
+        super(type, nbt);
+    }
+    
+    @Override
+    protected void writeNbt(StructureContext context, NbtCompound nbt) {
+        // 保存额外数据
+    }
+    
+    @Override
+    public void generate(StructureWorldAccess world, StructureAccessor accessor,
+                        ChunkGenerator generator, Random random,
+                        BlockBox box, ChunkPos chunkPos, BlockPos pivot) {
+        // 生成逻辑
+        BlockState wood = Blocks.OAK_PLANKS.getDefaultState();
+        BlockState air = Blocks.AIR.getDefaultState();
+        
+        // 填充 5x5x5 的空心立方体
+        fillWithOutline(world, box, 
+            0, 0, 0,  // 最小坐标
+            4, 4, 4,  // 最大坐标
+            wood, air, false  // 外层木头，内部空气
+        );
+    }
+}</code></pre>
+<h2 id="Jigsaw 结构管理器">Jigsaw 结构管理器</h2>
+<h3>JigsawBlock 方块</h3>
+<pre class="code-block"><code class="language-java">public class JigsawBlock {
+    // 连接方向
+    Direction facing = ...;
+    
+    // 目标池名称
+    String pool = &quot;minecraft:empty&quot;;
+    
+    // 目标拼图名称
+    String name = &quot;empty&quot;;
+    
+    // 优先级
+    int priority = 0;
+}</code></pre>
+<h3>连接规则</h3>
+<div class="mermaid">graph LR
+    A["Jigsaw A<br/>facing=south<br/>name=entrance"] 
+    -->|对接| B["Jigsaw B<br/>facing=north<br/>name=entrance"]
+    
+    style A fill:#3399ff,color:#fff
+    style B fill:#3399ff,color:#fff</div>
+<p>两个 Jigsaw 方块能够连接的条件：
+<ul><li><strong>方向相反</strong>：A 向南，B 向北</li>
+<li><strong>名称匹配</strong>：entrance 对 entrance</li>
+<li><strong>高度兼容</strong>：RIGID 对 RIGID 或TERRAIN_MATCHING</li></ul></p>
+<h3>StructurePool 结构池</h3>
+<pre class="code-block"><code class="language-java">public class StructurePool {
+    // 池的唯一标识
+    ResourceKey&lt;StructurePool&gt; key;
+    
+    // 池中的所有元素
+    List&lt;StructurePoolElement&gt; elements;
+    
+    // 当池为空时的后备
+    RegistryEntry&lt;StructurePool&gt; fallback;
+    
+    // 投影模式
+    Projection projection = Projection.RIGID;
+}</code></pre>
+<h3>投影模式</h3>
+<table class="data-table"><thead><tr><th>模式</th><th>描述</th><th>用途</th></tr></thead><tbody><tr><td><code>RIGID</code></td><td>严格高度</td><td>地牢、房间</td></tr><tr><td><code>TERRAIN_MATCHING</code></td><td>适应地形</td><td>地表建筑</td></tr></tbody></table>
+<h2 id="核心代码">核心代码</h2>
+<h3>注册新结构</h3>
+<pre class="code-block"><code class="language-java">public class MyStructure extends JigsawStructure {
+    public MyStructure(Config config, RegistryEntry&lt;StructurePool&gt; startPool,
+                      int size, HeightProvider startHeight, 
+                      boolean useExpansionHack) {
+        super(config, startPool, size, startHeight, useExpansionHack);
+    }
+    
+    @Override
+    public Optional&lt;StructurePosition&gt; getStructurePosition(
+            Structure.Context context) {
+        // 调用生成器
+        return StructurePoolBasedGenerator.generate(
+            context,
+            this.startPool,
+            Optional.empty(),
+            this.size,
+            ...其他参数
+        );
+    }
+}
+
+// 2. 在初始化时注册
+@Override
+public void onConfigured(RegistrationContext context, 
+                         MutableRegistry&lt;Structure&gt; registry) {
+    RegistryKey&lt;StructurePool&gt; poolKey = 
+        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, 
+            new Identifier(&quot;mymod&quot;, &quot;my_structure_pool&quot;));
+    
+    RegistryEntry&lt;StructurePool&gt; pool = context.register(
+        poolKey,
+        new StructurePool(poolKey, 
+            List.of(
+                new SinglePoolElement(&quot;mymod:my_start&quot;, Projection.RIGID),
+                // 更多元素...
+            ),
+            StructurePools.EMPTY  // 后备池
+        )
+    );
+    
+    registry.register(
+        new Identifier(&quot;mymod&quot;, &quot;my_structure&quot;),
+        new MyStructure(
+            new Structure.Config(
+                context.get(RegistryKeys.BIOME)
+                    .getOrThrow(PlainsBiome.KEY),
+                Map.of(),
+                GenerationStep.Feature.SURFACE_STRUCTURES,
+                StructureTerrainAdaptation.NONE
+            ),
+            pool,
+            10,  // 生成深度
+            HeightProvider.uniform(60, 80),  // 高度范围
+            false
+        )
+    );
+}</code></pre>
+<h3>StructurePieceType 注册</h3>
+<pre class="code-block"><code class="language-java">public static final StructurePieceType MY_PIECE_TYPE = 
+    StructurePieceType.register(&quot;my_mod:my_piece&quot;, MyStructurePiece::new);</code></pre>
+<h2 id="实战演示：创建一个简单的Jigsaw结构">实战演示：创建一个简单的Jigsaw结构</h2>
+<h3>步骤1：创建结构池 JSON</h3>
+<pre class="code-block"><code class="language-json">{
+    &quot;elements&quot;: [
+        {
+            &quot;element&quot;: {
+                &quot;location&quot;: &quot;mymod:my_start&quot;,
+                &quot;processors&quot;: &quot;minecraft:empty&quot;,
+                &quot;projection&quot;: &quot;rigid&quot;
+            },
+            &quot;weight&quot;: 1
+        }
+    ],
+    &quot;fallback&quot;: &quot;minecraft:empty&quot;
+}</code></pre>
+<h3>步骤2：创建拼图房间模板</h3>
+<p>在 <code>data/mymod/structures/</code> 创建 NBT 文件（使用 Structure Block 保存）</p>
+<h3>步骤3：添加Jigsaw方块</h3>
+<p>在结构模板中使用 Jigsaw Block：
+<ul><li><code>facing</code>: 连接方向</li>
+<li><code>pool</code>: 目标池，如 <code>mymod:my<em>next</em>room</code></li>
+<li><code>name</code>: 连接点名称</li></ul></p>
+<h3>步骤4：测试生成</h3>
+<pre class="code-block"><code class="language-text">/place structure mymod:my_structure ~ ~ ~</code></pre>
+<h2 id="小结">小结</h2>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                    结构系统                              │
+├─────────────────────────────────────────────────────────┤
+│  核心组件：                                             │
+│  • Structure = 结构定义                                 │
+│  • StructurePiece = 结构部件                            │
+│  • JigsawBlock = 拼图连接器                            │
+│  • StructurePool = 部件池                              │
+│  • StructurePoolBasedGenerator = 生成器                 │
+│                                                         │
+│  生成流程：                                             │
+│  查找起始位置 → 选择起始模板 → 递归拼装 → 完成生成      │
+│                                                         │
+│  Jigsaw 连接规则：                                      │
+│  • 方向相反                                            │
+│  • 名称匹配                                            │
+│  • 投影兼容                                            │
+│                                                         │
+│  常见结构类型：                                         │
+│  • 预定义结构：神殿、矿井                                │
+│  • Jigsaw结构：村庄、要塞、林地府邸                     │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h2 id="练习">练习</h2>
+<p><ul><li><strong>思考题</strong>：为什么要使用"池"而不是固定的结构模板列表？</li></ul></p>
+<p><ul><li><strong>实践题</strong>：创建一个由3个房间组成的简单地牢结构。</li></ul></p>
+<p><ul><li><strong>设计题</strong>：设计一个可以无限延伸的道路系统（类似村庄道路）。</li></ul></p>
+<p><ul><li><strong>调试题</strong>：使用 <code>/debug start</code> 生成结构，然后用 <code>/debug stop</code> 查看日志分析生成过程。</li></ul></p>
+<p><ul><li><strong>进阶题</strong>：如何让结构根据地形自动调整高度？</li></ul></p>
+<h2 id="相关链接">相关链接</h2>
+<p><ul><li><a href="https://minecraft.fandom.com/wiki/Structure">Minecraft Wiki: Structure</a></li>
+<li><a href="https://minecraft.fandom.com/wiki/Jigsaw_Block">Minecraft Wiki: Jigsaw Block</a></li>
+<li><a href="https://minecraft.fandom.com/wiki/Structure_Void">Minecraft Wiki: Structure Void</a></li>
+<li>相关源码：</li>
+</ul>  - <code>net.minecraft.world.gen.structure.Structure</code>
+  - <code>net.minecraft.world.gen.structure.JigsawStructure</code>
+  - <code>net.minecraft.structure.StructurePiece</code>
+  - <code>net.minecraft.structure.pool.StructurePoolBasedGenerator</code>
+  - <code>net.minecraft.structure.pool.StructurePool</code>
+  - <code>net.minecraft.block.JigsawBlock</code></p>
+<p><hr></p>
+<h3>源码文件位置</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>Structure.java</td><td><code>net/minecraft/world/gen/structure/Structure.java</code></td><td>结构基类</td></tr><tr><td>StructurePiece.java</td><td><code>net/minecraft/structure/StructurePiece.java</code></td><td>结构部件基类</td></tr><tr><td>JigsawBlock.java</td><td><code>net/minecraft/block/JigsawBlock.java</code></td><td>拼图方块</td></tr></tbody></table>
+<hr></p>
+<p><strong>关键词</strong>：Structure、StructurePiece、JigsawBlock、StructurePool
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="56-raid-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            袭击系统
+        </a><a href="98-project1-block.html" class="next">
+            新方块
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

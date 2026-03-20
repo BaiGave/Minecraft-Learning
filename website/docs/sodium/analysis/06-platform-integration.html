@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06 platform integration - Sodium 优化</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #F2CC8F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #F2CC8F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
+        .info-box i { color: #F2CC8F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
+        .docs-body h2 i { color: #F2CC8F; }
+        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #F2CC8F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #F2CC8F, #F2CC8F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk 渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-eye-slash"></i>
+            遮挡剔除
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-palette"></i>
+            着色器系统
+        </a>
+<a href="06-platform-integration.html" class="active">
+            <i class="fas fa-plug"></i>
+            平台集成
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>06 platform integration</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    06 platform integration
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 平台集成机制</h1>
+<blockquote><p>Fabric 和 NeoForge 的服务加载与 Mixin 配置</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Sodium 需要同时支持 Fabric 和 NeoForge 两个模组加载器。通过服务加载模式和 Mixin 配置实现平台无关的代码设计。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>平台</th><th>路径</th></tr></thead><tbody><tr><td><code>Services</code></td><td>Common</td><td><code>common/.../services/Services.java</code></td></tr><tr><td><code>FabricBlockAccess</code></td><td>Fabric</td><td><code>fabric/.../FabricBlockAccess.java</code></td></tr><tr><td><code>NeoForgeBlockAccess</code></td><td>NeoForge</td><td><code>neoforge/.../NeoForgeBlockAccess.java</code></td></tr><tr><td><code>SodiumFabricMod</code></td><td>Fabric</td><td><code>fabric/.../SodiumFabricMod.java</code></td></tr><tr><td><code>SodiumForgeMod</code></td><td>NeoForge</td><td><code>neoforge/.../SodiumForgeMod.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 服务加载模式">2. 服务加载模式</h2>
+<h3>2.1 Services 类</h3>
+<pre class="code-block"><code class="language-java">    private static final Map&lt;Class&lt;?&gt;, Object&gt; cache = new ConcurrentHashMap&lt;&gt;();
+    
+    public static &lt;T&gt; T load(Class&lt;T&gt; clazz) {
+        return cache.computeIfAbsent(clazz, Services::loadInternal);
+    }
+    
+    private static &lt;T&gt; T loadInternal(Class&lt;T&gt; clazz) {
+        // 获取服务加载器
+        ServiceLoader&lt;T&gt; loader = ServiceLoader.load(clazz, clazz.getClassLoader());
+        
+        // 遍历所有实现
+        Iterator&lt;T&gt; iterator = loader.iterator();
+        if (!iterator.hasNext()) {
+            throw new ServiceConfigurationError(&quot;No provider for &quot; + clazz.getName());
+        }
+        
+        T service = iterator.next();
+        
+        // 检查是否有多个实现
+        if (iterator.hasNext()) {
+            throw new ServiceConfigurationError(&quot;Multiple providers for &quot; + clazz.getName());
+        }
+        
+        return service;
+    }
+}</code></pre>
+<h3>2.2 服务接口定义</h3>
+<p><strong>PlatformBlockAccess</strong>：</p>
+<pre class="code-block"><code class="language-java">    PlatformBlockAccess INSTANCE = Services.load(PlatformBlockAccess.class);
+    
+    /**
+     * 获取方块的光照发射值
+     */
+    int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos);
+    
+    /**
+     * 检查方块是否应该跳过渲染
+     */
+    boolean shouldSkipRender(BlockState state);
+    
+    /**
+     * 获取方块的纹理
+     */
+    BlockRenderProperties getRenderProperties(BlockState state);
+    
+    /**
+     * 检查方块是否有大型碰撞形状
+     */
+    boolean hasLargeCollisionShape(BlockState state);
+}</code></pre>
+<p><strong>PlatformLevelAccess</strong>：</p>
+<pre class="code-block"><code class="language-java">    PlatformLevelAccess INSTANCE = Services.load(PlatformLevelAccess.class);
+    
+    /**
+     * 获取世界类型标识
+     */
+    WorldType getWorldType(ClientWorld world);
+    
+    /**
+     * 获取维度类型
+     */
+    DimensionType getDimensionType(ClientWorld world);
+    
+    /**
+     * 检查是否是过度世界
+     */
+    boolean isNether(ClientWorld world);
+}</code></pre>
+<h3>2.3 服务配置文件</h3>
+<p><strong>Fabric META-INF/services</strong>：</p>
+<pre class="code-block"><code class="language-text">fabric/src/main/resources/META-INF/services/
+└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess</code></pre>
+<p>文件内容：</p>
+<pre class="code-block"><code class="language-text">net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess
+# 或
+net.caffeinemc.mods.sodium.client.platform.linux.LinuxBlockAccess</code></pre>
+<p><strong>NeoForge META-INF/services</strong>：</p>
+<pre class="code-block"><code class="language-text">neoforge/src/main/resources/META-INF/services/
+└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess</code></pre>
+<p>文件内容：</p>
+<pre class="code-block"><code class="language-text">net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess</code></pre>
+<p><hr></p>
+<h2 id="3. Fabric 集成">3. Fabric 集成</h2>
+<h3>3.1 Mod 入口</h3>
+<pre class="code-block"><code class="language-java">public class SodiumFabricMod implements ClientModInitializer {
+    private static final String MOD_ID = &quot;sodium&quot;;
+    private static String version;
+    
+    @Override
+    public void onInitializeClient() {
+        version = FabricLoader.getInstance()
+            .getModContainer(MOD_ID)
+            .map(ModContainer::getMetadata)
+            .map(Version::getFriendlyString)
+            .orElse(&quot;unknown&quot;);
+        
+        // 初始化核心模块
+        SodiumClientMod.onInitialization(version);
+        
+        // 收集配置入口点
+        ConfigLoaderFabric.collectConfigEntryPoints();
+        
+        // 注册 FRAPI
+        FRAPIProvider.getInstance().register();
+        
+        // 注册 Flawless Frames
+        FabricLoader.getInstance()
+            .getEntrypoints(&quot;frex_flawless_frames&quot;, FlawlessFramesEntryPoint.class)
+            .forEach(ep -&gt; ep.accept(FlawlessFrames.getProvider()));
+        
+        SodiumFabricMod.LOGGER.info(&quot;Sodium initialized on Fabric&quot;);
+    }
+}</code></pre>
+<h3>3.2 Fabric 特定实现</h3>
+<pre class="code-block"><code class="language-java">    
+    @Override
+    public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+        // Fabric 实现
+        return state.getLightEmission(level, pos);
+    }
+    
+    @Override
+    public boolean shouldSkipRender(BlockState state) {
+        // 检查方块是否透明
+        return state.isSolid() &amp;&amp; state.getRenderShape() == RenderShape.INVISIBLE;
+    }
+    
+    @Override
+    public BlockRenderProperties getRenderProperties(BlockState state) {
+        RenderShape shape = state.getRenderShape();
+        return new BlockRenderProperties(
+            shape == RenderShape.SOLID,
+            shape == RenderShape.TRANSLUCENT,
+            state.isSolid()
+        );
+    }
+}</code></pre>
+<h3>3.3 Fabric Mixin 配置</h3>
+<pre class="code-block"><code class="language-json">{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
+  &quot;client&quot;: [
+    &quot;core.render.world.LevelRendererMixin&quot;,
+    &quot;core.render.world.sky.LevelSkyMixin&quot;,
+    &quot;core.render.world.clouds.CloudRendererMixin&quot;,
+    &quot;features.render.entity.EntityRendererMixin&quot;,
+    &quot;features.options.GameOptionsMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+<h3>3.4 LevelRenderer Mixin</h3>
+<pre class="code-block"><code class="language-java">public abstract class LevelRendererMixin implements WorldRenderer {
+    
+    @Shadow
+    @Final
+    private Minecraft client;
+    
+    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;renderLevel&quot;)
+    private void onRenderLevel(PoseStack matrices, 
+                               float tickDelta, 
+                               long limitTimeNano,
+                               boolean renderBlockOutline,
+                               Camera camera,
+                               GameRenderer gameRenderer,
+                               Matrix4f projectionMatrix,
+                               CallbackInfo ci) {
+        // 在渲染开始前调用 Sodium
+        SodiumWorldRenderer.getInstance()
+            .onRenderStarted((LevelRenderer)(Object)this, camera);
+    }
+    
+    @Inject(at = @At(&quot;RETURN&quot;), method = &quot;renderLevel&quot;)
+    private void onRenderLevelEnd(CallbackInfo ci) {
+        // 渲染结束后清理
+        SodiumWorldRenderer.getInstance().onRenderEnded();
+    }
+    
+    @Redirect(method = &quot;renderLevel&quot;,
+              at = @At(value = &quot;INVOKE&quot;, 
+                       target = &quot;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;compileChunks()V&quot;))
+    private void redirectCompileChunks(ChunkRenderDispatcher dispatcher) {
+        // 重定向到 Sodium 的异步编译
+        // 原版编译被禁用
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4. NeoForge 集成">4. NeoForge 集成</h2>
+<h3>4.1 Mod 入口</h3>
+<pre class="code-block"><code class="language-java">public class SodiumForgeMod {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    
+    public SodiumForgeMod(IEventBus modBus, ModContainer modContainer) {
+        // 注册配置屏幕
+        modContainer.registerExtensionPoint(IConfigScreenFactory.class, 
+            (minecraft, parent) -&gt; VideoSettingsScreen.createScreen(parent));
+        
+        // 初始化核心
+        SodiumClientMod.onInitialization(modContainer.getVersion());
+        
+        // 注册事件处理器
+        modBus.addListener(this::onClientSetup);
+        
+        // 注册 FRAPI
+        FRAPIProvider.getInstance().register();
+        
+        LOGGER.info(&quot;Sodium initialized on NeoForge&quot;);
+    }
+    
+    private void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -&gt; {
+            // 配置加载
+            ConfigLoaderForge.collectConfigEntryPoints();
+        });
+    }
+}</code></pre>
+<h3>4.2 NeoForge 特定实现</h3>
+<pre class="code-block"><code class="language-java">    
+    @Override
+    public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+        // NeoForge 实现
+        if (state.hasEmissiveLighting(level, pos)) {
+            return state.getEmissiveLight(level, pos);
+        }
+        return state.getLightEmission();
+    }
+    
+    @Override
+    public boolean shouldSkipRender(BlockState state) {
+        // NeoForge 的跳过渲染逻辑
+        return state.is(Blocks.AIR) || 
+               state.getRenderShape() == VoxelShape.EMPTY;
+    }
+    
+    @Override
+    public BlockRenderProperties getRenderProperties(BlockState state) {
+        VoxelShape shape = state.getOcclusionShape();
+        return new BlockRenderProperties(
+            !shape.isEmpty(),
+            state.useNeighborBrightness(),
+            state.isSolid()
+        );
+    }
+}</code></pre>
+<h3>4.3 NeoForge Mixin 配置</h3>
+<pre class="code-block"><code class="language-json">{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
+  &quot;client&quot;: [
+    &quot;platform.neoforge.LevelRendererMixin&quot;,
+    &quot;platform.neoforge.GameRendererMixin&quot;,
+    &quot;platform.neoforge.LevelSliceMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. Mixin 系统">5. Mixin 系统</h2>
+<h3>5.1 Mixin 优先级</h3>
+<pre class="code-block"><code class="language-java">@Mixin(value = Minecraft.class, priority = 1000)
+public class MinecraftMixin { ... }
+
+// 默认优先级
+@Mixin(ChunkRenderDispatcher.class)
+public class ChunkRenderDispatcherMixin { ... }
+
+// 低优先级确保在其他 Mixin 之后执行
+@Mixin(value = BlockColors.class, priority = 999)
+public class BlockColorsMixin { ... }</code></pre>
+<h3>5.2 注入点类型</h3>
+<table class="data-table"><thead><tr><th>注解</th><th>用途</th></tr></thead><tbody><tr><td><code>@At("HEAD")</code></td><td>方法执行前</td></tr><tr><td><code>@At("RETURN")</code></td><td>方法正常返回后</td></tr><tr><td><code>@At("TAIL")</code></td><td>方法执行后（包括异常）</td></tr><tr><td><code>@At("INVOKE")</code></td><td>调用特定方法时</td></tr><tr><td><code>@At("FIELD")</code></td><td>访问字段时</td></tr></tbody></table>
+<h3>5.3 修改器类型</h3>
+<table class="data-table"><thead><tr><th>注解</th><th>用途</th></tr></thead><tbody><tr><td><code>@Inject</code></td><td>插入新代码</td></tr><tr><td><code>@Redirect</code></td><td>重定向方法调用</td></tr><tr><td><code>@ModifyArg</code></td><td>修改方法参数</td></tr><tr><td><code>@ModifyVariable</code></td><td>修改局部变量</td></tr><tr><td><code>@WrapOperation</code></td><td>包装方法调用</td></tr><tr><td><code>@Shadow</code></td><td>引用目标类的方法/字段</td></tr></tbody></table>
+<hr></p>
+<h2 id="6. Access Widener">6. Access Widener</h2>
+<h3>6.1 用途</h3>
+<p>Access Widener 允许 mod 访问 Minecraft 类的私有成员：</p>
+<pre class="code-block"><code class="language-text"># sodium-common.accesswidener
+accessWidener v2 named
+
+# 访问类
+accessible class net/minecraft/world/level/BlockAndTintGetter
+accessible class net/minecraft/world/level/Level
+accessible class net/minecraft/client/renderer/chunk/ChunkRenderDispatcher
+
+# 访问字段
+accessible field net/minecraft/world/level/Level watching
+accessible field net/minecraft/client/renderer/chunk/ChunkRenderDispatcher builtSections
+
+# 访问方法
+accessible method net/minecraft/world/level/Level getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;</code></pre>
+<h3>6.2 注册</h3>
+<pre class="code-block"><code class="language-kotlin">accessWidener(&quot;src/main/resources/sodium-${platform}.accesswidener&quot;)</code></pre>
+<p><hr></p>
+<h2 id="7. FRAPI 集成">7. FRAPI 集成</h2>
+<h3>7.1 FRAPI 是什么</h3>
+<p>FRAPI (Fabric Renderer API) 允许第三方 mod 使用 Sodium 的渲染系统。</p>
+<h3>7.2 FRAPIProvider</h3>
+<pre class="code-block"><code class="language-java">    private static final FRAPIProvider INSTANCE = new FRAPIProvider();
+    private boolean registered = false;
+    
+    public static FRAPIProvider getInstance() {
+        return INSTANCE;
+    }
+    
+    public void register() {
+        if (registered) return;
+        
+        // 注册到 FRAPI
+        Loader.instance().extend(
+            SodiumRenderer.INSTANCE,
+            SodiumWorldRendererAccessor.getInstance()
+        );
+        
+        registered = true;
+    }
+}</code></pre>
+<h3>7.3 Renderer 实现</h3>
+<pre class="code-block"><code class="language-java">    public static final SodiumRenderer INSTANCE = new SodiumRenderer();
+    
+    private SodiumRenderer() {}
+    
+    @Override
+    public MutableMesh mutableMesh() {
+        return new MutableMeshImpl();
+    }
+    
+    @Override
+    public MutableMesh mutableMesh(MeshBuilder&lt;?&gt; builder) {
+        return new MutableMeshImpl(builder);
+    }
+    
+    @Override
+    public MeshBuilder&lt;?&gt; meshBuilder() {
+        return SodiumMeshBuilder.INSTANCE;
+    }
+    
+    @Override
+    public void render(ModelBlockRenderer renderer, 
+                       BakedModel model,
+                       BlockState state,
+                       BlockPos pos,
+                       Level level,
+                       PoseStack matrixStack,
+                       RenderType renderType) {
+        // 使用 Sodium 的渲染管道
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. 配置系统">8. 配置系统</h2>
+<h3>8.1 Fabric 配置加载</h3>
+<pre class="code-block"><code class="language-java">    public static void collectConfigEntryPoints() {
+        // 收集所有配置选项
+        SodiumConfig.collectOptions(new FabricConfigOptions());
+        
+        // 监听配置变化
+        FabricLoader.getInstance().getConfigDir();
+    }
+}</code></pre>
+<h3>8.2 NeoForge 配置加载</h3>
+<pre class="code-block"><code class="language-java">    public static void collectConfigEntryPoints() {
+        // 收集配置
+        SodiumConfig.collectOptions(new ForgeConfigOptions());
+        
+        // 注册配置ChangedListener
+        ModLoadingContext.get().registerExtensionPoint(
+            IConfigScreenFactory.class,
+            (mc, parent) -&gt; VideoSettingsScreen.createScreen(parent)
+        );
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="9. 平台检测">9. 平台检测</h2>
+<pre class="code-block"><code class="language-java">public enum Platform {
+    FABRIC,
+    NEOFORGE;
+    
+    public static Platform getCurrent() {
+        // 通过类存在性检测
+        if (Class.forName(&quot;net.fabricmc.api.EnvType&quot;) != null) {
+            return FABRIC;
+        }
+        return NEOFORGE;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="10. 相关文档">10. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-chunk-render-system.md">02-chunk-render-system.md</a> - 区块渲染系统</li>
+<li><a href="04-render-pipeline.md">04-render-pipeline.md</a> - 渲染管线</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-shader-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            着色器系统
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

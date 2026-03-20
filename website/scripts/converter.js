@@ -5,17 +5,16 @@
  * 使用方法：
  * 1. 修改 config.js 中的模组配置
  * 2. 运行 node converter.js [模组名] [版本]
- *    - node converter.js mc        # 转换 MC 所有版本
- *    - node converter.js mc 1.21 # 只转换 MC 1.21
- *    - node converter.js iris    # 转换 Iris
- *    - node converter.js sodium   # 转换 Sodium
- *    - node converter.js all      # 转换所有
- *    - node converter.js list     # 列出所有可用模组
+ *    - node converter.js iris tutorials     # 转换 Iris 教程
+ *    - node converter.js iris analysis     # 转换 Iris 分析
+ *    - node converter.js mc 1.21 tutorials # 转换 MC 1.21 教程
+ *    - node converter.js mc 1.21 analysis # 转换 MC 1.21 分析
+ *    - node converter.js all              # 转换所有
  */
 
 const fs = require('fs');
 const path = require('path');
-const { modules, navigation, moduleCards, config } = require('./config');
+const { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config } = require('./config');
 
 // ============================================
 // Markdown 解析器
@@ -61,11 +60,7 @@ function parseMarkdown(text) {
     html = html.replace(/```([^\n]*)\n?([\s\S]*?)```/g, (match, langTag, code) => {
         const index = codeBlocks.length;
 
-        // 解析语言标签，支持多种写法：
-        //   java                          → 语言=java，无路径行
-        //   java:118:180:D:/X.java        → 语言=java，路径行已嵌入代码第一行
-        //   startLine                     → 特殊标记：语言=text，代码第一行是 :行号:行号:路径
-        //   startLine:118:180:D:/X.java   → 同上，路径行在标签里
+        // 解析语言标签
         let lang = 'text';
         let codeContent = code.replace(/\r\n/g, '\n').trimEnd();
 
@@ -73,13 +68,11 @@ function parseMarkdown(text) {
             const parts = langTag.trim().split(':');
             const first = parts[0].toLowerCase();
 
-            // startLine / line / linenumbers / filepath 等特殊标记 → 提取路径行后跳过
+            // startLine / line 等特殊标记
             const pathMarkers = ['startline', 'line', 'linenumbers', 'filepath', 'source', 'srclines'];
             if (pathMarkers.includes(first)) {
-                // 路径信息在代码第一行（:118:180:D:/.../X.java），去掉该行
                 const nlIdx = codeContent.indexOf('\n');
                 if (nlIdx !== -1) codeContent = codeContent.slice(nlIdx + 1);
-                // 尝试从 parts 里找 .java/.js/.glsl 等扩展名，映射为语言
                 const extMap = {
                     'java': 'java', 'py': 'python', 'js': 'javascript', 'ts': 'typescript',
                     'glsl': 'glsl', 'frag': 'glsl', 'vert': 'glsl', 'fs': 'glsl', 'vs': 'glsl',
@@ -98,7 +91,6 @@ function parseMarkdown(text) {
                 }
             } else {
                 lang = parts[0] || 'text';
-                // java/python/... 正常语言，后面若有 :行号:行号:路径，也去掉代码第一行
                 const line0 = codeContent.split('\n')[0];
                 if (
                     (line0.length > 1 && line0.charAt(1) === ':' && /[A-Za-z]/.test(line0.charAt(0))) ||
@@ -119,7 +111,7 @@ function parseMarkdown(text) {
         return `\n<!--CODEBLOCK_${index}-->\n`;
     });
 
-    // 行内代码（排除代码块中的）
+    // 行内代码
     html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
     // 表格
@@ -199,12 +191,10 @@ function parseMarkdown(text) {
     // 恢复代码块
     codeBlocks.forEach((block, index) => {
         const placeholder = `<!--CODEBLOCK_${index}-->`;
-        
+
         if (block.type === 'mermaid') {
-            // Mermaid 图表
             html = html.replace(placeholder, `<div class="mermaid">${block.code}</div>`);
         } else {
-            // 普通代码块
             const escapedCode = block.code
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -227,10 +217,17 @@ function parseMarkdown(text) {
 // HTML 生成器
 // ============================================
 
-function generateDocHTML(doc, module, navItems, version = null) {
-    const relativePath = version
-        ? `../../..`
-        : `../..`;
+function generateDocHTML(doc, module, navItems, version = null, docType = 'analysis') {
+    // 根据类型调整相对路径
+    let relativePath;
+    let baseDir;
+    if (version) {
+        relativePath = docType === 'tutorials' ? '../../../..' : '../../..';
+        baseDir = docType === 'tutorials' ? `../../..` : `../..`;
+    } else {
+        relativePath = docType === 'tutorials' ? '../../..' : '../..';
+        baseDir = `../..`;
+    }
 
     const sidebarLinks = navItems.map(item => {
         const isActive = doc.slug === item.file;
@@ -241,6 +238,10 @@ function generateDocHTML(doc, module, navItems, version = null) {
     }).join('\n');
 
     const prevNext = generatePrevNext(navItems, doc.slug);
+
+    // 文档类型标识
+    const docTypeLabel = docType === 'tutorials' ? '教程' : '源码分析';
+    const docTypeIcon = docType === 'tutorials' ? 'graduation-cap' : 'microscope';
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -274,7 +275,7 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .info-box { border-left: 4px solid ${module.color}; background: ${module.color}15; }
         .info-box i { color: ${module.color}; }
         .info-table td:first-child { font-weight: 600; color: #666; }
-        /* 与 styles.css 的 pre.code-block 一致：勿对 ::before 设 display:none，否则会盖住终端提示符 > */
+        /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
             box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
@@ -304,13 +305,6 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .code-reference::after {
             display: none !important;
         }
-        .code-reference-header::before {
-            content: '> ' !important;
-            color: #ffffff !important;
-        }
-        .code-reference-header::after {
-            display: none !important;
-        }
         .docs-body h2 { border-bottom: 2px solid ${module.color}; }
         .docs-body h2 i { color: ${module.color}; }
         .data-table th { background: ${module.colorGradient}; }
@@ -330,6 +324,25 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .docs-nav .dropdown-content a:hover {
             background: var(--gray-light);
             color: ${module.color};
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, ${module.color}, ${module.color}99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
         }
     </style>
 </head>
@@ -363,13 +376,13 @@ function generateDocHTML(doc, module, navItems, version = null) {
         <aside class="docs-sidebar">
             <div class="sidebar-header">
                 <h3>${module.name}</h3>
-                <span class="doc-badge">${version || module.versions?.[0] || 'v1.0'}</span>
+                <span class="doc-badge">${docType === 'tutorials' ? '教程' : '分析'}</span>
             </div>
             <nav class="sidebar-nav">
                 ${sidebarLinks}
             </nav>
             <div class="sidebar-footer">
-                <a href="${relativePath}/docs/${module.slug}/index.html">
+                <a href="${baseDir}/index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -381,11 +394,17 @@ function generateDocHTML(doc, module, navItems, version = null) {
                 <nav class="breadcrumb">
                     <a href="${relativePath}/index.html">首页</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="${relativePath}/docs/${module.slug}/index.html">${module.name}</a>
+                    <a href="${baseDir}/index.html">${module.name}</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>${doc.title}</span>
                 </nav>
-                <h1>${doc.title}</h1>
+                <h1>
+                    <span class="doc-type-tag ${docType}">
+                        <i class="fas fa-${docTypeIcon}"></i>
+                        ${docTypeLabel}
+                    </span>
+                    ${doc.title}
+                </h1>
                 <div class="docs-meta">
                     ${version ? `<span><i class="fas fa-code-branch"></i> ${version}</span>` : ''}
                     <span><i class="fas fa-clock"></i> ${doc.readingTime || config.defaults.readingTime} 分钟</span>
@@ -467,18 +486,40 @@ function generatePrevNext(navItems, currentSlug) {
     return `<div class="prev-next">${prev}${next}</div>`;
 }
 
-function generateModuleIndex(module, navItems, version = null) {
-    const relativePath = version ? '../../..' : '../..';
+function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, version = null) {
+    const relativePath = version ? '../../../..' : '../../..';
     const versionInfo = version ? ` - ${version}` : '';
 
-    const docCards = navItems.map((item, index) => `
-        <div class="doc-card" onclick="window.location.href='${item.file}.html'" style="animation-delay: ${index * 0.1}s">
-            <div class="doc-icon">
+    // 教程卡片
+    const tutorialCards = tutorialsNavItems.map((item, index) => `
+        <div class="doc-card" onclick="window.location.href='tutorials/${item.file}.html'" style="animation-delay: ${index * 0.1}s">
+            <div class="doc-icon tutorial-icon">
                 <i class="fas fa-${item.icon}"></i>
             </div>
             <div class="doc-content">
+                <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
                 <h3>${item.title}</h3>
-                <p>文档页面</p>
+                <p>学习指南</p>
+                <div class="doc-meta">
+                    <span><i class="fas fa-clock"></i> ${config.defaults.readingTime} 分钟</span>
+                </div>
+            </div>
+            <div class="doc-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    `).join('');
+
+    // 分析卡片
+    const analysisCards = analysisNavItems.map((item, index) => `
+        <div class="doc-card" onclick="window.location.href='analysis/${item.file}.html'" style="animation-delay: ${(tutorialsNavItems.length + index) * 0.1}s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-${item.icon}"></i>
+            </div>
+            <div class="doc-content">
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>${item.title}</h3>
+                <p>深度解析</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> ${config.defaults.readingTime} 分钟</span>
                 </div>
@@ -523,7 +564,8 @@ function generateModuleIndex(module, navItems, version = null) {
         .page-hero { background: ${module.colorGradient}; }
         .page-hero .hero-badge { background: rgba(255,255,255,0.2); }
         .page-hero .stat-number { color: rgba(255,255,255,0.9); }
-        .doc-icon { background: ${module.colorGradient} !important; }
+        .doc-icon.tutorial-icon { background: ${module.colorGradient} !important; }
+        .doc-icon.analysis-icon { background: linear-gradient(135deg, #E07A5F, #F2CC8F) !important; }
         .section-header { text-align: center; margin-bottom: 40px; }
         .version-selector { text-align: center; margin-bottom: 30px; }
         .version-dropdown {
@@ -534,6 +576,42 @@ function generateModuleIndex(module, navItems, version = null) {
             background: white;
             color: var(--text-primary);
             cursor: pointer;
+        }
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gray-light), transparent);
+        }
+        .section-divider span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .doc-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .doc-type-badge.tutorial {
+            background: linear-gradient(135deg, ${module.color}, ${module.color}99);
+            color: white;
+        }
+        .doc-type-badge.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
         }
     </style>
 </head>
@@ -573,7 +651,7 @@ function generateModuleIndex(module, navItems, version = null) {
             <p class="hero-subtitle">深入理解 ${module.name} 的核心架构与实现细节</p>
             <div class="hero-stats">
                 <div class="stat">
-                    <span class="stat-number">${navItems.length}</span>
+                    <span class="stat-number">${tutorialsNavItems.length + analysisNavItems.length}</span>
                     <span class="stat-label">核心文档</span>
                 </div>
                 ${version ? `<div class="stat">
@@ -587,17 +665,86 @@ function generateModuleIndex(module, navItems, version = null) {
     <section class="section">
         <div class="container">
             ${versionSelector}
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-file-alt"></i>
-                    文档列表
-                </h2>
+
+            <!-- 教程/分析切换标签 -->
+            ${analysisNavItems.length > 0 ? `
+            <div class="doc-type-tabs" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;">
+                <button class="tab-btn active" onclick="switchDocType('tutorials')" style="padding: 10px 20px; border: 2px solid ${module.color}; background: ${module.color}; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-graduation-cap"></i> 教程
+                </button>
+                <button class="tab-btn" onclick="switchDocType('analysis')" style="padding: 10px 20px; border: 2px solid ${module.color}; background: white; color: ${module.color}; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-microscope"></i> 分析
+                </button>
             </div>
-            <div class="docs-grid">
-                ${docCards}
+            ` : ''}
+
+            <!-- 教程部分 -->
+            <div id="tutorialsSection" class="doc-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程 ${version || ''}
+                    </h2>
+                </div>
+                <div class="docs-grid">
+                    ${tutorialCards || '<div class="empty-state"><i class="fas fa-folder-open"></i><p>暂无教程文档</p></div>'}
+                </div>
             </div>
+
+            <!-- 分析部分 -->
+            ${analysisNavItems.length > 0 ? `
+            <div id="analysisSection" class="doc-section" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-microscope"></i>
+                        源码分析 ${version || ''}
+                    </h2>
+                </div>
+                <div class="docs-grid">
+                    ${analysisCards}
+                </div>
+            </div>
+            ` : ''}
         </div>
     </section>
+
+    <script>
+        function switchDocType(type) {
+            const tutorialsSection = document.getElementById('tutorialsSection');
+            const analysisSection = document.getElementById('analysisSection');
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(type === 'tutorials' ? '教程' : '分析')) {
+                    btn.classList.add('active');
+                    if (type === 'tutorials') {
+                        btn.style.background = '${module.color}';
+                        btn.style.color = 'white';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.color = '${module.color}';
+                    }
+                } else {
+                    if (type === 'tutorials') {
+                        btn.style.background = 'white';
+                        btn.style.color = '${module.color}';
+                    } else {
+                        btn.style.background = '${module.color}';
+                        btn.style.color = 'white';
+                    }
+                }
+            });
+            
+            if (type === 'tutorials') {
+                if (tutorialsSection) tutorialsSection.style.display = 'block';
+                if (analysisSection) analysisSection.style.display = 'none';
+            } else {
+                if (tutorialsSection) tutorialsSection.style.display = 'none';
+                if (analysisSection) analysisSection.style.display = 'block';
+            }
+        }
+    </script>
 
     <footer class="footer">
         <div class="container">
@@ -689,19 +836,46 @@ function generateModuleFooterLinks(relativePath) {
 // 转换逻辑
 // ============================================
 
-function getMarkdownFiles(sourceDir) {
+function getMarkdownFiles(sourceDir, recursive = true) {
     if (!fs.existsSync(sourceDir)) {
         return [];
     }
-    return fs.readdirSync(sourceDir)
-        .filter(f => {
-            const isMarkdown = config.markdown.extensions.some(ext => f.endsWith(ext));
-            const isNotIgnored = !config.markdown.ignorePrefixes.some(prefix => f.startsWith(prefix));
-            return isMarkdown && isNotIgnored;
-        });
+
+    const files = [];
+    
+    function scanDir(dir, basePath = '') {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            const relativePath = basePath ? path.join(basePath, entry.name) : entry.name;
+            
+            if (entry.isDirectory()) {
+                // 递归扫描子目录（但跳过 node_modules 等）
+                if (recursive && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+                    scanDir(fullPath, relativePath);
+                }
+            } else if (entry.isFile()) {
+                // 检查是否是 Markdown 文件
+                const isMarkdown = config.markdown.extensions.some(ext => entry.name.endsWith(ext));
+                const isNotIgnored = !config.markdown.ignorePrefixes.some(prefix => entry.name.startsWith(prefix));
+                
+                if (isMarkdown && isNotIgnored) {
+                    files.push({
+                        name: entry.name,
+                        path: fullPath,
+                        relativePath: relativePath
+                    });
+                }
+            }
+        }
+    }
+    
+    scanDir(sourceDir);
+    return files;
 }
 
-function convertModule(moduleKey, specificVersion = null) {
+function convertModule(moduleKey, specificVersion = null, docType = 'tutorials') {
     const module = modules[moduleKey];
     if (!module) {
         console.error(`错误: 未知的模组 "${moduleKey}"`);
@@ -709,27 +883,29 @@ function convertModule(moduleKey, specificVersion = null) {
     }
 
     const websiteRoot = path.resolve(__dirname, '..');
-    // 源文件统一从 website/ 同级的 content/ 目录读取，格式：
-    //   有版本: content/{slug}/{version}/analysis/
-    //   无版本: content/{slug}/analysis/
+
+    // 根据类型选择导航
+    const navConfig = docType === 'tutorials' ? tutorialsNavigation : analysisNavigation;
+    const navItems = navConfig[moduleKey] || [];
+
+    // 源文件路径
     let sourceDir;
     if (module.versions && module.versions.length > 0) {
         const version = specificVersion || module.defaultVersion || module.versions[0];
-        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'analysis');
+        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, docType);
     } else {
-        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'analysis');
+        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, docType);
     }
 
     if (!fs.existsSync(sourceDir)) {
-        console.log(`跳过 ${module.name}: 源目录不存在 (${sourceDir})`);
+        console.log(`跳过 ${module.name} ${docType}: 源目录不存在 (${sourceDir})`);
         return;
     }
 
-    const navItems = navigation[moduleKey] || [];
-    console.log(`\n转换 ${module.name}...`);
+    console.log(`\n转换 ${module.name} (${docType})...`);
 
-    // 转换为绝对路径
-    const outputDir = path.resolve(websiteRoot, module.docsDir);
+    // 输出目录
+    let outputDir = path.resolve(websiteRoot, module.docsDir);
 
     // 确保输出目录存在
     if (!fs.existsSync(outputDir)) {
@@ -743,52 +919,70 @@ function convertModule(moduleKey, specificVersion = null) {
             : module.versions;
 
         versionsToProcess.forEach(version => {
+            // 创建版本目录
             const versionDir = path.join(outputDir, version);
             if (!fs.existsSync(versionDir)) {
                 fs.mkdirSync(versionDir, { recursive: true });
             }
 
-            // 生成版本索引页
-            const indexContent = generateModuleIndex(module, navItems, version);
-            fs.writeFileSync(path.join(versionDir, 'index.html'), indexContent);
+            // 创建类型目录 (tutorials/analysis)
+            const typeDir = path.join(versionDir, docType);
+            if (!fs.existsSync(typeDir)) {
+                fs.mkdirSync(typeDir, { recursive: true });
+            }
+
+            // 获取该版本的导航
+            const versionNavItems = navConfig[moduleKey] || [];
+
+            // 获取该版本的源目录
+            const versionSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, docType);
 
             // 转换该版本的所有文档
-            const files = getMarkdownFiles(sourceDir);
+            if (fs.existsSync(versionSourceDir)) {
+                const files = getMarkdownFiles(versionSourceDir);
 
-            files.forEach(file => {
-                const sourcePath = path.join(sourceDir, file);
-                const content = fs.readFileSync(sourcePath, 'utf-8');
-                const { metadata, content: markdownContent } = parseFrontmatter(content);
+                files.forEach(fileInfo => {
+                    const sourcePath = fileInfo.path;
+                    const content = fs.readFileSync(sourcePath, 'utf-8');
+                    const { metadata, content: markdownContent } = parseFrontmatter(content);
 
-                const slug = file.replace(/\.(md|markdown)$/, '');
-                const title = metadata.title || slug.replace(/-/g, ' ');
-                const readingTime = metadata.readingTime || config.defaults.readingTime;
+                    // 使用文件名（不含路径）作为 slug
+                    const slug = fileInfo.name.replace(/\.(md|markdown)$/, '');
+                    const title = metadata.title || slug.replace(/-/g, ' ');
+                    const readingTime = metadata.readingTime || config.defaults.readingTime;
 
-                const doc = {
-                    slug,
-                    title,
-                    readingTime,
-                    content: parseMarkdown(markdownContent)
-                };
+                    const doc = {
+                        slug,
+                        title,
+                        readingTime,
+                        content: parseMarkdown(markdownContent)
+                    };
 
-                const html = generateDocHTML(doc, module, navItems, version);
-                fs.writeFileSync(path.join(versionDir, `${slug}.html`), html);
-                console.log(`  - ${slug}.html`);
-            });
+                    const html = generateDocHTML(doc, module, versionNavItems, version, docType);
+                    fs.writeFileSync(path.join(typeDir, `${slug}.html`), html);
+                    console.log(`  - ${docType}/${slug}.html`);
+                });
+            }
         });
     } else {
         // 无版本分支的模组
-        const indexContent = generateModuleIndex(module, navItems);
-        fs.writeFileSync(path.join(outputDir, 'index.html'), indexContent);
 
+        // 创建类型目录
+        const typeDir = path.join(outputDir, docType);
+        if (!fs.existsSync(typeDir)) {
+            fs.mkdirSync(typeDir, { recursive: true });
+        }
+
+        // 转换所有文档
         const files = getMarkdownFiles(sourceDir);
 
-        files.forEach(file => {
-            const sourcePath = path.join(sourceDir, file);
+        files.forEach(fileInfo => {
+            const sourcePath = fileInfo.path;
             const content = fs.readFileSync(sourcePath, 'utf-8');
             const { metadata, content: markdownContent } = parseFrontmatter(content);
 
-            const slug = file.replace(/\.(md|markdown)$/, '');
+            // 使用文件名（不含路径）作为 slug
+            const slug = fileInfo.name.replace(/\.(md|markdown)$/, '');
             const title = metadata.title || slug.replace(/-/g, ' ');
             const readingTime = metadata.readingTime || config.defaults.readingTime;
 
@@ -799,13 +993,77 @@ function convertModule(moduleKey, specificVersion = null) {
                 content: parseMarkdown(markdownContent)
             };
 
-            const html = generateDocHTML(doc, module, navItems);
-            fs.writeFileSync(path.join(outputDir, `${slug}.html`), html);
-            console.log(`  - ${slug}.html`);
+            const html = generateDocHTML(doc, module, navItems, null, docType);
+            fs.writeFileSync(path.join(typeDir, `${slug}.html`), html);
+            console.log(`  - ${docType}/${slug}.html`);
         });
     }
 
-    console.log(`完成 ${module.name}`);
+    console.log(`完成 ${module.name} (${docType})`);
+}
+
+function generateModuleIndexPage(moduleKey) {
+    const module = modules[moduleKey];
+    if (!module) return;
+
+    const websiteRoot = path.resolve(__dirname, '..');
+    const outputDir = path.resolve(websiteRoot, module.docsDir);
+
+    if (module.versions && module.versions.length > 0) {
+        // 有版本分支 - 为每个版本生成索引页
+        module.versions.forEach(version => {
+            const versionDir = path.join(outputDir, version);
+
+            // 扫描该版本的教程和分析文件
+            const tutorialsSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'tutorials');
+            const analysisSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'analysis');
+
+            const actualTutorials = getActualDocFiles(tutorialsSourceDir);
+            const actualAnalysis = getActualDocFiles(analysisSourceDir);
+
+            // 生成索引页
+            const indexContent = generateModuleIndex(module, actualTutorials, actualAnalysis, version);
+            fs.writeFileSync(path.join(versionDir, 'index.html'), indexContent);
+            console.log(`生成 ${module.name} ${version} 索引页`);
+        });
+    } else {
+        // 无版本分支 - 扫描实际存在的文件
+        const tutorialsSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'tutorials');
+        const analysisSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'analysis');
+
+        const actualTutorials = getActualDocFiles(tutorialsSourceDir);
+        const actualAnalysis = getActualDocFiles(analysisSourceDir);
+
+        const indexContent = generateModuleIndex(module, actualTutorials, actualAnalysis);
+        fs.writeFileSync(path.join(outputDir, 'index.html'), indexContent);
+        console.log(`生成 ${module.name} 索引页`);
+    }
+}
+
+// 获取实际存在的文档文件，转换为导航项格式
+function getActualDocFiles(sourceDir, recursive = true) {
+    const files = getMarkdownFiles(sourceDir, recursive);
+    return files.map(f => {
+        const slug = f.name.replace(/\.(md|markdown)$/, '');
+        let title = slug.replace(/-/g, ' ');
+        let icon = 'file-alt';
+
+        try {
+            const content = fs.readFileSync(f.path, 'utf-8');
+            const { metadata } = parseFrontmatter(content);
+            if (metadata.title) {
+                title = metadata.title;
+            }
+        } catch (e) {
+            // 忽略读取错误
+        }
+
+        return {
+            file: slug,
+            title: title,
+            icon: icon
+        };
+    });
 }
 
 // ============================================
@@ -815,15 +1073,27 @@ function convertModule(moduleKey, specificVersion = null) {
 function main() {
     const args = process.argv.slice(2);
     const target = args[0] || 'all';
-    const specificVersion = args[1] || null;
+
+    // 解析参数：converter.js [模组] [版本] [类型]
+    // 版本可以是具体值或 'null'
+    // 类型可以是 'tutorials' 或 'analysis'
+    const specificVersion = args[1];
+    const docType = args[2] || 'tutorials';
 
     console.log('========================================');
     console.log('  MC 开发文档转换器');
     console.log('========================================\n');
 
     if (target === 'all') {
+        // 转换所有模组的所有文档
         Object.keys(modules).forEach(moduleKey => {
-            convertModule(moduleKey);
+            // 先生成索引页
+            generateModuleIndexPage(moduleKey);
+
+            // 转换教程
+            convertModule(moduleKey, null, 'tutorials');
+            // 转换分析
+            convertModule(moduleKey, null, 'analysis');
         });
     } else if (target === 'list') {
         console.log('可用模组:');
@@ -834,18 +1104,31 @@ function main() {
             } else {
                 console.log(`    版本: 无版本分支`);
             }
-            let displaySource = module.versions && module.versions.length > 0
-                ? `content/${module.slug}/{version}/analysis/`
-                : `content/${module.slug}/analysis/`;
-            console.log(`    源目录: ${displaySource}`);
         });
-    } else if (target === 'refresh-home') {
-        // 重新生成首页
-        console.log('更新首页...');
-        // 需要更新 index.html 和 catalog.html
-        // 这将在后续步骤中完成
+    } else if (target === 'index') {
+        // 只生成索引页
+        if (specificVersion && modules[specificVersion]) {
+            generateModuleIndexPage(specificVersion);
+        } else {
+            Object.keys(modules).forEach(moduleKey => {
+                generateModuleIndexPage(moduleKey);
+            });
+        }
     } else {
-        convertModule(target, specificVersion);
+        // 转换特定模组
+        // 参数格式: converter.js [模组] [版本] [类型]
+        // 例如: converter.js iris null tutorials
+        //       converter.js mc 1.21 tutorials
+        //       converter.js iris null analysis
+
+        const moduleKey = target;
+        const version = specificVersion === 'null' || specificVersion === undefined ? null : specificVersion;
+        const type = docType === 'tutorials' || docType === 'analysis' ? docType : 'tutorials';
+
+        console.log(`参数: 模块=${moduleKey}, 版本=${version}, 类型=${type}`);
+
+        generateModuleIndexPage(moduleKey);
+        convertModule(moduleKey, version, type);
     }
 
     console.log('\n========================================');

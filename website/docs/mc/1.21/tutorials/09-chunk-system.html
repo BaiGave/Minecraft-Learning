@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>09 chunk system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="active">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>09 chunk system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    09 chunk system
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>09 - 区块系统：Chunk 的奥秘</h1>
+<h2 id="目标">目标</h2>
+<p>学完本章后，你将理解：
+<ul><li>Chunk 是什么，为什么需要 Chunk</li>
+<li>ChunkSection 的结构（16x16x16 的方块层）</li>
+<li>懒加载机制是如何工作的</li>
+<li>方块数据是如何存储和访问的</li></ul></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li><a href="./08-world-core.md">08-世界核心.md</a> - 了解 World 类和坐标系统</li></ul></p>
+<h2 id="核心概念">核心概念</h2>
+<h3>Chunk 是什么？</h3>
+<p>想象你在一座巨大的城市中：</p>
+<p><ul><li><strong>如果把整座城市都装进内存</strong> → 电脑直接爆炸 💥</li>
+<li><strong>把城市分成很多街区，每个街区单独加载</strong> → 完美！这就是 Chunk 的思想</li></ul></p>
+<p><strong>Chunk（区块）</strong> = Minecraft 世界的一块<strong>16×16×世界高度</strong>的方块区域</p>
+<pre class="code-block"><code class="language-text">        俯视图（从天空往下看）
+
+    ┌──────────────────────────────┐
+    │                              │
+    │      ┌────────────┐          │
+    │      │            │          │
+    │      │   Chunk    │          │
+    │      │  16 × 16   │          │
+    │      │            │          │
+    │      └────────────┘          │
+    │                              │
+    └──────────────────────────────┘
+
+    侧视图（从侧面看）
+
+         世界高度 (~380层)
+    ┌─────────────────┐
+    │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│ ← 天空
+    │                 │
+    │   16 × 380     │ ← Chunk (垂直方向是整个可建造范围)
+    │                 │
+    │▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒│ ← 基岩层
+    └─────────────────┘
+         16 格宽</code></pre>
+<h3>为什么需要 Chunk？</h3>
+<p><strong>性能优化的关键</strong>：</p>
+<p><ul><li><strong>按需加载</strong>：只有玩家附近的 Chunk 才会加载</li>
+<li><strong>节省内存</strong>：不需要把整个世界都加载到内存</li>
+<li><strong>分块保存</strong>：存档时可以一个一个 Chunk 地保存</li>
+<li><strong>并行处理</strong>：多个 Chunk 可以同时生成</li></ul></p>
+<div class="mermaid">flowchart TD
+    subgraph Loading["Chunk 加载流程"]
+        A[玩家移动] --> B{检查 Chunk 是否已加载}
+        B -->|否| C[加载 Chunk]
+        B -->|是| D[使用现有 Chunk]
+        C --> E[从硬盘读取或生成]
+        E --> F[放入内存缓存]
+        F --> D
+        D --> G[获取/修改方块]
+    end
+
+    subgraph Unloading["Chunk 卸载流程"]
+        G --> H{玩家距离 Chunk > 加载范围?}
+        H -->|是| I[标记为待卸载]
+        I --> J{有玩家需要此 Chunk?}
+        J -->|否| K[从内存移除]
+        J -->|是| L[保留在内存]
+        K --> M[可选：保存到硬盘]
+    end</div>
+<h3>ChunkSection：方块的"楼层"</h3>
+<p>每个 Chunk 被分成多个 <strong>ChunkSection（区块截面）</strong>：</p>
+<p><ul><li><strong>每个 ChunkSection = 16×16×16 = 4096 个方块</strong></li>
+<li><strong>Chunk 的层数</strong> = 世界高度 ÷ 16</li></ul></p>
+<pre class="code-block"><code class="language-text">    Chunk 的结构（俯视图，每层是 16×16）
+
+    ┌────┬────┬────┬────┐
+    │Sec │Sec │Sec │Sec │  ← Section 索引（从下往上）
+    │ 0  │ 1  │ 2  │ 3  │     例如：高度 0-15 对应 Section 0
+    ├────┼────┼────┼────┤     高度 16-31 对应 Section 1
+    │Sec │Sec │Sec │Sec │     ...
+    │ 4  │ 5  │ 6  │ 7  │
+    ├────┼────┼────┼────┤
+    │... │... │... │... │
+    ├────┼────┼────┼────┤
+    │Sec │Sec │Sec │Sec │
+    │ 20 │ 21 │ 22 │ 23 │
+    └────┴────┴────┴────┘
+
+    世界高度 384（-64 到 320）：
+    384 ÷ 16 = 24 个 Section</code></pre>
+<h3>懒加载机制</h3>
+<p><strong>想象你在图书馆借书</strong>：
+<ul><li>你不会一次性把图书馆所有书都搬回家</li>
+<li>只借你需要的书（懒加载）</li>
+<li>看完了可以还回去（卸载）</li></ul></p>
+<div class="mermaid">sequenceDiagram
+    participant P as 玩家
+    participant CM as Chunk管理器
+    participant Cache as Chunk缓存
+    participant Disk as 硬盘
+
+    P->>CM: 移动到 (100, 64, 200)
+    CM->>CM: 计算 Chunk 位置 (6, 12)
+    CM->>Cache: 请求 Chunk (6, 12)
+
+    alt Chunk 已在缓存中
+        Cache-->>CM: 返回现有 Chunk
+        CM-->>P: 返回方块数据
+    else Chunk 未加载
+        Cache-->>CM: 返回 null
+        CM->>Disk: 读取 Chunk 文件
+        alt 文件存在
+            Disk-->>CM: 读取的 Chunk 数据
+        else 新区块
+            CM->>CM: 生成新 Chunk
+        end
+        CM->>Cache: 存入缓存
+        CM-->>P: 返回方块数据
+    end</div>
+<h2 id="核心代码">核心代码</h2>
+<blockquote><p>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</p></blockquote>
+<h3>WorldChunk 类的定义</h3>
+<p>源码路径：<code>net/minecraft/world/chunk/WorldChunk.java</code></p>
+<pre class="code-block"><code class="language-java">62:public class WorldChunk
+63:extends Chunk {
+64:    // 所属的世界
+65:    final World world;
+66:
+67:    // 方块数据存储（ChunkSection 数组）
+68:    protected final ChunkSection[] sectionArray;
+69:
+70:    // 高度图（快速查询高度）
+71:    private final Map&lt;Heightmap.Type, Heightmap&gt; heightmaps;
+72:
+73:    // 方块实体（箱子、熔炉等）
+74:    private final Map&lt;BlockPos, BlockEntity&gt; blockEntities;
+75:}</code></pre>
+<h3>获取方块状态</h3>
+<pre class="code-block"><code class="language-java">159:    @Override
+160:    public BlockState getBlockState(BlockPos pos) {
+161:        int i = pos.getX();
+162:        int j = pos.getY();
+163:        int k = pos.getZ();
+164:
+165:        // 调试世界特殊处理
+166:        if (this.world.isDebugWorld()) {
+167:            // y=60 显示屏障，y=70 显示所有方块状态
+168:            ...
+169:        }
+170:
+171:        // 关键：找到这个方块属于哪个 Section
+172:        int l = this.getSectionIndex(j);
+173:
+174:        // 检查 Section 是否有效且非空
+175:        ChunkSection chunkSection = this.sectionArray[l];
+176:        if (l &gt;= 0 &amp;&amp; l &lt; this.sectionArray.length &amp;&amp; !chunkSection.isEmpty()) {
+177:            // 获取方块状态（x, y, z 需要 &amp; 0xF 转换成局部坐标）
+178:            return chunkSection.getBlockState(i &amp; 0xF, j &amp; 0xF, k &amp; 0xF);
+179:        }
+180:
+181:        return Blocks.AIR.getDefaultState();
+182:    }</code></pre>
+<h3>设置方块状态</h3>
+<pre class="code-block"><code class="language-java">201:    @Override
+202:    @Deprecated
+203:    public BlockState setBlockState(BlockPos pos, BlockState state, boolean moved) {
+204:        int i = pos.getY();
+
+205:        // 获取对应的 Section
+206:        ChunkSection chunkSection = this.getSection(this.getSectionIndex(i));
+207:        boolean bl = chunkSection.isEmpty();
+208:
+209:        // 如果 Section 是空的且要放置空气方块，直接返回
+210:        if (bl &amp;&amp; state.isAir()) {
+211:            return null;
+212:        }
+213:
+214:        // 计算在 Section 内的局部坐标
+215:        int j = pos.getX() &amp; 0xF;  // x: 0-15
+216:        int k = i &amp; 0xF;            // y: 0-15 (Section 内)
+217:        int l = pos.getZ() &amp; 0xF;  // z: 0-15
+218:
+219:        // 设置方块
+220:        BlockState blockState = chunkSection.setBlockState(j, k, l, state);
+221:
+222:        // 更新所有高度图！
+223:        ((Heightmap)this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING))
+224:            .trackUpdate(j, i, l, state);
+225:        ((Heightmap)this.heightmaps.get(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES))
+226:            .trackUpdate(j, i, l, state);
+227:        ((Heightmap)this.heightmaps.get(Heightmap.Type.OCEAN_FLOOR))
+228:            .trackUpdate(j, i, l, state);
+229:        ((Heightmap)this.heightmaps.get(Heightmap.Type.WORLD_SURFACE))
+230:            .trackUpdate(j, i, l, state);
+231:
+232:        // 处理方块实体（如果新方块需要）
+233:        if (state.hasBlockEntity()) {
+234:            BlockEntity blockEntity = this.getBlockEntity(pos, CreationType.CHECK);
+235:            if (blockEntity == null) {
+236:                Block block = state.getBlock();
+237:                blockEntity = ((BlockEntityProvider)block).createBlockEntity(pos, state);
+238:                if (blockEntity != null) {
+239:                    this.addBlockEntity(blockEntity);
+240:                }
+241:            }
+242:        }
+243:
+244:        return blockState; // 返回被替换的方块
+245:    }</code></pre>
+<h3>ChunkSection 的结构</h3>
+<blockquote><p>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</p></blockquote>
+<p>源码路径：<code>net/minecraft/world/chunk/ChunkSection.java</code></p>
+<pre class="code-block"><code class="language-java">21:public class ChunkSection {
+22:    // 每个 Section 是 16×16×16 = 4096 个方块
+23:    public static final int field_31406 = 16;
+24:    public static final int field_31407 = 16;
+25:    public static final int field_31408 = 4096;
+26:
+27:    // 方块数据的压缩存储
+28:    private final PalettedContainer&lt;BlockState&gt; blockStateContainer;
+29:
+30:    // 生物群系数据
+31:    private ReadableContainer&lt;RegistryEntry&lt;Biome&gt;&gt; biomeContainer;
+32:
+33:    // 方块计数（优化用）
+34:    private short nonEmptyBlockCount;
+35:    private short randomTickableBlockCount;
+36:    private short nonEmptyFluidCount;
+37:}</code></pre>
+<p><strong>为什么用 PalettedContainer？</strong></p>
+<p>普通的 4096 个 BlockState 存储会很占内存。PalettedContainer 使用<strong>调色板压缩</strong>：
+<ul><li>如果一个 Section 里 90% 都是石头 → 只需要记录"石头"和特殊位置的几个例外</li>
+<li>内存占用从几 MB 降到几 KB！</li></ul></p>
+<h2 id="实战演示">实战演示</h2>
+<h3>理解方块查询的完整流程</h3>
+<pre class="code-block"><code class="language-text">玩家获取 (100, 64, 200) 位置的方块：
+
+1. World.getBlockState(BlockPos(100, 64, 200))
+   ↓
+2. World 根据 (100, 200) 计算 Chunk 位置
+   - chunkX = 100 / 16 = 6
+   - chunkZ = 200 / 16 = 12
+   ↓
+3. 获取或加载 Chunk (6, 12)
+   ↓
+4. WorldChunk.getBlockState(BlockPos(100, 64, 200))
+   ↓
+5. 计算 Section 索引
+   - sectionIndex = (64 + 64) / 16 = 8  // Y + 偏移 / 16
+   ↓
+6. 计算 Section 内的局部坐标
+   - localX = 100 &amp; 0xF = 4
+   - localY = 64 &amp; 0xF = 0
+   - localZ = 200 &amp; 0xF = 8
+   ↓
+7. 从 ChunkSection[8] 获取 (4, 0, 8) 处的方块</code></pre>
+<h3>懒加载的实际例子</h3>
+<p>当玩家在服务器中移动时：</p>
+<div class="mermaid">sequenceDiagram
+    participant P as 玩家
+    participant CM as ChunkManager
+    participant GS as 生成器
+
+    Note over P: 玩家在 (0, 64, 0)
+    P->>CM: 移动到 (100, 64, 0)
+    CM->>CM: 需要 Chunk (6, 0)
+
+    Note over CM: Chunk (6,0) 不在缓存中！
+    CM->>GS: 生成 Chunk (6, 0)
+    GS->>GS: 使用 Noise 采样生成地形
+    GS->>GS: 放置矿石、树木等
+    GS->>GS: 计算生物群系
+    GS-->>CM: 返回完整 Chunk
+    CM-->>P: 显示地形
+
+    Note over P: 玩家继续移动
+    P->>CM: 移动到 (200, 64, 0)
+    CM->>CM: 需要 Chunk (12, 0)
+    CM->>GS: 生成 Chunk (12, 0)
+    GS-->>CM: 返回新 Chunk
+    CM-->>P: 显示新地形
+
+    Note over CM: Chunk (6,0) 超出加载范围
+    CM->>CM: 卸载 Chunk (6, 0)
+    CM->>CM: 可选：保存到硬盘</div>
+<h2 id="小结">小结</h2>
+<table class="data-table"><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td>Chunk</td><td>16×16×世界高度的方块区域</td></tr><tr><td>ChunkSection</td><td>每个 16×16×16 的方块层</td></tr><tr><td>PalettedContainer</td><td>方块数据的压缩存储方式</td></tr><tr><td>懒加载</td><td>只加载玩家附近的 Chunk</td></tr><tr><td>ChunkPos</td><td>区块的坐标（不是方块坐标）</td></tr></tbody></table>
+<strong>关键理解</strong>：
+<ul><li><strong>Chunk 是内存管理的基本单位</strong>：Minecraft 不会一个方块一个方块地管理</li>
+<li><strong>Section 是访问的基本单位</strong>：获取方块时要先找到对应的 Section</li>
+<li><strong>局部坐标很重要</strong>：在 Chunk/Section 内部，方块坐标都是 0-15</li></ul></p>
+<h2 id="练习">练习</h2>
+<h3>思考题</h3>
+<p><ul><li>为什么 Minecraft 选择 16×16 而不是其他大小作为 Chunk 的水平尺寸？</li>
+<li>如果一个 Section 全是空气，<code>isEmpty()</code> 会返回什么？这对性能有什么帮助？</li>
+<li>为什么修改方块时需要更新高度图？</li></ul></p>
+<h3>动手题</h3>
+<p>在源码中找到以下内容：</p>
+<p><ul><li><strong>WorldChunk.java 第 159-183 行</strong>：理解 <code>getBlockState</code> 的完整流程</li>
+<li><strong>ChunkSection.java 第 21-41 行</strong>：查看 ChunkSection 的结构</li>
+<li><strong>计算练习</strong>：如果方块坐标是 (100, -10, 200)：</li>
+</ul>   - 所在的 Chunk 是 (?, ?)
+   - 在 Chunk 内的局部坐标是 (?, ?, ?)</p>
+<h2 id="源码文件位置">源码文件位置</h2>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>Chunk.java</td><td><code>net/minecraft/world/chunk/Chunk.java</code></td><td>区块主类</td></tr><tr><td>WorldChunk.java</td><td><code>net/minecraft/world/chunk/WorldChunk.java</code></td><td>世界区块</td></tr><tr><td>ChunkSection.java</td><td><code>net/minecraft/world/chunk/ChunkSection.java</code></td><td>区块切片</td></tr><tr><td>ChunkProvider.java</td><td><code>net/minecraft/world/chunk/ChunkProvider.java</code></td><td>区块提供者</td></tr></tbody></table>
+<h2 id="相关链接">相关链接</h2>
+<p><ul><li><a href="./08-world-core.md">08-世界核心.md</a> - 了解 World 如何调用 Chunk</li>
+<li><a href="./10-biome-system.md">10-生物群系系统.md</a> - Chunk 中存储的生物群系数据</li>
+<li><a href="./11-terrain-gen.md">11-地形生成.md</a> - Chunk 是如何生成的</li>
+<li><a href="./13-heightmap.md">13-高度图.md</a> - Chunk 中的高度图</li>
+<li>Minecraft Wiki: <a href="https://minecraft.wiki/w/Chunk">Chunk</a></li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-world-core.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            World核心
+        </a><a href="10-biome-system.html" class="next">
+            生物群系
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05 shader system - Sodium 优化</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #F2CC8F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #F2CC8F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
+        .info-box i { color: #F2CC8F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
+        .docs-body h2 i { color: #F2CC8F; }
+        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #F2CC8F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #F2CC8F, #F2CC8F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk 渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-eye-slash"></i>
+            遮挡剔除
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="05-shader-system.html" class="active">
+            <i class="fas fa-palette"></i>
+            着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-plug"></i>
+            平台集成
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>05 shader system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    05 shader system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 着色器系统</h1>
+<blockquote><p>自定义 GLSL 着色器与顶点格式优化</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Sodium 使用自定义 GLSL 着色器实现高级渲染效果，包括抗锯齿、雾渲染优化和顶点压缩。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ChunkShader</code></td><td><code>common/.../render/chunk/shader/ChunkShader.java</code></td></tr><tr><td><code>ShaderConstants</code></td><td><code>common/.../gl/shader/ShaderConstants.java</code></td></tr><tr><td><code>ShaderLoader</code></td><td><code>common/.../gl/shader/ShaderLoader.java</code></td></tr><tr><td><code>GlShader</code></td><td><code>common/.../gl/shader/GlShader.java</code></td></tr></tbody></table>
+<strong>着色器文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>rendertype<em>solid.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>solid.fsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype<em>cutout.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>translucent.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 着色器资源结构">2. 着色器资源结构</h2>
+<h3>2.1 资源路径</h3>
+<pre class="code-block"><code class="language-text">common/src/main/resources/
+└── assets/
+    └── sodium/
+        └── shaders/
+            ├── include/
+            │   ├── common.glsl           # 共享代码
+            │   ├── fog.glsl              # 雾函数
+            │   ├── vertex_attribute.glsl # 顶点属性
+            │   └── noise.glsl            # 噪声函数
+            ├── blocks/
+            │   ├── rendertype_solid.vsh
+            │   ├── rendertype_solid.fsh
+            │   ├── rendertype_cutout.vsh
+            │   ├── rendertype_cutout.fsh
+            │   ├── rendertype_translucent.vsh
+            │   ├── rendertype_translucent.fsh
+            │   └── ...
+            └── environment/
+                ├── sky.glsl
+                └── clouds.glsl</code></pre>
+<p><hr></p>
+<h2 id="3. 顶点着色器">3. 顶点着色器</h2>
+<h3>3.1 Solid 顶点着色器</h3>
+<pre class="code-block"><code class="language-glsl">#version 450
+
+// 包含顶点属性定义
+#include &lt;vertex_attribute.glsl&gt;
+
+// 包含雾函数
+#include &lt;fog.glsl&gt;
+
+// Uniform 块
+layout(std140) uniform Uniforms {
+    mat4 u_ModelViewMatrix;
+    mat4 u_ProjectionMatrix;
+    mat4 u_ModelViewProjectionMatrix;
+    vec4 u_FogColor;
+    vec2 u_FogScale;
+    float u_FogStart;
+    float u_FogEnd;
+    float u_FogShape;
+    vec4 u_AmbientLight;
+    vec4 u_BlockLight;
+    
+    #ifdef USE_RGSS
+    vec4 u_RGSSSamples[4];
+    float u_RGSSKernel[16];
+    #endif
+};
+
+// 实例数据
+layout(location = 5) in ivec4 a_Flags;
+
+// 顶点输出
+out float v_ao;
+out float v_Light;
+out vec2 v_Uv;
+out vec4 v_Color;
+out vec3 v_Pos;
+out vec3 v_Normal;
+
+// 雾参数输出
+out float v_FogStart;
+out float v_FogEnd;
+out float v_FogColor;
+out float v_FogShape;
+
+void main() {
+    // 解码位置
+    ivec2 packedPos = ivec2(a_Pos &gt;&gt; 16, a_Pos &amp; 0xFFFF);
+    vec3 position = vec3(packedPos, a_Pos_Mid) * (1.0 / 4096.0);
+    
+    // 计算顶点坐标
+    vec4 pos = u_ModelViewMatrix * vec4(position, 1.0);
+    gl_Position = u_ProjectionMatrix * pos;
+    
+    // 解码法线
+    vec3 normal = decodeNormalizedNormal(a_Normal);
+    
+    // 解码光照
+    float blockLight = unpackUnorm(a_Light, 0) * 15.0 / 16.0;
+    float skyLight = unpackUnorm(a_Light, 4) * 15.0 / 16.0;
+    v_Light = mix(u_BlockLight, u_AmbientLight, skyLight) * (0.8 + blockLight * 0.2);
+    
+    // 解码 AO
+    v_ao = float((a_Flags.x &gt;&gt; 16) &amp; 0xFF) / 255.0;
+    
+    // 纹理坐标
+    v_Uv = a_Uv * (1.0 / 16.0);
+    
+    // 颜色
+    v_Color = unpackSnorm4x8(a_Color) * (1.0 / 127.0);
+    
+    // 法线
+    v_Normal = normal;
+    
+    // 位置（用于雾计算）
+    v_Pos = pos.xyz;
+    
+    // 雾
+    v_FogStart = u_FogStart;
+    v_FogEnd = u_FogEnd;
+    v_FogColor = u_FogColor;
+    v_FogShape = u_FogShape;
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 片段着色器">4. 片段着色器</h2>
+<h3>4.1 Solid 片段着色器</h3>
+<pre class="code-block"><code class="language-glsl">#version 450
+
+// 包含雾函数
+#include &lt;fog.glsl&gt;
+
+// Uniform 块
+layout(std140) uniform Uniforms {
+    mat4 u_ModelViewMatrix;
+    mat4 u_ProjectionMatrix;
+    mat4 u_ModelViewProjectionMatrix;
+    vec4 u_FogColor;
+    vec2 u_FogScale;
+    float u_FogStart;
+    float u_FogEnd;
+    float u_FogShape;
+    vec4 u_AmbientLight;
+    vec4 u_BlockLight;
+    
+    #ifdef USE_RGSS
+    vec4 u_RGSSSamples[4];
+    float u_RGSSKernel[16];
+    #endif
+};
+
+// 顶点输入
+in float v_ao;
+in float v_Light;
+in vec2 v_Uv;
+in vec4 v_Color;
+in vec3 v_Pos;
+in vec3 v_Normal;
+
+// 雾输入
+in float v_FogStart;
+in float v_FogEnd;
+in float v_FogColor;
+in float v_FogShape;
+
+// 纹理采样器
+uniform sampler2D u_Texture;
+
+// 片段输出
+layout(location = 0) out vec4 out_Color;
+
+void main() {
+    // 采样纹理
+    vec4 color = texture(u_Texture, v_Uv);
+    
+    // Alpha 测试（裁剪）
+    if (color.a &lt; 0.1) {
+        discard;
+    }
+    
+    // 应用光照
+    color.rgb *= v_Light;
+    
+    // 应用 AO
+    color.rgb *= mix(1.0, v_ao, 0.65);
+    
+    // 应用顶点颜色
+    color *= v_Color;
+    
+    // 应用雾
+    color = applyFog(color, v_Pos.z, v_FogStart, v_FogEnd, v_FogColor, v_FogShape);
+    
+    out_Color = color;
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 雾函数实现">5. 雾函数实现</h2>
+<h3>5.1 Fog.glsl</h3>
+<pre class="code-block"><code class="language-glsl">vec4 applyFog(vec4 color, float viewDepth, 
+              float fogStart, float fogEnd, 
+              vec4 fogColor, float fogShape) {
+    
+    // 根据雾形状参数调整计算
+    float fogSize = mix(fogEnd, fogStart, fogShape);
+    float fogFactor = clamp((viewDepth - fogSize) / (fogEnd - fogSize), 0.0, 1.0);
+    
+    // 平滑雾
+    fogFactor = fogFactor * fogFactor * (3.0 - 2.0 * fogFactor);
+    
+    // 混合颜色
+    return mix(color, fogColor, fogFactor);
+}
+
+// 雾缩放计算
+vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
+    float fogRange = max(fogEnd - fogStart, 1e-5);
+    return vec2(1.0 / fogRange, -fogStart / fogRange);
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 顶点格式">6. 顶点格式</h2>
+<h3>6.1 Vanilla 格式（24 bytes）</h3>
+<pre class="code-block"><code class="language-java">    VANILLA(24) {
+        @Override
+        public ChunkVertexEncoder createEncoder() {
+            return (ptr, materialBits, vertices, sectionIndex) -&gt; {
+                for (Vertex vertex : vertices) {
+                    // 位置: 3 floats = 12 bytes
+                    memPutFloat(ptr + 0, vertex.x);
+                    memPutFloat(ptr + 4, vertex.y);
+                    memPutFloat(ptr + 8, vertex.z);
+                    
+                    // 颜色: 4 bytes
+                    memPutInt(ptr + 12, vertex.color);
+                    
+                    // UV: 2 floats = 8 bytes
+                    memPutFloat(ptr + 16, vertex.u);
+                    memPutFloat(ptr + 20, vertex.v);
+                    
+                    ptr += 24;
+                }
+            };
+        }
+    }
+}</code></pre>
+<h3>6.2 IMMIX 格式（16 bytes，优化格式）</h3>
+<pre class="code-block"><code class="language-java">        @Override
+        public ChunkVertexEncoder createEncoder() {
+            return (ptr, materialBits, vertices, sectionIndex) -&gt; {
+                for (Vertex vertex : vertices) {
+                    // 位置: 3 half-floats = 6 bytes
+                    memPutShort(ptr + 0, floatToHalf(vertex.x));
+                    memPutShort(ptr + 2, floatToHalf(vertex.y));
+                    memPutShort(ptr + 4, floatToHalf(vertex.z));
+                    
+                    // 颜色 + AO: 4 bytes
+                    int colorAo = packColorAo(vertex.color, vertex.ao);
+                    memPutInt(ptr + 6, colorAo);
+                    
+                    // UV + 光照: 4 bytes
+                    int uvLight = packUvLight(vertex.u, vertex.v, vertex.light);
+                    memPutInt(ptr + 10, uvLight);
+                    
+                    // 法线: 2 bytes
+                    memPutShort(ptr + 14, encodeNormal(vertex.normal));
+                    
+                    ptr += 16;
+                }
+            };
+        }
+    }
+}</code></pre>
+<h3>6.3 顶点编码工具</h3>
+<pre class="code-block"><code class="language-java">    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
+    
+    class Vertex {
+        public float x, y, z;
+        public int color;          // ABGR
+        public float ao;           // [0, 1]
+        public float u, v;
+        public int light;          // 天空 + 阻塞光
+        public Vec3f normal;
+    }
+    
+    static int packColorAo(int color, float ao) {
+        int aoByte = (int)(ao * 255.0f);
+        return (aoByte &lt;&lt; 24) | (color &amp; 0x00FFFFFF);
+    }
+    
+    static int packUvLight(float u, float v, int light) {
+        int uByte = (int)(u * 65535.0f);
+        int vByte = (int)(v * 65535.0f);
+        return ((uByte &amp; 0xFFFF) &lt;&lt; 16) | (vByte &amp; 0xFFFF);
+    }
+    
+    static short floatToHalf(float value) {
+        // IEEE 754 float to half conversion
+        int bits = Float.floatToIntBits(value);
+        int sign = (bits &gt;&gt; 16) &amp; 0x8000;
+        int exponent = ((bits &gt;&gt; 23) &amp; 0xFF) - 127 + 15;
+        int mantissa = (bits &gt;&gt; 13) &amp; 0x3FF;
+        
+        if (exponent &lt;= 0) return (short)sign;
+        if (exponent &gt; 30) return (short)(sign | 0x7C00);
+        
+        return (short)(sign | (exponent &lt;&lt; 10) | mantissa);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. 着色器管理">7. 着色器管理</h2>
+<h3>7.1 ChunkShader</h3>
+<pre class="code-block"><code class="language-java">    private final GlShader vertexShader;
+    private final GlShader fragmentShader;
+    private final GlProgram program;
+    
+    // Uniform 位置
+    private final int u_ModelViewMatrix;
+    private final int u_ProjectionMatrix;
+    private final int u_ModelViewProjectionMatrix;
+    private final int u_FogColor;
+    private final int u_FogScale;
+    private final int u_Texture;
+    
+    public ChunkShader(ShaderLoader loader) {
+        this.vertexShader = loader.loadVertexShader(&quot;rendertype_solid.vsh&quot;);
+        this.fragmentShader = loader.loadFragmentShader(&quot;rendertype_solid.fsh&quot;);
+        this.program = GlProgram.create(&quot;rendertype_solid&quot;, 
+                                        vertexShader, fragmentShader);
+        
+        // 缓存 Uniform 位置
+        this.u_ModelViewMatrix = program.getUniform(&quot;u_ModelViewMatrix&quot;);
+        this.u_ProjectionMatrix = program.getUniform(&quot;u_ProjectionMatrix&quot;);
+        // ...
+    }
+    
+    public void bind(CommandList commandList) {
+        commandList.bindShader(program);
+    }
+    
+    public void unbind(CommandList commandList) {
+        commandList.unbindShader();
+    }
+    
+    public void uploadUniforms(CommandList commandList, UniformData data) {
+        commandList.setUniform(u_ModelViewMatrix, data.modelViewMatrix);
+        commandList.setUniform(u_ProjectionMatrix, data.projectionMatrix);
+        commandList.setUniform(u_FogColor, data.fogColor);
+        // ...
+    }
+}</code></pre>
+<h3>7.2 ShaderLoader</h3>
+<pre class="code-block"><code class="language-java">    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
+    
+    public GlShader loadVertexShader(String name) {
+        String source = loadShaderSource(&quot;blocks/&quot; + name);
+        return GlShader.create(GL_VERTEX_SHADER, name, preprocess(source));
+    }
+    
+    public GlShader loadFragmentShader(String name) {
+        String source = loadShaderSource(&quot;blocks/&quot; + name);
+        return GlShader.create(GL_FRAGMENT_SHADER, name, preprocess(source));
+    }
+    
+    private String loadShaderSource(String path) {
+        InputStream stream = getClass().getResourceAsStream(&quot;/&quot; + SHADER_PATH + &quot;/&quot; + path);
+        return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    
+    private String preprocess(String source) {
+        // 处理 #include 指令
+        return source.replaceAll(&quot;#include\\s+\&quot;([^\&quot;]+)\&quot;&quot;, 
+                                 match -&gt; loadInclude(match.group(1)));
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. 着色器常量">8. 着色器常量</h2>
+<h3>8.1 ShaderConstants</h3>
+<pre class="code-block"><code class="language-java">    // 着色器宏定义
+    public static final String USE_FOG = &quot;USE_FOG&quot;;
+    public static final String USE_FRAGMENT_DISCARD = &quot;USE_FRAGMENT_DISCARD&quot;;
+    public static final String USE_VERTEX_COMPRESSION = &quot;USE_VERTEX_COMPRESSION&quot;;
+    public static final String USE_RGSS = &quot;USE_RGSS&quot;;
+    public static final String USE_ENTITY_CLOUD = &quot;USE_ENTITY_CLOUD&quot;;
+    
+    // 抗锯齿模式
+    public enum AntiAliasing {
+        NONE(0),
+        MSAA4X(4),
+        MSAA8X(8),
+        RGSS(4);  // Rotated Grid Super-Sampling
+        
+        public final int samples;
+    }
+}</code></pre>
+<h3>8.2 Uniform 定义</h3>
+<pre class="code-block"><code class="language-java">layout(std140) uniform Uniforms {
+    mat4 u_ModelViewMatrix;              // 模型视图矩阵
+    mat4 u_ProjectionMatrix;              // 投影矩阵
+    mat4 u_ModelViewProjectionMatrix;   // MVP 矩阵
+    vec4 u_FogColor;                     // 雾颜色
+    vec2 u_FogScale;                     // 雾缩放
+    float u_FogStart;                    // 雾起始距离
+    float u_FogEnd;                      // 雾结束距离
+    float u_FogShape;                    // 雾形状参数
+    vec4 u_AmbientLight;                 // 环境光
+    vec4 u_BlockLight;                   // 方块光
+};</code></pre>
+<p><hr></p>
+<h2 id="9. 性能优化特性">9. 性能优化特性</h2>
+<table class="data-table"><thead><tr><th>特性</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>顶点压缩</strong></td><td>Half-float 代替 float</td><td>减少 33% 带宽</td></tr><tr><td><strong>Include 预处理</strong></td><td>GLSL #include</td><td>代码复用</td></tr><tr><td><strong>Uniform 缓存</strong></td><td>预缓存位置</td><td>减少查询</td></tr><tr><td><strong>批量 Uniform</strong></td><td>std140 布局</td><td>减少设置调用</td></tr><tr><td><strong>RGSS 抗锯齿</strong></td><td>着色器内采样</td><td>平滑边缘</td></tr></tbody></table>
+<hr></p>
+<h2 id="10. OpenGL 要求">10. OpenGL 要求</h2>
+<table class="data-table"><thead><tr><th>要求</th><th>版本</th><th>说明</th></tr></thead><tbody><tr><td><strong>最低版本</strong></td><td>OpenGL 3.3</td><td>基本的顶点属性</td></tr><tr><td><strong>推荐版本</strong></td><td>OpenGL 4.5</td><td>SPIR-V 支持</td></tr><tr><td><strong>可选扩展</strong></td><td>GL<em>ARB</em>gl<em>spirv</td><td>SPIR-V 着色器</td></tr><tr><td><strong>可选扩展</strong></td><td>GL</em>ARB<em>vertex</em>attrib_64bit</td><td>64-bit 属性</td></tr></tbody></table>
+<hr></p>
+<h2 id="11. 相关文档">11. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-chunk-render-system.md">02-chunk-render-system.md</a> - 区块渲染系统</li>
+<li><a href="04-render-pipeline.md">04-render-pipeline.md</a> - 渲染管线</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-render-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            渲染管线
+        </a><a href="06-platform-integration.html" class="next">
+            平台集成
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 iris setup - Iris 光影</title>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #E07A5F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #E07A5F 0, #F2CC8F 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #E07A5F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #E07A5F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
+        .info-box i { color: #E07A5F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #E07A5F; }
+        .docs-body h2 i { color: #E07A5F; }
+        .data-table th { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #E07A5F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #E07A5F, #E07A5F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-shader-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Shader 基础入门
+        </a>
+<a href="02-iris-setup.html" class="active">
+            <i class="fas fa-cog"></i>
+            开发环境搭建
+        </a>
+<a href="03-create-simple-shader.html" class="">
+            <i class="fas fa-magic"></i>
+            创建第一个 Shader
+        </a>
+<a href="04-shaderpack-structure.html" class="">
+            <i class="fas fa-folder"></i>
+            ShaderPack 结构
+        </a>
+<a href="05-uniforms-practice.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            Uniform 实践
+        </a>
+<a href="06-post-processing.html" class="">
+            <i class="fas fa-image"></i>
+            后处理效果
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>02 iris setup</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    02 iris setup
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第二章：Iris 开发环境搭建</h1>
+<blockquote><p>配置 Iris 开发环境与调试工具</p></blockquote>
+<p><hr></p>
+<h2 id="目标">目标</h2>
+<p>学完本章后，你将能够：</p>
+<p><ul><li><strong>搭建 Iris 开发环境</strong></li>
+<li><strong>编译并运行 Iris Mod</strong></li>
+<li><strong>配置开发工具进行调试</strong></li>
+<li><strong>了解项目结构</strong></li></ul></p>
+<p><hr></p>
+<h2 id="前置准备">前置准备</h2>
+<h3>必需软件</h3>
+<table class="data-table"><thead><tr><th>软件</th><th>版本</th><th>用途</th></tr></thead><tbody><tr><td>JDK</td><td>21+</td><td>Java 开发环境</td></tr><tr><td>Git</td><td>最新</td><td>版本控制</td></tr><tr><td>IDEA / VSCode</td><td>最新</td><td>代码编辑器</td></tr><tr><td>Minecraft</td><td>1.21</td><td>游戏客户端</td></tr></tbody></table>
+<h3>可选软件</h3>
+<table class="data-table"><thead><tr><th>软件</th><th>用途</th></tr></thead><tbody><tr><td>GitHub Desktop</td><td>可视化 Git 操作</td></tr><tr><td>HMC</td><td>Minecraft 启动器</td></tr></tbody></table>
+<hr></p>
+<h2 id="获取源码">获取源码</h2>
+<h3>1. 克隆仓库</h3>
+<pre class="code-block"><code class="language-bash"># 使用 Git 克隆 Iris 仓库
+git clone https://github.com/IrisShaders/Iris.git
+
+# 进入项目目录
+cd Iris
+
+# 查看分支
+git branch -a</code></pre>
+<h3>2. 选择版本</h3>
+<pre class="code-block"><code class="language-bash"># 查看可用的版本标签
+git tag
+
+# 切换到特定版本（例如 1.7.3）
+git checkout v1.7.3</code></pre>
+<h3>3. 项目结构</h3>
+<pre class="code-block"><code class="language-text">Iris/
+├── src/
+│   └── main/
+│       ├── java/net/irisshaders/iris/
+│       │   ├── pipeline/        # 渲染管线
+│       │   ├── shaderpack/      # 着色器包系统
+│       │   ├── shadows/         # 阴影系统
+│       │   ├── targets/         # 帧缓冲
+│       │   ├── uniforms/        # Uniform 管理
+│       │   ├── gl/              # OpenGL 封装
+│       │   └── mixin/           # Mixin 注入
+│       └── resources/
+│           └── assets/iris/     # 资源文件
+├── build.gradle                 # Gradle 构建配置
+├── gradle.properties           # Gradle 属性
+└── settings.gradle             # 项目设置</code></pre>
+<p><hr></p>
+<h2 id="环境配置">环境配置</h2>
+<h3>1. 安装 JDK 21</h3>
+<p>Iris 需要 JDK 21 或更高版本。</p>
+<pre class="code-block"><code class="language-bash"># 检查 Java 版本
+java -version
+
+# 如果版本不对，设置 JAVA_HOME
+# Windows:
+set JAVA_HOME=C:\Program Files\Java\jdk-21
+
+# Linux/Mac:
+export JAVA_HOME=/usr/lib/jvm/jdk-21</code></pre>
+<h3>2. Gradle 包装器</h3>
+<p>Iris 使用 Gradle 进行构建管理：</p>
+<pre class="code-block"><code class="language-bash"># Windows
+./gradlew.bat
+
+# Linux/Mac
+./gradlew
+
+# 首次运行会下载 Gradle（约 100MB）</code></pre>
+<h3>3. 生成 IDE 项目</h3>
+<pre class="code-block"><code class="language-bash"># 为 IntelliJ IDEA 生成项目
+./gradlew idea
+
+# 为 VSCode 生成项目
+./gradlew vscode
+
+# 为 Eclipse 生成项目
+./gradlew eclipse</code></pre>
+<p><hr></p>
+<h2 id="构建项目">构建项目</h2>
+<h3>基本构建命令</h3>
+<pre class="code-block"><code class="language-bash"># 构建所有模块
+./gradlew build
+
+# 只构建主模块（跳过测试）
+./gradlew assemble
+
+# 清理后重新构建
+./gradlew clean build</code></pre>
+<h3>运行测试</h3>
+<pre class="code-block"><code class="language-bash"># 运行所有测试
+./gradlew test
+
+# 运行特定测试
+./gradlew test --tests &quot;net.irisshaders.iris.*&quot;</code></pre>
+<h3>生成 JAR 文件</h3>
+<pre class="code-block"><code class="language-bash"># 在 build/libs/ 目录生成 jar 文件
+./gradlew jar
+
+# 包含所有依赖的 fat jar
+./gradlew shadowJar</code></pre>
+<p><hr></p>
+<h2 id="在游戏中测试">在游戏中测试</h2>
+<h3>方法 1：直接运行</h3>
+<pre class="code-block"><code class="language-bash"># 启动 Minecraft 并加载 Iris Mod
+./gradlew runClient</code></pre>
+<h3>方法 2：手动安装</h3>
+<p><ul><li>找到生成的 JAR 文件：</li>
+</ul>   
+<pre class="code-block"><code class="language-text">   build/libs/iris-1.7.3.jar</code></pre></p>
+<p><ul><li>复制到游戏的 mods 文件夹：</li>
+</ul>   
+<pre class="code-block"><code class="language-text">   .minecraft/mods/1.21/iris-1.7.3.jar</code></pre></p>
+<p><ul><li>确保已安装 Sodium 和 Fabric Loader</li></ul></p>
+<h3>方法 3：开发客户端</h3>
+<pre class="code-block"><code class="language-bash"># 启动带调试的开发客户端
+./gradlew runDevClient</code></pre>
+<p><hr></p>
+<h2 id="IDE 配置">IDE 配置</h2>
+<h3>IntelliJ IDEA</h3>
+<p><ul><li><strong>打开项目</strong></li>
+</ul>   - File → Open → 选择 Iris 目录
+   - 选择 "Import as Gradle project"</p>
+<p><ul><li><strong>配置 JDK</strong></li>
+</ul>   - File → Project Structure → Project
+   - 设置 Project SDK 为 JDK 21</p>
+<p><ul><li><strong>运行配置</strong></li>
+</ul>   - Run → Edit Configurations
+   - 添加 Gradle 配置：
+   
+<pre class="code-block"><code class="language-text">   Tasks: runClient</code></pre></p>
+<h3>VSCode</h3>
+<p><ul><li><strong>安装插件</strong></li>
+</ul>   - Java Extension Pack
+   - Language Support for Java(TM) by Red Hat</p>
+<p><ul><li><strong>配置 Java Home</strong></li>
+</ul>   - Ctrl + Shift + P → Java: Configure Java Runtime
+   - 选择 JDK 21</p>
+<p><hr></p>
+<h2 id="调试技巧">调试技巧</h2>
+<h3>1. 查看日志</h3>
+<p>Iris 的日志位于：</p>
+<pre class="code-block"><code class="language-text">.minecraft/logs/iris.log</code></pre>
+<h3>2. 启用调试模式</h3>
+<p>在 <code>gradle.properties</code> 中：</p>
+<pre class="code-block"><code class="language-properties"># 启用详细日志
+org.gradle.logging=debug
+
+# 启用 Mixin 调试
+mixin.env.remapRefMap=true
+mixin.env.transformCacheSize=2048</code></pre>
+<h3>3. 使用 Debugger</h3>
+<p>在 IDE 中设置断点：</p>
+<pre class="code-block"><code class="language-java">public void onShaderLoaded(ShaderPack pack) {
+    // 断点可以设在这里
+    LOGGER.info(&quot;Loading shader: &quot; + pack.getName());
+}</code></pre>
+<p><hr></p>
+<h2 id="常见问题">常见问题</h2>
+<h3>Q1：Gradle 构建失败</h3>
+<pre class="code-block"><code class="language-bash"># 清理缓存
+./gradlew clean --refresh-dependencies
+
+# 重新下载依赖
+./gradlew --refresh-dependencies</code></pre>
+<h3>Q2：找不到 Minecraft 源码</h3>
+<p>确保已安装 Fabric 和 Minecraft 依赖：</p>
+<pre class="code-block"><code class="language-bash">./gradlew fetchMinecraft</code></pre>
+<h3>Q3：Java 版本不兼容</h3>
+<pre class="code-block"><code class="language-bash"># 检查 Gradle 使用的 Java 版本
+./gradlew -version
+
+# 如果版本不对，设置 JAVA_HOME 后重试</code></pre>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<div class="mermaid">flowchart TB
+    subgraph 环境搭建["环境搭建流程"]
+        A1[克隆源码] --> A2[安装 JDK 21]
+        A2 --> A3[生成 IDE 项目]
+        A3 --> A4[构建项目]
+        A4 --> A5[测试运行]
+    end
+
+    subgraph 构建命令["常用命令"]
+        B1[./gradlew build]
+        B2[./gradlew runClient]
+        B3[./gradlew jar]
+    end
+
+    style A1 fill:#4d96ff,color:#fff
+    style B1 fill:#6bcb77,color:#fff</div>
+<p><hr></p>
+<h2 id="相关链接">相关链接</h2>
+<p><ul><li>下一章：<a href="./03-create-simple-shader.md">创建第一个 Shader</a> - 开始编写代码</li>
+<li><a href="https://github.com/IrisShaders/Iris">Iris GitHub</a> - 官方仓库</li>
+<li><a href="https://github.com/SpongePowered/Mixin">Mixin 文档</a> - 字节码注入框架</li></ul></p>
+<p><hr></p>
+<blockquote><p>💡 <strong>提示</strong>：遇到问题先查看日志文件，大部分构建问题都可以通过清理缓存解决。</p></blockquote>
+<p><hr></p>
+<p><em>文档版本：Iris 1.7.x / Minecraft 1.21</em>
+<em>最后更新：2026-03-21</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-shader-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Shader 基础入门
+        </a><a href="03-create-simple-shader.html" class="next">
+            创建第一个 Shader
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

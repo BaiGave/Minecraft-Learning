@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 chunk render system - Sodium 优化</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #F2CC8F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #F2CC8F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
+        .info-box i { color: #F2CC8F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
+        .docs-body h2 i { color: #F2CC8F; }
+        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #F2CC8F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #F2CC8F, #F2CC8F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-chunk-render-system.html" class="active">
+            <i class="fas fa-th"></i>
+            Chunk 渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-eye-slash"></i>
+            遮挡剔除
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-palette"></i>
+            着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-plug"></i>
+            平台集成
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>02 chunk render system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    02 chunk render system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 区块渲染系统</h1>
+<blockquote><p>多线程异步构建与批处理渲染机制</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>区块（Chunk）是 Minecraft 世界的基本渲染单位。Sodium 通过多线程异步构建和批处理渲染显著优化了区块渲染性能。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>RenderSection</code></td><td><code>common/.../render/chunk/RenderSection.java</code></td></tr><tr><td><code>RenderSectionManager</code></td><td><code>common/.../render/chunk/RenderSectionManager.java</code></td></tr><tr><td><code>ChunkBuilder</code></td><td><code>common/.../render/chunk/compile/executor/ChunkBuilder.java</code></td></tr><tr><td><code>DefaultChunkRenderer</code></td><td><code>common/.../render/chunk/DefaultChunkRenderer.java</code></td></tr><tr><td><code>BlockRenderer</code></td><td><code>common/.../render/chunk/compile/pipeline/BlockRenderer.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 核心数据结构">2. 核心数据结构</h2>
+<h3>2.1 RenderSection</h3>
+<p><code>RenderSection</code> 是区块渲染的基本单位：</p>
+<pre class="code-block"><code class="language-java">    private static final int SECTION_HEIGHT = 16;
+    
+    // 区块坐标（区块级，不是方块级）
+    private final int sectionX;
+    private final int sectionY;
+    private final int sectionZ;
+    
+    // 渲染数据
+    private volatile ChunkGraphicsState graphicsState;
+    private volatile int frameIndex;
+    
+    // 可见性数据
+    private volatile long visibilityData;
+    private volatile long neighborVisibilityData;
+    
+    // 包围盒
+    private final AABB boundingBox;
+    
+    public int getCenterX() { return sectionX &lt;&lt; 4 | 8; }
+    public int getCenterY() { return sectionY &lt;&lt; 4 | 8; }
+    public int getCenterZ() { return sectionZ &lt;&lt; 4 | 8; }
+}</code></pre>
+<h3>2.2 RenderSectionManager</h3>
+<p>管理所有 <code>RenderSection</code> 的生命周期：</p>
+<pre class="code-block"><code class="language-java">    private final RenderSection[] sections;
+    private final ChunkTracker tracker;
+    private final ChunkUpdateQueue updateQueue;
+    
+    // 区块可见性状态
+    private final RemovableMultiTree&lt;RenderSection&gt; sectionTree;
+    private final OcclusionCuller occlusionCuller;
+    
+    // 渲染列表
+    private final ChunkRenderList[] renderLists;
+}</code></pre>
+<h3>2.3 RenderRegion</h3>
+<p>区块区域分组，优化 GPU 缓冲区管理：</p>
+<pre class="code-block"><code class="language-java">    public static final int REGION_WIDTH = 8;    // X 方向区块数
+    public static final int REGION_HEIGHT = 4;   // Y 方向区块数
+    public static final int REGION_DEPTH = 8;    // Z 方向区块数
+    
+    // 区域内的区块总数: 8 × 4 × 8 = 256
+    private static final int REGION_SIZE = REGION_WIDTH * REGION_HEIGHT * REGION_DEPTH;
+    
+    // GPU 缓冲区
+    private final GlBuffer vertexBuffer;
+    private final GlBuffer uploadBuffer;
+    
+    // 缓存的批处理
+    private final CachedBatch[] cachedBatches;
+}</code></pre>
+<p><hr></p>
+<h2 id="3. 多线程构建系统">3. 多线程构建系统</h2>
+<h3>3.1 ChunkBuilder 架构</h3>
+<pre class="code-block"><code class="language-java">    private final ClientLevel level;
+    private final ChunkVertexType vertexType;
+    private final Thread[] workers;
+    private final ChunkJobQueue queue;
+    private final ChunkJobCollector collector;
+    
+    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+        this.level = level;
+        this.vertexType = vertexType;
+        this.queue = new ChunkJobQueue();
+        this.collector = new ChunkJobCollector();
+        
+        int count = calculateOptimalThreadCount();
+        this.workers = new Thread[count];
+        
+        for (int i = 0; i &lt; count; i++) {
+            this.workers[i] = new Thread(new WorkerRunnable(), 
+                &quot;Chunk Render Task Executor #&quot; + i);
+        }
+    }
+}</code></pre>
+<h3>3.2 任务调度</h3>
+<pre class="code-block"><code class="language-java">    ChunkJob job = ChunkJob.create(section, priority);
+    this.queue.enqueue(job);
+    this.workerSemaphore.release();
+}
+
+private static int calculateOptimalThreadCount() {
+    int processors = Runtime.getRuntime().availableProcessors();
+    int maxThreads = Math.max(1, processors - 2);
+    // 智能限制线程数
+    return Math.min(maxThreads, 10);
+}</code></pre>
+<h3>3.3 工作线程执行</h3>
+<pre class="code-block"><code class="language-java">    @Override
+    public void run() {
+        while (!isShutdown.get()) {
+            try {
+                ChunkJob job = queue.dequeue(timeout);
+                
+                if (job != null) {
+                    BuildResult result = buildChunk(job.section);
+                    collector.offer(result);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+    
+    private BuildResult buildChunk(RenderSection section) {
+        ChunkBuildBuffers buffers = buffersByThread.get();
+        ChunkBuildContext context = new ChunkBuildContext(buffers);
+        
+        // 调用渲染管道构建网格
+        return BlockRenderer.render(context, section, vertexType);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 网格构建流程">4. 网格构建流程</h2>
+<h3>4.1 BlockRenderer 管道</h3>
+<pre class="code-block"><code class="language-java">    private final ChunkOcclusionTracker occlusionTracker;
+    private final ChunkBuildBuffers buffers;
+    
+    public static BuildResult render(ChunkBuildContext context,
+                                     RenderSection section,
+                                     ChunkVertexType vertexType) {
+        // 1. 收集需要渲染的方块
+        List&lt;BlockPos&gt; blocks = collectRenderableBlocks(section);
+        
+        // 2. 按材质分组
+        Map&lt;RenderMaterial, List&lt;BlockPos&gt;&gt; byMaterial = groupByMaterial(blocks);
+        
+        // 3. 对每个材质渲染
+        for (Map.Entry&lt;RenderMaterial, List&lt;BlockPos&gt;&gt; entry : byMaterial) {
+            RenderMaterial material = entry.getKey();
+            List&lt;BlockPos&gt; positions = entry.getValue();
+            
+            // 渲染该材质的所有方块
+            renderBlocks(context, section, material, positions);
+        }
+        
+        // 4. 构建最终网格
+        return buildMesh(context, section, vertexType);
+    }
+}</code></pre>
+<h3>4.2 遮挡追踪</h3>
+<pre class="code-block"><code class="language-java">    private static final int CACHE_SIZE = 512;
+    
+    // LRU 缓存
+    private final Long2ObjectMap&lt;BlockOcclusionData&gt; cache;
+    
+    public boolean shouldDrawSide(BlockState selfState, 
+                                   BlockGetter view,
+                                   BlockPos selfPos, 
+                                   Direction facing) {
+        BlockState neighborState = view.getBlockState(selfPos.relative(facing));
+        
+        // 全方块形状 - 快速路径
+        if (neighborState.isSolid() &amp;&amp; neighborState.hasLargeCollisionShape()) {
+            return false;
+        }
+        
+        // VoxelShape 交集检测 - 慢速路径（带缓存）
+        return this.lookupOcclusion(selfState, neighborState, facing);
+    }
+    
+    private boolean lookupOcclusion(BlockState self, BlockState neighbor, Direction facing) {
+        long cacheKey = calculateCacheKey(self, neighbor, facing);
+        BlockOcclusionData data = cache.get(cacheKey);
+        
+        if (data != null) {
+            return data.isVisible(facing);
+        }
+        
+        // 计算并缓存结果
+        data = computeOcclusion(self, neighbor, facing);
+        cache.put(cacheKey, data);
+        return data.isVisible(facing);
+    }
+}</code></pre>
+<h3>4.3 顶点编码</h3>
+<pre class="code-block"><code class="language-java">    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
+    
+    class Vertex {
+        public float x, y, z;      // 位置 (16-bit 压缩)
+        public int color;          // ABGR 颜色
+        public float ao;           // 环境光遮蔽 [0, 1]
+        public float u, v;         // 纹理坐标
+        public int light;          // 天空 + 阻塞光照
+    }
+}
+
+public enum ChunkVertexType {
+    VANILLA(24),      // 24 bytes per vertex
+    IMMIX(16);        // 优化格式，16 bytes per vertex
+    
+    public final int stride;
+    private final ChunkVertexEncoder encoder;
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 批处理渲染">5. 批处理渲染</h2>
+<h3>5.1 DefaultChunkRenderer</h3>
+<pre class="code-block"><code class="language-java">    private final RenderDevice device;
+    private final ChunkShader parentShader;
+    private final SharedQuadIndexBuffer indexBuffer;
+    
+    public void render(ChunkRenderMatrices matrices,
+                       CommandList commandList,
+                       ChunkRenderListIterable renderLists,
+                       TerrainRenderPass renderPass) {
+        // 按 Region 分组渲染
+        while (iterator.hasNext()) {
+            ChunkRenderList renderList = iterator.next();
+            RenderRegion region = renderList.getRegion();
+            
+            // 获取或创建缓存的批处理
+            CachedBatch batch = region.getCachedBatch(renderPass);
+            
+            if (!batch.isFilled()) {
+                // 填充批处理
+                fillCommandBuffer(batch, region, storage, renderPass);
+            }
+            
+            // 执行绘制（每个 Region 一次 Draw Call）
+            executeDrawBatch(commandList, tessellation, batch);
+        }
+    }
+    
+    private void executeDrawBatch(CommandList commandList,
+                                  Tessellator tessellator,
+                                  CachedBatch batch) {
+        // 使用 MultiDraw 批量绘制
+        batch.multiDraw(commandList, tessellator, indexBuffer);
+    }
+}</code></pre>
+<h3>5.2 MultiDrawBatch</h3>
+<pre class="code-block"><code class="language-java">    void begin();
+    void add(int vertexCount, int firstVertex);
+    void end();
+    void draw(CommandList commandList, Tessellator tessellator, 
+              SharedQuadIndexBuffer indices);
+    void multiDraw(CommandList commandList, Tessellator tessellator,
+                   SharedQuadIndexBuffer indices);
+}</code></pre>
+<h3>5.3 共享索引缓冲区</h3>
+<pre class="code-block"><code class="language-java">    private static final int[] QUAD_INDICES;
+    
+    static {
+        // 预生成 quad 索引模式
+        QUAD_INDICES = new int[6 * 1024 * 1024];  // 6M quads
+        for (int i = 0; i &lt; QUAD_INDICES.length; i += 6) {
+            int base = (i / 6) * 4;
+            QUAD_INDICES[i + 0] = base + 0;
+            QUAD_INDICES[i + 1] = base + 1;
+            QUAD_INDICES[i + 2] = base + 2;
+            QUAD_INDICES[i + 3] = base + 0;
+            QUAD_INDICES[i + 4] = base + 2;
+            QUAD_INDICES[i + 5] = base + 3;
+        }
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 渲染列表管理">6. 渲染列表管理</h2>
+<h3>6.1 ChunkRenderList</h3>
+<pre class="code-block"><code class="language-java">    private static final int SORTING_HISTOGRAM_SIZE = 64;
+    
+    // 排序后的区块索引数组
+    private int[] sortedIndices;
+    private int sortedCount;
+    
+    // 几何数据位图
+    private long[] sectionsWithGeometryMap;
+    
+    // 相机相对位置
+    private int relativeCameraX;
+    private int relativeCameraY;
+    private int relativeCameraZ;
+    
+    public void sort(int cameraX, int cameraY, int cameraZ) {
+        // 直方图排序 - O(n) 复杂度
+        int[] histogram = new int[SORTING_HISTOGRAM_SIZE];
+        
+        // 第一遍：计算直方图
+        for (int i = 0; i &lt; sectionsWithGeometryMap.length; i++) {
+            long map = sectionsWithGeometryMap[i];
+            while (map != 0) {
+                int index = Long.numberOfTrailingZeros(map);
+                map &amp;= map - 1;
+                
+                int distance = calculateDistance(i, index, cameraX, cameraY, cameraZ);
+                histogram[distance]++;
+            }
+        }
+        
+        // 第二遍：前缀和
+        for (int i = 1; i &lt; SORTING_HISTOGRAM_SIZE; i++) {
+            histogram[i] += histogram[i - 1];
+        }
+        
+        // 第三遍：收集排序结果
+        // ... 
+    }
+    
+    private int calculateDistance(int regionIndex, int sectionIndex, 
+                                   int camX, int camY, int camZ) {
+        // 使用曼哈顿距离
+        int dx = Math.abs(sectionX - camX);
+        int dy = Math.abs(sectionY - camY);
+        int dz = Math.abs(sectionZ - camZ);
+        return (dx + dy + dz) / 16;  // 区块级距离
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. 帧预算控制">7. 帧预算控制</h2>
+<pre class="code-block"><code class="language-java">    // 估算任务耗时
+    var uploadBudget = new LimitedResourceBudget(
+        Math.max((long)(averageFrameDuration * 0.1f), MIN_UPLOAD_DURATION_BUDGET),
+        regions.getStagingBuffer().getUploadSizeLimit(averageFrameDuration)
+    );
+    
+    // 控制每帧处理的 Chunk 数量
+    while (!queue.isEmpty() &amp;&amp; workBudget.hasRemaining()) {
+        ChunkJob job = queue.dequeue();
+        if (job != null) {
+            processJob(job);
+            workBudget.decrement(job.getEstimatedCost());
+        }
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. 性能优化要点">8. 性能优化要点</h2>
+<table class="data-table"><thead><tr><th>优化项</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>多线程构建</strong></td><td>专用工作线程池</td><td>帧率更稳定</td></tr><tr><td><strong>直方图排序</strong></td><td>O(n) 排序算法</td><td>排序更快</td></tr><tr><td><strong>MultiDraw</strong></td><td>批量绘制</td><td>减少 Draw Calls</td></tr><tr><td><strong>共享索引</strong></td><td>预生成索引缓冲</td><td>减少显存占用</td></tr><tr><td><strong>帧预算</strong></td><td>时间片控制</td><td>避免卡顿</td></tr><tr><td><strong>工作窃取</strong></td><td>负载均衡</td><td>CPU 利用率更高</td></tr></tbody></table>
+<hr></p>
+<h2 id="9. 相关文档">9. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="03-occlusion-culling.md">03-occlusion-culling.md</a> - 遮挡剔除</li>
+<li><a href="04-render-pipeline.md">04-render-pipeline.md</a> - 渲染管线</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-architecture-overview.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            架构总览
+        </a><a href="03-occlusion-culling.html" class="next">
+            遮挡剔除
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

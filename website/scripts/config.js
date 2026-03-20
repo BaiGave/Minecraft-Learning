@@ -72,46 +72,133 @@ const modules = {
         docsDir: 'docs/sodium',
         sourceDir: 'D:/Projects/sodium/analysis',
         theme: 'sodium'
-    },
-
-    // ========== 示例: 如何添加新模组 ==========
-    // new_mod: {
-    //     name: '新模组名称',
-    //     slug: 'new-mod',
-    //     icon: 'puzzle-piece',
-    //     color: '#FF6B6B',
-    //     colorGradient: 'linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%)',
-    //     description: '模组描述',
-    //     versions: null,  // 或 ['1.21', '1.20'] 用于多版本
-    //     defaultVersion: null,
-    //     docsDir: 'docs/new-mod',
-    //     sourceDir: 'D:/Projects/new-mod/analysis',
-    //     theme: 'generic'
-    // },
+    }
 };
 
 // ============================================
-// 导航结构
+// 教程导航结构
 // ============================================
-// 每个模组的文档导航顺序
-// - id: 唯一标识
-// - title: 显示标题
-// - icon: FontAwesome 图标
-// - file: 文件名 (不含 .html)
+const tutorialsNavigation = {
 
-const navigation = {
+    mc: [
+        // Part-0: 前置知识
+        { id: 'course-overview', title: '课程概述', icon: 'book', file: '00-course-overview' },
+        { id: 'java-basics', title: 'Java基础', icon: 'code', file: '01-java-basics' },
+        { id: 'development-env', title: '开发环境', icon: 'cog', file: '02-development-env' },
+        { id: 'project-intro', title: '项目结构', icon: 'folder-open', file: '03-project-intro' },
+        { id: 'sourcecode-guide', title: '源码查找指南', icon: 'search', file: '04-sourcecode-guide' },
+        // Part-1: 核心基础
+        { id: 'registry-system', title: '注册表系统 ⭐', icon: 'archive', file: '04-registry-system' },
+        { id: 'client-server-arch', title: '客户端-服务端', icon: 'network-wired', file: '05-client-server-arch' },
+        { id: 'shared-constants', title: '全局常量', icon: 'tag', file: '06-shared-constants' },
+        { id: 'bootstrap-flow', title: '启动引导', icon: 'play', file: '07-bootstrap-flow' },
+        // Part-2: 世界系统
+        { id: 'world-core', title: 'World核心', icon: 'globe', file: '08-world-core' },
+        { id: 'chunk-system', title: 'Chunk系统', icon: 'th', file: '09-chunk-system' },
+        { id: 'biome-system', title: '生物群系', icon: 'tree', file: '10-biome-system' },
+        { id: 'terrain-gen', title: '地形生成', icon: 'mountain', file: '11-terrain-gen' },
+        { id: 'lighting-system', title: '光照系统', icon: 'lightbulb', file: '12-lighting-system' },
+        { id: 'heightmap', title: '高度图', icon: 'chart-area', file: '13-heightmap' },
+        // Part-3: 方块物品
+        { id: 'block-basics', title: 'Block基础', icon: 'cube', file: '14-block-basics' },
+        { id: 'block-state', title: 'BlockState', icon: 'toggle-on', file: '15-block-state' },
+        { id: 'block-entity', title: 'BlockEntity', icon: 'box', file: '16-block-entity' },
+        { id: 'item-basics', title: 'Item基础', icon: 'gift', file: '17-item-basics' },
+        { id: 'item-stack', title: 'ItemStack', icon: 'layer-group', file: '18-item-stack' },
+        { id: 'item-component', title: 'Component', icon: 'puzzle-piece', file: '19-item-component' },
+        // Part-4: 实体系统
+        { id: 'entity-intro', title: 'Entity入门', icon: 'paw', file: '20-entity-intro' },
+        { id: 'entity-lifecycle', title: '生命周期', icon: 'circle', file: '21-entity-lifecycle' },
+        { id: 'living-entity', title: 'LivingEntity', icon: 'heart', file: '22-living-entity' },
+        { id: 'mob-entity', title: 'MobEntity', icon: 'ghost', file: '23-mob-entity' },
+        { id: 'entity-attributes', title: '属性系统', icon: 'sliders-h', file: '24-entity-attributes' },
+        { id: 'damage-system', title: '伤害系统', icon: 'sword', file: '25-damage-system' },
+        { id: 'spawn-system', title: '生成系统', icon: 'magic', file: '26-spawn-system' },
+        // Part-5: AI系统
+        { id: 'ai-brain-intro', title: 'AI大脑 ⭐', icon: 'brain', file: '27-ai-brain-intro' },
+        { id: 'memory-system', title: '记忆系统', icon: 'memory', file: '28-memory-system' },
+        { id: 'sensor-system', title: '传感器', icon: 'eye', file: '29-sensor-system' },
+        { id: 'task-system', title: '任务系统', icon: 'tasks', file: '30-task-system' },
+        { id: 'activity-schedule', title: '活动日程', icon: 'calendar', file: '31-activity-schedule' },
+        { id: 'pathfinding', title: '路径导航', icon: 'route', file: '32-pathfinding' },
+        // Part-6: 网络系统
+        { id: 'network-intro', title: '网络入门', icon: 'network-wired', file: '33-network-intro' },
+        { id: 'packet-system', title: '数据包', icon: 'envelope', file: '34-packet-system' },
+        { id: 'protocol-states', title: '协议状态', icon: 'exchange-alt', file: '35-protocol-states' },
+        { id: 'sync-mechanism', title: '同步机制', icon: 'sync', file: '36-sync-mechanism' },
+        // Part-7: 命令系统
+        { id: 'command-intro', title: '命令入门', icon: 'terminal', file: '37-command-intro' },
+        { id: 'brigadier-basics', title: 'Brigadier', icon: 'code-branch', file: '38-brigadier-basics' },
+        { id: 'custom-command', title: '自定义命令', icon: 'plus-circle', file: '39-custom-command' },
+        // Part-8: 资源系统
+        { id: 'resource-pack', title: '资源包', icon: 'image', file: '40-resource-pack' },
+        { id: 'datapack-intro', title: '数据包', icon: 'database', file: '41-datapack-intro' },
+        { id: 'loot-table', title: '战利品表', icon: 'coins', file: '42-loot-table' },
+        { id: 'advancement', title: '进度系统', icon: 'trophy', file: '43-advancement' },
+        { id: 'recipe-system', title: '配方系统', icon: 'flask', file: '44-recipe-system' },
+        // Part-9: 客户端
+        { id: 'minecraft-client', title: 'MinecraftClient', icon: 'desktop', file: '45-minecraft-client' },
+        { id: 'render-system', title: '渲染系统', icon: 'paint-brush', file: '46-render-system' },
+        { id: 'gui-system', title: 'GUI系统', icon: 'window-maximize', file: '47-gui-system' },
+        { id: 'input-handling', title: '输入处理', icon: 'keyboard', file: '48-input-handling' },
+        // Part-10: 服务端
+        { id: 'server-intro', title: '服务端入门', icon: 'server', file: '49-server-intro' },
+        { id: 'player-manager', title: '玩家管理', icon: 'users', file: '50-player-manager' },
+        { id: 'save-system', title: '存档系统', icon: 'save', file: '51-save-system' },
+        { id: 'dedicated-vs-integrated', title: '服务器对比', icon: 'balance-scale', file: '52-dedicated-vs-integrated' },
+        // Part-11: 进阶主题
+        { id: 'datafixer', title: '数据修复', icon: 'wrench', file: '53-datafixer' },
+        { id: 'fluids', title: '流体系统', icon: 'tint', file: '54-fluids' },
+        { id: 'village-system', title: '村民系统', icon: 'home', file: '55-village-system' },
+        { id: 'raid-system', title: '袭击系统', icon: 'shield-alt', file: '56-raid-system' },
+        { id: 'structure-system', title: '结构系统', icon: 'building', file: '57-structure-system' },
+        // Part-12: 实战项目
+        { id: 'project1-block', title: '新方块', icon: 'cube', file: '98-project1-block' },
+        { id: 'project2-item', title: '新物品', icon: 'gift', file: '99-project2-item' },
+        { id: 'project3-entity', title: '新生物', icon: 'dragon', file: '100-project3-entity' },
+        { id: 'project4-datapack', title: '数据包', icon: 'database', file: '101-project4-datapack' },
+        // Part-13: 补充系统
+        { id: 'enchantment-system', title: '附魔系统', icon: 'magic', file: 'enchantment-system' },
+        { id: 'inventory-system', title: '物品栏容器', icon: 'box-open', file: 'inventory-system' },
+        { id: 'nbt-data-system', title: 'NBT数据', icon: 'file-code', file: 'nbt-data-system' },
+        { id: 'particle-system', title: '粒子系统', icon: 'sparkles', file: 'particle-system' },
+        { id: 'potion-effect-system', title: '药水效果', icon: 'flask', file: 'potion-effect-system' },
+        { id: 'scoreboard-system', title: '记分板', icon: 'clipboard-list', file: 'scoreboard-system' },
+        { id: 'sound-system', title: '声音系统', icon: 'volume-up', file: 'sound-system' },
+        { id: 'stats-system', title: '统计系统', icon: 'chart-bar', file: 'stats-system' },
+        { id: 'text-system', title: '文本系统', icon: 'font', file: 'text-system' }
+    ],
+
+    iris: [
+        { id: 'shader-basics', title: 'Shader 基础入门', icon: 'code', file: '01-shader-basics' },
+        { id: 'iris-setup', title: '开发环境搭建', icon: 'cog', file: '02-iris-setup' },
+        { id: 'create-shader', title: '创建第一个 Shader', icon: 'magic', file: '03-create-simple-shader' },
+        { id: 'shaderpack-structure', title: 'ShaderPack 结构', icon: 'folder', file: '04-shaderpack-structure' },
+        { id: 'uniforms-practice', title: 'Uniform 实践', icon: 'sliders-h', file: '05-uniforms-practice' },
+        { id: 'post-processing', title: '后处理效果', icon: 'image', file: '06-post-processing' }
+    ],
+
+    sodium: [
+        { id: 'mod-dev-intro', title: 'Mod 开发入门', icon: 'puzzle-piece', file: '01-mod-dev-intro' },
+        { id: 'render-optimization', title: '渲染优化基础', icon: 'chart-line', file: '02-rendering-optimization' },
+        { id: 'multithreading', title: '多线程编程', icon: 'layer-group', file: '03-multithreading-basics' },
+        { id: 'chunk-system', title: '深入区块系统', icon: 'th', file: '04-chunk-system-deep' },
+        { id: 'gl-basics', title: 'OpenGL 基础', icon: 'cube', file: '05-gl-basics' },
+        { id: 'performance-profiling', title: '性能分析与调优', icon: 'tachometer-alt', file: '06-performance-profiling' }
+    ]
+};
+
+// ============================================
+// 分析导航结构
+// ============================================
+const analysisNavigation = {
 
     mc: [
         { id: 'architecture', title: '架构总览', icon: 'sitemap', file: '01-architecture-overview' },
         { id: 'client', title: '客户端模块', icon: 'desktop', file: '02-client-module' },
         { id: 'server', title: '服务端模块', icon: 'server', file: '03-server-module' },
         { id: 'world', title: '世界系统', icon: 'globe', file: '04-world-system' },
-        { id: 'entity', title: '实体系统', icon: 'paw', file: '05-entity-system' },
-        { id: 'block-item', title: '方块物品', icon: 'box', file: '06-block-item-system' },
-        { id: 'network', title: '网络协议', icon: 'network-wired', file: '07-network-protocol' },
-        { id: 'datafixer', title: '数据修复', icon: 'database', file: '08-datafixer-system' },
-        { id: 'registry', title: '注册表系统', icon: 'archive', file: '09-registry-system' },
-        { id: 'package', title: '包结构', icon: 'folder', file: '10-package-structure' }
+        { id: 'entity', title: '实体系统', icon: 'paw', file: '05-entity-system' }
     ],
 
     iris: [
@@ -131,49 +218,32 @@ const navigation = {
         { id: 'shader', title: '着色器系统', icon: 'palette', file: '05-shader-system' },
         { id: 'platform', title: '平台集成', icon: 'plug', file: '06-platform-integration' }
     ]
-
-    // 添加新模组的导航:
-    // new_mod: [
-    //     { id: 'intro', title: '介绍', icon: 'info-circle', file: '01-intro' },
-    //     { id: 'architecture', title: '架构', icon: 'sitemap', file: '02-architecture' },
-    // ],
-
-// 未来可添加的模组示例:
-// - fabric: Fabric API
-// - quilt: Quilt 项目
-// - neoforge: NeoForge
-// - forge: Minecraft Forge
-// - architectury: Architectury API
-// - lithium: Lithium 优化
-// - indium: Indium (Sodium 渲染器)
-// - iris: 已完成
-// - sodium: 已完成
 };
 
 // ============================================
 // 首页模块卡片配置
 // ============================================
-// 用于 index.html 首页显示
-
 const moduleCards = {
     mc: {
         versions: ['1.21', '1.20', '1.19', '1.18'],
-        docCount: 10
+        tutorialCount: 80,
+        analysisCount: 5
     },
     iris: {
         versions: null,
-        docCount: 6
+        tutorialCount: 6,
+        analysisCount: 6
     },
     sodium: {
         versions: null,
-        docCount: 6
+        tutorialCount: 6,
+        analysisCount: 6
     }
 };
 
 // ============================================
 // 全局配置
 // ============================================
-
 const config = {
     websiteTitle: 'MC 开发文档中心',
     websiteRoot: path.join(__dirname, '..'),
@@ -183,7 +253,7 @@ const config = {
 
     // 文档元数据默认值
     defaults: {
-        readingTime: 30, // 分钟
+        readingTime: 30,
         language: 'zh-CN'
     },
 
@@ -198,11 +268,9 @@ const config = {
 
     // Markdown 解析选项
     markdown: {
-        // 忽略的文件前缀
         ignorePrefixes: ['README', 'SUMMARY', 'index'],
-        // 支持的文件扩展名
         extensions: ['.md']
     }
 };
 
-module.exports = { modules, navigation, moduleCards, config };
+module.exports = { modules, tutorialsNavigation, analysisNavigation, moduleCards, config };

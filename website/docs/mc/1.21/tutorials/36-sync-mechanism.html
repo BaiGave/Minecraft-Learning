@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>36 sync mechanism - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="active">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>36 sync mechanism</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    36 sync mechanism
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第36章 同步机制详解</h1>
+<h2 id="目标">目标</h2>
+<p><ul><li>理解 Minecraft 中的数据同步概念</li>
+<li>掌握玩家位置同步的实现方式</li>
+<li>了解区块（Chunk）同步机制</li>
+<li>理解实体（Entity）同步原理</li>
+<li>认识客户端预测与服务端校验</li></ul></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>完成 <a href="./34-packet-system.md">第34章 数据包系统</a></li>
+<li>理解 Serverbound 和 Clientbound 的区别</li>
+<li>了解 Minecraft 世界和实体的基本概念</li></ul></p>
+<h2 id="核心概念">核心概念</h2>
+<h3>什么是同步？</h3>
+<p><strong>同步 = 让所有玩家看到相同的游戏世界</strong></p>
+<p>就像视频会议：
+<ul><li>每个人都看到相同的画面</li>
+<li>一个人的操作，其他人也能看到</li>
+<li>如果不同步，就会出现"你看到我在A点，但实际上我在B点"的情况</li></ul></p>
+<h3>Minecraft 同步的三个层次</h3>
+<table class="data-table"><thead><tr><th>层次</th><th>同步内容</th><th>重要性</th></tr></thead><tbody><tr><td><strong>位置同步</strong></td><td>玩家、实体在哪里</td><td>最高</td></tr><tr><td><strong>区块同步</strong></td><td>玩家周围的方块数据</td><td>高</td></tr><tr><td><strong>实体同步</strong></td><td>实体的状态、属性</td><td>中</td></tr></tbody></table>
+<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
+<h3>同步架构总览</h3>
+<div class="mermaid">flowchart TB
+    subgraph Server["服务端 (权威数据源)"]
+        ServerWorld["服务端世界"]
+        ServerPlayer["服务端玩家实体"]
+        ServerEntities["服务端实体列表"]
+        ServerChunks["服务端区块数据"]
+    end
+
+    subgraph Network["网络传输"]
+        MovePackets["PlayerMoveC2SPacket"]
+        EntityPackets["Entity Spawn/Update Packets"]
+        ChunkPackets["Chunk Data Packets"]
+    end
+
+    subgraph Client["客户端 (本地渲染)"]
+        ClientWorld["客户端世界"]
+        ClientPlayer["客户端玩家实体"]
+        ClientEntities["客户端实体列表"]
+        ClientChunks["客户端区块缓存"]
+    end
+
+    ServerPlayer -->|"玩家移动"| MovePackets
+    MovePackets -->|"验证"| ServerWorld
+    ServerWorld -->|"实体状态"| EntityPackets
+    ServerWorld -->|"区块数据"| ChunkPackets
+
+    EntityPackets --> ClientEntities
+    ChunkPackets --> ClientChunks
+    MovePackets -.->|"反馈"| ClientPlayer
+
+    style Server fill:#ffcdd2
+    style Network fill:#fff9c4
+    style Client fill:#c8e6c9</div>
+<h3>位置同步流程图</h3>
+<div class="mermaid">sequenceDiagram
+    participant P as 玩家
+    participant C as 客户端
+    participant S as 服务端
+    participant O as 其他玩家
+
+    Note over P,O: 玩家A移动的场景
+
+    P->>C: 按 W 键
+
+    rect rgb(200, 230, 200)
+        Note over C: 客户端预测
+        C->>C: 立即本地移动
+        C->>C: 渲染移动动画
+        C->>S: PlayerMoveC2SPacket
+        Note right of C: 发送位置给服务端
+    end
+
+    rect rgb(255, 230, 200)
+        Note over S: 服务端验证
+        S->>S: 接收数据包
+        S->>S: 检查移动合法性
+        S->>S: 更新服务端玩家位置
+        S->>S: 广播给周围玩家
+        S-->>C: PlayerPositionLookS2CPacket
+        Note left of S: 可能纠正位置
+    end
+
+    rect rgb(230, 200, 255)
+        Note over O: 其他玩家
+        O->>O: 收到 EntityPositionS2CPacket
+        O->>O: 看到玩家A移动
+    end
+
+    C->>C: 校正位置（如需要）</div>
+<h3>区块同步流程图</h3>
+<div class="mermaid">flowchart TB
+    subgraph Client["客户端"]
+        C1["请求新区块"]
+        C2["接收区块数据"]
+        C3["存储到缓存"]
+        C4["渲染区块"]
+    end
+
+    subgraph Server["服务端"]
+        S1["接收请求"]
+        S2["计算可见区块"]
+        S3["发送区块数据"]
+        S4["处理区块加载"]
+    end
+
+    subgraph Network["网络"]
+        N1["ChunkDataS2CPacket"]
+        N2["StartChunkSendS2CPacket"]
+        N3["ChunkBatchFinishedS2CPacket"]
+    end
+
+    C1 -->|"玩家移动"| S1
+    S1 -->|"加载区块"| S4
+    S4 --> S2
+    S2 -->|"发送批次"| N2
+    N2 -->|"发送数据"| N1
+    N1 --> C2
+    C2 --> C3
+    C3 -->|"批次完成"| N3
+    N3 -->|"确认"| S3
+    C4 -->|"最终渲染"| C1
+
+    style C1 fill:#e3f2fd
+    style S4 fill:#fff3e0</div>
+<h3>实体同步流程图</h3>
+<div class="mermaid">flowchart LR
+    subgraph Spawn["实体生成"]
+        ES["EntitySpawnS2CPacket"]
+        Spawning["实体创建"]
+        Render["渲染模型"]
+    end
+
+    subgraph Update["实体更新"]
+        EU["EntityTrackerUpdateS2CPacket<br/>EntityVelocityUpdateS2CPacket"]
+        Updating["属性同步"]
+        Animating["动画更新"]
+    end
+
+    subgraph Destroy["实体销毁"]
+        ED["EntitiesDestroyS2CPacket"]
+        Destroying["移除实体"]
+    end
+
+    ES --> Spawning --> Render
+    EU --> Updating --> Animating
+    ED --> Destroying
+
+    style Spawn fill:#e8f5e9
+    style Update fill:#fff9c4
+    style Destroy fill:#ffcdd2</div>
+<h2 id="核心代码">核心代码</h2>
+<h3>位置同步相关数据包</h3>
+<pre class="code-block"><code class="language-java">
+public class PlayPackets {
+    // ===== 客户端 -&gt; 服务端 =====
+    // 玩家移动（完整位置+旋转）
+    public static final PacketType&lt;PlayerMoveC2SPacket.Full&gt; MOVE_PLAYER_POS_ROT = 
+        PlayPackets.c2s(&quot;move_player_pos_rot&quot;);
+    // 玩家移动（仅位置）
+    public static final PacketType&lt;PlayerMoveC2SPacket.PositionAndOnGround&gt; MOVE_PLAYER_POS = 
+        PlayPackets.c2s(&quot;move_player_pos&quot;);
+    // 玩家移动（仅旋转）
+    public static final PacketType&lt;PlayerMoveC2SPacket.LookAndOnGround&gt; MOVE_PLAYER_ROT = 
+        PlayPackets.c2s(&quot;move_player_rot&quot;);
+    // 玩家移动（仅在地面上状态）
+    public static final PacketType&lt;PlayerMoveC2SPacket.OnGroundOnly&gt; MOVE_PLAYER_STATUS_ONLY = 
+        PlayPackets.c2s(&quot;move_player_status_only&quot;);
+
+    // ===== 服务端 -&gt; 客户端 =====
+    // 玩家位置和旋转（服务器校正）
+    public static final PacketType&lt;PlayerPositionLookS2CPacket&gt; PLAYER_POSITION = 
+        PlayPackets.s2c(&quot;player_position&quot;);
+    // 实体位置
+    public static final PacketType&lt;EntityPositionS2CPacket&gt; TELEPORT_ENTITY = 
+        PlayPackets.s2c(&quot;teleport_entity&quot;);
+    // 实体相对移动
+    public static final PacketType&lt;EntityS2CPacket.MoveRelative&gt; MOVE_ENTITY_POS = 
+        PlayPackets.s2c(&quot;move_entity_pos&quot;);
+}</code></pre>
+<h3>区块同步相关数据包</h3>
+<pre class="code-block"><code class="language-java">
+public class PlayPackets {
+    // 区块批次开始
+    public static final PacketType&lt;StartChunkSendS2CPacket&gt; CHUNK_BATCH_START = 
+        PlayPackets.s2c(&quot;chunk_batch_start&quot;);
+    // 区块数据（包含方块和光照）
+    public static final PacketType&lt;ChunkDataS2CPacket&gt; LEVEL_CHUNK_WITH_LIGHT = 
+        PlayPackets.s2c(&quot;level_chunk_with_light&quot;);
+    // 区块批次完成
+    public static final PacketType&lt;ChunkSentS2CPacket&gt; CHUNK_BATCH_FINISHED = 
+        PlayPackets.s2c(&quot;chunk_batch_finished&quot;);
+    // 卸载区块
+    public static final PacketType&lt;UnloadChunkS2CPacket&gt; FORGET_LEVEL_CHUNK = 
+        PlayPackets.s2c(&quot;forget_level_chunk&quot;);
+    // 区块delta更新（单区块变化）
+    public static final PacketType&lt;ChunkDeltaUpdateS2CPacket&gt; SECTION_BLOCKS_UPDATE = 
+        PlayPackets.s2c(&quot;section_blocks_update&quot;);
+}</code></pre>
+<h3>实体同步相关数据包</h3>
+<pre class="code-block"><code class="language-java">
+public class PlayPackets {
+    // 生成实体
+    public static final PacketType&lt;EntitySpawnS2CPacket&gt; ADD_ENTITY = 
+        PlayPackets.s2c(&quot;add_entity&quot;);
+    // 销毁实体
+    public static final PacketType&lt;EntitiesDestroyS2CPacket&gt; REMOVE_ENTITIES = 
+        PlayPackets.s2c(&quot;remove_entities&quot;);
+    // 实体数据同步
+    public static final PacketType&lt;EntityTrackerUpdateS2CPacket&gt; SET_ENTITY_DATA = 
+        PlayPackets.s2c(&quot;set_entity_data&quot;);
+    // 实体速度
+    public static final PacketType&lt;EntityVelocityUpdateS2CPacket&gt; SET_ENTITY_MOTION = 
+        PlayPackets.s2c(&quot;set_entity_motion&quot;);
+    // 实体属性（生命值等）
+    public static final PacketType&lt;EntityAttributesS2CPacket&gt; UPDATE_ATTRIBUTES = 
+        PlayPackets.s2c(&quot;update_attributes&quot;);
+}</code></pre>
+<h2 id="实战演示">实战演示</h2>
+<h3>场景：玩家移动和同步</h3>
+<p><strong>1. 客户端本地处理（预测）：</strong></p>
+<pre class="code-block"><code class="language-java">// 这样玩家感觉操作是&quot;即时&quot;的
+public void onPlayerInput(PlayerInputPacket packet) {
+    // 立即更新本地玩家位置
+    Vec3d newPos = calculateNewPosition(localPlayer, packet);
+    localPlayer.setPosition(newPos);
+    localPlayer.setVelocity(input);
+
+    // 同时发送给服务端
+    connection.send(new PlayerMoveC2SPacket(newPos.x, newPos.y, newPos.z, ...));
+}</code></pre>
+<p><strong>2. 服务端验证：</strong></p>
+<pre class="code-block"><code class="language-java">public void onPlayerMove(PlayerMoveC2SPacket packet) {
+    // 检查移动是否合法
+    if (isMoveValid(player, packet)) {
+        // 合法：更新位置并广播
+        player.setPosition(packet.getPos());
+        broadcastToNearby(packet);  // 通知周围玩家
+    } else {
+        // 非法：回滚位置
+        player.setPosition(player.getPreviousPos());
+        // 发送校正包
+        connection.send(new PlayerPositionLookS2CPacket(
+            player.getX(), player.getY(), player.getZ(),
+            player.getYaw(), player.getPitch()
+        ));
+    }
+}</code></pre>
+<h3>场景：区块加载</h3>
+<div class="mermaid">sequenceDiagram
+    participant P as 玩家
+    participant C as 客户端
+    participant S as 服务端
+
+    P->>C: 移动到新位置
+    C->>S: 发送位置更新
+    S->>S: 计算需要加载的区块
+    S->>C: StartChunkSendS2CPacket (批次开始)
+    
+    loop 对于每个需要加载的区块
+        S->>C: ChunkDataS2CPacket
+        Note over C: 接收并存储
+    end
+
+    S->>C: ChunkBatchFinishedS2CPacket
+    C->>C: 渲染新区块
+    C->>S: AcknowledgeChunksC2SPacket
+    Note right of C: 确认区块已加载</div>
+<h2 id="小结">小结</h2>
+<p><ul><li><strong>同步</strong> = 让所有玩家看到相同的游戏世界</li>
+<li><strong>客户端预测</strong> = 客户端先本地处理，让操作感觉即时</li>
+<li><strong>服务端权威</strong> = 服务端是"真理之源"，可以纠正客户端</li>
+<li><strong>三种同步</strong>：</li>
+</ul>   - 位置同步：玩家和实体的位置
+   - 区块同步：玩家周围的方块数据
+   - 实体同步：实体的状态和属性
+<ul><li><strong>数据包驱动</strong> = 所有同步都通过数据包实现</li></ul></p>
+<h2 id="练习">练习</h2>
+<p><ul><li>在源码中查找 <code>PlayerPositionLookS2CPacket</code>，理解它如何纠正客户端位置</li>
+<li>查找 <code>ChunkDataS2CPacket</code>，了解区块数据的结构</li>
+<li>思考：为什么服务端要有"权威"？如果客户端可以随意移动会怎样？</li></ul></p>
+<h2 id="相关链接">相关链接</h2>
+<p><ul><li>上一章：<a href="./35-protocol-states.md">第35章 协议状态机</a></li>
+<li>下一章：<a href="../Part-7-Command/37-command-intro.md">第37章 命令系统入门</a> - 了解命令系统</li>
+<li>Minecraft Wiki 网络协议文档</li></ul></p>
+<h3>源码文件位置</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>ClientBoundEntityS2CPacket.java</td><td><code>net/minecraft/network/packet/s2c/play/ClientBoundEntityS2CPacket.java</code></td><td>实体同步数据包</td></tr><tr><td>ClientBoundBlockUpdateS2CPacket.java</td><td><code>net/minecraft/network/packet/s2c/play/ClientBoundBlockUpdateS2CPacket.java</code></td><td>方块更新数据包</td></tr><tr><td>ChunkDataS2CPacket.java</td><td><code>net/minecraft/network/packet/s2c/play/ChunkDataS2CPacket.java</code></td><td>区块数据同步数据包</td></tr></tbody></table>
+<blockquote><p><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p></blockquote>
+<p><hr></p>
+<p><strong>关键词</strong>：同步机制、客户端预测、服务端权威、位置同步、区块同步、实体同步</p>
+<p><hr>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="35-protocol-states.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            协议状态
+        </a><a href="37-command-intro.html" class="next">
+            命令入门
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

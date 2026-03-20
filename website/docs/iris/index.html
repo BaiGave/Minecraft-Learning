@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iris 光影 - MC 开发文档中心</title>
-    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../../styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,8 @@
         .page-hero { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
         .page-hero .hero-badge { background: rgba(255,255,255,0.2); }
         .page-hero .stat-number { color: rgba(255,255,255,0.9); }
-        .doc-icon { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%) !important; }
+        .doc-icon.tutorial-icon { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%) !important; }
+        .doc-icon.analysis-icon { background: linear-gradient(135deg, #E07A5F, #F2CC8F) !important; }
         .section-header { text-align: center; margin-bottom: 40px; }
         .version-selector { text-align: center; margin-bottom: 30px; }
         .version-dropdown {
@@ -25,6 +26,42 @@
             color: var(--text-primary);
             cursor: pointer;
         }
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gray-light), transparent);
+        }
+        .section-divider span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .doc-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .doc-type-badge.tutorial {
+            background: linear-gradient(135deg, #E07A5F, #E07A5F99);
+            color: white;
+        }
+        .doc-type-badge.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -32,7 +69,7 @@
 
     <nav class="navbar" style="background: #E07A5F;">
         <div class="nav-container">
-            <a href="../../index.html" class="nav-logo" style="color: white;">
+            <a href="../../../index.html" class="nav-logo" style="color: white;">
                 <i class="fas fa-cube"></i>
                 <span>MC 开发文档</span>
             </a>
@@ -40,17 +77,17 @@
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="../../index.html" style="color: rgba(255,255,255,0.9);">首页</a></li>
+                <li><a href="../../../index.html" style="color: rgba(255,255,255,0.9);">首页</a></li>
                 <li class="dropdown">
                     <a href="#" class="active" style="color: white;">文档中心 <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-content">
-                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
-                        <a href="../../docs/iris/index.html">Iris 光影</a>
-                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../catalog.html" style="color: rgba(255,255,255,0.9);">文档目录</a></li>
-                <li><a href="../../about.html" style="color: rgba(255,255,255,0.9);">关于</a></li>
+                <li><a href="../../../catalog.html" style="color: rgba(255,255,255,0.9);">文档目录</a></li>
+                <li><a href="../../../about.html" style="color: rgba(255,255,255,0.9);">关于</a></li>
             </ul>
         </div>
     </nav>
@@ -65,7 +102,7 @@
             <p class="hero-subtitle">深入理解 Iris 光影 的核心架构与实现细节</p>
             <div class="hero-stats">
                 <div class="stat">
-                    <span class="stat-number">6</span>
+                    <span class="stat-number">9</span>
                     <span class="stat-label">核心文档</span>
                 </div>
                 
@@ -76,21 +113,37 @@
     <section class="section">
         <div class="container">
             
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-file-alt"></i>
-                    文档列表
-                </h2>
+
+            <!-- 教程/分析切换标签 -->
+            
+            <div class="doc-type-tabs" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;">
+                <button class="tab-btn active" onclick="switchDocType('tutorials')" style="padding: 10px 20px; border: 2px solid #E07A5F; background: #E07A5F; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-graduation-cap"></i> 教程
+                </button>
+                <button class="tab-btn" onclick="switchDocType('analysis')" style="padding: 10px 20px; border: 2px solid #E07A5F; background: white; color: #E07A5F; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-microscope"></i> 分析
+                </button>
             </div>
-            <div class="docs-grid">
-                
-        <div class="doc-card" onclick="window.location.href='01-architecture-overview.html'" style="animation-delay: 0s">
-            <div class="doc-icon">
-                <i class="fas fa-sitemap"></i>
+            
+
+            <!-- 教程部分 -->
+            <div id="tutorialsSection" class="doc-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程 
+                    </h2>
+                </div>
+                <div class="docs-grid">
+                    
+        <div class="doc-card" onclick="window.location.href='tutorials/01-shader-basics.html'" style="animation-delay: 0s">
+            <div class="doc-icon tutorial-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>架构总览</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
+                <h3>01 shader basics</h3>
+                <p>学习指南</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -100,13 +153,14 @@
             </div>
         </div>
     
-        <div class="doc-card" onclick="window.location.href='02-rendering-pipeline.html'" style="animation-delay: 0.1s">
-            <div class="doc-icon">
-                <i class="fas fa-project-diagram"></i>
+        <div class="doc-card" onclick="window.location.href='tutorials/02-iris-setup.html'" style="animation-delay: 0.1s">
+            <div class="doc-icon tutorial-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>渲染管线</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
+                <h3>02 iris setup</h3>
+                <p>学习指南</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -116,13 +170,14 @@
             </div>
         </div>
     
-        <div class="doc-card" onclick="window.location.href='03-shaderpack-system.html'" style="animation-delay: 0.2s">
-            <div class="doc-icon">
-                <i class="fas fa-palette"></i>
+        <div class="doc-card" onclick="window.location.href='tutorials/03-create-simple-shader.html'" style="animation-delay: 0.2s">
+            <div class="doc-icon tutorial-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>ShaderPack 系统</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
+                <h3>03 create simple shader</h3>
+                <p>学习指南</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -132,13 +187,28 @@
             </div>
         </div>
     
-        <div class="doc-card" onclick="window.location.href='04-shadow-system.html'" style="animation-delay: 0.30000000000000004s">
-            <div class="doc-icon">
-                <i class="fas fa-cube"></i>
+                </div>
+            </div>
+
+            <!-- 分析部分 -->
+            
+            <div id="analysisSection" class="doc-section" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-microscope"></i>
+                        源码分析 
+                    </h2>
+                </div>
+                <div class="docs-grid">
+                    
+        <div class="doc-card" onclick="window.location.href='analysis/01-architecture-overview.html'" style="animation-delay: 0.30000000000000004s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>阴影系统</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>01 architecture overview</h3>
+                <p>深度解析</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -148,13 +218,14 @@
             </div>
         </div>
     
-        <div class="doc-card" onclick="window.location.href='05-framebuffer-texture.html'" style="animation-delay: 0.4s">
-            <div class="doc-icon">
-                <i class="fas fa-layer-group"></i>
+        <div class="doc-card" onclick="window.location.href='analysis/02-rendering-pipeline.html'" style="animation-delay: 0.4s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>帧缓冲与纹理</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>02 rendering pipeline</h3>
+                <p>深度解析</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -164,13 +235,14 @@
             </div>
         </div>
     
-        <div class="doc-card" onclick="window.location.href='06-uniforms.html'" style="animation-delay: 0.5s">
-            <div class="doc-icon">
-                <i class="fas fa-sliders-h"></i>
+        <div class="doc-card" onclick="window.location.href='analysis/03-shaderpack-system.html'" style="animation-delay: 0.5s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="doc-content">
-                <h3>Uniform 管理</h3>
-                <p>文档页面</p>
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>03 shaderpack system</h3>
+                <p>深度解析</p>
                 <div class="doc-meta">
                     <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
@@ -180,9 +252,100 @@
             </div>
         </div>
     
+        <div class="doc-card" onclick="window.location.href='analysis/04-shadow-system.html'" style="animation-delay: 0.6000000000000001s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
             </div>
+            <div class="doc-content">
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>04 shadow system</h3>
+                <p>深度解析</p>
+                <div class="doc-meta">
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+            <div class="doc-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    
+        <div class="doc-card" onclick="window.location.href='analysis/05-framebuffer-texture.html'" style="animation-delay: 0.7000000000000001s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="doc-content">
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>05 framebuffer texture</h3>
+                <p>深度解析</p>
+                <div class="doc-meta">
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+            <div class="doc-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    
+        <div class="doc-card" onclick="window.location.href='analysis/06-uniforms.html'" style="animation-delay: 0.8s">
+            <div class="doc-icon analysis-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="doc-content">
+                <span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>
+                <h3>06 uniforms</h3>
+                <p>深度解析</p>
+                <div class="doc-meta">
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+            <div class="doc-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    
+                </div>
+            </div>
+            
         </div>
     </section>
+
+    <script>
+        function switchDocType(type) {
+            const tutorialsSection = document.getElementById('tutorialsSection');
+            const analysisSection = document.getElementById('analysisSection');
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(type === 'tutorials' ? '教程' : '分析')) {
+                    btn.classList.add('active');
+                    if (type === 'tutorials') {
+                        btn.style.background = '#E07A5F';
+                        btn.style.color = 'white';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.color = '#E07A5F';
+                    }
+                } else {
+                    if (type === 'tutorials') {
+                        btn.style.background = 'white';
+                        btn.style.color = '#E07A5F';
+                    } else {
+                        btn.style.background = '#E07A5F';
+                        btn.style.color = 'white';
+                    }
+                }
+            });
+            
+            if (type === 'tutorials') {
+                if (tutorialsSection) tutorialsSection.style.display = 'block';
+                if (analysisSection) analysisSection.style.display = 'none';
+            } else {
+                if (tutorialsSection) tutorialsSection.style.display = 'none';
+                if (analysisSection) analysisSection.style.display = 'block';
+            }
+        }
+    </script>
 
     <footer class="footer">
         <div class="container">
@@ -194,16 +357,16 @@
                 <div class="footer-links">
                     <h4>文档</h4>
                     <ul>
-                        <li><a href="../../docs/mc/index.html">Minecraft 原版</a></li>
-                        <li><a href="../../docs/iris/index.html">Iris 光影</a></li>
-                        <li><a href="../../docs/sodium/index.html">Sodium 优化</a></li>
+                        <li><a href="../../../docs/mc/index.html">Minecraft 原版</a></li>
+                        <li><a href="../../../docs/iris/index.html">Iris 光影</a></li>
+                        <li><a href="../../../docs/sodium/index.html">Sodium 优化</a></li>
                     </ul>
                 </div>
                 <div class="footer-links">
                     <h4>资源</h4>
                     <ul>
-                        <li><a href="../../catalog.html">文档目录</a></li>
-                        <li><a href="../../about.html">关于</a></li>
+                        <li><a href="../../../catalog.html">文档目录</a></li>
+                        <li><a href="../../../about.html">关于</a></li>
                     </ul>
                 </div>
             </div>
@@ -213,7 +376,7 @@
         </div>
     </footer>
 
-    <script src="../../script.js"></script>
+    <script src="../../../script.js"></script>
     <style>
         .docs-grid {
             display: grid;

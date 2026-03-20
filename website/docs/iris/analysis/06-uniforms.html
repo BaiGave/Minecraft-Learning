@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06 uniforms - Iris 光影</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #E07A5F; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #E07A5F 0, #F2CC8F 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #E07A5F; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #E07A5F; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
+        .info-box i { color: #E07A5F; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #E07A5F; }
+        .docs-body h2 i { color: #E07A5F; }
+        .data-table th { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #E07A5F;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #E07A5F, #E07A5F99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../catalog.html">文档目录</a></li>
+                <li><a href="../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-sitemap"></i>
+            架构总览
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-project-diagram"></i>
+            渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-palette"></i>
+            ShaderPack 系统
+        </a>
+<a href="04-shadow-system.html" class="">
+            <i class="fas fa-cube"></i>
+            阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-layer-group"></i>
+            帧缓冲与纹理
+        </a>
+<a href="06-uniforms.html" class="active">
+            <i class="fas fa-sliders-h"></i>
+            Uniform 管理
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>06 uniforms</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    06 uniforms
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris Uniform 系统</h1>
+<blockquote><p>统一变量管理与更新机制</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
+<p>Iris 的 Uniform 系统负责向着色器提供各种游戏状态数据，包括相机、生物群系、时间、光照等。</p>
+<p><strong>核心文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>CommonUniforms</code></td><td><code>uniforms/CommonUniforms.java</code></td></tr><tr><td><code>CameraUniforms</code></td><td><code>uniforms/CameraUniforms.java</code></td></tr><tr><td><code>BiomeUniforms</code></td><td><code>uniforms/BiomeUniforms.java</code></td></tr><tr><td><code>MatrixUniforms</code></td><td><code>uniforms/MatrixUniforms.java</code></td></tr><tr><td><code>CustomUniforms</code></td><td><code>uniforms/custom/CustomUniforms.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. Uniform 更新频率">2. Uniform 更新频率</h2>
+<pre class="code-block"><code class="language-java">    /** 仅设置一次 */
+    ONCE,
+    
+    /** 每帧更新 */
+    PER_FRAME,
+    
+    /** 每游戏刻更新 */
+    PER_TICK,
+    
+    /** 自定义更新 */
+    CUSTOM
+}</code></pre>
+<p><hr></p>
+<h2 id="3. CommonUniforms">3. CommonUniforms</h2>
+<p>提供着色器需要的所有通用 Uniform：</p>
+<pre class="code-block"><code class="language-java">                                    PackDirectives directives, FrameUpdateNotifier updateNotifier, 
+                                    FogMode fogMode) {
+    addNonDynamicUniforms(uniforms, idMap, directives, updateNotifier);
+    addDynamicUniforms(uniforms, fogMode);
+}
+
+public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap, 
+                                       PackDirectives directives, FrameUpdateNotifier updateNotifier) {
+    // 相机 Uniform
+    CameraUniforms.addCameraUniforms(uniforms, updateNotifier);
+    
+    // 视口 Uniform
+    ViewportUniforms.addViewportUniforms(uniforms);
+    
+    // 世界时间 Uniform
+    WorldTimeUniforms.addWorldTimeUniforms(uniforms);
+    
+    // 系统时间 Uniform
+    SystemTimeUniforms.addSystemTimeUniforms(uniforms);
+    
+    // 生物群系 Uniform
+    BiomeUniforms.addBiomeUniforms(uniforms);
+    
+    // 天体 Uniform
+    new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
+    
+    // Iris 特有 Uniform
+    IrisExclusiveUniforms.addIrisExclusiveUniforms(uniforms);
+    
+    // 时间 Uniform
+    IrisTimeUniforms.addTimeUniforms(uniforms);
+    
+    // 矩阵 Uniform
+    MatrixUniforms.addMatrixUniforms(uniforms, directives);
+    
+    // ID 映射 Uniform
+    IdMapUniforms.addIdMapUniforms(updateNotifier, uniforms, idMap, directives.isOldHandLight());
+}</code></pre>
+<h3>3.1 动态 Uniform</h3>
+<pre class="code-block"><code class="language-java">    // 雾 Uniform
+    FogUniforms.addFogUniforms(uniforms, fogMode);
+    IrisInternalUniforms.addFogUniforms(uniforms, fogMode);
+    
+    // 实体 ID
+    uniforms.uniform1i(&quot;entityId&quot;, 
+        CapturedRenderingState.INSTANCE::getCurrentRenderedEntity, 
+        StateUpdateNotifiers.fallbackEntityNotifier);
+    
+    // 纹理尺寸
+    uniforms.uniform2i(&quot;atlasSize&quot;, () -&gt; {
+        int glId = RenderSystem.getShaderTexture(0);
+        AbstractTexture texture = TextureTracker.INSTANCE.getTexture(glId);
+        if (texture instanceof TextureAtlas atlas) {
+            return new Vector2i(atlasAccessor.callGetWidth(), atlasAccessor.callGetHeight());
+        }
+        return ZERO_VECTOR_2i;
+    }, listener -&gt; {});
+    
+    // 混合函数
+    uniforms.uniform4i(&quot;blendFunc&quot;, () -&gt; {
+        GlStateManager.BlendState blend = GlStateManagerAccessor.getBLEND();
+        if (((BooleanStateAccessor) blend.mode).isEnabled()) {
+            return new Vector4i(blend.srcRgb, blend.dstRgb, blend.srcAlpha, blend.dstAlpha);
+        }
+        return ZERO_VECTOR_4i;
+    }, StateUpdateNotifiers.blendFuncNotifier);
+    
+    // 渲染阶段
+    uniforms.uniform1i(&quot;renderStage&quot;, 
+        () -&gt; GbufferPrograms.getCurrentPhase().ordinal(), 
+        StateUpdateNotifiers.phaseChangeNotifier);
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 相机 Uniform">4. 相机 Uniform</h2>
+<pre class="code-block"><code class="language-java">    public static void addCameraUniforms(UniformHolder uniforms, FrameUpdateNotifier updateNotifier) {
+        // 世界空间相机位置
+        uniforms.uniform3d(PER_FRAME, &quot;cameraPosition&quot;, CameraUniforms::getCameraPosition);
+        
+        // 平滑相机位置
+        uniforms.uniform3d(PER_FRAME, &quot;cameraPositionSmooth&quot;, CameraUniforms::getCameraPositionSmooth);
+        
+        // 相机变换矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;modelViewMatrix&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelView);
+        
+        // 投影矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;projectionMatrix&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjection);
+    }
+    
+    private static Vector3d getCameraPosition() {
+        Vector3d pos = CapturedRenderingState.INSTANCE.getCameraPosition();
+        // 应用偏移
+        return new Vector3d(pos.x - CameraUniforms.getDiffX(), 
+                          pos.y - CameraUniforms.getDiffY(), 
+                          pos.z - CameraUniforms.getDiffZ());
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 天体 Uniform">5. 天体 Uniform</h2>
+<pre class="code-block"><code class="language-java">    private final float sunPathRotation;
+    
+    public void addCelestialUniforms(UniformHolder uniforms) {
+        uniforms.uniform1f(PER_FRAME, &quot;sunAngle&quot;, this::getSunAngle);
+        uniforms.uniform1f(PER_FRAME, &quot;moonAngle&quot;, this::getMoonAngle);
+        uniforms.uniform1f(PER_FRAME, &quot;sunPathRotation&quot;, () -&gt; sunPathRotation);
+        
+        // 太阳位置 (世界空间)
+        uniforms.uniform3d(PER_FRAME, &quot;sunPosition&quot;, this::getSunPosition);
+        uniforms.uniform3d(PER_FRAME, &quot;moonPosition&quot;, this::getMoonPosition);
+    }
+    
+    private double getSunAngle() {
+        // 获取天空角度
+        float skyAngle = getLevel().getTimeOfDay(CapturedRenderingState.INSTANCE.getTickDelta());
+        
+        // 调整到 [0, 1) 范围
+        if (skyAngle &lt; 0.25f) {
+            return skyAngle + 0.75f;
+        } else {
+            return skyAngle - 0.25f;
+        }
+    }
+    
+    private Vector3d getSunPosition() {
+        Vector3d cameraPos = CameraUniforms.getCameraPosition();
+        
+        // 计算太阳相对于相机的位置
+        double sunAngle = getSunAngle() * 2 * Math.PI;
+        double sunHeight = Math.sin(sunAngle);
+        double sunX = Math.cos(sunAngle);
+        double sunZ = Math.sin(sunAngle);
+        
+        return new Vector3d(
+            cameraPos.x + sunX * 1000,
+            cameraPos.y + sunHeight * 1000,
+            cameraPos.z + sunZ * 1000
+        );
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 矩阵 Uniform">6. 矩阵 Uniform</h2>
+<pre class="code-block"><code class="language-java">    public static void addMatrixUniforms(UniformHolder uniforms, PackDirectives directives) {
+        // GBuffer 矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferModelView&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelView);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferModelViewInverse&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferModelViewInverse);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferProjection&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjection);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferProjectionInverse&quot;, 
+            CapturedRenderingState.INSTANCE::getGbufferProjectionInverse);
+        
+        // 阴影矩阵
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;shadowModelView&quot;, 
+            ShadowRenderer::getShadowModelView);
+        uniforms.uniformMatrix4f(PER_FRAME, false, &quot;shadowProjection&quot;, 
+            ShadowRenderer::getShadowProjection);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. 自定义 Uniform">7. 自定义 Uniform</h2>
+<h3>7.1 CustomUniforms</h3>
+<pre class="code-block"><code class="language-java">    private final Map&lt;String, CustomUniformHolder&gt; uniforms = new HashMap&lt;&gt;();
+    private final Builder builder;
+    
+    public static class Builder {
+        private final List&lt;CustomUniformDefinition&gt; definitions = new ArrayList&lt;&gt;();
+        
+        public Builder uniform1f(String name, Supplier&lt;Float&gt; supplier) {
+            definitions.add(new CustomUniformDefinition(name, Type.FLOAT, () -&gt; new float[]{supplier.get()}));
+            return this;
+        }
+        
+        public Builder uniform2f(String name, Supplier&lt;Vector2f&gt; supplier) {
+            definitions.add(new CustomUniformDefinition(name, Type.VECTOR_2, () -&gt; {
+                Vector2f v = supplier.get();
+                return new float[]{v.x, v.y};
+            }));
+            return this;
+        }
+        
+        public CustomUniforms build(UniformFactory factory) {
+            for (CustomUniformDefinition def : definitions) {
+                CustomUniformHolder holder = factory.createHolder(def);
+                uniforms.put(def.name, holder);
+            }
+            return new CustomUniforms(uniforms);
+        }
+    }
+    
+    public void push(Program program) {
+        for (CustomUniformHolder holder : uniforms.values()) {
+            holder.push(program);
+        }
+    }
+    
+    public void update() {
+        for (CustomUniformHolder holder : uniforms.values()) {
+            holder.update();
+        }
+    }
+}</code></pre>
+<h3>7.2 缓存的 Uniform</h3>
+<pre class="code-block"><code class="language-java">    private final Supplier&lt;T&gt; supplier;
+    private final UniformPusher&lt;T&gt; pusher;
+    private T cachedValue;
+    private boolean hasUpdated = false;
+    
+    public CachedUniform(Supplier&lt;T&gt; supplier, UniformPusher&lt;T&gt; pusher) {
+        this.supplier = supplier;
+        this.pusher = pusher;
+    }
+    
+    public void update() {
+        T newValue = supplier.get();
+        if (!hasUpdated || !equals(cachedValue, newValue)) {
+            cachedValue = newValue;
+            hasUpdated = true;
+        }
+    }
+    
+    public void push(int location) {
+        if (hasUpdated) {
+            pusher.push(location, cachedValue);
+        }
+    }
+    
+    private static boolean equals(Object a, Object b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. CapturedRenderingState">8. CapturedRenderingState</h2>
+<p>捕获的渲染状态：</p>
+<pre class="code-block"><code class="language-java">    public static final CapturedRenderingState INSTANCE = new CapturedRenderingState();
+    
+    private Matrix4f gbufferModelView;
+    private Matrix4f gbufferModelViewInverse;
+    private Matrix4f gbufferProjection;
+    private Matrix4f gbufferProjectionInverse;
+    
+    private Vector3d cameraPosition;
+    private Vector3d fogColor;
+    
+    private float tickDelta;
+    
+    private int currentRenderedEntity;
+    
+    private CapturedRenderingState() {}
+    
+    public void captureMatrices(Matrix4f modelView, Matrix4f projection) {
+        this.gbufferModelView = new Matrix4f(modelView);
+        this.gbufferProjection = new Matrix4f(projection);
+        this.gbufferModelViewInverse = new Matrix4f(modelView).invert();
+        this.gbufferProjectionInverse = new Matrix4f(projection).invert();
+    }
+    
+    public void captureCameraPosition(Vector3d position) {
+        this.cameraPosition = position;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="9. UniformHolder">9. UniformHolder</h2>
+<h3>9.1 创建 Uniform</h3>
+<pre class="code-block"><code class="language-java">    // 单值 Uniform
+    UniformHolder uniform1i(String name, Supplier&lt;Integer&gt; supplier, ...);
+    UniformHolder uniform1f(String name, Supplier&lt;Float&gt; supplier, ...);
+    UniformHolder uniform1b(String name, Supplier&lt;Boolean&gt; supplier, ...);
+    
+    // 向量 Uniform
+    UniformHolder uniform2i(String name, Supplier&lt;Vector2i&gt; supplier, ...);
+    UniformHolder uniform2f(String name, Supplier&lt;Vector2f&gt; supplier, ...);
+    UniformHolder uniform3d(String name, Supplier&lt;Vector3d&gt; supplier, ...);
+    UniformHolder uniform4f(String name, Supplier&lt;Vector4f&gt; supplier, ...);
+    
+    // 矩阵 Uniform
+    UniformHolder uniformMatrix4f(boolean transpose, String name, Supplier&lt;Matrix4f&gt; supplier, ...);
+}</code></pre>
+<p><hr></p>
+<h2 id="10. Uniform 推送机制">10. Uniform 推送机制</h2>
+<pre class="code-block"><code class="language-java">    FullScreenQuadRenderer.INSTANCE.begin();
+    
+    for (Pass renderPass : passes) {
+        // ...
+        
+        renderPass.program.use();
+        
+        // 推送自定义 Uniform
+        this.customUniforms.push(renderPass.program);
+        
+        // ...
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="11. 相关文档">11. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.md">01-architecture-overview.md</a> - 整体架构</li>
+<li><a href="02-rendering-pipeline.md">02-rendering-pipeline.md</a> - 渲染管线</li>
+<li><a href="03-shaderpack-system.md">03-shaderpack-system.md</a> - 着色器包系统</li>
+<li><a href="04-shadow-system.md">04-shadow-system.md</a> - 阴影系统</li>
+<li><a href="05-framebuffer-texture.md">05-framebuffer-texture.md</a> - 帧缓冲与纹理</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-framebuffer-texture.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            帧缓冲与纹理
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

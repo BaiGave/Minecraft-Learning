@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>35 protocol states - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #5B8C5A; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb a { color: #5B8C5A; }
+        .breadcrumb i { color: #ccc; }
+        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
+        .info-box i { color: #5B8C5A; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
+        .docs-body h2 i { color: #5B8C5A; }
+        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #5B8C5A;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar docs-nav">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>MC 开发文档</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Minecraft 原版</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-course-overview.html" class="">
+            <i class="fas fa-book"></i>
+            课程概述
+        </a>
+<a href="01-java-basics.html" class="">
+            <i class="fas fa-code"></i>
+            Java基础
+        </a>
+<a href="02-development-env.html" class="">
+            <i class="fas fa-cog"></i>
+            开发环境
+        </a>
+<a href="03-project-intro.html" class="">
+            <i class="fas fa-folder-open"></i>
+            项目结构
+        </a>
+<a href="04-sourcecode-guide.html" class="">
+            <i class="fas fa-search"></i>
+            源码查找指南
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-archive"></i>
+            注册表系统 ⭐
+        </a>
+<a href="05-client-server-arch.html" class="">
+            <i class="fas fa-network-wired"></i>
+            客户端-服务端
+        </a>
+<a href="06-shared-constants.html" class="">
+            <i class="fas fa-tag"></i>
+            全局常量
+        </a>
+<a href="07-bootstrap-flow.html" class="">
+            <i class="fas fa-play"></i>
+            启动引导
+        </a>
+<a href="08-world-core.html" class="">
+            <i class="fas fa-globe"></i>
+            World核心
+        </a>
+<a href="09-chunk-system.html" class="">
+            <i class="fas fa-th"></i>
+            Chunk系统
+        </a>
+<a href="10-biome-system.html" class="">
+            <i class="fas fa-tree"></i>
+            生物群系
+        </a>
+<a href="11-terrain-gen.html" class="">
+            <i class="fas fa-mountain"></i>
+            地形生成
+        </a>
+<a href="12-lighting-system.html" class="">
+            <i class="fas fa-lightbulb"></i>
+            光照系统
+        </a>
+<a href="13-heightmap.html" class="">
+            <i class="fas fa-chart-area"></i>
+            高度图
+        </a>
+<a href="14-block-basics.html" class="">
+            <i class="fas fa-cube"></i>
+            Block基础
+        </a>
+<a href="15-block-state.html" class="">
+            <i class="fas fa-toggle-on"></i>
+            BlockState
+        </a>
+<a href="16-block-entity.html" class="">
+            <i class="fas fa-box"></i>
+            BlockEntity
+        </a>
+<a href="17-item-basics.html" class="">
+            <i class="fas fa-gift"></i>
+            Item基础
+        </a>
+<a href="18-item-stack.html" class="">
+            <i class="fas fa-layer-group"></i>
+            ItemStack
+        </a>
+<a href="19-item-component.html" class="">
+            <i class="fas fa-puzzle-piece"></i>
+            Component
+        </a>
+<a href="20-entity-intro.html" class="">
+            <i class="fas fa-paw"></i>
+            Entity入门
+        </a>
+<a href="21-entity-lifecycle.html" class="">
+            <i class="fas fa-circle"></i>
+            生命周期
+        </a>
+<a href="22-living-entity.html" class="">
+            <i class="fas fa-heart"></i>
+            LivingEntity
+        </a>
+<a href="23-mob-entity.html" class="">
+            <i class="fas fa-ghost"></i>
+            MobEntity
+        </a>
+<a href="24-entity-attributes.html" class="">
+            <i class="fas fa-sliders-h"></i>
+            属性系统
+        </a>
+<a href="25-damage-system.html" class="">
+            <i class="fas fa-sword"></i>
+            伤害系统
+        </a>
+<a href="26-spawn-system.html" class="">
+            <i class="fas fa-magic"></i>
+            生成系统
+        </a>
+<a href="27-ai-brain-intro.html" class="">
+            <i class="fas fa-brain"></i>
+            AI大脑 ⭐
+        </a>
+<a href="28-memory-system.html" class="">
+            <i class="fas fa-memory"></i>
+            记忆系统
+        </a>
+<a href="29-sensor-system.html" class="">
+            <i class="fas fa-eye"></i>
+            传感器
+        </a>
+<a href="30-task-system.html" class="">
+            <i class="fas fa-tasks"></i>
+            任务系统
+        </a>
+<a href="31-activity-schedule.html" class="">
+            <i class="fas fa-calendar"></i>
+            活动日程
+        </a>
+<a href="32-pathfinding.html" class="">
+            <i class="fas fa-route"></i>
+            路径导航
+        </a>
+<a href="33-network-intro.html" class="">
+            <i class="fas fa-network-wired"></i>
+            网络入门
+        </a>
+<a href="34-packet-system.html" class="">
+            <i class="fas fa-envelope"></i>
+            数据包
+        </a>
+<a href="35-protocol-states.html" class="active">
+            <i class="fas fa-exchange-alt"></i>
+            协议状态
+        </a>
+<a href="36-sync-mechanism.html" class="">
+            <i class="fas fa-sync"></i>
+            同步机制
+        </a>
+<a href="37-command-intro.html" class="">
+            <i class="fas fa-terminal"></i>
+            命令入门
+        </a>
+<a href="38-brigadier-basics.html" class="">
+            <i class="fas fa-code-branch"></i>
+            Brigadier
+        </a>
+<a href="39-custom-command.html" class="">
+            <i class="fas fa-plus-circle"></i>
+            自定义命令
+        </a>
+<a href="40-resource-pack.html" class="">
+            <i class="fas fa-image"></i>
+            资源包
+        </a>
+<a href="41-datapack-intro.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="42-loot-table.html" class="">
+            <i class="fas fa-coins"></i>
+            战利品表
+        </a>
+<a href="43-advancement.html" class="">
+            <i class="fas fa-trophy"></i>
+            进度系统
+        </a>
+<a href="44-recipe-system.html" class="">
+            <i class="fas fa-flask"></i>
+            配方系统
+        </a>
+<a href="45-minecraft-client.html" class="">
+            <i class="fas fa-desktop"></i>
+            MinecraftClient
+        </a>
+<a href="46-render-system.html" class="">
+            <i class="fas fa-paint-brush"></i>
+            渲染系统
+        </a>
+<a href="47-gui-system.html" class="">
+            <i class="fas fa-window-maximize"></i>
+            GUI系统
+        </a>
+<a href="48-input-handling.html" class="">
+            <i class="fas fa-keyboard"></i>
+            输入处理
+        </a>
+<a href="49-server-intro.html" class="">
+            <i class="fas fa-server"></i>
+            服务端入门
+        </a>
+<a href="50-player-manager.html" class="">
+            <i class="fas fa-users"></i>
+            玩家管理
+        </a>
+<a href="51-save-system.html" class="">
+            <i class="fas fa-save"></i>
+            存档系统
+        </a>
+<a href="52-dedicated-vs-integrated.html" class="">
+            <i class="fas fa-balance-scale"></i>
+            服务器对比
+        </a>
+<a href="53-datafixer.html" class="">
+            <i class="fas fa-wrench"></i>
+            数据修复
+        </a>
+<a href="54-fluids.html" class="">
+            <i class="fas fa-tint"></i>
+            流体系统
+        </a>
+<a href="55-village-system.html" class="">
+            <i class="fas fa-home"></i>
+            村民系统
+        </a>
+<a href="56-raid-system.html" class="">
+            <i class="fas fa-shield-alt"></i>
+            袭击系统
+        </a>
+<a href="57-structure-system.html" class="">
+            <i class="fas fa-building"></i>
+            结构系统
+        </a>
+<a href="98-project1-block.html" class="">
+            <i class="fas fa-cube"></i>
+            新方块
+        </a>
+<a href="99-project2-item.html" class="">
+            <i class="fas fa-gift"></i>
+            新物品
+        </a>
+<a href="100-project3-entity.html" class="">
+            <i class="fas fa-dragon"></i>
+            新生物
+        </a>
+<a href="101-project4-datapack.html" class="">
+            <i class="fas fa-database"></i>
+            数据包
+        </a>
+<a href="enchantment-system.html" class="">
+            <i class="fas fa-magic"></i>
+            附魔系统
+        </a>
+<a href="inventory-system.html" class="">
+            <i class="fas fa-box-open"></i>
+            物品栏容器
+        </a>
+<a href="nbt-data-system.html" class="">
+            <i class="fas fa-file-code"></i>
+            NBT数据
+        </a>
+<a href="particle-system.html" class="">
+            <i class="fas fa-sparkles"></i>
+            粒子系统
+        </a>
+<a href="potion-effect-system.html" class="">
+            <i class="fas fa-flask"></i>
+            药水效果
+        </a>
+<a href="scoreboard-system.html" class="">
+            <i class="fas fa-clipboard-list"></i>
+            记分板
+        </a>
+<a href="sound-system.html" class="">
+            <i class="fas fa-volume-up"></i>
+            声音系统
+        </a>
+<a href="stats-system.html" class="">
+            <i class="fas fa-chart-bar"></i>
+            统计系统
+        </a>
+<a href="text-system.html" class="">
+            <i class="fas fa-font"></i>
+            文本系统
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">首页</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>35 protocol states</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    35 protocol states
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第35章 协议状态机详解</h1>
+<h2 id="目标">目标</h2>
+<p><ul><li>理解 Minecraft 协议的五个状态阶段</li>
+<li>掌握 HANDSHAKING → LOGIN → CONFIGURATION → PLAY 的转换流程</li>
+<li>了解 1.21 新增的 CONFIGURATION 阶段的作用</li>
+<li>理解各阶段发送的不同数据包</li></ul></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>完成 <a href="./34-packet-system.md">第34章 数据包系统</a></li>
+<li>理解 Packet 和 PacketListener 的关系</li></ul></p>
+<h2 id="核心概念">核心概念</h2>
+<h3>什么是协议状态机？</h3>
+<p>就像打电话的过程：</p>
+<pre class="code-block"><code class="language-text">拿起手机 ──&gt; 拨号 ──&gt; 对方接听 ──&gt; 通话 ──&gt; 挂断</code></pre>
+<p>Minecraft 连接也有类似的过程：</p>
+<pre class="code-block"><code class="language-text">握手 ──&gt; 登录 ──&gt; 配置 ──&gt; 游戏 ──&gt; 断开</code></pre>
+<h3>五个协议状态</h3>
+<pre class="code-block"><code class="language-java">
+public enum NetworkPhase {
+    HANDSHAKING(&quot;handshake&quot;),   // 握手 - 建立连接
+    PLAY(&quot;play&quot;),               // 游戏 - 正常游玩
+    STATUS(&quot;status&quot;),           // 状态 - 获取服务器信息
+    LOGIN(&quot;login&quot;),             // 登录 - 验证玩家身份
+    CONFIGURATION(&quot;configuration&quot;); // 配置 - 1.21新增的阶段
+}</code></pre>
+<h3>状态转换流程图</h3>
+<div class="mermaid">stateDiagram-v2
+    [*] --> HANDSHAKING: 启动连接
+    
+    state HANDSHAKING {
+        [*] --> 发送握手包
+        发送握手包 --> 选择意图
+    }
+    
+    HANDSHAKING --> LOGIN: 意图=LOGIN
+    HANDSHAKING --> STATUS: 意图=STATUS
+    
+    state LOGIN {
+        [*] --> 发送登录包
+        发送登录包 --> 等待成功
+        等待成功 --> 验证完成
+    }
+    
+    LOGIN --> CONFIGURATION: 1.21+ 版本
+    LOGIN --> PLAY: 旧版本直接进入PLAY
+    
+    state CONFIGURATION {
+        [*] --> 发送配置包
+        发送配置包 --> 客户端准备完成
+        客户端准备完成 --> 配置完成
+    }
+    
+    CONFIGURATION --> PLAY: 完成配置
+    PLAY --> [*]: 断开连接
+    
+    state STATUS {
+        [*] --> 响应ping请求
+    }
+    
+    STATUS --> [*]: 关闭连接</div>
+<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
+<h3>Minecraft 连接状态转换图</h3>
+<div class="mermaid">flowchart LR
+    subgraph Phases["协议状态"]
+        HS["HANDSHAKING<br/>握手"]
+        ST["STATUS<br/>状态查询"]
+        LN["LOGIN<br/>登录验证"]
+        CF["CONFIGURATION<br/>配置 (1.21+)"]
+        PL["PLAY<br/>游戏"]
+    end
+    
+    HS -->|"HandshakeC2SPacket<br/>intent=LOGIN"| LN
+    HS -->|"HandshakeC2SPacket<br/>intent=STATUS"| ST
+    
+    LN -->|"LoginSuccessS2CPacket"| CF
+    LN -->|"LoginSuccessS2CPacket"| PL
+    
+    CF -->|"FinishConfigurationC2SPacket"| PL
+    
+    PL -.->|"Disconnect"|[*]
+    ST -.->|"断开"|[*]
+    
+    style HS fill:#bbdefb
+    style LN fill:#c8e6c9
+    style CF fill:#fff9c4
+    style PL fill:#ffcdd2
+    style ST fill:#e1bee7</div>
+<h3>1.21 新增的 CONFIGURATION 阶段</h3>
+<div class="mermaid">flowchart TB
+    subgraph OldFlow["旧版本 (< 1.20.3)"]
+        A1["握手"] --> B1["登录"]
+        B1 --> C1["游戏"]
+    end
+    
+    subgraph NewFlow["新版本 (>= 1.21)"]
+        A2["握手"] --> B2["登录"]
+        B2 --> C2["配置"]
+        C2 --> D2["游戏"]
+    end
+    
+    style NewFlow fill:#e8f5e9
+    style OldFlow fill:#ffebee</div>
+<h2 id="核心代码">核心代码</h2>
+<h3>状态定义</h3>
+<pre class="code-block"><code class="language-java">
+public enum NetworkPhase {
+    HANDSHAKING(&quot;handshake&quot;),
+    PLAY(&quot;play&quot;),
+    STATUS(&quot;status&quot;),
+    LOGIN(&quot;login&quot;),
+    CONFIGURATION(&quot;configuration&quot;);  // 1.21 新增
+
+    private final String id;
+
+    private NetworkPhase(String id) {
+        this.id = id;
+    }
+}</code></pre>
+<h3>握手包</h3>
+<pre class="code-block"><code class="language-java">
+public class HandshakeC2SPacket implements Packet&lt;ServerHandshakePacketListener&gt; {
+    private final int protocolVersion;   // 协议版本
+    private final String serverAddress;  // 服务器地址
+    private final int serverPort;        // 服务器端口
+    private final ConnectionIntent intent; // 连接意图
+
+    // intent 可以是: HANDSHAKE, STATUS, LOGIN, TRANSFER
+}</code></pre>
+<h3>状态切换</h3>
+<pre class="code-block"><code class="language-java">
+// 切换入站协议（接收数据的方向）
+public &lt;T extends PacketListener&gt; void transitionInbound(NetworkState&lt;T&gt; state, T packetListener) {
+    this.packetListener = packetListener;
+    // 更新解码器
+    NetworkStateTransitions.DecoderTransitioner decoderTransitioner = 
+        NetworkStateTransitions.decoderTransitioner(state);
+    // 同步切换
+    ClientConnection.syncUninterruptibly(this.channel.writeAndFlush(decoderTransitioner));
+}
+
+// 切换出站协议（发送数据的方向）
+public void transitionOutbound(NetworkState&lt;?&gt; newState) {
+    NetworkStateTransitions.EncoderTransitioner encoderTransitioner = 
+        NetworkStateTransitions.encoderTransitioner(newState);
+    ClientConnection.syncUninterruptibly(this.channel.writeAndFlush(encoderTransitioner.andThen(context -&gt; {
+        this.duringLogin = bl;
+    })));
+}</code></pre>
+<h3>各阶段的监听器</h3>
+<pre class="code-block"><code class="language-java">
+public interface PacketListener {
+    NetworkSide getSide();    // 服务端bound 或 客户端bound
+    NetworkPhase getPhase();  // 当前处于哪个阶段
+    void onDisconnected(DisconnectionInfo info);  // 断开连接回调
+}
+
+// 不同阶段的监听器
+public interface ServerHandshakePacketListener extends PacketListener {}
+public interface ClientLoginPacketListener extends PacketListener {}      // LOGIN
+public interface ClientConfigurationPacketListener extends PacketListener {} // CONFIGURATION
+public interface ClientPlayPacketListener extends PacketListener {}       // PLAY</code></pre>
+<h2 id="各阶段详解">各阶段详解</h2>
+<h3>1. HANDSHAKING (握手阶段)</h3>
+<p><strong>目的</strong>：建立初始连接，确定后续要做什么</p>
+<p><strong>发送的包</strong>：
+<ul><li><code>HandshakeC2SPacket</code>：包含协议版本、服务器地址、连接意图</li></ul></p>
+<h3>2. STATUS (状态查询)</h3>
+<p><strong>目的</strong>：获取服务器信息（用于服务器列表）</p>
+<p><strong>发送的包</strong>：
+<ul><li><code>QueryResponseS2CPacket</code>：服务器信息</li>
+<li><code>PingResultS2CPacket</code>：ping 结果</li></ul></p>
+<h3>3. LOGIN (登录阶段)</h3>
+<p><strong>目的</strong>：验证玩家身份</p>
+<p><strong>发送的包</strong>：
+<ul><li>客户端：<code>LoginHelloC2SPacket</code>（包含用户名）</li>
+<li>服务端：<code>LoginSuccessS2CPacket</code>（验证成功）或 <code>LoginDisconnectS2CPacket</code>（验证失败）</li></ul></p>
+<h3>4. CONFIGURATION (配置阶段) [1.21+]</h3>
+<p><strong>目的</strong>：在游戏开始前完成客户端配置同步</p>
+<p><strong>为什么需要</strong>：将原本在 LOGIN 阶段的一些配置移到独立阶段，让协议更清晰</p>
+<p><strong>发送的包</strong>：
+<ul><li><code>DynamicRegistriesS2CPacket</code>：注册表数据</li>
+<li><code>ServerLinksS2CPacket</code>：服务器链接</li>
+<li><code>KnownPacksS2CPacket</code>：可用数据包列表</li>
+<li><code>SelectKnownPacksC2SPacket</code>：客户端选择的包</li></ul></p>
+<h3>5. PLAY (游戏阶段)</h3>
+<p><strong>目的</strong>：正常游戏</p>
+<p><strong>发送的包</strong>：
+<ul><li>位置移动、聊天、物品栏、实体更新、方块更新等所有游戏相关包</li></ul></p>
+<h2 id="实战演示">实战演示</h2>
+<h3>完整的连接流程</h3>
+<div class="mermaid">sequenceDiagram
+    participant C as 客户端
+    participant S as 服务端
+
+    Note over C,S: 1. HANDSHAKING 阶段
+    C->>S: HandshakeC2SPacket
+    Note right of C: intent = LOGIN, 协议版本 = 765
+
+    Note over C,S: 2. LOGIN 阶段
+    C->>S: LoginHelloC2SPacket
+    Note right of C: 用户名 = "Steve"
+    S-->>C: LoginSuccessS2CPacket
+    Note left of S: 验证成功！
+
+    Note over C,S: 3. CONFIGURATION 阶段 (1.21+)
+    S->>C: KnownPacksS2CPacket
+    Note left of S: 提供数据包列表
+    C->>S: SelectKnownPacksC2SPacket
+    Note right of C: 选择需要的包
+    S->>C: DynamicRegistriesS2CPacket
+    S->>C: FinishConfigurationS2CPacket
+
+    Note over C,S: 4. PLAY 阶段
+    C->>S: PlayerMoveC2SPacket
+    S->>C: EntitySpawnS2CPacket
+    C->>S: ChatMessageC2SPacket
+    S->>C: ChatMessageS2CPacket</div>
+<h2 id="小结">小结</h2>
+<p><ul><li><strong>协议状态机</strong> = 把连接过程分成多个有序阶段</li>
+<li><strong>五个状态</strong>：HANDSHAKING → LOGIN → CONFIGURATION → PLAY（或 STATUS）</li>
+<li><strong>CONFIGURATION (1.21+)</strong> = 新增的配置阶段，用于游戏开始前的配置同步</li>
+<li><strong>状态切换</strong> = 不同阶段使用不同的 PacketListener 和数据包集合</li>
+<li><strong>PacketListener</strong> = 每个阶段有不同的监听器接口</li></ul></p>
+<h2 id="练习">练习</h2>
+<p><ul><li>在源码中找到 <code>NetworkPhase.java</code>，查看所有状态</li>
+<li>理解为什么 1.21 要增加 CONFIGURATION 阶段</li>
+<li>查找 <code>LoginPackets.java</code> 中有哪些登录相关的包</li></ul></p>
+<h2 id="相关链接">相关链接</h2>
+<p><ul><li>上一章：<a href="./34-packet-system.md">第34章 数据包系统</a></li>
+<li>下一章：<a href="./36-sync-mechanism.md">第36章 同步机制</a></li>
+<li>Minecraft Wiki 协议文档</li></ul></p>
+<h3>源码文件位置</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>NetworkState.java</td><td><code>net/minecraft/network/NetworkState.java</code></td><td>网络状态管理</td></tr><tr><td>ConnectionIntent.java</td><td><code>net/minecraft/network/ConnectionIntent.java</code></td><td>连接意图枚举</td></tr><tr><td>NetworkPhase.java</td><td><code>net/minecraft/network/NetworkPhase.java</code></td><td>网络阶段定义</td></tr></tbody></table>
+<blockquote><p><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p></blockquote>
+<p><hr></p>
+<p><strong>关键词</strong>：协议状态机、握手、登录、配置、游戏、NetworkPhase
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="34-packet-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            数据包
+        </a><a href="36-sync-mechanism.html" class="next">
+            同步机制
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>
