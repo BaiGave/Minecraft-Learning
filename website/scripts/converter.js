@@ -233,12 +233,13 @@ function generateDocHTML(doc, module, navItems, version = null) {
             border-radius: 0 !important;
             background: #1a1a1a !important;
         }
-        .code-block::before {
-            content: '> ' !important;
-            color: ${module.color} !important;
-        }
+        .code-block::before,
         .code-block::after {
             display: none !important;
+        }
+        .code-block pre::before {
+            content: '> ' !important;
+            color: #ffffff !important;
         }
         .code-reference {
             border: 2px solid ${module.color} !important;
@@ -251,7 +252,7 @@ function generateDocHTML(doc, module, navItems, version = null) {
         }
         .code-reference-header::before {
             content: '> ' !important;
-            color: ${module.color} !important;
+            color: #ffffff !important;
         }
         .code-reference-header::after {
             display: none !important;
