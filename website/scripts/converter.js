@@ -235,6 +235,18 @@ function generateDocHTML(doc, module, navItems, version = null) {
         .prev-next .next:hover { box-shadow: 0 4px 15px ${module.color}66; }
         .doc-content pre { border-left: 4px solid ${module.color}; }
         .doc-content pre code { color: #d4d4d4; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: ${module.color};
+        }
     </style>
 </head>
 <body>
