@@ -336,8 +336,27 @@
             updateStats();
 
             // 数字动画
-            animateCounter(document.getElementById('docCount'), getTotalDocCount());
-            animateCounter(document.getElementById('moduleCount'), Object.keys(moduleData).length);
+            const docCount = getTotalDocCount();
+            const moduleCount = Object.keys(moduleData).length;
+            
+            console.log('文档总数:', docCount);
+            console.log('模组总数:', moduleCount);
+            console.log('模块数据:', moduleData);
+            
+            const docCountEl = document.getElementById('docCount');
+            const moduleCountEl = document.getElementById('moduleCount');
+            
+            if (docCountEl) {
+                animateCounter(docCountEl, docCount);
+            } else {
+                console.error('docCount element not found');
+            }
+            
+            if (moduleCountEl) {
+                animateCounter(moduleCountEl, moduleCount);
+            } else {
+                console.error('moduleCount element not found');
+            }
         }
 
         function updateStats() {
@@ -347,11 +366,13 @@
         function getTotalDocCount() {
             let count = 0;
             Object.values(moduleData).forEach(mod => {
-                if (mod.versions) {
+                if (mod.versions && typeof mod.versions === 'object') {
                     Object.values(mod.versions).forEach(v => {
-                        count += v.docs.length;
+                        if (v && v.docs && Array.isArray(v.docs)) {
+                            count += v.docs.length;
+                        }
                     });
-                } else if (mod.docs) {
+                } else if (mod.docs && Array.isArray(mod.docs)) {
                     count += mod.docs.length;
                 }
             });
@@ -604,8 +625,18 @@
 
         // 数字动画
         function animateCounter(element, target) {
+            if (!element) {
+                console.warn('animateCounter: element not found');
+                return;
+            }
+            
+            if (target === 0) {
+                element.textContent = '0';
+                return;
+            }
+            
             let current = 0;
-            const increment = target / 50;
+            const increment = Math.max(1, target / 50);
             const timer = setInterval(() => {
                 current += increment;
                 if (current >= target) {
