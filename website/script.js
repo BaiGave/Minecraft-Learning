@@ -1,5 +1,52 @@
 // Minecraft 源码教程 - 脚本
 
+// 模块数据配置（与 index.html 同步）
+const moduleData = {
+    mc: {
+        name: 'Minecraft 原版',
+        slug: 'mc',
+        docsDir: 'docs/mc',
+        defaultVersion: '1.21',
+        versions: ['1.21', '1.20', '1.19', '1.18']
+    },
+    iris: {
+        name: 'Iris 光影',
+        slug: 'iris',
+        docsDir: 'docs/iris',
+        versions: null
+    },
+    sodium: {
+        name: 'Sodium 优化',
+        slug: 'sodium',
+        docsDir: 'docs/sodium',
+        versions: null
+    }
+};
+
+// 填充导航下拉菜单
+function renderNavigationDropdown() {
+    const dropdown = document.getElementById('navDropdown');
+    if (!dropdown) return;
+    
+    const links = Object.entries(moduleData).map(([key, mod]) => {
+        let href;
+        if (mod.versions && mod.versions.length > 0) {
+            const defaultVersion = mod.defaultVersion || mod.versions[0];
+            href = `${mod.docsDir}/${defaultVersion}/index.html`;
+        } else {
+            href = `${mod.docsDir}/index.html`;
+        }
+        return `<a href="${href}">${mod.name}</a>`;
+    }).join('');
+    
+    dropdown.innerHTML = links || '<a href="#">暂无文档</a>';
+}
+
+// 页面加载时填充下拉菜单
+document.addEventListener('DOMContentLoaded', () => {
+    renderNavigationDropdown();
+});
+
 // 移动端菜单切换
 function toggleMobileMenu() {
     const navLinks = document.querySelector('.nav-links');

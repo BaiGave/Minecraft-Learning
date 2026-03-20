@@ -364,12 +364,24 @@
 
         function renderNavigation() {
             const dropdown = document.getElementById('navDropdown');
-            dropdown.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                const href = mod.versions
-                    ? `${mod.docsDir}/${mod.defaultVersion || '1.21'}/index.html`
-                    : `${mod.docsDir}/index.html`;
+            if (!dropdown) {
+                console.warn('navDropdown element not found');
+                return;
+            }
+            
+            const links = Object.entries(moduleData).map(([key, mod]) => {
+                let href;
+                if (mod.versions) {
+                    // 对于有版本的模组，使用第一个版本或默认版本
+                    const defaultVersion = mod.defaultVersion || Object.keys(mod.versions)[0] || '1.21';
+                    href = `${mod.docsDir}/${defaultVersion}/index.html`;
+                } else {
+                    href = `${mod.docsDir}/index.html`;
+                }
                 return `<a href="${href}">${mod.name}</a>`;
             }).join('');
+            
+            dropdown.innerHTML = links || '<a href="#">暂无文档</a>';
         }
 
         function renderFooter() {
