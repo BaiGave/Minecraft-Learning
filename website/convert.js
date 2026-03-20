@@ -73,18 +73,27 @@ function parseMarkdown(content) {
 
     // Extract title from first h1
     const titleMatch = content.match(/^#\s+(.+)$/m);
-    const title = titleMatch ? titleMatch[1] : 'Minecraft 源码教程';
+    const title = titleMatch ? titleMatch[1].trim() : 'Minecraft 源码教程';
 
     // Extract subtitle from first blockquote
     const subtitleMatch = content.match(/^>\s*\*\*([^*]+)\*\*\s*(.+)$/m);
-    const subtitle = subtitleMatch ? subtitleMatch[2] : '';
+    const subtitle = subtitleMatch ? subtitleMatch[2].trim() : '';
+
+    // Find the first title line index
+    let firstTitleIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim().startsWith('# ')) {
+            firstTitleIndex = i;
+            break;
+        }
+    }
 
     // Process lines
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        // Skip the first title line
-        if (i === 0 && line.startsWith('# ')) {
+        // Skip the first title line (main h1)
+        if (i === firstTitleIndex && line.trim().startsWith('# ')) {
             continue;
         }
 

@@ -56,16 +56,26 @@ function parseFrontmatter(content) {
 function parseMarkdown(text) {
     let html = text;
 
-    // 预处理：保留代码块
+    // 预处理：保留代码块（包括 mermaid）
     const codeBlocks = [];
     html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
         const index = codeBlocks.length;
-        codeBlocks.push({ lang: lang || 'text', code: code.trim() });
-        return `§§§CODE_BLOCK_${index}§§§`;
+        const langLower = (lang || '').toLowerCase();
+        const codeContent = code.trim();
+        
+        // 区分 mermaid 和其他代码块
+        if (langLower === 'mermaid') {
+            codeBlocks.push({ type: 'mermaid', lang: 'mermaid', code: codeContent });
+        } else {
+            codeBlocks.push({ type: 'code', lang: lang || 'text', code: codeContent });
+        }
+        
+        // 使用更安全的占位符，避免被其他处理影响
+        return `\n__CODEBLOCK_PLACEHOLDER_${index}__\n`;
     });
 
-    // 行内代码
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 行内代码（排除代码块中的）
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
     // 表格
     html = html.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, (match, header, body) => {
@@ -119,7 +129,16 @@ function parseMarkdown(text) {
     // 有序列表
     html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
 
-    // 换行处理（保留段落）
+    // 换行处理（保留段落）- 先保护代码块占位符
+    // 将占位符临时替换为特殊标记，避免被段落处理影响
+    const placeholderMap = {};
+    html = html.replace(/__CODEBLOCK_PLACEHOLDER_(\d+)__/g, (match, index) => {
+        const key = `__TEMP_CODEBLOCK_${index}__`;
+        placeholderMap[key] = match;
+        return key;
+    });
+
+    // 段落处理
     html = html.replace(/\n\n+/g, '</p>\n<p>');
     html = '<p>' + html + '</p>';
     html = html.replace(/<p>\s*<\/p>/g, '');
@@ -135,26 +154,42 @@ function parseMarkdown(text) {
     html = html.replace(/(<\/ul>)<\/p>/g, '$1');
     html = html.replace(/<p>(<ol>)/g, '$1');
     html = html.replace(/(<\/ol>)<\/p>/g, '$1');
+    
+    // 确保代码块占位符不被包装在 <p> 标签中
+    html = html.replace(/<p>(__TEMP_CODEBLOCK_\d+__)<\/p>/g, '$1');
+    html = html.replace(/<p>(.*?)(__TEMP_CODEBLOCK_\d+__)(.*?)<\/p>/g, '<p>$1</p>$2<p>$3</p>');
+
+    // 恢复占位符
+    Object.keys(placeholderMap).forEach(key => {
+        html = html.replace(key, placeholderMap[key]);
+    });
 
     // 包装列表
     html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
-    // Mermaid 图表
-    html = html.replace(/```mermaid\n?([\s\S]*?)```/g, '<div class="mermaid">$1</div>');
-
     // 恢复代码块
     codeBlocks.forEach((block, index) => {
-        const escapedCode = block.code
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        html = html.replace(`§§§CODE_BLOCK_${index}§§§`,
-            `<pre class="code-block"><code class="language-${block.lang}">${escapedCode}</code></pre>`);
+        const placeholder = `__CODEBLOCK_PLACEHOLDER_${index}__`;
+        
+        if (block.type === 'mermaid') {
+            // Mermaid 图表
+            html = html.replace(placeholder, `<div class="mermaid">${block.code}</div>`);
+        } else {
+            // 普通代码块
+            const escapedCode = block.code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            html = html.replace(placeholder,
+                `<pre class="code-block"><code class="language-${block.lang}">${escapedCode}</code></pre>`);
+        }
     });
 
     // 清理多余的br
-    html = html.replace(/<br>\n(?=<(ul|ol|table|pre|blockquote))/g, '');
-    html = html.replace(/(<(ul|ol|table|pre|blockquote).*?)<br>/gs, '$1');
+    html = html.replace(/<br>\n(?=<(ul|ol|table|pre|blockquote|div))/g, '');
+    html = html.replace(/(<(ul|ol|table|pre|blockquote|div).*?)<br>/gs, '$1');
 
     return html;
 }
