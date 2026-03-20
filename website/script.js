@@ -2,7 +2,10 @@
 
 // 移动端菜单切换
 function toggleMobileMenu() {
-    document.querySelector('.nav-links').classList.toggle('active');
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks) {
+        navLinks.classList.toggle('active');
+    }
 }
 
 // 平滑滚动
