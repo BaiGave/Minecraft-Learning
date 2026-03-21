@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ if .Title }}{{ .Title }} - {{ end }}{{ .Site.Title }}</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="main-nav">
+            <button class="menu-toggle" onclick="toggleMenu()">☰ 菜单</button>
+            <ul class="nav-list" id="navList">
+                {{ range .Site.Menus.main }}
+                <li><a href="{{ .URL }}" {{ if eq $.RelPermalink .URL }}class="active"{{ end }}>{{ .Name }}</a></li>
+                {{ end }}
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <aside class="sidebar" id="sidebar">
+            <h3>快速导航</h3>
+            {{ if .TableOfContents }}
+            <nav class="toc">{{ .TableOfContents }}</nav>
+            {{ end }}
+        </aside>
+
+        <article class="content">
+            {{ if .Title }}
+            <h1>{{ .Title }}</h1>
+            {{ end }}
+            {{ .Content }}
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; {{ now.Year }} {{ .Site.Title }}. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('navList').classList.toggle('show');
+        }
+        // Close menu on outside click
+        document.addEventListener('click', function(e) {
+            const nav = document.querySelector('.main-nav');
+            const menuToggle = document.querySelector('.menu-toggle');
+            if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
+                document.getElementById('navList').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
