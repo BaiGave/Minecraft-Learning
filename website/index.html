@@ -426,8 +426,10 @@
             Object.values(moduleData).forEach(mod => {
                 if (mod.versions && typeof mod.versions === 'object') {
                     Object.values(mod.versions).forEach(v => {
-                        if (v && v.docs && Array.isArray(v.docs)) {
-                            count += v.docs.length;
+                        if (v) {
+                            if (v.tutorials) count += v.tutorials.length;
+                            if (v.analysis) count += v.analysis.length;
+                            if (v.docs && Array.isArray(v.docs)) count += v.docs.length;
                         }
                     });
                 } else if (mod.docs && Array.isArray(mod.docs)) {
@@ -483,10 +485,12 @@
                     ? (() => {
                         let total = 0;
                         Object.values(mod.versions).forEach(v => {
-                            if (v.tutorials) total += v.tutorials.length;
-                            if (v.analysis) total += v.analysis.length;
+                            if (v) {
+                                if (v.tutorials) total += v.tutorials.length;
+                                if (v.analysis) total += v.analysis.length;
+                            }
                         });
-                        return total + '+';
+                        return total > 0 ? total + '+' : '0';
                     })()
                     : (mod.docs ? mod.docs.length : 0) + '篇';
 
