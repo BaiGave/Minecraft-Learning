@@ -243,7 +243,9 @@ function renderNavigationDropdown() {
     const defaultModuleData = {
         mc: { name: 'Minecraft 原版', docsDir: 'docs/mc', defaultVersion: '1.21', versions: ['1.21'] },
         iris: { name: 'Iris 光影', docsDir: 'docs/iris', versions: null },
-        sodium: { name: 'Sodium 优化', docsDir: 'docs/sodium', versions: null }
+        sodium: { name: 'Sodium 优化', docsDir: 'docs/sodium', versions: null },
+        fabric: { name: 'Fabric 模组', docsDir: 'docs/fabric', versions: null },
+        lithium: { name: 'Lithium 优化', docsDir: 'docs/lithium', versions: null }
     };
 
     // Use global moduleData if available, otherwise use default
