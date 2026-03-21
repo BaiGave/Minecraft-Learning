@@ -1,19 +1,138 @@
 /**
  * Markdown to HTML Converter for Minecraft Tutorial Website
  * Converts tutorial markdown files to styled HTML pages
+ *
+ * Features:
+ * - Detailed logging with timestamps
+ * - Error handling with file-level granularity
+ * - Progress bar for long operations
+ * - Statistics summary
  */
 
 const fs = require('fs');
 const path = require('path');
 
+// ============================================================================
 // Configuration
+// ============================================================================
+
 const CONFIG = {
-    tutorialsDir: path.join(__dirname, '..', 'tutorials'),
-    outputDir: path.join(__dirname, 'tutorials'),
-    websiteDir: __dirname
+    tutorialsDir: path.join(__dirname, '..', 'content'),
+    outputDir: path.join(__dirname, 'docs'),
+    websiteDir: __dirname,
+    verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
+    dryRun: process.argv.includes('--dry-run')
 };
 
-// Part configuration
+// ============================================================================
+// Logger - Styled console output
+// ============================================================================
+
+const Logger = {
+    reset: '\x1b[0m',
+    bright: '\x1b[1m',
+    dim: '\x1b[2m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+    white: '\x1b[37m',
+
+    log(msg, color = 'white') {
+        console.log(`${this[color]}${msg}${this.reset}`);
+    },
+
+    info(msg) { this.log(`ℹ  ${msg}`, 'blue'); },
+    success(msg) { this.log(`✓  ${msg}`, 'green'); },
+    warning(msg) { this.log(`⚠  ${msg}`, 'yellow'); },
+    error(msg) { this.log(`✗  ${msg}`, 'red'); },
+
+    header(msg) {
+        console.log(`\n${this.cyan}${'='.repeat(60)}${this.reset}`);
+        console.log(`${this.bright}${this.cyan}  ${msg}${this.reset}`);
+        console.log(`${this.cyan}${'='.repeat(60)}${this.reset}\n`);
+    },
+
+    subheader(msg) {
+        console.log(`\n${this.magenta}▶ ${msg}${this.reset}`);
+    },
+
+    stats(data) {
+        const { converted, errors, warnings, duration } = data;
+        console.log(`\n${this.cyan}${'─'.repeat(40)}${this.reset}`);
+        console.log(`${this.bright}转换统计:${this.reset}`);
+        console.log(`  ${this.green}成功: ${converted}${this.reset}`);
+        if (errors > 0) console.log(`  ${this.red}错误: ${errors}${this.reset}`);
+        if (warnings > 0) console.log(`  ${this.yellow}警告: ${warnings}${this.reset}`);
+        console.log(`  ${this.dim}耗时: ${(duration / 1000).toFixed(2)}s${this.reset}`);
+        console.log(`${this.cyan}${'─'.repeat(40)}${this.reset}\n`);
+    }
+};
+
+// ============================================================================
+// Progress Bar
+// ============================================================================
+
+class ProgressBar {
+    constructor(total, label = 'Progress') {
+        this.total = total;
+        this.current = 0;
+        this.label = label;
+        this.startTime = Date.now();
+    }
+
+    increment(message = '') {
+        this.current++;
+        this.render(message);
+    }
+
+    render(message = '') {
+        const width = 40;
+        const filled = Math.round((this.current / this.total) * width);
+        const empty = width - filled;
+        const percentage = Math.round((this.current / this.total) * 100);
+
+        const bar = '█'.repeat(filled) + '░'.repeat(empty);
+        const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
+
+        process.stdout.write(`\r${this.label}: [${bar}] ${percentage}% (${this.current}/${this.total}) ${elapsed}s ${message ? '- ' + message : ''}`);
+        process.stdout.write(' '.repeat(Math.max(0, 50 - message.length)));
+
+        if (this.current >= this.total) {
+            process.stdout.write('\n');
+        }
+    }
+
+    complete() {
+        this.current = this.total;
+        this.render('Done!');
+    }
+}
+
+// ============================================================================
+// Part Configuration
+// ============================================================================
+
+const MODULES = {
+    mc: {
+        name: 'Minecraft 原版',
+        color: '#5B8C5A',
+        versions: ['1.21', '1.20', '1.19', '1.18']
+    },
+    iris: {
+        name: 'Iris 光影',
+        color: '#E07A5F',
+        versions: null
+    },
+    sodium: {
+        name: 'Sodium 优化',
+        color: '#F2CC8F',
+        versions: null
+    }
+};
+
 const PARTS = {
     'Part-0-Prerequisites': { num: 0, title: '前置知识', color: '#34495e', prev: null, next: 'part-1.html' },
     'Part-1-Foundation': { num: 1, title: '核心基础', color: '#c0392b', prev: 'part-0.html', next: 'part-2.html' },
@@ -31,25 +150,83 @@ const PARTS = {
     'Part-13-Additional': { num: 13, title: '附加系统', color: '#7f8c8d', prev: 'part-12.html', next: null }
 };
 
-// Ensure output directory exists
+// ============================================================================
+// File System Helpers
+// ============================================================================
+
+/**
+ * Ensure directory exists
+ * @param {string} dir - Directory path
+ */
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
+        Logger.info(`Created directory: ${dir}`);
     }
 }
 
-// Read file with BOM handling
+/**
+ * Read file with BOM handling
+ * @param {string} filePath - File path
+ * @returns {string|null} - File content or null on error
+ */
 function readFile(filePath) {
     try {
         const content = fs.readFileSync(filePath, 'utf8');
         return content.replace(/^\uFEFF/, '');
     } catch (e) {
-        console.error(`Error reading file: ${filePath}`, e);
+        Logger.error(`Failed to read file: ${filePath}`);
+        if (CONFIG.verbose) {
+            Logger.error(e.message);
+        }
         return null;
     }
 }
 
-// Escape HTML entities
+/**
+ * Write file with error handling
+ * @param {string} filePath - File path
+ * @param {string} content - Content to write
+ * @returns {boolean} - Success status
+ */
+function writeFile(filePath, content) {
+    try {
+        fs.writeFileSync(filePath, content, 'utf8');
+        return true;
+    } catch (e) {
+        Logger.error(`Failed to write file: ${filePath}`);
+        if (CONFIG.verbose) {
+            Logger.error(e.message);
+        }
+        return false;
+    }
+}
+
+/**
+ * Copy file with error handling
+ * @param {string} src - Source path
+ * @param {string} dest - Destination path
+ * @returns {boolean} - Success status
+ */
+function copyFile(src, dest) {
+    try {
+        fs.copyFileSync(src, dest);
+        return true;
+    } catch (e) {
+        Logger.error(`Failed to copy: ${src} -> ${dest}`);
+        return false;
+    }
+}
+
+// ============================================================================
+// Markdown Parser
+// ============================================================================
+
+/**
+ * Escape HTML entities
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped text
+ */
 function escapeHtml(text) {
     return text
         .replace(/&/g, '&amp;')
@@ -58,7 +235,11 @@ function escapeHtml(text) {
         .replace(/"/g, '&quot;');
 }
 
-// Parse markdown to extract title, content and headings for TOC
+/**
+ * Parse markdown to extract title, content and headings for TOC
+ * @param {string} content - Markdown content
+ * @returns {Object} - Parsed result
+ */
 function parseMarkdown(content) {
     const lines = content.split('\n');
     let html = '';
@@ -129,7 +310,7 @@ function parseMarkdown(content) {
                         <pre><code>${escapeHtml(codeContent.join('\n'))}</code></pre>
                     </div>\n`;
                 } else {
-                    html += `<pre><code>${escapeHtml(codeContent.join('\n'))}</code></pre>\n`;
+                    html += `<pre class="code-block"><code>${escapeHtml(codeContent.join('\n'))}</code></pre>\n`;
                 }
                 codeBlockType = null;
                 codeContent = [];
@@ -245,9 +426,24 @@ function parseMarkdown(content) {
     return { title, subtitle, content: html, headings };
 }
 
-// Generate HTML page
-function generateHTML(partKey, filename, markdownContent) {
-    const part = PARTS[partKey];
+// ============================================================================
+// HTML Generator
+// ============================================================================
+
+/**
+ * Generate HTML page from markdown (new version for multi-module support)
+ * @param {string} module - Module name (mc, iris, sodium)
+ * @param {string|null} version - Version (for MC)
+ * @param {string} type - Type (tutorials, analysis)
+ * @param {string|null} part - Part folder name
+ * @param {string} filename - Markdown filename
+ * @param {string} markdownContent - Markdown content
+ * @returns {string} - Generated HTML
+ */
+function generateTutorialHTML(module, version, type, part, filename, markdownContent) {
+    const moduleConfig = MODULES[module];
+    const moduleColor = moduleConfig ? moduleConfig.color : '#5B8C5A';
+
     const { title, subtitle, content, headings } = parseMarkdown(markdownContent);
 
     // Generate TOC
@@ -260,84 +456,111 @@ function generateHTML(partKey, filename, markdownContent) {
         }
     });
 
-    // Get previous part info
-    let prevPartInfo = null;
-    if (part.prev) {
-        for (const [k, v] of Object.entries(PARTS)) {
-            if (v.next === part.prev) {
-                prevPartInfo = v;
-                break;
-            }
-        }
+    // Determine relative path depth
+    let relPath = '../../';
+    if (version) {
+        relPath = '../../../';
     }
 
-    // Get next part info
-    let nextPartInfo = null;
-    if (part.next) {
-        for (const [k, v] of Object.entries(PARTS)) {
-            if (v.prev === part.next) {
-                nextPartInfo = v;
-                break;
-            }
-        }
+    // Build breadcrumb
+    let breadcrumbHtml = `
+        <a href="${relPath}index.html">首页</a>
+        <span>/</span>
+        <a href="${relPath}catalog.html">目录</a>
+    `;
+
+    if (version) {
+        breadcrumbHtml += `
+            <span>/</span>
+            <a href="${relPath}docs/${module}/${version}/index.html">${moduleConfig.name} ${version}</a>
+        `;
+    } else {
+        breadcrumbHtml += `
+            <span>/</span>
+            <a href="${relPath}docs/${module}/index.html">${moduleConfig.name}</a>
+        `;
     }
 
-    // Navigation buttons
-    let prevNav = '';
-    let nextNav = '';
-
-    if (prevPartInfo) {
-        prevNav = `<a href="../../${part.prev}" class="tutorial-nav-btn prev">
-            <span>上一部分</span>
-            <strong><i class="fas fa-arrow-left"></i> ${prevPartInfo.title}</strong>
-        </a>`;
+    if (type) {
+        breadcrumbHtml += `
+            <span>/</span>
+            <span>${type === 'tutorials' ? '教程' : '源码分析'}</span>
+        `;
     }
 
-    if (nextPartInfo) {
-        nextNav = `<a href="../../${part.next}" class="tutorial-nav-btn next">
-            <span>下一部分</span>
-            <strong>${nextPartInfo.title} <i class="fas fa-arrow-right"></i></strong>
-        </a>`;
+    if (part) {
+        breadcrumbHtml += `
+            <span>/</span>
+            <span>${part}</span>
+        `;
     }
 
-    // Find adjacent chapters within the same part
-    const partDir = path.join(CONFIG.tutorialsDir, partKey);
-    let chapterList = [];
-    if (fs.existsSync(partDir)) {
-        chapterList = fs.readdirSync(partDir)
-            .filter(f => f.endsWith('.md'))
-            .sort();
+    breadcrumbHtml += `
+        <span>/</span>
+        <span>${escapeHtml(title)}</span>
+    `;
+
+    // Module badge class
+    const moduleBadgeClass = module;
+
+    // SEO: Determine page URL
+    let pageUrl = '/website/';
+    if (version) {
+        pageUrl = `/website/docs/${module}/${version}/${type}/${part ? part + '/' : ''}${filename.replace('.md', '.html')}`;
+    } else {
+        pageUrl = `/website/docs/${module}/${type}/${part ? part + '/' : ''}${filename.replace('.md', '.html')}`;
     }
 
-    const currentIndex = chapterList.findIndex(f => f === filename);
-    let chapterNav = '';
+    // SEO meta tags
+    const seoMetaTags = `
+    <!-- Primary Meta Tags -->
+    <title>${escapeHtml(title)} - ${moduleConfig.name} 教程</title>
+    <meta name="title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
+    <meta name="description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码，理解其内部工作原理')}">
+    <meta name="keywords" content="${moduleConfig.name}, Minecraft, 源码教程, ${type === 'tutorials' ? '教程' : '源码分析'}, Java">
+    <link rel="canonical" href="https://baigave.github.io/Blog${pageUrl}">
 
-    if (currentIndex > 0) {
-        const prevChapter = chapterList[currentIndex - 1];
-        const prevTitle = parseMarkdown(readFile(path.join(partDir, prevChapter))).title;
-        chapterNav += `<a href="${prevChapter.replace('.md', '.html')}" class="tutorial-nav-btn prev">
-            <span>上一章</span>
-            <strong><i class="fas fa-arrow-left"></i> ${prevTitle}</strong>
-        </a>`;
-    }
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/Blog${pageUrl}">
+    <meta property="og:title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
+    <meta property="og:description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码')}">
+    <meta property="og:site_name" content="技术博客 & MC 源码教程">
+    <meta property="og:locale" content="zh_CN">
 
-    if (currentIndex < chapterList.length - 1 && currentIndex >= 0) {
-        const nextChapter = chapterList[currentIndex + 1];
-        const nextTitle = parseMarkdown(readFile(path.join(partDir, nextChapter))).title;
-        chapterNav += `<a href="${nextChapter.replace('.md', '.html')}" class="tutorial-nav-btn next">
-            <span>下一章</span>
-            <strong>${nextTitle} <i class="fas fa-arrow-right"></i></strong>
-        </a>`;
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${escapeHtml(title)} - ${moduleConfig.name}">
+    <meta name="twitter:description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码')}">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "${escapeHtml(title)}",
+        "description": "${escapeHtml(subtitle || '')}",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "技术博客 & MC 源码教程"
+        },
+        "datePublished": "${new Date().toISOString()}",
+        "dateModified": "${new Date().toISOString()}"
     }
+    </script>`.trim();
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title} - Minecraft 源码教程</title>
-    <link rel="stylesheet" href="../../styles.css">
-    <link rel="stylesheet" href="../../tutorial.css">
+    ${seoMetaTags}
+    <link rel="stylesheet" href="${relPath}styles.css">
+    <link rel="stylesheet" href="${relPath}tutorial.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -349,7 +572,7 @@ function generateHTML(partKey, filename, markdownContent) {
 
     <nav class="navbar">
         <div class="nav-container">
-            <a href="../../index.html" class="nav-logo">
+            <a href="${relPath}index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
                 <span>MC 源码教程</span>
             </a>
@@ -357,33 +580,29 @@ function generateHTML(partKey, filename, markdownContent) {
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="../../index.html">首页</a></li>
-                <li><a href="../../catalog.html">目录</a></li>
-                <li><a href="../../roadmap.html">路线图</a></li>
-                <li><a href="../../about.html">关于</a></li>
+                <li><a href="${relPath}index.html">首页</a></li>
+                <li><a href="${relPath}catalog.html">目录</a></li>
+                <li><a href="${relPath}roadmap.html">路线图</a></li>
+                <li><a href="${relPath}about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="tutorial-page">
-        <header class="tutorial-header" style="background: linear-gradient(135deg, ${part.color} 0%, ${part.color}88 100%);">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, ${moduleColor} 0%, ${moduleColor}88 100%);">
             <div class="container">
                 <div class="tutorial-nav">
                     <div class="tutorial-breadcrumb">
-                        <a href="../../index.html">首页</a>
-                        <span>/</span>
-                        <a href="../../catalog.html">目录</a>
-                        <span>/</span>
-                        <a href="../../part-${part.num}.html">Part-${part.num}</a>
-                        <span>/</span>
-                        <span>${title}</span>
+                        ${breadcrumbHtml}
                     </div>
                 </div>
-                <h1 class="tutorial-title">${title}</h1>
-                ${subtitle ? `<p class="tutorial-subtitle">${subtitle}</p>` : ''}
+                <h1 class="tutorial-title">${escapeHtml(title)}</h1>
+                ${subtitle ? `<p class="tutorial-subtitle">${escapeHtml(subtitle)}</p>` : ''}
                 <div class="tutorial-meta">
-                    <span><i class="fas fa-book"></i> Part-${part.num}: ${part.title}</span>
-                    <span><i class="fas fa-file"></i> ${filename.replace('.md', '')}</span>
+                    <span class="module-badge ${moduleBadgeClass}">${moduleConfig.name}</span>
+                    ${version ? `<span><i class="fas fa-code-branch"></i> ${version}</span>` : ''}
+                    <span><i class="fas fa-file"></i> ${type === 'tutorials' ? '教程' : '源码分析'}</span>
+                    <span><i class="fas fa-file"></i> ${escapeHtml(filename.replace('.md', ''))}</span>
                 </div>
             </div>
         </header>
@@ -397,9 +616,13 @@ function generateHTML(partKey, filename, markdownContent) {
                     </ul>
                 </div>
                 <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-map"></i> 章节导航</h3>
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
                     <div class="part-nav">
-                        ${chapterNav || (prevNav + nextNav)}
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>${moduleConfig.name}</p>
+                            ${version ? `<p style="margin-bottom: 8px;"><strong>版本：</strong>${version}</p>` : ''}
+                            <p><strong>类型：</strong>${type === 'tutorials' ? '教程' : '源码分析'}</p>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -418,8 +641,8 @@ function generateHTML(partKey, filename, markdownContent) {
         </div>
     </footer>
 
-    <script src="../../script.js"></script>
-    <script src="../../tutorial.js"></script>
+    <script src="${relPath}script.js"></script>
+    <script src="${relPath}tutorial.js"></script>
     <script>
         // Initialize Mermaid
         mermaid.initialize({
@@ -444,52 +667,288 @@ function generateHTML(partKey, filename, markdownContent) {
 </html>`;
 }
 
-// Main conversion function
+// ============================================================================
+// Statistics
+// ============================================================================
+
+const stats = {
+    converted: 0,
+    errors: 0,
+    warnings: 0,
+    startTime: Date.now(),
+
+    get duration() {
+        return Date.now() - this.startTime;
+    }
+};
+
+// ============================================================================
+// Main Conversion Function
+// ============================================================================
+
+/**
+ * Scan for all markdown files in the content directory
+ * Supports: content/mc/1.21/tutorials/, content/iris/tutorials/, etc.
+ * @returns {Array} Array of { module, version, part, file } objects
+ */
+function scanMarkdownFiles() {
+    const files = [];
+    const baseDir = CONFIG.tutorialsDir;
+
+    // Scan each module (mc, iris, sodium)
+    for (const [module, config] of Object.entries(MODULES)) {
+        const moduleDir = path.join(baseDir, module);
+
+        if (!fs.existsSync(moduleDir)) {
+            Logger.warning(`Module directory not found: ${moduleDir}`);
+            continue;
+        }
+
+        // For MC, scan each version
+        if (module === 'mc' && config.versions) {
+            for (const version of config.versions) {
+                const versionDir = path.join(moduleDir, version);
+
+                // Scan tutorials
+                const tutorialsDir = path.join(versionDir, 'tutorials');
+                if (fs.existsSync(tutorialsDir)) {
+                    scanDirectory(tutorialsDir, files, { module, version, type: 'tutorials' });
+                }
+
+                // Scan analysis
+                const analysisDir = path.join(versionDir, 'analysis');
+                if (fs.existsSync(analysisDir)) {
+                    scanDirectory(analysisDir, files, { module, version, type: 'analysis' });
+                }
+            }
+        } else {
+            // For Iris/Sodium, scan tutorials and analysis directly
+            const tutorialsDir = path.join(moduleDir, 'tutorials');
+            if (fs.existsSync(tutorialsDir)) {
+                scanDirectory(tutorialsDir, files, { module, version: null, type: 'tutorials' });
+            }
+
+            const analysisDir = path.join(moduleDir, 'analysis');
+            if (fs.existsSync(analysisDir)) {
+                scanDirectory(analysisDir, files, { module, version: null, type: 'analysis' });
+            }
+        }
+    }
+
+    return files;
+}
+
+/**
+ * Scan a directory for markdown files
+ * @param {string} dir - Directory path
+ * @param {Array} files - Array to push found files to
+ * @param {Object} context - Context object with module, version, type
+ */
+function scanDirectory(dir, files, context) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+        if (entry.isDirectory()) {
+            // Scan subdirectory (e.g., Part-0-Prerequisites)
+            const subDir = path.join(dir, entry.name);
+            scanDirectory(subDir, files, { ...context, part: entry.name });
+        } else if (entry.name.endsWith('.md')) {
+            files.push({
+                ...context,
+                file: entry.name,
+                fullPath: path.join(dir, entry.name)
+            });
+        }
+    }
+}
+
+/**
+ * Main conversion function
+ */
 function convertAll() {
-    console.log('Starting Markdown to HTML conversion...\n');
+    const startTime = Date.now();
+
+    Logger.header('Markdown to HTML Converter');
+
+    if (CONFIG.dryRun) {
+        Logger.warning('Running in dry-run mode - no files will be written');
+    }
+
+    Logger.info(`Source directory: ${CONFIG.tutorialsDir}`);
+    Logger.info(`Output directory: ${CONFIG.outputDir}`);
 
     // Ensure output directory
     ensureDir(CONFIG.outputDir);
 
-    let totalConverted = 0;
+    // Scan for all markdown files
+    const markdownFiles = scanMarkdownFiles();
 
-    // Process each part
-    for (const [partKey, part] of Object.entries(PARTS)) {
-        const partDir = path.join(CONFIG.tutorialsDir, partKey);
-        const outputPartDir = path.join(CONFIG.outputDir, partKey);
+    if (markdownFiles.length === 0) {
+        Logger.error('No markdown files found to convert');
+        Logger.info(`Please ensure your content is in:`);
+        Logger.info(`  - content/mc/{version}/tutorials/`);
+        Logger.info(`  - content/mc/{version}/analysis/`);
+        Logger.info(`  - content/iris/tutorials/`);
+        Logger.info(`  - content/iris/analysis/`);
+        Logger.info(`  - content/sodium/tutorials/`);
+        Logger.info(`  - content/sodium/analysis/`);
+        return;
+    }
 
-        if (!fs.existsSync(partDir)) {
-            console.log(`Part directory not found: ${partDir}`);
+    Logger.info(`Found ${markdownFiles.length} markdown files\n`);
+
+    // Group by module
+    const byModule = {};
+    markdownFiles.forEach(f => {
+        if (!byModule[f.module]) byModule[f.module] = [];
+        byModule[f.module].push(f);
+    });
+
+    // Log file distribution
+    for (const [module, files] of Object.entries(byModule)) {
+        Logger.subheader(`${MODULES[module].name} - ${files.length} files`);
+    }
+
+    console.log('');
+
+    // Create progress bar
+    const progress = new ProgressBar(markdownFiles.length, 'Converting');
+
+    // Process each file
+    for (const fileInfo of markdownFiles) {
+        const { module, version, type, part, file, fullPath } = fileInfo;
+
+        const content = readFile(fullPath);
+        if (!content) {
+            stats.errors++;
+            progress.increment(`Error: ${file}`);
             continue;
         }
 
-        ensureDir(outputPartDir);
-
-        // Find all markdown files
-        const files = fs.readdirSync(partDir).filter(f => f.endsWith('.md'));
-
-        console.log(`Processing ${partKey} (${files.length} files)...`);
-
-        for (const file of files) {
-            const inputPath = path.join(partDir, file);
-            const outputPath = path.join(outputPartDir, file.replace('.md', '.html'));
-
-            const content = readFile(inputPath);
-            if (!content) continue;
-
-            const html = generateHTML(partKey, file, content);
-            fs.writeFileSync(outputPath, html, 'utf8');
-            totalConverted++;
-
-            console.log(`  ✓ ${file} → ${file.replace('.md', '.html')}`);
+        if (CONFIG.dryRun) {
+            stats.converted++;
+            progress.increment(`[DRY] ${module}/${file}`);
+            continue;
         }
 
-        console.log('');
+        // Generate output path
+        const outputDir = path.join(CONFIG.outputDir, module);
+        ensureDir(outputDir);
+
+        if (version) {
+            const versionDir = path.join(outputDir, version);
+            ensureDir(versionDir);
+
+            const typeDir = path.join(versionDir, type);
+            ensureDir(typeDir);
+
+            if (part) {
+                const partDir = path.join(typeDir, part);
+                ensureDir(partDir);
+                const outputPath = path.join(partDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, version, type, part, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            } else {
+                const outputPath = path.join(typeDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, version, type, null, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            }
+        } else {
+            const typeDir = path.join(outputDir, type);
+            ensureDir(typeDir);
+
+            if (part) {
+                const partDir = path.join(typeDir, part);
+                ensureDir(partDir);
+                const outputPath = path.join(partDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, null, type, part, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            } else {
+                const outputPath = path.join(typeDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, null, type, null, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            }
+        }
+
+        progress.increment(`${module}/${file}`);
     }
 
-    console.log(`\nConversion complete! ${totalConverted} files converted.`);
-    console.log(`Output directory: ${CONFIG.outputDir}`);
+    progress.complete();
+
+    // Print statistics
+    Logger.stats(stats);
+
+    // Generate sitemap
+    if (!CONFIG.dryRun && stats.errors === 0) {
+        try {
+            const { generateSitemapFromContent, generateRobotsTxt } = require('./scripts/seo.js');
+            const sitemap = generateSitemapFromContent({
+                baseDir: CONFIG.tutorialsDir,
+                outputPath: path.join(__dirname, '..', 'sitemap.xml'),
+                verbose: CONFIG.verbose
+            });
+            Logger.success('Generated sitemap.xml');
+
+            // Generate robots.txt
+            const robotsTxt = generateRobotsTxt({
+                sitemapUrl: 'https://baigave.github.io/Blog/sitemap.xml'
+            });
+            fs.writeFileSync(path.join(__dirname, '..', 'robots.txt'), robotsTxt, 'utf8');
+            Logger.success('Generated robots.txt');
+        } catch (e) {
+            Logger.warning('Failed to generate SEO files: ' + e.message);
+        }
+    }
+
+    // Print completion message
+    if (stats.errors === 0) {
+        Logger.success('Conversion completed successfully!');
+    } else {
+        Logger.error(`Conversion completed with ${stats.errors} error(s)`);
+    }
+
+    Logger.info(`Output directory: ${CONFIG.outputDir}`);
 }
 
-// Run conversion
+// ============================================================================
+// Error Handlers
+// ============================================================================
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    Logger.error('Uncaught exception: ' + err.message);
+    if (CONFIG.verbose) {
+        console.error(err.stack);
+    }
+    process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    Logger.error('Unhandled promise rejection');
+    if (CONFIG.verbose) {
+        console.error('Reason:', reason);
+    }
+});
+
+// ============================================================================
+// Run
+// ============================================================================
+
 convertAll();

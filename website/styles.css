@@ -2,20 +2,56 @@
    Minecraft 源码教程 - 样式表
    ============================================ */
 
-/* CSS Variables */
+/* ============================================
+   Design System Variables (引用设计系统)
+   ============================================ */
+@import url('./scripts/design-system.css') layer(design-system);
+
+/* ============================================
+   MC Tutorial Theme Variables (MC 教程主题变量)
+   ============================================ */
 :root {
-    --primary-color: #5B8C5A;
-    --primary-dark: #4A7349;
-    --primary-light: #6FA070;
-    --secondary-color: #3D5A80;
-    --accent-color: #E07A5F;
-    --accent-secondary: #F2CC8F;
-    --dark-color: #1a1a2e;
-    --light-color: #f8f9fa;
-    --gray-dark: #343a40;
-    --gray-light: #e9ecef;
+    /* MC 特色主色调 - Minecraft Green */
+    --mc-primary: #5B8C5A;
+    --mc-primary-dark: #4A7349;
+    --mc-primary-light: #6FA070;
+
+    /* MC 辅助色 - Steel Blue */
+    --mc-secondary: #3D5A80;
+    --mc-secondary-light: #5c7aa3;
+
+    /* MC 强调色 - Coral/Orange */
+    --mc-accent: #E07A5F;
+    --mc-accent-light: #e8957a;
+    --mc-accent-secondary: #F2CC8F;
+    --mc-accent-tertiary: #FFE066;
+
+    /* 兼容旧变量名 */
+    --primary-color: var(--mc-primary);
+    --primary-dark: var(--mc-primary-dark);
+    --primary-light: var(--mc-primary-light);
+    --secondary-color: var(--mc-secondary);
+    --accent-color: var(--mc-accent);
+    --accent-secondary: var(--mc-accent-secondary);
+
+    /* 背景色 */
+    --bg-dark: #1a1a2e;
+    --bg-dark-secondary: #16213e;
+    --bg-dark-tertiary: #0f3460;
+    --bg-light: #f8f9fa;
+    --bg-light-secondary: #eef2f7;
+
+    /* 兼容旧变量 */
+    --dark-color: var(--bg-dark);
+    --light-color: var(--bg-light);
+    --gray-dark: var(--color-gray-700);
+    --gray-light: var(--color-gray-200);
+
+    /* 文字颜色 */
     --text-primary: #2c3e50;
     --text-secondary: #6c757d;
+
+    /* 兼容旧变量 */
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
     --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
     --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
@@ -25,7 +61,63 @@
     --transition: all 0.3s ease;
 }
 
-/* Reset & Base */
+/* ============================================
+   Animation Keyframes (动画关键帧)
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+    50% {
+        transform: translateY(0) rotate(0deg);
+    }
+    75% {
+        transform: translateY(20px) rotate(-5deg);
+    }
+}
+
+@keyframes moveGrid {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Reset & Base (重置与基础)
+   ============================================ */
 * {
     margin: 0;
     padding: 0;
@@ -2535,4 +2627,81 @@ pre.code-block code.hljs {
     .prev-next a {
         justify-content: center;
     }
+}
+
+/* ============================================
+   Utility Classes (实用工具类)
+   ============================================ */
+
+/* Text utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted, #94A3B8); }
+
+/* Background utilities */
+.bg-primary { background-color: var(--mc-primary); }
+.bg-dark { background-color: var(--bg-dark); }
+.bg-light { background-color: var(--bg-light); }
+
+/* Spacing utilities */
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-8 { margin-top: 2rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-8 { margin-bottom: 2rem; }
+
+/* Animation utilities */
+.animate-fade-in {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Focus ring for accessibility */
+.focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(91, 140, 90, 0.4);
+}
+
+/* Screen reader only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Truncate text */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

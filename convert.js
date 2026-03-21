@@ -1,7 +1,13 @@
 /**
  * 博客文章转换脚本
  * 将 Markdown 文件转换为 HTML
- * 
+ *
+ * Features:
+ * - 详细的日志输出
+ * - 错误处理
+ * - 进度条显示
+ * - 统计摘要
+ *
  * 使用方法：
  * 1. 将 Markdown 文件放到 posts/ 目录
  * 2. 运行 node convert.js
@@ -11,81 +17,250 @@
 const fs = require('fs');
 const path = require('path');
 
-const POSTS_DIR = path.join(__dirname, 'posts');
-const OUTPUT_HTML = path.join(__dirname, 'index.html');
+// ============================================================================
+// Configuration
+// ============================================================================
 
-// 文章元数据提取
+const CONFIG = {
+    postsDir: path.join(__dirname, 'posts'),
+    outputDir: __dirname,
+    verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
+    dryRun: process.argv.includes('--dry-run')
+};
+
+// ============================================================================
+// Logger - Styled console output
+// ============================================================================
+
+const Logger = {
+    reset: '\x1b[0m',
+    bright: '\x1b[1m',
+    dim: '\x1b[2m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+    white: '\x1b[37m',
+
+    log(msg, color = 'white') {
+        console.log(`${this[color]}${msg}${this.reset}`);
+    },
+
+    info(msg) { this.log(`ℹ  ${msg}`, 'blue'); },
+    success(msg) { this.log(`✓  ${msg}`, 'green'); },
+    warning(msg) { this.log(`⚠  ${msg}`, 'yellow'); },
+    error(msg) { this.log(`✗  ${msg}`, 'red'); },
+
+    header(msg) {
+        console.log(`\n${this.cyan}${'='.repeat(60)}${this.reset}`);
+        console.log(`${this.bright}${this.cyan}  ${msg}${this.reset}`);
+        console.log(`${this.cyan}${'='.repeat(60)}${this.reset}\n`);
+    },
+
+    subheader(msg) {
+        console.log(`\n${this.magenta}▶ ${msg}${this.reset}`);
+    },
+
+    stats(data) {
+        const { articles, errors, duration } = data;
+        console.log(`\n${this.cyan}${'─'.repeat(40)}${this.reset}`);
+        console.log(`${this.bright}转换统计:${this.reset}`);
+        console.log(`  ${this.green}成功: ${articles}${this.reset}`);
+        if (errors > 0) console.log(`  ${this.red}错误: ${errors}${this.reset}`);
+        console.log(`  ${this.dim}耗时: ${(duration / 1000).toFixed(2)}s${this.reset}`);
+        console.log(`${this.cyan}${'─'.repeat(40)}${this.reset}\n`);
+    }
+};
+
+// ============================================================================
+// Progress Bar
+// ============================================================================
+
+class ProgressBar {
+    constructor(total, label = 'Progress') {
+        this.total = total;
+        this.current = 0;
+        this.label = label;
+        this.startTime = Date.now();
+    }
+
+    increment(message = '') {
+        this.current++;
+        this.render(message);
+    }
+
+    render(message = '') {
+        const width = 40;
+        const filled = Math.round((this.current / this.total) * width);
+        const empty = width - filled;
+        const percentage = Math.round((this.current / this.total) * 100);
+
+        const bar = '█'.repeat(filled) + '░'.repeat(empty);
+        const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
+
+        process.stdout.write(`\r${this.label}: [${bar}] ${percentage}% (${this.current}/${this.total}) ${elapsed}s ${message ? '- ' + message : ''}`);
+        process.stdout.write(' '.repeat(Math.max(0, 50 - message.length)));
+
+        if (this.current >= this.total) {
+            process.stdout.write('\n');
+        }
+    }
+
+    complete() {
+        this.current = this.total;
+        this.render('Done!');
+    }
+}
+
+// ============================================================================
+// Statistics
+// ============================================================================
+
+const stats = {
+    articles: 0,
+    errors: 0,
+    startTime: Date.now(),
+
+    get duration() {
+        return Date.now() - this.startTime;
+    }
+};
+
+// ============================================================================
+// File System Helpers
+// ============================================================================
+
+/**
+ * Read file with error handling
+ */
+function readFile(filePath) {
+    try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        return content.replace(/^\uFEFF/, '');
+    } catch (e) {
+        Logger.error(`Failed to read: ${filePath}`);
+        if (CONFIG.verbose) {
+            Logger.error(e.message);
+        }
+        return null;
+    }
+}
+
+/**
+ * Write file with error handling
+ */
+function writeFile(filePath, content) {
+    try {
+        fs.writeFileSync(filePath, content, 'utf8');
+        return true;
+    } catch (e) {
+        Logger.error(`Failed to write: ${filePath}`);
+        if (CONFIG.verbose) {
+            Logger.error(e.message);
+        }
+        return false;
+    }
+}
+
+/**
+ * Ensure directory exists
+ */
+function ensureDir(dir) {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        return true;
+    }
+    return false;
+}
+
+// ============================================================================
+// Markdown Parser
+// ============================================================================
+
+/**
+ * Parse frontmatter from markdown content
+ */
 function parseFrontmatter(content) {
     const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
     const match = content.match(frontmatterRegex);
-    
+
     if (!match) {
         return { metadata: {}, content: content };
     }
-    
+
     const frontmatter = match[1];
     const metadata = {};
-    
+
     frontmatter.split('\n').forEach(line => {
         const colonIndex = line.indexOf(':');
         if (colonIndex > 0) {
             const key = line.substring(0, colonIndex).trim();
             let value = line.substring(colonIndex + 1).trim();
-            
-            // 处理数组
+
+            // Handle arrays
             if (value.startsWith('[') && value.endsWith(']')) {
                 value = value.slice(1, -1).split(',').map(v => v.trim().replace(/['"]/g, ''));
             }
-            
+
             metadata[key] = value;
         }
     });
-    
+
     return {
         metadata,
         content: content.substring(match[0].length)
     };
 }
 
-// 简单的 Markdown 解析
+/**
+ * Simple markdown to HTML parser
+ */
 function parseMarkdown(text) {
     let html = text
-        // 代码块
+        // Code blocks
         .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>\n')
-        // 引用块
+        // Blockquotes
         .replace(/^> (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
-        // 标题
+        // Headers
         .replace(/^#### (.+)$/gm, '<h4>$1</h4>\n')
         .replace(/^### (.+)$/gm, '<h3>$1</h3>\n')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>\n')
         .replace(/^# (.+)$/gm, '<h1>$1</h1>\n')
-        // 粗体和斜体
+        // Bold and italic
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // 删除线
+        // Strikethrough
         .replace(/~~(.+?)~~/g, '<del>$1</del>')
-        // 行内代码
+        // Inline code
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        // 图片
+        // Images
         .replace(/!\[(.+?)\]\((.+?)\)/g, '<img src="$2" alt="$1">')
-        // 链接
+        // Links
         .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-        // 水平线
+        // Horizontal rules
         .replace(/^---$/gm, '<hr>')
-        // 无序列表
+        // Unordered lists
         .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // 有序列表
+        // Ordered lists
         .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        // 换行
+        // Line breaks
         .replace(/\n/g, '<br>\n');
-    
-    // 包装列表
+
+    // Wrap lists
     html = html.replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>');
-    
+
     return html;
 }
 
-// 生成文章卡片 HTML
+// ============================================================================
+// HTML Generators
+// ============================================================================
+
+/**
+ * Generate article card HTML
+ */
 function generateArticleCard(article, index) {
     const iconMap = {
         'frontend': 'fa-brands fa-react',
@@ -94,9 +269,9 @@ function generateArticleCard(article, index) {
         'tool': 'fa-solid fa-screwdriver-wrench',
         'thoughts': 'fa-solid fa-lightbulb'
     };
-    
+
     const tags = Array.isArray(article.tags) ? article.tags.join(',') : '';
-    
+
     return `
                 <article class="article-card" data-category="${article.category}" style="animation-delay: ${(index + 1) * 0.1}s">
                     <div class="article-card-image">
@@ -125,14 +300,16 @@ function generateArticleCard(article, index) {
                 </article>`;
 }
 
-// 读取所有文章
+/**
+ * Load and parse all articles
+ */
 function loadArticles() {
-    // 如果 posts 目录不存在，创建它
-    if (!fs.existsSync(POSTS_DIR)) {
-        fs.mkdirSync(POSTS_DIR, { recursive: true });
-        console.log('已创建 posts 目录');
-        
-        // 创建示例文章
+    // Create posts directory if it doesn't exist
+    if (!fs.existsSync(CONFIG.postsDir)) {
+        fs.mkdirSync(CONFIG.postsDir, { recursive: true });
+        Logger.info(`Created posts directory: ${CONFIG.postsDir}`);
+
+        // Create sample post
         const samplePost = `---
 title: 第一篇博客文章
 date: 2026-03-19
@@ -164,22 +341,28 @@ function hello() {
 
 > 持续学习，共同进步！
 `;
-        
-        fs.writeFileSync(path.join(POSTS_DIR, 'first-post.md'), samplePost);
-        console.log('已创建示例文章 first-post.md');
+
+        writeFile(path.join(CONFIG.postsDir, 'first-post.md'), samplePost);
+        Logger.success('Created sample post: first-post.md');
     }
-    
-    const files = fs.readdirSync(POSTS_DIR).filter(f => f.endsWith('.md'));
+
+    const files = fs.readdirSync(CONFIG.postsDir).filter(f => f.endsWith('.md'));
     const articles = [];
-    
+
     files.forEach((file, index) => {
-        const filePath = path.join(POSTS_DIR, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
+        const filePath = path.join(CONFIG.postsDir, file);
+        const content = readFile(filePath);
+
+        if (!content) {
+            stats.errors++;
+            return;
+        }
+
         const { metadata, content: markdownContent } = parseFrontmatter(content);
-        
+
         const id = index + 1;
         const slug = file.replace('.md', '');
-        
+
         articles.push({
             id,
             title: metadata.title || '无标题',
@@ -193,30 +376,32 @@ function hello() {
             content: parseMarkdown(markdownContent)
         });
     });
-    
-    // 按日期排序
+
+    // Sort by date
     articles.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    // 重新分配 ID
+
+    // Reassign IDs
     articles.forEach((article, index) => {
         article.id = index + 1;
     });
-    
+
     return articles;
 }
 
-// 生成 index.html
+/**
+ * Generate index.html
+ */
 function generateIndex(articles) {
     const articlesGrid = articles.map((article, index) => generateArticleCard(article, index)).join('\n');
-    
-    // 统计
+
+    // Statistics
     const totalTags = new Set();
     articles.forEach(a => {
         if (Array.isArray(a.tags)) {
             a.tags.forEach(t => totalTags.add(t));
         }
     });
-    
+
     const indexHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -296,7 +481,7 @@ function generateIndex(articles) {
                 <i class="fas fa-search search-icon"></i>
                 <input type="text" class="search-input" placeholder="搜索文章..." oninput="searchArticles(this.value)">
             </div>
-            
+
             <div class="category-filter">
                 <button class="category-btn active" onclick="filterArticles('all')">全部</button>
                 <button class="category-btn" onclick="filterArticles('frontend')">前端</button>
@@ -364,14 +549,16 @@ ${articlesGrid}
     <script src="script.js"></script>
 </body>
 </html>`;
-    
-    fs.writeFileSync(OUTPUT_HTML, indexHtml);
+
+    return writeFile(path.join(CONFIG.outputDir, 'index.html'), indexHtml);
 }
 
-// 生成 article.html
+/**
+ * Generate article.html
+ */
 function generateArticlePage(articles) {
     const articlesJson = JSON.stringify(articles);
-    
+
     const articleHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -480,7 +667,7 @@ function generateArticlePage(articles) {
             const container = document.getElementById('article-container');
             document.title = article.title + ' - 技术博客';
 
-            const tagsHtml = Array.isArray(article.tags) 
+            const tagsHtml = Array.isArray(article.tags)
                 ? article.tags.map(tag => '<span class="tag">' + tag + '</span>').join('')
                 : '';
 
@@ -521,34 +708,95 @@ function generateArticlePage(articles) {
     </script>
 </body>
 </html>`;
-    
-    fs.writeFileSync(path.join(__dirname, 'article.html'), articleHtml);
+
+    return writeFile(path.join(CONFIG.outputDir, 'article.html'), articleHtml);
 }
 
-// 主函数
+// ============================================================================
+// Main Function
+// ============================================================================
+
 function main() {
-    console.log('开始转换博客文章...\n');
-    
-    const articles = loadArticles();
-    
-    if (articles.length === 0) {
-        console.log('没有找到文章文件。');
-        console.log('请在 posts/ 目录下创建 Markdown 文件。\n');
-    } else {
-        console.log('找到 ' + articles.length + ' 篇文章:');
-        articles.forEach(function(article) {
-            console.log('  - [' + article.categoryName + '] ' + article.title);
-        });
-        console.log();
+    Logger.header('博客文章转换器');
+
+    if (CONFIG.dryRun) {
+        Logger.warning('Running in dry-run mode - no files will be written');
     }
-    
-    generateIndex(articles);
-    console.log('已生成 index.html');
-    
-    generateArticlePage(articles);
-    console.log('已生成 article.html');
-    
-    console.log('\n转换完成！');
+
+    Logger.info(`Posts directory: ${CONFIG.postsDir}`);
+    Logger.info(`Output directory: ${CONFIG.outputDir}`);
+
+    // Load articles
+    Logger.subheader('加载文章...');
+    const articles = loadArticles();
+
+    if (articles.length === 0) {
+        Logger.warning('No articles found');
+    } else {
+        Logger.info(`Found ${articles.length} articles`);
+
+        // List all articles
+        articles.forEach(article => {
+            Logger.success(`  [${article.categoryName}] ${article.title}`);
+        });
+    }
+
+    console.log('');
+
+    if (CONFIG.dryRun) {
+        Logger.warning('Dry-run mode: skipping file generation');
+        Logger.stats(stats);
+        return;
+    }
+
+    // Generate index.html
+    Logger.subheader('生成 index.html...');
+    if (generateIndex(articles)) {
+        stats.articles++;
+        Logger.success('Generated index.html');
+    } else {
+        stats.errors++;
+    }
+
+    // Generate article.html
+    Logger.subheader('生成 article.html...');
+    if (generateArticlePage(articles)) {
+        Logger.success('Generated article.html');
+    } else {
+        stats.errors++;
+    }
+
+    // Print statistics
+    Logger.stats(stats);
+
+    if (stats.errors === 0) {
+        Logger.success('Conversion completed successfully!');
+    } else {
+        Logger.error(`Conversion completed with ${stats.errors} error(s)`);
+    }
 }
+
+// ============================================================================
+// Error Handlers
+// ============================================================================
+
+process.on('uncaughtException', (err) => {
+    Logger.error('Uncaught exception: ' + err.message);
+    if (CONFIG.verbose) {
+        console.error(err.stack);
+    }
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    Logger.error('Unhandled promise rejection');
+    if (CONFIG.verbose) {
+        console.error('Reason:', reason);
+    }
+});
+
+// ============================================================================
+// Run
+// ============================================================================
 
 main();

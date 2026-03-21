@@ -3,254 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>01 mod dev intro - Sodium 优化</title>
-    <link rel="stylesheet" href="../../../styles.css">
+    <title>????Mod ????? - Sodium 优化 教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <style>
-        /* 主题样式 */
-        .docs-nav { background: #F2CC8F; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #F2CC8F 0, #FFE066 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #F2CC8F; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
-        .breadcrumb a { color: #F2CC8F; }
-        .breadcrumb i { color: #ccc; }
-        .info-box { border-left: 4px solid #F2CC8F; background: #F2CC8F15; }
-        .info-box i { color: #F2CC8F; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
-        /* 代码块样式 */
-        pre.code-block {
-            border: 1px solid rgba(255,255,255,0.06) !important;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
-            border-radius: 8px !important;
-            background: #16161a !important;
-        }
-        pre.code-block::before {
-            content: '> ' !important;
-            color: #ffffff !important;
-            display: block !important;
-            position: absolute !important;
-            left: 18px !important;
-            top: 16px !important;
-            pointer-events: none !important;
-            z-index: 1 !important;
-        }
-        pre.code-block::after {
-            display: none !important;
-        }
-        .code-reference {
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
-        }
-        .code-reference::before,
-        .code-reference::after {
-            display: none !important;
-        }
-        .docs-body h2 { border-bottom: 2px solid #F2CC8F; }
-        .docs-body h2 i { color: #F2CC8F; }
-        .data-table th { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #F2CC8F66; }
-        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
-        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
-            z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        .docs-nav .dropdown-content a {
-            color: var(--text-primary);
-        }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #F2CC8F;
-        }
-        /* 文档类型标签 */
-        .doc-type-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-        .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #F2CC8F, #F2CC8F99);
-            color: white;
-        }
-        .doc-type-tag.analysis {
-            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
-            color: white;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 <body>
-    <div class="progress-bar" id="progressBar"></div>
+    <div class="reading-progress" id="readingProgress"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="../../../index.html" class="nav-logo">
+            <a href="../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>MC 源码教程</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="../../../index.html">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
-                        <a href="../../../docs/iris/index.html">Iris 光影</a>
-                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
-                    </div>
-                </li>
-                <li><a href="../../../catalog.html">文档目录</a></li>
-                <li><a href="../../../about.html">关于</a></li>
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <div class="docs-layout">
-        <aside class="docs-sidebar">
-            <div class="sidebar-header">
-                <h3>Sodium 优化</h3>
-                <span class="doc-badge">教程</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="01-mod-dev-intro.html" class="active">
-            <i class="fas fa-puzzle-piece"></i>
-            Mod 开发入门
-        </a>
-<a href="02-rendering-optimization.html" class="">
-            <i class="fas fa-chart-line"></i>
-            渲染优化基础
-        </a>
-<a href="03-multithreading-basics.html" class="">
-            <i class="fas fa-layer-group"></i>
-            多线程编程
-        </a>
-<a href="04-chunk-system-deep.html" class="">
-            <i class="fas fa-th"></i>
-            深入区块系统
-        </a>
-<a href="05-gl-basics.html" class="">
-            <i class="fas fa-cube"></i>
-            OpenGL 基础
-        </a>
-<a href="06-performance-profiling.html" class="">
-            <i class="fas fa-tachometer-alt"></i>
-            性能分析与调优
-        </a>
-            </nav>
-            <div class="sidebar-footer">
-                <a href="../../index.html">
-                    <i class="fas fa-arrow-left"></i>
-                    返回概述
-                </a>
-            </div>
-        </aside>
-
-        <main class="docs-content">
-            <div class="docs-header">
-                <nav class="breadcrumb">
-                    <a href="../../../index.html">首页</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <a href="../../index.html">Sodium 优化</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span>01 mod dev intro</span>
-                </nav>
-                <h1>
-                    <span class="doc-type-tag tutorials">
-                        <i class="fas fa-graduation-cap"></i>
-                        教程
-                    </span>
-                    01 mod dev intro
-                </h1>
-                <div class="docs-meta">
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #F2CC8F 0%, #F2CC8F88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../index.html">首页</a>
+        <span>/</span>
+        <a href="../../catalog.html">目录</a>
+    
+            <span>/</span>
+            <a href="../../docs/sodium/index.html">Sodium 优化</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+        <span>/</span>
+        <span>????Mod ?????</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">????Mod ?????</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge sodium">Sodium 优化</span>
                     
-                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 01-mod-dev-intro</span>
                 </div>
             </div>
+        </header>
 
-            <div class="docs-body doc-content">
-                <h1>第一章：Mod 开发入门</h1>
-<blockquote><p>了解 Fabric Mod 开发基础知识</p></blockquote>
-<p><hr></p>
-<h2 id="目标">目标</h2>
-<p>学完本章后，你将能够：</p>
-<p><ul><li><strong>理解 Mod 和 Mod Loader 的概念</strong></li>
-<li><strong>搭建 Fabric Mod 开发环境</strong></li>
-<li><strong>创建你的第一个 Fabric Mod</strong></li>
-<li><strong>了解 Mod 的基本结构</strong></li></ul></p>
-<p><hr></p>
-<h2 id="什么是 Mod？">什么是 Mod？</h2>
-<h3>Mod 的定义</h3>
-<p><strong>Mod</strong> = <strong>Mod</strong>ification（模组/修改）</p>
-<p>Mod 是一种修改游戏内容的程序，可以在不改变原版游戏代码的情况下：
-<ul><li>添加新的方块、物品、生物</li>
-<li>修改游戏规则</li>
-<li>优化游戏性能</li>
-<li>添加全新的游戏系统</li></ul></p>
-<h3>Mod Loader</h3>
-<p>Mod 需要通过 <strong>Mod Loader</strong> 来加载到游戏中。常见的 Mod Loader 有：</p>
-<table class="data-table"><thead><tr><th>Mod Loader</th><th>平台</th><th>特点</th></tr></thead><tbody><tr><td><strong>Fabric</strong></td><td>1.14+</td><td>轻量、简单、社区活跃</td></tr><tr><td><strong>Forge</strong></td><td>全版本</td><td>功能强大、兼容性好</td></tr><tr><td><strong>Quilt</strong></td><td>1.14+</td><td>Fabric 的分支</td></tr></tbody></table>
-<h3>Minecraft 版本与 Mod 兼容性</h3>
-<pre class="code-block"><code class="language-text">Minecraft 版本
-├── 1.21 (最新)
-├── 1.20
-├── 1.19
-└── 1.18 及之前
-         ↓
-    不同版本使用不同的 Mod Loader
-    Mod 一般不能跨版本使用</code></pre>
-<p><hr></p>
-<h2 id="Fabric Mod 开发环境搭建">Fabric Mod 开发环境搭建</h2>
-<h3>1. 安装 JDK 21</h3>
-<pre class="code-block"><code class="language-bash"># 检查 Java 版本
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#-">??</a></li><li><a href="#-mod-">??? Mod??</a></li><li class="h3"><a href="#mod-">Mod ????</a></li><li class="h3"><a href="#mod-loader">Mod Loader</a></li><li class="h3"><a href="#minecraft-mod-">Minecraft ????Mod ????</a></li><li><a href="#fabric-mod-">Fabric Mod ???????</a></li><li class="h3"><a href="#1-jdk-21">1. ?? JDK 21</a></li><li class="h3"><a href="#2-ide">2. ?? IDE</a></li><li class="h3"><a href="#3-">3. ????????</a></li><li class="h3"><a href="#4-gradle-">4. Gradle ??</a></li><li><a href="#-fabric-mod">????Fabric Mod</a></li><li class="h3"><a href="#-">????</a></li><li class="h3"><a href="#fabric-mod-json">fabric.mod.json</a></li><li class="h3"><a href="#-">????</a></li><li class="h3"><a href="#-">??????</a></li><li><a href="#-">????</a></li><li class="h3"><a href="#-">????</a></li><li class="h3"><a href="#-">????</a></li><li class="h3"><a href="#-">??????</a></li><li><a href="#mixin-">Mixin ??</a></li><li class="h3"><a href="#-mixin-">??? Mixin??</a></li><li class="h3"><a href="#mixin-">Mixin ??</a></li><li class="h3"><a href="#mixin-">Mixin ??</a></li><li><a href="#-">??????</a></li><li class="h3"><a href="#-">????</a></li><li class="h3"><a href="#-">??????</a></li><li><a href="#-">??</a></li><li class="h3"><a href="#-">????</a></li><li><a href="#-">??</a></li><li class="h3"><a href="#-1-mod">?? 1???? Mod</a></li><li class="h3"><a href="#-2-">?? 2??????</a></li><li class="h3"><a href="#-3-mixin">?? 3????Mixin</a></li><li><a href="#-">????</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Sodium 优化</p>
+                            
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                <blockquote>?? Fabric Mod ??????</blockquote>
+
+<hr>
+
+<h2 id="-">??</h2>
+
+<p>????????????</p>
+<p>1. <em>*?? Mod ??Mod Loader ????</em></p>
+<p>2. <em>*?? Fabric Mod ?????</em></p>
+<p>3. <strong>????????Fabric Mod</strong></p>
+<p>4. <em>*?? Mod ??????</em></p>
+
+<hr>
+
+<h2 id="-mod-">??? Mod??</h2>
+<h3 id="mod-">Mod ????</h3>
+<p><strong>Mod</strong> = <strong>Mod</strong>ification????????</p>
+<p>Mod ??????????????????????????????</p>
+<p>- ?????????????- ??????</p>
+<p>- ??????</p>
+<p>- ??????????</p>
+<h3 id="mod-loader">Mod Loader</h3>
+
+<p>Mod ???? <strong>Mod Loader</strong> ??????????? Mod Loader ??</p>
+
+<table><thead><tr><th>Mod Loader</th><th>??</th><th>??</th></tr></thead><tbody><tr><td>------------</td><td>------</td><td>------</td></tr><tr><td>**Fabric**</td><td>1.14+</td><td>???????????</td></tr><tr><td>**Forge**</td><td>????</td><td>?????????</td></tr><tr><td>**Quilt**</td><td>1.14+</td><td>Fabric ????</td></tr></tbody></table>
+
+<h3 id="minecraft-mod-">Minecraft ????Mod ????</h3>
+<pre class="code-block"><code>Minecraft ??
+??? 1.21 (???
+??? 1.20
+??? 1.19
+??? 1.18 ????         ??    ??????????Mod Loader
+    Mod ?????????</code></pre>
+
+<hr>
+
+<h2 id="fabric-mod-">Fabric Mod ???????</h2>
+<h3 id="1-jdk-21">1. ?? JDK 21</h3>
+
+<pre class="code-block"><code># ???Java ??
 java -version
 
-# 如果版本低于 21，需要安装
-# 下载地址：https://adoptium.net/</code></pre>
-<h3>2. 安装 IDE</h3>
-<p>推荐使用 IntelliJ IDEA 或 VSCode</p>
-<p><strong>IntelliJ IDEA：</strong>
-<ul><li>社区版免费</li>
-<li>内置 Gradle 支持</li>
-<li>Java 开发最佳选择</li></ul></p>
-<p><strong>VSCode：</strong>
-<ul><li>轻量级</li>
-<li>需要安装 Java 扩展</li></ul></p>
-<h3>3. 使用模板创建项目</h3>
-<pre class="code-block"><code class="language-bash"># 方法 1：使用在线生成器
-# 访问 https://fabricmc.net/develop/
+# ?????? 21??????# ?????https://adoptium.net/</code></pre>
 
-# 方法 2：手动创建
-# 克隆模板仓库
+<h3 id="2-ide">2. ?? IDE</h3>
+
+<p>???? IntelliJ IDEA ??VSCode</p>
+
+<p><em>*IntelliJ IDEA??</em></p>
+<p>- ??????- ?? Gradle ??</p>
+<p>- Java ??????</p>
+
+<p><em>*VSCode??</em></p>
+<p>- ????- ?????Java ??</p>
+
+<h3 id="3-">3. ????????</h3>
+
+<pre class="code-block"><code># ?? 1????????
+# ?? https://fabricmc.net/develop/
+
+# ?? 2??????# ??????
 git clone https://github.com/FabricMC/fabric-example-mod.git my-mod
 cd my-mod</code></pre>
-<h3>4. Gradle 配置</h3>
-<pre class="code-block"><code class="language-groovy">plugins {
-    id &#39;fabric-loom&#39; version &#39;1.4-SNAPSHOT&#39;
-    id &#39;maven-publish&#39;
+
+<h3 id="4-gradle-">4. Gradle ??</h3>
+
+<pre class="code-block"><code>// build.gradle
+plugins {
+    id 'fabric-loom' version '1.4-SNAPSHOT'
+    id 'maven-publish'
 }
 
 version = project.mod_version
@@ -265,7 +171,7 @@ dependencies {
     mappings &quot;net.fabricmc:yarn:${project.yarn_mappings}:v2&quot;
     modImplementation &quot;net.fabricmc:fabric-loader:${project.loader_version}&quot;
 
-    // 添加你自己的依赖
+    // ????????
 }
 
 processResources {
@@ -275,28 +181,32 @@ processResources {
         expand &quot;version&quot;: project.version
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="第一个 Fabric Mod">第一个 Fabric Mod</h2>
-<h3>项目结构</h3>
-<pre class="code-block"><code class="language-text">my-mod/
-├── src/
-│   └── main/
-│       ├── java/
-│       │   └── com/example/
-│       │       └── mymod/
-│       │           └── MyMod.java      # 主类
-│       └── resources/
-│           └── fabric.mod.json         # Mod 元数据
-├── build.gradle                        # 构建配置
-├── gradle.properties                   # 属性文件
-└── settings.gradle                     # 项目设置</code></pre>
-<h3>fabric.mod.json</h3>
-<pre class="code-block"><code class="language-json">{
+
+<hr>
+
+<h2 id="-fabric-mod">????Fabric Mod</h2>
+
+<h3 id="-">????</h3>
+
+<pre class="code-block"><code>my-mod/
+??? src/
+??  ??? main/
+??      ??? java/
+??      ??  ??? com/example/
+??      ??      ??? mymod/
+??      ??          ??? MyMod.java      # ??
+??      ??? resources/
+??          ??? fabric.mod.json         # Mod ??????? build.gradle                        # ????
+??? gradle.properties                   # ???????? settings.gradle                     # ????</code></pre>
+
+<h3 id="fabric-mod-json">fabric.mod.json</h3>
+
+<pre class="code-block"><code>{
     &quot;schemaVersion&quot;: 1,
     &quot;id&quot;: &quot;mymod&quot;,
     &quot;version&quot;: &quot;1.0.0&quot;,
     &quot;name&quot;: &quot;My Mod&quot;,
-    &quot;description&quot;: &quot;我的第一个 Mod&quot;,
+    &quot;description&quot;: &quot;??????Mod&quot;,
     &quot;authors&quot;: [&quot;Your Name&quot;],
     &quot;contact&quot;: {
         &quot;homepage&quot;: &quot;https://example.com&quot;
@@ -322,41 +232,46 @@ processResources {
         &quot;java&quot;: &quot;&gt;=21&quot;
     }
 }</code></pre>
-<h3>主类示例</h3>
-<pre class="code-block"><code class="language-java">package com.example.mymod;
+
+<h3 id="-">????</h3>
+
+<pre class="code-block"><code>// MyMod.java
+package com.example.mymod;
 
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MyMod implements ModInitializer {
-    // 使用 Slf4j 日志
+    // ?? Slf4j ??
     public static final Logger LOGGER = LoggerFactory.getLogger(&quot;mymod&quot;);
 
     @Override
     public void onInitialize() {
-        // Mod 初始化时调用
-        LOGGER.info(&quot;My Mod 已加载！&quot;);
+        // Mod ??????
+        LOGGER.info(&quot;My Mod ????&quot;);
 
-        // 注册方块
+        // ????
         Registry.register(
             Registry.BLOCK,
             new Identifier(&quot;mymod&quot;, &quot;example_block&quot;),
             new ExampleBlock()
         );
 
-        // 注册物品
+        // ????
         Registry.register(
             Registry.ITEM,
             new Identifier(&quot;mymod&quot;, &quot;example_item&quot;),
             new ExampleItem()
         );
 
-        LOGGER.info(&quot;注册完成！&quot;);
+        LOGGER.info(&quot;??????);
     }
 }</code></pre>
-<h3>客户端入口</h3>
-<pre class="code-block"><code class="language-java">package com.example.mymod.client;
+
+<h3 id="-">??????</h3>
+<pre class="code-block"><code>// MyModClient.java
+package com.example.mymod.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -370,18 +285,22 @@ public class MyModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // 客户端初始化代码
-        LOGGER.info(&quot;客户端 Mod 已加载！&quot;);
+        // ????????
+        LOGGER.info(&quot;????Mod ????&quot;);
 
-        // 注册客户端渲染器
-        // 注册按键绑定
-        // 注册屏幕处理器
-    }
+        // ????????
+        // ??????
+        // ????????    }
 }</code></pre>
-<p><hr></p>
-<h2 id="注册系统">注册系统</h2>
-<h3>注册方块</h3>
-<pre class="code-block"><code class="language-java">public class MyBlocks {
+
+<hr>
+
+<h2 id="-">????</h2>
+
+<h3 id="-">????</h3>
+
+<pre class="code-block"><code>// ?? 1????????
+public class MyBlocks {
     public static final Block EXAMPLE_BLOCK = new Block(
         FabricBlockSettings.copy(Blocks.STONE)
     );
@@ -395,15 +314,17 @@ public class MyModClient implements ClientModInitializer {
     }
 }
 
-// 在主类中调用
+// ??????
 public class MyMod implements ModInitializer {
     @Override
     public void onInitialize() {
         MyBlocks.register();
     }
 }</code></pre>
-<h3>注册物品</h3>
-<pre class="code-block"><code class="language-java">public class MyItems {
+
+<h3 id="-">????</h3>
+
+<pre class="code-block"><code>public class MyItems {
     public static final Item EXAMPLE_ITEM = new Item(
         new Item.Settings()
             .group(ItemGroup.MISC)
@@ -418,8 +339,10 @@ public class MyMod implements ModInitializer {
         );
     }
 }</code></pre>
-<h3>注册方块物品</h3>
-<pre class="code-block"><code class="language-java">Registry.register(
+
+<h3 id="-">??????</h3>
+
+<pre class="code-block"><code>// ????????????Registry.register(
     Registry.ITEM,
     new Identifier(&quot;mymod&quot;, &quot;example_block&quot;),
     new BlockItem(
@@ -427,15 +350,18 @@ public class MyMod implements ModInitializer {
         new Item.Settings().group(ItemGroup.BUILDING_BLOCKS)
     )
 );</code></pre>
-<p><hr></p>
-<h2 id="Mixin 注入">Mixin 注入</h2>
-<h3>什么是 Mixin？</h3>
-<p>Mixin 是一个字节码注入框架，允许你在不修改原始代码的情况下：
-<ul><li>添加新方法</li>
-<li>修改现有方法</li>
-<li>注入新代码</li></ul></p>
-<h3>Mixin 配置</h3>
-<pre class="code-block"><code class="language-json">{
+
+<hr>
+
+<h2 id="mixin-">Mixin ??</h2>
+
+<h3 id="-mixin-">??? Mixin??</h3>
+<p>Mixin ????????????????????????????- ??????- ??????</p>
+<p>- ??????</p>
+<h3 id="mixin-">Mixin ??</h3>
+
+<pre class="code-block"><code>// src/main/resources/mymod.mixins.json
+{
     &quot;required&quot;: true,
     &quot;package&quot;: &quot;com.example.mymod.mixin&quot;,
     &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
@@ -447,8 +373,11 @@ public class MyMod implements ModInitializer {
         &quot;MixinExampleClient&quot;
     ]
 }</code></pre>
-<h3>Mixin 示例</h3>
-<pre class="code-block"><code class="language-java">package com.example.mymod.mixin;
+
+<h3 id="mixin-">Mixin ??</h3>
+
+<pre class="code-block"><code>// MixinExampleClient.java
+package com.example.mymod.mixin;
 
 import net.fabricmc.api.Environment;
 import net.fabricmc.api.EnvType;
@@ -463,111 +392,128 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Environment(EnvType.CLIENT)
 public class MixinExampleClient {
 
-    // 在方法开头注入代码
-    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;render&quot;)
+    // ??????????    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;render&quot;)
     private void onRender(CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
-        // 在标题屏幕渲染之前执行
-    }
+        // ????????????    }
 }</code></pre>
-<p><hr></p>
-<h2 id="构建和测试">构建和测试</h2>
-<h3>基本命令</h3>
-<pre class="code-block"><code class="language-bash"># 构建 Mod
+
+<hr>
+
+<h2 id="-">??????</h2>
+<h3 id="-">????</h3>
+
+<pre class="code-block"><code># ?? Mod
 ./gradlew build
 
-# 运行 Minecraft 客户端
-./gradlew runClient
+# ?? Minecraft ????./gradlew runClient
 
-# 运行带调试的客户端
-./gradlew runClient --debug
+# ??????????./gradlew runClient --debug
 
-# 清理
+# ??
 ./gradlew clean</code></pre>
-<h3>生成的文件</h3>
-<p>构建完成后，JAR 文件位于：</p>
-<pre class="code-block"><code class="language-text">build/libs/
-├── mymod-1.0.0.jar           # 仅你的代码
-└── mymod-1.0.0-sources.jar   # 源代码（可选）</code></pre>
-<h3>安装 Mod</h3>
-<p>将 JAR 文件复制到 Minecraft mods 目录：</p>
-<pre class="code-block"><code class="language-text">.minecraft/mods/1.21/mymod-1.0.0.jar</code></pre>
-<p><hr></p>
-<h2 id="小结">小结</h2>
-<div class="mermaid">flowchart TB
-    subgraph 环境搭建["环境搭建"]
-        A1[安装 JDK 21] --> A2[安装 IDE]
-        A2 --> A3[创建项目]
-        A3 --> A4[配置 Gradle]
+
+<h3 id="-">??????</h3>
+<p>??????JAR ??????<code>`</code></p>
+<p>build/libs/</p>
+<p>??? mymod-1.0.0.jar           # ????????? mymod-1.0.0-sources.jar   # ???????</p>
+<pre class="code-block"><code>
+### ?? Mod
+
+??JAR ??????Minecraft mods ????```
+.minecraft/mods/1.21/mymod-1.0.0.jar</code></pre>
+
+<hr>
+
+<h2 id="-">??</h2>
+
+<div class="mermaid">
+flowchart TB
+    subgraph ????["????"]
+        A1[?? JDK 21] --> A2[?? IDE]
+        A2 --> A3[????]
+        A3 --> A4[?? Gradle]
     end
 
-    subgraph 开发流程["开发流程"]
-        B1[编写主类] --> B2[注册内容]
-        B2 --> B3[添加 Mixin]
-        B3 --> B4[构建测试]
+    subgraph ????["?????]
+        B1[????] --> B2[????]
+        B2 --> B3[?? Mixin]
+        B3 --> B4[????]
     end
 
     style A1 fill:#4d96ff,color:#fff
-    style B1 fill:#6bcb77,color:#fff</div>
-<h3>关键要点</h3>
-<p><ul><li><strong>Mod Loader</strong> - Fabric 是加载 Mod 的框架</li>
-<li><strong>fabric.mod.json</strong> - 描述 Mod 的元数据</li>
-<li><strong>注册系统</strong> - 通过 Registry 注册方块、物品等</li>
-<li><strong>Mixin</strong> - 字节码注入，用于修改原版代码</li>
-<li><strong>Gradle</strong> - 项目构建工具</li></ul></p>
-<p><hr></p>
-<h2 id="练习">练习</h2>
-<h3>练习 1：创建空 Mod</h3>
-<p>按照教程创建并运行一个空的 Mod，确保环境正常。</p>
-<h3>练习 2：注册方块</h3>
-<p>创建一个新的方块并注册到游戏中。</p>
-<h3>练习 3：添加 Mixin</h3>
-<p>尝试使用 Mixin 在原版代码中添加日志输出。</p>
-<p><hr></p>
-<h2 id="相关链接">相关链接</h2>
-<p><ul><li>下一章：<a href="./02-rendering-optimization.html">渲染优化基础</a> - 学习渲染优化技术</li>
-<li><a href="../analysis/README.html">Sodium 源码分析</a> - 深入理解 Sodium</li>
-<li><a href="https://fabricmc.net/wiki/">Fabric Wiki</a> - 官方文档</li>
-<li><a href="https://github.com/FabricMC/fabric-example-mod">Fabric Example Mod</a> - 官方模板</li></ul></p>
-<p><hr></p>
-<blockquote><p>💡 <strong>提示</strong>：从简单的 Mod 开始，逐步添加复杂功能。遇到问题时查看官方文档和社区资源。</p></blockquote>
-<p><hr></p>
-<p><em>文档版本：Sodium 0.8.x / Minecraft 1.21</em>
-<em>最后更新：2026-03-21</em>
-</p>
-            </div>
+    style B1 fill:#6bcb77,color:#fff
+</div>
 
-            <div class="docs-footer">
-                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="02-rendering-optimization.html" class="next">
-            渲染优化基础
-            <i class="fas fa-arrow-right"></i>
-        </a></div>
-            </div>
-        </main>
+<h3 id="-">????</h3>
+
+<p>1. <strong>Mod Loader</strong> - Fabric ????Mod ????2. <strong>fabric.mod.json</strong> - ?? Mod ????</p>
+<p>3. <strong>????</strong> - ?? Registry ????????</p>
+<p>4. <strong>Mixin</strong> - ??????????????</p>
+<p>5. <strong>Gradle</strong> - ??????</p>
+
+<hr>
+
+<h2 id="-">??</h2>
+
+<h3 id="-1-mod">?? 1???? Mod</h3>
+
+<p>??????????????Mod?????????</p>
+<h3 id="-2-">?? 2??????</h3>
+<p>?????????????????</p>
+<h3 id="-3-mixin">?? 3????Mixin</h3>
+
+<p>???? Mixin ??????????????</p>
+<hr>
+
+<h2 id="-">????</h2>
+
+<p>- ????<a href="/sodium/tutorials/02-rendering-optimization/">??????</a> - ?????????- <a href="/sodium/analysis/">Sodium ????</a> - ???? Sodium</p>
+<p>- <a href="https://fabricmc.net/wiki/">Fabric Wiki</a> - ????</p>
+<p>- <a href="https://github.com/FabricMC/fabric-example-mod">Fabric Example Mod</a> - ????</p>
+
+<hr>
+
+<blockquote>?? <strong>??</strong>????? Mod ??????????????????????????????</blockquote>
+<hr>
+
+<p><em>?????Sodium 0.8.x / Minecraft 1.21</em></p>
+<p><em>?????2026-03-21</em></p>
+
+
+            </article>
+        </div>
     </div>
 
-    <script src="../../../script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof hljs === 'undefined') return;
-        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
-          if (el.closest('.mermaid')) return;
-          var cls = el.className || '';
-          if (cls.indexOf('language-') === -1) {
-            el.classList.add('language-plaintext');
-            return;
-          }
-          var m = cls.match(/language-(\S+)/);
-          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
-            el.className = cls.replace(/language-\S+/, 'language-plaintext');
-          }
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
         });
-        hljs.highlightAll();
-      });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
 </body>
 </html>

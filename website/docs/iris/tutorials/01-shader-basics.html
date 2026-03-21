@@ -3,239 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>01 shader basics - Iris 光影</title>
-    <link rel="stylesheet" href="../../../styles.css">
+    <title>第一章：Shader 基础入门 - Iris 光影 教程</title>
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="../../tutorial.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <style>
-        /* 主题样式 */
-        .docs-nav { background: #E07A5F; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #E07A5F 0, #F2CC8F 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #E07A5F; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
-        .breadcrumb a { color: #E07A5F; }
-        .breadcrumb i { color: #ccc; }
-        .info-box { border-left: 4px solid #E07A5F; background: #E07A5F15; }
-        .info-box i { color: #E07A5F; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
-        /* 代码块样式 */
-        pre.code-block {
-            border: 1px solid rgba(255,255,255,0.06) !important;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
-            border-radius: 8px !important;
-            background: #16161a !important;
-        }
-        pre.code-block::before {
-            content: '> ' !important;
-            color: #ffffff !important;
-            display: block !important;
-            position: absolute !important;
-            left: 18px !important;
-            top: 16px !important;
-            pointer-events: none !important;
-            z-index: 1 !important;
-        }
-        pre.code-block::after {
-            display: none !important;
-        }
-        .code-reference {
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
-        }
-        .code-reference::before,
-        .code-reference::after {
-            display: none !important;
-        }
-        .docs-body h2 { border-bottom: 2px solid #E07A5F; }
-        .docs-body h2 i { color: #E07A5F; }
-        .data-table th { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #E07A5F66; }
-        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
-        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
-            z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        .docs-nav .dropdown-content a {
-            color: var(--text-primary);
-        }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #E07A5F;
-        }
-        /* 文档类型标签 */
-        .doc-type-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-        .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #E07A5F, #E07A5F99);
-            color: white;
-        }
-        .doc-type-tag.analysis {
-            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
-            color: white;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 <body>
-    <div class="progress-bar" id="progressBar"></div>
+    <div class="reading-progress" id="readingProgress"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="../../../index.html" class="nav-logo">
+            <a href="../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>MC 源码教程</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="../../../index.html">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
-                        <a href="../../../docs/iris/index.html">Iris 光影</a>
-                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
-                    </div>
-                </li>
-                <li><a href="../../../catalog.html">文档目录</a></li>
-                <li><a href="../../../about.html">关于</a></li>
+                <li><a href="../../index.html">首页</a></li>
+                <li><a href="../../catalog.html">目录</a></li>
+                <li><a href="../../roadmap.html">路线图</a></li>
+                <li><a href="../../about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <div class="docs-layout">
-        <aside class="docs-sidebar">
-            <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">教程</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="01-shader-basics.html" class="active">
-            <i class="fas fa-code"></i>
-            Shader 基础入门
-        </a>
-<a href="02-iris-setup.html" class="">
-            <i class="fas fa-cog"></i>
-            开发环境搭建
-        </a>
-<a href="03-create-simple-shader.html" class="">
-            <i class="fas fa-magic"></i>
-            创建第一个 Shader
-        </a>
-<a href="04-shaderpack-structure.html" class="">
-            <i class="fas fa-folder"></i>
-            ShaderPack 结构
-        </a>
-<a href="05-uniforms-practice.html" class="">
-            <i class="fas fa-sliders-h"></i>
-            Uniform 实践
-        </a>
-<a href="06-post-processing.html" class="">
-            <i class="fas fa-image"></i>
-            后处理效果
-        </a>
-            </nav>
-            <div class="sidebar-footer">
-                <a href="../../index.html">
-                    <i class="fas fa-arrow-left"></i>
-                    返回概述
-                </a>
-            </div>
-        </aside>
-
-        <main class="docs-content">
-            <div class="docs-header">
-                <nav class="breadcrumb">
-                    <a href="../../../index.html">首页</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <a href="../../index.html">Iris 光影</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span>01 shader basics</span>
-                </nav>
-                <h1>
-                    <span class="doc-type-tag tutorials">
-                        <i class="fas fa-graduation-cap"></i>
-                        教程
-                    </span>
-                    01 shader basics
-                </h1>
-                <div class="docs-meta">
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #E07A5F 0%, #E07A5F88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../index.html">首页</a>
+        <span>/</span>
+        <a href="../../catalog.html">目录</a>
+    
+            <span>/</span>
+            <a href="../../docs/iris/index.html">Iris 光影</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+        <span>/</span>
+        <span>第一章：Shader 基础入门</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第一章：Shader 基础入门</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge iris">Iris 光影</span>
                     
-                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 01-shader-basics</span>
                 </div>
             </div>
+        </header>
 
-            <div class="docs-body doc-content">
-                <h1>第一章：Shader 基础入门</h1>
-<blockquote><p>学习 GLSL 语法与 Shader 基本概念</p></blockquote>
-<p><hr></p>
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#什么是-shader-">什么是 Shader�?</a></li><li class="h3"><a href="#为什么需-shader-">为什么需�?Shader�?</a></li><li class="h3"><a href="#minecraft-中的-shader">Minecraft 中的 Shader</a></li><li><a href="#glsl-基础语法">GLSL 基础语法</a></li><li class="h3"><a href="#1-数据类型">1. 数据类型</a></li><li class="h3"><a href="#2-向量分量访问">2. 向量分量访问</a></li><li class="h3"><a href="#3-内置函数">3. 内置函数</a></li><li><a href="#顶点着色器-vs-片段着色器">顶点着色器 vs 片段着色器</a></li><li class="h3"><a href="#varying-插值变量-">varying（插值变量）</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Iris 光影</p>
+                            
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>学习 GLSL 语法�?Shader 基本概念</blockquote>
+
+<hr>
+
 <h2 id="目标">目标</h2>
-<p>学完本章后，你将理解：</p>
-<p><ul><li><strong>什么是 Shader（着色器）</strong></li>
-<li><strong>GLSL 语言基础语法</strong></li>
-<li><strong>顶点着色器 vs 片段着色器</strong></li>
-<li><strong>uniform、varying、attribute 的作用</strong></li></ul></p>
-<p><hr></p>
-<h2 id="什么是 Shader？">什么是 Shader？</h2>
-<p>Shader（着色器）是一种运行在 GPU 上的特殊程序，用于控制如何绘制像素。</p>
-<h3>为什么需要 Shader？</h3>
-<pre class="code-block"><code class="language-text">CPU（串行） vs GPU（并行）
 
-CPU:  指令1 → 指令2 → 指令3 → ...
-      (一次处理一个任务)
+<p>学完本章后，你将理解�?</p>
+<p>1. <em>*什么是 Shader（着色器�?</em></p>
+<p>2. <strong>GLSL 语言基础语法</strong></p>
+<p>3. <strong>顶点着色器 vs 片段着色器</strong></p>
+<p>4. <em>*uniform、varying、attribute 的作�?</em></p>
 
-GPU:  像素1 → 像素2 → 像素3 → ...
-      像素4 → 像素5 → 像素6 → ...
+<hr>
+
+<h2 id="什么是-shader-">什么是 Shader�?</h2>
+<p>Shader（着色器）是一种运行在 GPU 上的特殊程序，用于控制如何绘制像素�?</p>
+<h3 id="为什么需-shader-">为什么需�?Shader�?</h3>
+<pre class="code-block"><code>CPU（串行） vs GPU（并行）
+
+CPU:  指令1 �?指令2 �?指令3 �?...
+      (一次处理一个任�?
+
+GPU:  像素1 �?像素2 �?像素3 �?...
+      像素4 �?像素5 �?像素6 �?...
       (同时处理数百万个像素)</code></pre>
-<h3>Minecraft 中的 Shader</h3>
-<p>在 Minecraft 中，Shader 用于实现：
-<ul><li>光影效果（阴影、高光、反射）</li>
-<li>水面波动</li>
-<li>天空渐变</li>
-<li>后期处理效果</li></ul></p>
-<p><hr></p>
-<h2 id="GLSL 基础语法">GLSL 基础语法</h2>
-<h3>1. 数据类型</h3>
-<pre class="code-block"><code class="language-glsl">float a = 1.0;      // 浮点数
-int b = 10;          // 整数
-bool c = true;       // 布尔值
 
-// 向量类型（重要！）
-vec2 uv = vec2(0.5, 0.5);       // 2维向量
-vec3 color = vec3(1.0, 0.0, 0.0); // RGB 颜色
+<h3 id="minecraft-中的-shader">Minecraft 中的 Shader</h3>
+
+<p>�?Minecraft 中，Shader 用于实现�?- 光影效果（阴影、高光、反射）</p>
+<p>- 水面波动</p>
+<p>- 天空渐变</p>
+<p>- 后期处理效果</p>
+
+<hr>
+
+<h2 id="glsl-基础语法">GLSL 基础语法</h2>
+
+<h3 id="1-数据类型">1. 数据类型</h3>
+
+<pre class="code-block"><code>// 基本类型
+float a = 1.0;      // 浮点�?int b = 10;          // 整数
+bool c = true;       // 布尔�?
+// 向量类型（重要！�?vec2 uv = vec2(0.5, 0.5);       // 2维向�?vec3 color = vec3(1.0, 0.0, 0.0); // RGB 颜色
 vec4 position = vec4(0.0, 1.0, 0.0, 1.0); // 带透明度的位置
 
 // 矩阵类型
 mat3 rotation;       // 3x3 矩阵
 mat4 projection;     // 4x4 矩阵</code></pre>
-<h3>2. 向量分量访问</h3>
-<pre class="code-block"><code class="language-glsl">vec3 color = vec3(1.0, 0.5, 0.2);
+
+<h3 id="2-向量分量访问">2. 向量分量访问</h3>
+
+<pre class="code-block"><code>vec3 color = vec3(1.0, 0.5, 0.2);
 
 // 方式1：用 x,y,z,w 访问
 float r = color.x;
@@ -243,243 +146,213 @@ float r = color.x;
 // 方式2：用 r,g,b,a 访问（颜色用这个更直观）
 float red = color.r;
 
-// 方式3：用 s,t,p,q 访问（纹理坐标用这个）
-float s = color.s;
+// 方式3：用 s,t,p,q 访问（纹理坐标用这个�?float s = color.s;
 
-// 也可以组合
-vec2 rg = color.rg;  // vec2(1.0, 0.5)
+// 也可以组�?vec2 rg = color.rg;  // vec2(1.0, 0.5)
 vec3 rgb = color.rgb; // vec3(1.0, 0.5, 0.2)</code></pre>
-<h3>3. 内置函数</h3>
-<pre class="code-block"><code class="language-glsl">float sinValue = sin(angle);
+
+<h3 id="3-内置函数">3. 内置函数</h3>
+
+<pre class="code-block"><code>// 数学函数
+float sinValue = sin(angle);
 float cosValue = cos(angle);
 float length = length(vector);
 
-// 插值
-float mixed = mix(a, b, t);  // t 在 0-1 之间时，返回 a 到 b 的插值
-
+// 插�?float mixed = mix(a, b, t);  // t �?0-1 之间时，返回 a �?b 的插�?
 // 颜色操作
 vec3 darkened = color * 0.5;  // 变暗
-vec3 saturated = clamp(color, 0.0, 1.0);  // 限制在 0-1 范围
+vec3 saturated = clamp(color, 0.0, 1.0);  // 限制�?0-1 范围
 
 // 条件判断
 if (depth &gt; 0.5) {
     // 远处更暗
 }</code></pre>
-<p><hr></p>
-<h2 id="顶点着色器 vs 片段着色器">顶点着色器 vs 片段着色器</h2>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
-│                    渲染管线流程                              │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   顶点着色器 (Vertex Shader)                                 │
-│   ├── 处理每个顶点                                          │
-│   ├── 变换位置（模型 → 世界 → 视图 → 投影）                  │
-│   └── 输出顶点的各种属性                                     │
-│                         ↓                                   │
-│                    图元装配                                   │
-│                    (三角形、线段等)                          │
-│                         ↓                                   │
-│   片段着色器 (Fragment Shader)                              │
-│   ├── 处理每个像素                                          │
-│   ├── 计算最终颜色                                          │
-│   └── 输出到帧缓冲                                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘</code></pre>
-<h3>顶点着色器示例</h3>
-<pre class="code-block"><code class="language-glsl">#version 120
 
-attribute vec3 position;      // 顶点位置
-attribute vec2 texCoord;      // 纹理坐标
-attribute vec3 normal;        // 法线
+<hr>
 
-varying vec2 uv;              // 传递给片段着色器
-varying vec3 normal;           // 法线
+<h2 id="顶点着色器-vs-片段着色器">顶点着色器 vs 片段着色器</h2>
 
-uniform mat4 modelViewProjection;  // MVP 矩阵
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────�?�?                   渲染管线流程                              �?├─────────────────────────────────────────────────────────────�?�?                                                            �?�?  顶点着色器 (Vertex Shader)                                 �?�?  ├── 处理每个顶点                                          �?�?  ├── 变换位置（模�?�?世界 �?视图 �?投影�?                 �?�?  └── 输出顶点的各种属�?                                    �?�?                        �?                                  �?�?                   图元装配                                   �?�?                   (三角形、线段等)                          �?�?                        �?                                  �?�?  片段着色器 (Fragment Shader)                              �?�?  ├── 处理每个像素                                          �?�?  ├── 计算最终颜�?                                         �?�?  └── 输出到帧缓冲                                          �?�?                                                            �?└─────────────────────────────────────────────────────────────�?```
 
-void main() {
-    // 传递纹理坐标给片段着色器
-    uv = texCoord;
+### 顶点着色器示例
+</code></pre>
+<p>#version 120</p>
 
-    // 传递法线（用于光照计算）
-    normal = normal;
+<p>attribute vec3 position;      // 顶点位置</p>
+<p>attribute vec2 texCoord;      // 纹理坐标</p>
+<p>attribute vec3 normal;        // 法线</p>
 
-    // 顶点位置变换
-    gl_Position = modelViewProjection * vec4(position, 1.0);
-}</code></pre>
-<h3>片段着色器示例</h3>
-<pre class="code-block"><code class="language-glsl">#version 120
+<p>varying vec2 uv;              // 传递给片段着色器</p>
+<p>varying vec3 normal;           // 法线</p>
 
-varying vec2 uv;          // 从顶点着色器接收
-varying vec3 normal;      // 从顶点着色器接收
+<p>uniform mat4 modelViewProjection;  // MVP 矩阵</p>
 
-uniform sampler2D texture; // 采样器
-uniform vec3 lightDir;     // 光照方向
+<p>void main() {</p>
+<p>    // 传递纹理坐标给片段着色器</p>
+<p>    uv = texCoord;</p>
 
-void main() {
-    // 采样纹理颜色
-    vec4 texColor = texture2D(texture, uv);
+<p>    // 传递法线（用于光照计算�?    normal = normal;</p>
 
-    // 简单光照计算
-    float diffuse = max(dot(normal, lightDir), 0.0);
+<p>    // 顶点位置变换</p>
+<p>    gl_Position = modelViewProjection * vec4(position, 1.0);</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 片段着色器示例
+</code></pre>
+<p>#version 120</p>
 
-    // 最终颜色
-    gl_FragColor = texColor * diffuse;
-}</code></pre>
-<p><hr></p>
-<h2 id="修饰符详解">修饰符详解</h2>
-<h3>uniform（全局变量）</h3>
-<pre class="code-block"><code class="language-glsl">uniform mat4 modelMatrix;      // 模型矩阵
-uniform mat4 viewMatrix;       // 视图矩阵
-uniform vec3 cameraPosition;   // 相机位置
+<p>varying vec2 uv;          // 从顶点着色器接收</p>
+<p>varying vec3 normal;      // 从顶点着色器接收</p>
 
-// uniform 在同一个 draw call 中所有顶点/像素都相同
-// 用于传递场景级别的数据</code></pre>
-<h3>attribute（顶点属性）</h3>
-<pre class="code-block"><code class="language-glsl">attribute vec3 position;   // 顶点位置
-attribute vec2 uv;         // 纹理坐标
-attribute vec3 normal;     // 法线
+<p>uniform sampler2D texture; // 采样�?uniform vec3 lightDir;     // 光照方向</p>
 
-// attribute 每个顶点都不同
-// 在顶点着色器中使用</code></pre>
-<h3>varying（插值变量）</h3>
-<pre class="code-block"><code class="language-glsl">varying vec2 uv;      // 顶点着色器写入
+<p>void main() {</p>
+<p>    // 采样纹理颜色</p>
+<p>    vec4 texColor = texture2D(texture, uv);</p>
+
+<p>    // 简单光照计�?    float diffuse = max(dot(normal, lightDir), 0.0);</p>
+
+<p>    // 最终颜�?    gl_FragColor = texColor * diffuse;</p>
+<p>}</p>
+<pre class="code-block"><code>
+---
+
+## 修饰符详�?
+### uniform（全局变量�?</code></pre>
+<p>uniform mat4 modelMatrix;      // 模型矩阵</p>
+<p>uniform mat4 viewMatrix;       // 视图矩阵</p>
+<p>uniform vec3 cameraPosition;   // 相机位置</p>
+
+<p>// uniform 在同一�?draw call 中所有顶�?像素都相�?// 用于传递场景级别的数据</p>
+<pre class="code-block"><code>
+### attribute（顶点属性）
+</code></pre>
+<p>attribute vec3 position;   // 顶点位置</p>
+<p>attribute vec2 uv;         // 纹理坐标</p>
+<p>attribute vec3 normal;     // 法线</p>
+
+<p>// attribute 每个顶点都不�?// 在顶点着色器中使�?<code>`</code></p>
+
+<h3 id="varying-插值变量-">varying（插值变量）</h3>
+
+<pre class="code-block"><code>varying vec2 uv;      // 顶点着色器写入
 varying vec3 normal;  // 片段着色器读取
 
-// varying 在顶点着色器和片段着色器之间传递数据
-// 值会自动在像素间进行插值</code></pre>
-<p><hr></p>
-<h2 id="实战：创建第一个简单 Shader">实战：创建第一个简单 Shader</h2>
-<h3>1. 创建一个红色渐变</h3>
-<pre class="code-block"><code class="language-glsl">varying vec2 uv;
+// varying 在顶点着色器和片段着色器之间传递数�?// 值会自动在像素间进行插�?```
 
-void main() {
-    // 使用 UV 的 R 分量作为红色通道
-    float red = uv.x;
+---
 
-    // 输出红色渐变
-    gl_FragColor = vec4(red, 0.0, 0.0, 1.0);
-}</code></pre>
-<p>效果：</p>
-<pre class="code-block"><code class="language-text">红 ████████████████
-色 ████████████████
-渐 ████████████████
-变 ████████████████
-  ←───────────────→
-   黑              红</code></pre>
-<h3>2. 创建棋盘格纹理</h3>
-<pre class="code-block"><code class="language-glsl">varying vec2 uv;
+## 实战：创建第一个简�?Shader
 
-void main() {
-    // 将 UV 放大 10 倍
-    vec2 grid = floor(uv * 10.0);
+### 1. 创建一个红色渐�?</code></pre>
+<p>varying vec2 uv;</p>
 
-    // 奇偶性判断
-    float checker = mod(grid.x + grid.y, 2.0);
+<p>void main() {</p>
+<p>    // 使用 UV �?R 分量作为红色通道</p>
+<p>    float red = uv.x;</p>
 
-    // 黑白色棋盘格
-    vec3 color = mix(
-        vec3(0.0),          // 黑色
-        vec3(1.0),          // 白色
-        checker
-    );
+<p>    // 输出红色渐变</p>
+<p>    gl_FragColor = vec4(red, 0.0, 0.0, 1.0);</p>
+<p>}</p>
+<pre class="code-block"><code>
+效果�?```
+�?████████████████
+�?████████████████
+�?████████████████
+�?████████████████
+  ←───────────────�?   �?             �?```
 
-    gl_FragColor = vec4(color, 1.0);
-}</code></pre>
-<h3>3. 创建噪声效果</h3>
-<pre class="code-block"><code class="language-glsl">varying vec2 uv;
+### 2. 创建棋盘格纹�?</code></pre>
+<p>varying vec2 uv;</p>
 
-// 简单的伪随机函数
-float random(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-}
+<p>void main() {</p>
+<p>    // �?UV 放大 10 �?    vec2 grid = floor(uv * 10.0);</p>
 
-void main() {
-    // 创建噪点
-    float noise = random(uv * 10.0);
+<p>    // 奇偶性判�?    float checker = mod(grid.x + grid.y, 2.0);</p>
 
-    // 灰度颜色
-    gl_FragColor = vec4(vec3(noise), 1.0);
-}</code></pre>
-<p><hr></p>
-<h2 id="小结">小结</h2>
-<div class="mermaid">flowchart TB
-    subgraph Shader基础["Shader 基础概念"]
-        GLSL["GLSL 语言"]
-        VS["顶点着色器"]
-        FS["片段着色器"]
-        U["uniform"]
-        V["varying"]
-    end
+<p>    // 黑白色棋盘格</p>
+<p>    vec3 color = mix(</p>
+<p>        vec3(0.0),          // 黑色</p>
+<p>        vec3(1.0),          // 白色</p>
+<p>        checker</p>
+<p>    );</p>
 
-    subgraph 用途["各修饰符用途"]
-        U -->|场景数据| VS
-        U -->|场景数据| FS
-        VS -->|插值| V
-        V --> FS
-    end
+<p>    gl_FragColor = vec4(color, 1.0);</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 3. 创建噪声效果
+</code></pre>
+<p>varying vec2 uv;</p>
 
-    style GLSL fill:#4d96ff,color:#fff
-    style VS fill:#6bcb77,color:#fff
-    style FS fill:#ff6b6b,color:#fff</div>
-<h3>关键要点</h3>
-<p><ul><li><strong>Shader 是 GPU 程序</strong> - 并行处理，效率极高</li>
-<li><strong>GLSL 是 Shader 语言</strong> - 类似 C 的语法</li>
-<li><strong>顶点着色器处理顶点</strong> - 位置变换、属性传递</li>
-<li><strong>片段着色器处理像素</strong> - 颜色计算、光照</li>
-<li><strong>uniform/varying</strong> - 数据传递桥梁</li></ul></p>
-<p><hr></p>
-<h2 id="练习">练习</h2>
-<h3>练习 1：创建渐变</h3>
-<p>尝试修改上面的红色渐变 shader，创建从左到右的绿色渐变。</p>
-<h3>练习 2：创建环状渐变</h3>
-<p>创建从中心向外扩散的圆形渐变效果。</p>
-<h3>练习 3：理解插值</h3>
-<p>修改顶点着色器添加一个 varying float，设为 0.0 或 1.0，观察片段着色器中的插值效果。</p>
-<p><hr></p>
-<h2 id="相关链接">相关链接</h2>
-<p><ul><li>下一章：<a href="./02-iris-setup.html">Iris 开发环境搭建</a> - 配置开发环境</li>
-<li><a href="https://www.khronos.org/opengl/wiki/Core<em>Language</em>(GLSL">GLSL 官方文档</a>)</li>
-<li><a href="https://learnopengl.com/Getting-started/Shaders">GLSL 教程</a></li></ul></p>
-<p><hr></p>
-<blockquote><p>💡 <strong>提示</strong>：理解 Shader 基础是学习 Iris 的关键。多动手实验，观察不同代码产生的效果变化。</p></blockquote>
-<p><hr></p>
-<p><em>文档版本：Iris 1.7.x / Minecraft 1.21</em>
-<em>最后更新：2026-03-21</em>
-</p>
-            </div>
+<p>// 简单的伪随机函�?float random(vec2 st) {</p>
+<p>    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);</p>
+<p>}</p>
 
-            <div class="docs-footer">
-                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="02-iris-setup.html" class="next">
-            开发环境搭建
-            <i class="fas fa-arrow-right"></i>
-        </a></div>
-            </div>
-        </main>
+<p>void main() {</p>
+<p>    // 创建噪点</p>
+<p>    float noise = random(uv * 10.0);</p>
+
+<p>    // 灰度颜色</p>
+<p>    gl_FragColor = vec4(vec3(noise), 1.0);</p>
+<p>}</p>
+<pre class="code-block"><code>
+---
+
+## 小结
+</code></pre>
+<p>flowchart TB</p>
+<p>    subgraph Shader基础["Shader 基础概念"]</p>
+<p>        GLSL["GLSL 语言"]</p>
+<p>        VS["顶点着色器"]</p>
+<p>        FS["片段着色器"]</p>
+<p>        U["uniform"]</p>
+<p>        V["varying"]</p>
+<p>    end</p>
+
+<p>    subgraph 用途["各修饰符用�?]</p>
+<p>        U -->|场景数据| VS</p>
+<p>        U -->|场景数据| FS</p>
+<p>        VS -->|插值| V</p>
+<p>        V --> FS</p>
+<p>    end</p>
+
+<p>    style GLSL fill:#4d96ff,color:#fff</p>
+<p>    style VS fill:#6bcb77,color:#fff</p>
+<p>    style FS fill:#ff6b6b,color:#fff</p>
+
+            </article>
+        </div>
     </div>
 
-    <script src="../../../script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../script.js"></script>
+    <script src="../../tutorial.js"></script>
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof hljs === 'undefined') return;
-        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
-          if (el.closest('.mermaid')) return;
-          var cls = el.className || '';
-          if (cls.indexOf('language-') === -1) {
-            el.classList.add('language-plaintext');
-            return;
-          }
-          var m = cls.match(/language-(\S+)/);
-          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
-            el.className = cls.replace(/language-\S+/, 'language-plaintext');
-          }
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
         });
-        hljs.highlightAll();
-      });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
 </body>
 </html>

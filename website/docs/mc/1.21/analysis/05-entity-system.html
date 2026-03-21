@@ -3,196 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>05 entity system - Minecraft 原版</title>
+    <title>Minecraft 1.21 实体系统深度分析 - Minecraft 原版 教程</title>
     <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../tutorial.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <style>
-        /* 主题样式 */
-        .docs-nav { background: #5B8C5A; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #5B8C5A 0, #6FA070 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
-        .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
-        .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
-        .info-box i { color: #5B8C5A; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
-        /* 代码块样式 */
-        pre.code-block {
-            border: 1px solid rgba(255,255,255,0.06) !important;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
-            border-radius: 8px !important;
-            background: #16161a !important;
-        }
-        pre.code-block::before {
-            content: '> ' !important;
-            color: #ffffff !important;
-            display: block !important;
-            position: absolute !important;
-            left: 18px !important;
-            top: 16px !important;
-            pointer-events: none !important;
-            z-index: 1 !important;
-        }
-        pre.code-block::after {
-            display: none !important;
-        }
-        .code-reference {
-            border: none !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
-            border-radius: 0 !important;
-            background: #1a1a1a !important;
-        }
-        .code-reference::before,
-        .code-reference::after {
-            display: none !important;
-        }
-        .docs-body h2 { border-bottom: 2px solid #5B8C5A; }
-        .docs-body h2 i { color: #5B8C5A; }
-        .data-table th { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #5B8C5A66; }
-        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
-        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
-        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
-            z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        .docs-nav .dropdown-content a {
-            color: var(--text-primary);
-        }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #5B8C5A;
-        }
-        /* 文档类型标签 */
-        .doc-type-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-        .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #5B8C5A, #5B8C5A99);
-            color: white;
-        }
-        .doc-type-tag.analysis {
-            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
-            color: white;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 <body>
-    <div class="progress-bar" id="progressBar"></div>
+    <div class="reading-progress" id="readingProgress"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>MC 源码教程</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
                 <li><a href="../../../index.html">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
-                        <a href="../../../docs/iris/index.html">Iris 光影</a>
-                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
-                    </div>
-                </li>
-                <li><a href="../../../catalog.html">文档目录</a></li>
+                <li><a href="../../../catalog.html">目录</a></li>
+                <li><a href="../../../roadmap.html">路线图</a></li>
                 <li><a href="../../../about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <div class="docs-layout">
-        <aside class="docs-sidebar">
-            <div class="sidebar-header">
-                <h3>Minecraft 原版</h3>
-                <span class="doc-badge">分析</span>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="01-architecture-overview.html" class="">
-            <i class="fas fa-sitemap"></i>
-            架构总览
-        </a>
-<a href="02-client-module.html" class="">
-            <i class="fas fa-desktop"></i>
-            客户端模块
-        </a>
-<a href="03-server-module.html" class="">
-            <i class="fas fa-server"></i>
-            服务端模块
-        </a>
-<a href="04-world-system.html" class="">
-            <i class="fas fa-globe"></i>
-            世界系统
-        </a>
-<a href="05-entity-system.html" class="active">
-            <i class="fas fa-paw"></i>
-            实体系统
-        </a>
-            </nav>
-            <div class="sidebar-footer">
-                <a href="../../index.html">
-                    <i class="fas fa-arrow-left"></i>
-                    返回概述
-                </a>
-            </div>
-        </aside>
-
-        <main class="docs-content">
-            <div class="docs-header">
-                <nav class="breadcrumb">
-                    <a href="../../../index.html">首页</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <a href="../../index.html">Minecraft 原版</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span>05 entity system</span>
-                </nav>
-                <h1>
-                    <span class="doc-type-tag analysis">
-                        <i class="fas fa-microscope"></i>
-                        源码分析
-                    </span>
-                    05 entity system
-                </h1>
-                <div class="docs-meta">
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">首页</a>
+        <span>/</span>
+        <a href="../../../catalog.html">目录</a>
+    
+            <span>/</span>
+            <a href="../../../docs/mc/1.21/index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Minecraft 1.21 实体系统深度分析</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Minecraft 1.21 实体系统深度分析</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
                     <span><i class="fas fa-code-branch"></i> 1.21</span>
-                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 05-entity-system</span>
                 </div>
             </div>
+        </header>
 
-            <div class="docs-body doc-content">
-                <h1>Minecraft 1.21 实体系统深度分析</h1>
-<h2 id="1. 系统架构概述">1. 系统架构概述</h2>
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#1-系统架构概述">1. 系统架构概述</a></li><li class="h3"><a href="#1-1-核心架构组件">1.1 核心架构组件</a></li><li class="h3"><a href="#1-2-包结构">1.2 包结构</a></li><li><a href="#2-核心类分析">2. 核心类分析</a></li><li class="h3"><a href="#2-1-entity-类-net-minecraft-entity-entity-">2.1 Entity 类 (`net.minecraft.entity.Entity`)</a></li><li class="h3"><a href="#2-1-1-核心字段">2.1.1 核心字段</a></li><li class="h3"><a href="#2-1-2-实体生命周期">2.1.2 实体生命周期</a></li><li class="h3"><a href="#2-1-3-位置和运动">2.1.3 位置和运动</a></li><li class="h3"><a href="#2-1-4-数据追踪系统">2.1.4 数据追踪系统</a></li><li class="h3"><a href="#2-1-5-骑乘系统">2.1.5 骑乘系统</a></li><li class="h3"><a href="#2-2-livingentity-类-net-minecraft-entity-livingentity-">2.2 LivingEntity 类 (`net.minecraft.entity.LivingEntity`)</a></li><li class="h3"><a href="#2-2-1-核心字段">2.2.1 核心字段</a></li><li class="h3"><a href="#2-2-2-属性系统">2.2.2 属性系统</a></li><li class="h3"><a href="#2-2-3-伤害系统">2.2.3 伤害系统</a></li><li class="h3"><a href="#2-2-4-药水效果系统">2.2.4 药水效果系统</a></li><li class="h3"><a href="#2-2-5-基础tick逻辑">2.2.5 基础Tick逻辑</a></li><li><a href="#3-ai-大脑系统-brain-">3. AI 大脑系统 (Brain)</a></li><li class="h3"><a href="#3-1-brain-类结构">3.1 Brain 类结构</a></li><li class="h3"><a href="#3-2-记忆系统-memory-">3.2 记忆系统 (Memory)</a></li><li class="h3"><a href="#3-3-传感器系统-sensor-">3.3 传感器系统 (Sensor)</a></li><li class="h3"><a href="#3-4-活动系统-activity-">3.4 活动系统 (Activity)</a></li><li class="h3"><a href="#3-5-任务系统-task-">3.5 任务系统 (Task)</a></li><li><a href="#4-实体类型系统-entitytype-">4. 实体类型系统 (EntityType)</a></li><li class="h3"><a href="#4-1-entitytype-类结构">4.1 EntityType 类结构</a></li><li class="h3"><a href="#4-2-实体维度-entitydimensions-">4.2 实体维度 (EntityDimensions)</a></li><li><a href="#5-移动控制系统">5. 移动控制系统</a></li><li class="h3"><a href="#5-1-移动控制类型">5.1 移动控制类型</a></li><li class="h3"><a href="#5-2-路径导航">5.2 路径导航</a></li><li><a href="#6-瞄准系统-targetpredicate-">6. 瞄准系统 (TargetPredicate)</a></li><li class="h3"><a href="#6-1-目标选择器">6.1 目标选择器</a></li><li><a href="#7-关键算法和流程">7. 关键算法和流程</a></li><li class="h3"><a href="#7-1-实体加载-保存流程">7.1 实体加载/保存流程</a></li><li class="h3"><a href="#7-2-实体碰撞检测">7.2 实体碰撞检测</a></li><li class="h3"><a href="#7-3-生物ai决策循环">7.3 生物AI决策循环</a></li><li><a href="#8-属性系统详解">8. 属性系统详解</a></li><li class="h3"><a href="#8-1-属性类型">8.1 属性类型</a></li><li class="h3"><a href="#8-2-属性修饰符">8.2 属性修饰符</a></li><li class="h3"><a href="#8-3-属性容器">8.3 属性容器</a></li><li><a href="#9-数据同步系统">9. 数据同步系统</a></li><li class="h3"><a href="#9-1-数据追踪器">9.1 数据追踪器</a></li><li class="h3"><a href="#9-2-常用追踪数据">9.2 常用追踪数据</a></li><li><a href="#10-文件结构">10. 文件结构</a></li><li><a href="#11-总结">11. 总结</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="1-系统架构概述">1. 系统架构概述</h2>
+
 <p>Minecraft 的实体系统是游戏中最复杂的子系统之一，负责管理所有动态对象（玩家、生物、投射物、载具等）。1.21 版本的实体系统采用了高度面向对象的设计，通过继承层次结构实现了代码复用和统一的行为管理。</p>
-<h3>1.1 核心架构组件</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
+
+<h3 id="1-1-核心架构组件">1.1 核心架构组件</h3>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────────────┐
 │                          Entity Layer                                 │
 ├─────────────────────────────────────────────────────────────────────┤
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
@@ -211,8 +112,10 @@
 │  │   DataTracker    │  │  EntityType      │  │  MovementSystem  │   │
 │  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘</code></pre>
-<h3>1.2 包结构</h3>
-<pre class="code-block"><code class="language-text">net.minecraft.entity/
+
+<h3 id="1-2-包结构">1.2 包结构</h3>
+
+<pre class="code-block"><code>net.minecraft.entity/
 ├── ai/                - AI系统 (brain, task, sensor, control, goal, pathing)
 ├── attribute/         - 属性系统 (属性实例、修饰符)
 ├── boss/             - Boss相关 (凋零、末影龙)
@@ -231,11 +134,16 @@
 ├── MobEntity.java    - 生物基类
 ├── EntityType.java   - 实体类型注册
 └── ...</code></pre>
-<p><hr></p>
-<h2 id="2. 核心类分析">2. 核心类分析</h2>
-<h3>2.1 Entity 类 (<code>net.minecraft.entity.Entity</code>)</h3>
+
+<hr>
+
+<h2 id="2-核心类分析">2. 核心类分析</h2>
+
+<h3 id="2-1-entity-类-net-minecraft-entity-entity-">2.1 Entity 类 (`net.minecraft.entity.Entity`)</h3>
+
 <p><code>Entity</code> 是所有实体的基类，提供了实体的基本属性和行为。</p>
-<pre class="code-block"><code class="language-java">237:243:Entity.java
+
+<pre class="code-block"><code>237:243:Entity.java
 public abstract class Entity
     implements DataTracked,
                Nameable,
@@ -243,8 +151,11 @@ public abstract class Entity
                CommandOutput,
                ScoreHolder,
                AttachmentTarget {</code></pre>
-<h4>2.1.1 核心字段</h4>
-<pre class="code-block"><code class="language-java">private final EntityType&lt;?&gt; type;
+
+<h4 id="2-1-1-核心字段">2.1.1 核心字段</h4>
+
+<pre class="code-block"><code>// 实体标识
+private final EntityType&lt;?&gt; type;
 private int id = CURRENT_ID.incrementAndGet();  // 网络ID
 protected UUID uuid = MathHelper.randomUuid(this.random);  // 持久化UUID
 
@@ -274,8 +185,11 @@ protected static final TrackedData&lt;EntityPose&gt; POSE = DataTracker.register
 private ImmutableList&lt;Entity&gt; passengerList = ImmutableList.of();
 @Nullable
 private Entity vehicle;</code></pre>
-<h4>2.1.2 实体生命周期</h4>
-<pre class="code-block"><code class="language-java">public Entity(EntityType&lt;?&gt; type, World world) {
+
+<h4 id="2-1-2-实体生命周期">2.1.2 实体生命周期</h4>
+
+<pre class="code-block"><code>// 创建实体
+public Entity(EntityType&lt;?&gt; type, World world) {
     this.type = type;
     this.world = world;
     this.dimensions = type.getDimensions();
@@ -323,8 +237,10 @@ public void baseTick() {
     }
     this.getWorld().getProfiler().pop();
 }</code></pre>
-<h4>2.1.3 位置和运动</h4>
-<pre class="code-block"><code class="language-java">646:662:Entity.java
+
+<h4 id="2-1-3-位置和运动">2.1.3 位置和运动</h4>
+
+<pre class="code-block"><code>646:662:Entity.java
 public final void setPosition(Vec3d pos) {
     this.setPosition(pos.getX(), pos.getY(), pos.getZ());
 }
@@ -368,8 +284,11 @@ public void move(MovementType movementType, Vec3d movement) {
     
     this.getWorld().getProfiler().pop();
 }</code></pre>
-<h4>2.1.4 数据追踪系统</h4>
-<pre class="code-block"><code class="language-java">protected static final TrackedData&lt;Byte&gt; FLAGS = DataTracker.registerData(Entity.class, TrackedDataHandlerRegistry.BYTE);
+
+<h4 id="2-1-4-数据追踪系统">2.1.4 数据追踪系统</h4>
+
+<pre class="code-block"><code>// TrackedData - 需要同步的数据
+protected static final TrackedData&lt;Byte&gt; FLAGS = DataTracker.registerData(Entity.class, TrackedDataHandlerRegistry.BYTE);
 protected static final int ON_FIRE_FLAG_INDEX = 0;
 private static final int SNEAKING_FLAG_INDEX = 1;
 private static final int SPRINTING_FLAG_INDEX = 3;
@@ -401,8 +320,11 @@ public void setFlag(int index, boolean value) {
 public boolean getFlag(int index) {
     return (this.dataTracker.get(FLAGS) &amp; 1 &lt;&lt; index) != 0;
 }</code></pre>
-<h4>2.1.5 骑乘系统</h4>
-<pre class="code-block"><code class="language-java">public void addPassenger(Entity passenger) {
+
+<h4 id="2-1-5-骑乘系统">2.1.5 骑乘系统</h4>
+
+<pre class="code-block"><code>// 添加乘客
+public void addPassenger(Entity passenger) {
     if (passenger.getVehicle() != this) {
         throw new IllegalStateException(&quot;Use method startRiding&quot;);
     }
@@ -442,15 +364,22 @@ public boolean startRiding(Entity entity, boolean force) {
 public void stopRiding() {
     // ...
 }</code></pre>
-<p><hr></p>
-<h3>2.2 LivingEntity 类 (<code>net.minecraft.entity.LivingEntity</code>)</h3>
+
+<hr>
+
+<h3 id="2-2-livingentity-类-net-minecraft-entity-livingentity-">2.2 LivingEntity 类 (`net.minecraft.entity.LivingEntity`)</h3>
+
 <p><code>LivingEntity</code> 是所有有生命实体的基类，继承自 Entity，增加了生命值、药水效果、AI 等功能。</p>
-<pre class="code-block"><code class="language-java">158:160:LivingEntity.java
+
+<pre class="code-block"><code>158:160:LivingEntity.java
 public abstract class LivingEntity
     extends Entity
     implements Attackable {</code></pre>
-<h4>2.2.1 核心字段</h4>
-<pre class="code-block"><code class="language-java">private final AttributeContainer attributes;
+
+<h4 id="2-2-1-核心字段">2.2.1 核心字段</h4>
+
+<pre class="code-block"><code>// 属性系统
+private final AttributeContainer attributes;
 private final Map&lt;RegistryEntry&lt;StatusEffect&gt;, StatusEffectInstance&gt; activeStatusEffects;
 
 // 生命值
@@ -482,8 +411,10 @@ public float headYaw;
 protected int playerHitTimer;
 protected float lastDamageTaken;
 protected int scoreAmount;</code></pre>
-<h4>2.2.2 属性系统</h4>
-<pre class="code-block"><code class="language-java">198:199:LivingEntity.java
+
+<h4 id="2-2-2-属性系统">2.2.2 属性系统</h4>
+
+<pre class="code-block"><code>198:199:LivingEntity.java
 private final AttributeContainer attributes;
 
 277:289:LivingEntity.java
@@ -508,8 +439,11 @@ public static DefaultAttributeContainer.Builder createLivingAttributes() {
         .add(EntityAttributes.GENERIC_GRAVITY)
         // ... 更多属性
 }</code></pre>
-<h4>2.2.3 伤害系统</h4>
-<pre class="code-block"><code class="language-java">public boolean damage(DamageSource source, float amount) {
+
+<h4 id="2-2-3-伤害系统">2.2.3 伤害系统</h4>
+
+<pre class="code-block"><code>// 造成伤害
+public boolean damage(DamageSource source, float amount) {
     if (this.isInvulnerableTo(source)) {
         return false;
     }
@@ -564,8 +498,11 @@ protected boolean applyDamage(DamageSource source, float damage) {
     this.getWorld().getProfiler().pop();
     return true;
 }</code></pre>
-<h4>2.2.4 药水效果系统</h4>
-<pre class="code-block"><code class="language-java">public void addStatusEffect(StatusEffectInstance effect) {
+
+<h4 id="2-2-4-药水效果系统">2.2.4 药水效果系统</h4>
+
+<pre class="code-block"><code>// 添加药水效果
+public void addStatusEffect(StatusEffectInstance effect) {
     this.addStatusEffect(effect, EntityPoses.DEFAULT);
 }
 
@@ -607,8 +544,10 @@ private void tickStatusEffects() {
         this.effectsChanged = false;
     }
 }</code></pre>
-<h4>2.2.5 基础Tick逻辑</h4>
-<pre class="code-block"><code class="language-java">376:470:LivingEntity.java
+
+<h4 id="2-2-5-基础tick逻辑">2.2.5 基础Tick逻辑</h4>
+
+<pre class="code-block"><code>376:470:LivingEntity.java
 @Override
 public void baseTick() {
     this.lastHandSwingProgress = this.handSwingProgress;
@@ -650,10 +589,14 @@ public void baseTick() {
     this.prevBodyYaw = this.bodyYaw;
     this.prevHeadYaw = this.headYaw;
 }</code></pre>
-<p><hr></p>
-<h2 id="3. AI 大脑系统 (Brain)">3. AI 大脑系统 (Brain)</h2>
-<h3>3.1 Brain 类结构</h3>
-<pre class="code-block"><code class="language-java">61:139:Brain.java
+
+<hr>
+
+<h2 id="3-ai-大脑系统-brain-">3. AI 大脑系统 (Brain)</h2>
+
+<h3 id="3-1-brain-类结构">3.1 Brain 类结构</h3>
+
+<pre class="code-block"><code>61:139:Brain.java
 public class Brain&lt;E extends LivingEntity&gt; {
     private final Supplier&lt;Codec&lt;Brain&lt;E&gt;&gt;&gt; codecSupplier;
     private static final int ACTIVITY_REFRESH_COOLDOWN = 20;
@@ -677,8 +620,11 @@ public class Brain&lt;E extends LivingEntity&gt; {
     private final Set&lt;Activity&gt; possibleActivities = Sets.newHashSet();
     private Activity defaultActivity = Activity.IDLE;
 }</code></pre>
-<h3>3.2 记忆系统 (Memory)</h3>
-<pre class="code-block"><code class="language-java">public class MemoryModuleType&lt;T&gt; {
+
+<h3 id="3-2-记忆系统-memory-">3.2 记忆系统 (Memory)</h3>
+
+<pre class="code-block"><code>// 记忆模块类型
+public class MemoryModuleType&lt;T&gt; {
     private final Codec&lt;T&gt; codec;
     // ...
 }
@@ -714,8 +660,11 @@ public &lt;U&gt; Optional&lt;U&gt; getOptionalRegisteredMemory(MemoryModuleType&
     }
     return optional.map(Memory::getValue);
 }</code></pre>
-<h3>3.3 传感器系统 (Sensor)</h3>
-<pre class="code-block"><code class="language-java">public abstract class Sensor&lt;E extends LivingEntity&gt; {
+
+<h3 id="3-3-传感器系统-sensor-">3.3 传感器系统 (Sensor)</h3>
+
+<pre class="code-block"><code>// 传感器基类
+public abstract class Sensor&lt;E extends LivingEntity&gt; {
     private static final int DEFAULT_MAX_VISIBLE = 128;
     
     public abstract void sense(ServerWorld world, E entity);
@@ -744,8 +693,11 @@ public class NearestLivingEntitiesSensor extends Sensor&lt;LivingEntity&gt; {
         return ImmutableSet.of(MemoryModuleType.NEAREST_LIVING_ENTITIES);
     }
 }</code></pre>
-<h3>3.4 活动系统 (Activity)</h3>
-<pre class="code-block"><code class="language-java">public class Activity {
+
+<h3 id="3-4-活动系统-activity-">3.4 活动系统 (Activity)</h3>
+
+<pre class="code-block"><code>// 活动类型
+public class Activity {
     public static final Activity CORE = new Activity(&quot;core&quot;);
     public static final Activity IDLE = new Activity(&quot;idle&quot;);
     public static final Activity WORK = new Activity(&quot;work&quot;);
@@ -791,8 +743,11 @@ public void refreshActivities(long timeOfDay, long time) {
         }
     }
 }</code></pre>
-<h3>3.5 任务系统 (Task)</h3>
-<pre class="code-block"><code class="language-java">public abstract class Task&lt;E extends LivingEntity&gt; {
+
+<h3 id="3-5-任务系统-task-">3.5 任务系统 (Task)</h3>
+
+<pre class="code-block"><code>// 任务基类
+public abstract class Task&lt;E extends LivingEntity&gt; {
     private final int minRunTime;
     private final int maxRunTime;
     protected MultiTickTask.Status status = MultiTickTask.Status.STOPPED;
@@ -832,10 +787,15 @@ public enum Status {
     RUNNING,   // 运行中
     FINISHED   // 已完成
 }</code></pre>
-<p><hr></p>
-<h2 id="4. 实体类型系统 (EntityType)">4. 实体类型系统 (EntityType)</h2>
-<h3>4.1 EntityType 类结构</h3>
-<pre class="code-block"><code class="language-java">public class EntityType&lt;T extends Entity&gt; {
+
+<hr>
+
+<h2 id="4-实体类型系统-entitytype-">4. 实体类型系统 (EntityType)</h2>
+
+<h3 id="4-1-entitytype-类结构">4.1 EntityType 类结构</h3>
+
+<pre class="code-block"><code>// 实体类型注册
+public class EntityType&lt;T extends Entity&gt; {
     public static final MapCodec&lt;EntityType&lt;?&gt;&gt; CODEC = RecordCodecBuilder.mapCodec(
         instance -&gt; instance.group(
             Registries.ENTITY_TYPE.getEntryCodec().fieldOf(&quot;type&quot;).forGetter(EntityType::getCodecId),
@@ -863,8 +823,10 @@ public enum Status {
         // ...
     }
 }</code></pre>
-<h3>4.2 实体维度 (EntityDimensions)</h3>
-<pre class="code-block"><code class="language-java">public class EntityDimensions {
+
+<h3 id="4-2-实体维度-entitydimensions-">4.2 实体维度 (EntityDimensions)</h3>
+
+<pre class="code-block"><code>public class EntityDimensions {
     private final float width;
     private final float height;
     private final boolean fixed;
@@ -884,10 +846,15 @@ public enum Status {
         return new EntityDimensions(this.width * factor, this.height * factor, this.fixed);
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="5. 移动控制系统">5. 移动控制系统</h2>
-<h3>5.1 移动控制类型</h3>
-<pre class="code-block"><code class="language-java">public abstract class MoveControl {
+
+<hr>
+
+<h2 id="5-移动控制系统">5. 移动控制系统</h2>
+
+<h3 id="5-1-移动控制类型">5.1 移动控制类型</h3>
+
+<pre class="code-block"><code>// 基础移动控制
+public abstract class MoveControl {
     protected final MobEntity entity;
     protected double targetX;
     protected double targetY;
@@ -920,8 +887,11 @@ public class FlightMoveControl implements MoveControl {
         // 处理飞行移动逻辑
     }
 }</code></pre>
-<h3>5.2 路径导航</h3>
-<pre class="code-block"><code class="language-java">public class PathNode {
+
+<h3 id="5-2-路径导航">5.2 路径导航</h3>
+
+<pre class="code-block"><code>// 路径节点
+public class PathNode {
     public int x, y, z;
     public float penalty;
     public PathNode previous;
@@ -963,10 +933,14 @@ public abstract class EntityNavigation {
         // 移动到目标位置
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="6. 瞄准系统 (TargetPredicate)">6. 瞄准系统 (TargetPredicate)</h2>
-<h3>6.1 目标选择器</h3>
-<pre class="code-block"><code class="language-java">public class TargetPredicate {
+
+<hr>
+
+<h2 id="6-瞄准系统-targetpredicate-">6. 瞄准系统 (TargetPredicate)</h2>
+
+<h3 id="6-1-目标选择器">6.1 目标选择器</h3>
+
+<pre class="code-block"><code>public class TargetPredicate {
     private DistanceDistancePredicate distance;
     private EntityTypePredicate entityType;
     private ScoreboardPredicate scoreboard;
@@ -991,10 +965,14 @@ public abstract class EntityNavigation {
         // 测试目标是否满足条件
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="7. 关键算法和流程">7. 关键算法和流程</h2>
-<h3>7.1 实体加载/保存流程</h3>
-<pre class="code-block"><code class="language-text">// NBT序列化
+
+<hr>
+
+<h2 id="7-关键算法和流程">7. 关键算法和流程</h2>
+
+<h3 id="7-1-实体加载-保存流程">7.1 实体加载/保存流程</h3>
+
+<pre class="code-block"><code>// NBT序列化
 public void writeNbt(NbtCompound nbt) {
     // 1. 保存类型
     nbt.putString(&quot;id&quot;, Registries.ENTITY_TYPE.getId(this.type).toString());
@@ -1043,8 +1021,10 @@ public void writeNbt(NbtCompound nbt) {
         nbt.put(&quot;Passengers&quot;, passengers);
     }
 }</code></pre>
-<h3>7.2 实体碰撞检测</h3>
-<pre class="code-block"><code class="language-text">实体碰撞检测流程
+
+<h3 id="7-2-实体碰撞检测">7.2 实体碰撞检测</h3>
+
+<pre class="code-block"><code>实体碰撞检测流程
          │
          ▼
 ┌────────────────────────┐
@@ -1065,8 +1045,10 @@ public void writeNbt(NbtCompound nbt) {
 ┌────────────────────────┐
 │ 返回所有碰撞实体        │
 └────────────────────────┘</code></pre>
-<h3>7.3 生物AI决策循环</h3>
-<pre class="code-block"><code class="language-text">每个Tick
+
+<h3 id="7-3-生物ai决策循环">7.3 生物AI决策循环</h3>
+
+<pre class="code-block"><code>每个Tick
          │
          ▼
 ┌────────────────────────┐
@@ -1102,10 +1084,14 @@ public void writeNbt(NbtCompound nbt) {
                               │  - 更新运行中的任务      │
                               │  - 检查是否需要停止      │
                               └────────────────────────┘</code></pre>
-<p><hr></p>
-<h2 id="8. 属性系统详解">8. 属性系统详解</h2>
-<h3>8.1 属性类型</h3>
-<pre class="code-block"><code class="language-java">public static class EntityAttributes {
+
+<hr>
+
+<h2 id="8-属性系统详解">8. 属性系统详解</h2>
+
+<h3 id="8-1-属性类型">8.1 属性类型</h3>
+
+<pre class="code-block"><code>public static class EntityAttributes {
     // 通用属性
     public static final EntityAttribute GENERIC_MAX_HEALTH;
     public static final EntityAttribute GENERIC_FOLLOW_RANGE;
@@ -1129,8 +1115,11 @@ public void writeNbt(NbtCompound nbt) {
     public static final EntityAttribute FLYING_SPEED;
     public static final EntityAttribute SPAWN_REINFORCEMENTS_CHANCE;
 }</code></pre>
-<h3>8.2 属性修饰符</h3>
-<pre class="code-block"><code class="language-java">public enum Operation {
+
+<h3 id="8-2-属性修饰符">8.2 属性修饰符</h3>
+
+<pre class="code-block"><code>// 修饰符操作
+public enum Operation {
     ADD_VALUE,           // 加法
     MULTIPLY_BASE,       // 乘法（基于基础值）
     MULTIPLY_TOTAL       // 乘法（基于最终值）
@@ -1151,8 +1140,10 @@ public class EntityAttributeModifier {
             EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
         );
 }</code></pre>
-<h3>8.3 属性容器</h3>
-<pre class="code-block"><code class="language-java">public class AttributeContainer {
+
+<h3 id="8-3-属性容器">8.3 属性容器</h3>
+
+<pre class="code-block"><code>public class AttributeContainer {
     private final Map&lt;RegistryEntry&lt;EntityAttribute&gt;, EntityAttributeInstance&gt; instances;
     
     public double getValue(EntityAttribute attribute) {
@@ -1168,10 +1159,14 @@ public class EntityAttributeModifier {
         // 移除指定修饰符
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="9. 数据同步系统">9. 数据同步系统</h2>
-<h3>9.1 数据追踪器</h3>
-<pre class="code-block"><code class="language-java">public class DataTracker {
+
+<hr>
+
+<h2 id="9-数据同步系统">9. 数据同步系统</h2>
+
+<h3 id="9-1-数据追踪器">9.1 数据追踪器</h3>
+
+<pre class="code-block"><code>public class DataTracker {
     private final Map&lt;TrackedData&lt;?&gt;, Object&gt; entries = new Object2ObjectOpenHashMap&lt;&gt;();
     
     public static &lt;T&gt; TrackedData&lt;T&gt; registerData(Class&lt;?&gt; owner, TrackedDataHandler&lt;T&gt; handler) {
@@ -1191,8 +1186,11 @@ public class EntityAttributeModifier {
         this.dirty.add(data);
     }
 }</code></pre>
-<h3>9.2 常用追踪数据</h3>
-<pre class="code-block"><code class="language-java">FLAGS              - 实体标志位（燃烧、下潜等）
+
+<h3 id="9-2-常用追踪数据">9.2 常用追踪数据</h3>
+
+<pre class="code-block"><code>// Entity级别
+FLAGS              - 实体标志位（燃烧、下潜等）
 AIR                - 剩余空气时间
 CUSTOM_NAME        - 自定义名称
 NAME_VISIBLE       - 名称可见性
@@ -1207,9 +1205,12 @@ POTION_SWIRLS     - 药水粒子效果
 STUCK_ARROW_COUNT - 插入的箭矢数量
 STINGER_COUNT     - 刺数量
 SLEEPING_POSITION - 睡眠位置</code></pre>
-<p><hr></p>
-<h2 id="10. 文件结构">10. 文件结构</h2>
-<pre class="code-block"><code class="language-text">source/net/minecraft/entity/
+
+<hr>
+
+<h2 id="10-文件结构">10. 文件结构</h2>
+
+<pre class="code-block"><code>source/net/minecraft/entity/
 ├── Entity.java                       # 基础实体类
 ├── LivingEntity.java                 # 有生命实体
 ├── MobEntity.java                    # 生物基类
@@ -1269,62 +1270,72 @@ SLEEPING_POSITION - 睡眠位置</code></pre>
     ├── ProjectileEntity.java
     ├── ArrowEntity.java
     └── ...</code></pre>
-<p><hr></p>
-<h2 id="11. 总结">11. 总结</h2>
-<p>Minecraft 1.21 的实体系统是一个复杂而精密的系统：</p>
-<p><ul><li><strong>继承层次清晰</strong>：</li>
-</ul>   - Entity → LivingEntity → MobEntity → SpecificMobs
-   - 每层都有明确的职责和抽象</p>
-<p><ul><li><strong>模块化设计</strong>：</li>
-</ul>   - 属性系统独立管理实体能力
-   - AI系统通过Brain-Sensor-Task解耦
-   - 数据同步通过DataTracker统一管理</p>
-<p><ul><li><strong>高性能实现</strong>：</li>
-</ul>   - 路径导航使用A*算法优化
-   - 碰撞检测按区块组织
-   - 数据同步增量更新</p>
-<p><ul><li><strong>可扩展性</strong>：</li>
-</ul>   - EntityType支持新实体注册
-   - Goal/Task系统支持自定义AI
-   - Sensor系统支持自定义感知</p>
-<p><ul><li><strong>持久化支持</strong>：</li>
-</ul>   - 完整的NBT序列化/反序列化
-   - UUID保证跨会话一致性</p>
-<p>这个系统为mod开发提供了丰富的扩展点，同时也确保了游戏运行的稳定性和性能。
-</p>
-            </div>
 
-            <div class="docs-footer">
-                <div class="prev-next"><a href="04-world-system.html" class="prev">
-            <i class="fas fa-arrow-left"></i>
-            世界系统
-        </a><span class="next"></span></div>
-            </div>
-        </main>
+<hr>
+
+<h2 id="11-总结">11. 总结</h2>
+
+<p>Minecraft 1.21 的实体系统是一个复杂而精密的系统：</p>
+
+<p>1. <strong>继承层次清晰</strong>：</p>
+<p>   - Entity → LivingEntity → MobEntity → SpecificMobs</p>
+<p>   - 每层都有明确的职责和抽象</p>
+
+<p>2. <strong>模块化设计</strong>：</p>
+<p>   - 属性系统独立管理实体能力</p>
+<p>   - AI系统通过Brain-Sensor-Task解耦</p>
+<p>   - 数据同步通过DataTracker统一管理</p>
+
+<p>3. <strong>高性能实现</strong>：</p>
+<p>   - 路径导航使用A*算法优化</p>
+<p>   - 碰撞检测按区块组织</p>
+<p>   - 数据同步增量更新</p>
+
+<p>4. <strong>可扩展性</strong>：</p>
+<p>   - EntityType支持新实体注册</p>
+<p>   - Goal/Task系统支持自定义AI</p>
+<p>   - Sensor系统支持自定义感知</p>
+
+<p>5. <strong>持久化支持</strong>：</p>
+<p>   - 完整的NBT序列化/反序列化</p>
+<p>   - UUID保证跨会话一致性</p>
+
+<p>这个系统为mod开发提供了丰富的扩展点，同时也确保了游戏运行的稳定性和性能。</p>
+
+
+            </article>
+        </div>
     </div>
 
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
     <script src="../../../script.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="../../../tutorial.js"></script>
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof hljs === 'undefined') return;
-        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
-          if (el.closest('.mermaid')) return;
-          var cls = el.className || '';
-          if (cls.indexOf('language-') === -1) {
-            el.classList.add('language-plaintext');
-            return;
-          }
-          var m = cls.match(/language-(\S+)/);
-          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
-            el.className = cls.replace(/language-\S+/, 'language-plaintext');
-          }
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
         });
-        hljs.highlightAll();
-      });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
 </body>
 </html>
