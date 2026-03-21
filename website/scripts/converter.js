@@ -792,6 +792,10 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         .main-content.expanded {
             margin-left: 0;
         }
+        /* 查看「分析」时收起教程侧栏与 Part 快捷条，主区域全宽 */
+        .main-content.doc-mode-analysis {
+            margin-left: 0 !important;
+        }
         @media (max-width: 1024px) {
             .sidebar-nav {
                 transform: translateX(-100%);
@@ -1041,8 +1045,8 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     <section class="section main-content" id="mainContent">
         <div class="container">
             
-            <!-- 顶部快速导航 -->
-            <div class="quick-nav">
+            <!-- 顶部快速导航（仅教程模式显示） -->
+            <div class="quick-nav" id="tutorialQuickNav">
                 <div class="quick-nav-container">
                     ${sortedParts.map((partName, idx) => {
                         const shortLabel = partName.replace(/^[0-9]+-/, '').replace(/-/g, ' ').substring(0, 10);
@@ -1201,12 +1205,17 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             const tutorialsSection = document.getElementById('tutorialsSection');
             const analysisSection = document.getElementById('analysisSection');
             const tabs = document.querySelectorAll('.tab-btn');
+            const tutorialQuickNav = document.getElementById('tutorialQuickNav');
+            const sidebar = document.getElementById('sidebarNav');
+            const sidebarBtn = document.getElementById('sidebarToggle');
+            const mainContent = document.getElementById('mainContent');
+            const showTutorials = type === 'tutorials';
             
             tabs.forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.textContent.includes(type === 'tutorials' ? '教程' : '分析')) {
+                if (btn.textContent.includes(showTutorials ? '教程' : '分析')) {
                     btn.classList.add('active');
-                    if (type === 'tutorials') {
+                    if (showTutorials) {
                         btn.style.background = '${module.color}';
                         btn.style.color = 'white';
                     } else {
@@ -1214,7 +1223,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                         btn.style.color = '${module.color}';
                     }
                 } else {
-                    if (type === 'tutorials') {
+                    if (showTutorials) {
                         btn.style.background = 'white';
                         btn.style.color = '${module.color}';
                     } else {
@@ -1224,12 +1233,14 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                 }
             });
             
-            if (type === 'tutorials') {
-                if (tutorialsSection) tutorialsSection.style.display = 'block';
-                if (analysisSection) analysisSection.style.display = 'none';
-            } else {
-                if (tutorialsSection) tutorialsSection.style.display = 'none';
-                if (analysisSection) analysisSection.style.display = 'block';
+            if (tutorialsSection) tutorialsSection.style.display = showTutorials ? 'block' : 'none';
+            if (analysisSection) analysisSection.style.display = showTutorials ? 'none' : 'block';
+            if (tutorialQuickNav) tutorialQuickNav.style.display = showTutorials ? '' : 'none';
+            if (sidebar) sidebar.style.display = showTutorials ? '' : 'none';
+            if (sidebarBtn) sidebarBtn.style.display = showTutorials ? '' : 'none';
+            if (mainContent) {
+                if (showTutorials) mainContent.classList.remove('doc-mode-analysis');
+                else mainContent.classList.add('doc-mode-analysis');
             }
         }
     </script>
@@ -1285,6 +1296,11 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             box-shadow: var(--shadow-sm);
             animation: fadeInUp 0.5s ease forwards;
             opacity: 0;
+        }
+        /* 分析区默认隐藏，子元素动画不会在首屏完成，否则会一直保持 opacity:0 */
+        #analysisSection .doc-card {
+            opacity: 1;
+            animation: none;
         }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
