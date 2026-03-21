@@ -6,14 +6,8 @@
 
 ## 项目目标
 
-学完这个项目后，你将掌握：
-- 数据包的基本结构
-- 如何创建函数（Functions）
-- 如何添加进度（Advancements）
-- 如何创建战利品表（Loot Tables）
-- 如何添加配方（Recipes）
-- 如何测试数据包
-
+学完这个项目后，你将掌握�?- 数据包的基本结构
+- 如何创建函数（Functions�?- 如何添加进度（Advancements�?- 如何创建战利品表（Loot Tables�?- 如何添加配方（Recipes�?- 如何测试数据�?
 ---
 
 ## 项目概览
@@ -36,10 +30,10 @@ flowchart TD
 
 ## 所需知识
 
-- 数据包基础（Part-8 第41章）
-- 战利品表（Part-8 第42章）
-- 进度系统（Part-8 第43章）
-- 配方系统（Part-8 第44章）
+- 数据包基础（Part-8 �?1章）
+- 战利品表（Part-8 �?2章）
+- 进度系统（Part-8 �?3章）
+- 配方系统（Part-8 �?4章）
 
 ---
 
@@ -49,39 +43,16 @@ flowchart TD
 
 #### 核心概念
 
-数据包是一种不需要 Mod 就能自定义游戏内容的方式：
-
+数据包是一种不需�?Mod 就能自定义游戏内容的方式�?
 ```
-┌─────────────────────────────────────────┐
-│           数据包 vs Mod                   │
-│                                         │
-│  Mod（模组）                            │
-│    ├─ 需要安装到游戏目录                │
-│    ├─ 需要编程知识                      │
-│    └─ 可以添加新方块/物品/实体          │
-│                                         │
-│  数据包（Datapack）                     │
-│    ├─ 放入世界文件夹即可                │
-│    ├─ 只要 JSON 知识                    │
-│    └─ 只能修改现有内容（配方/进度/掉落）│
-│                                         │
-└─────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────�?�?          数据�?vs Mod                   �?�?                                        �?�? Mod（模组）                            �?�?   ├─ 需要安装到游戏目录                �?�?   ├─ 需要编程知�?                     �?�?   └─ 可以添加新方�?物品/实体          �?�?                                        �?�? 数据包（Datapack�?                    �?�?   ├─ 放入世界文件夹即�?               �?�?   ├─ 只要 JSON 知识                    �?�?   └─ 只能修改现有内容（配�?进度/掉落）│
+�?                                        �?└─────────────────────────────────────────�?```
 
 #### 生活中的比喻
 
 ```
-数据包就像游戏规则的"说明书"：
-
-┌─────────────────────────────────────────┐
-│  说明书内容        │  相当于数据包的     │
-├─────────────────┼─────────────────────  │
-│  菜谱            │  合成配方           │
-│  成就清单        │  进度系统           │
-│  掉落规则        │  战利品表           │
-│  任务提示        │  函数命令           │
-└─────────────────────────────────────────┘
-```
+数据包就像游戏规则的"说明�?�?
+┌─────────────────────────────────────────�?�? 说明书内�?       �? 相当于数据包�?    �?├─────────────────┼─────────────────────  �?�? 菜谱            �? 合成配方           �?�? 成就清单        �? 进度系统           �?�? 掉落规则        �? 战利品表           �?�? 任务提示        �? 函数命令           �?└─────────────────────────────────────────�?```
 
 ---
 
@@ -91,21 +62,20 @@ flowchart TD
 
 ```
 MyFirstDatapack/
-├── pack.mcmeta              # 数据包描述文件
-└── data/
+├── pack.mcmeta              # 数据包描述文�?└── data/
     ├── mymod/               # 命名空间（你的标识）
-    │   ├── advancement/     # 进度
-    │   │   └── my_advancement.json
-    │   ├── function/        # 函数
-    │   │   ├── tick.mcfunction
-    │   │   └── hello.mcfunction
-    │   ├── loot_tables/    # 战利品表
-    │   │   ├── blocks/
-    │   │   │   └── my_block.json
-    │   │   └── entities/
-    │   │       └── my_mob.json
-    │   └── recipe/          # 配方
-    │       └── my_recipe.json
+    �?  ├── advancement/     # 进度
+    �?  �?  └── my_advancement.json
+    �?  ├── function/        # 函数
+    �?  �?  ├── tick.mcfunction
+    �?  �?  └── hello.mcfunction
+    �?  ├── loot_tables/    # 战利品表
+    �?  �?  ├── blocks/
+    �?  �?  �?  └── my_block.json
+    �?  �?  └── entities/
+    �?  �?      └── my_mob.json
+    �?  └── recipe/          # 配方
+    �?      └── my_recipe.json
     └── minecraft/           # 可以覆盖原版
         └── tags/
             └── function/
@@ -134,42 +104,24 @@ MyFirstDatapack/
 
 ---
 
-### 步骤 3：创建函数（Functions）
-
-#### 什么是函数？
-
+### 步骤 3：创建函数（Functions�?
+#### 什么是函数�?
 函数是一系列命令的集合：
 
 ```
-┌─────────────────────────────────────────┐
-│           函数的优点                      │
-│                                         │
-│  # 传统方式：每次都要输入                │
-│  /say 你好                              │
-│  /give @s diamond 1                     │
-│  /playsound minecraft:entity.player.levelup ... │
-│                                         │
-│  # 函数方式：一键执行                    │
-│  /function mymod:welcome                │
-│  └── 自动执行上面所有命令                │
-│                                         │
-└─────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────�?�?          函数的优�?                     �?�?                                        �?�? # 传统方式：每次都要输�?               �?�? /say 你好                              �?�? /give @s diamond 1                     �?�? /playsound minecraft:entity.player.levelup ... �?�?                                        �?�? # 函数方式：一键执�?                   �?�? /function mymod:welcome                �?�? └── 自动执行上面所有命�?               �?�?                                        �?└─────────────────────────────────────────�?```
 
 #### 函数文件示例
 
-创建 `data/mymod/function/welcome.mcfunction`：
-
+创建 `data/mymod/function/welcome.mcfunction`�?
 ```mcfunction
 # 欢迎消息
-say 欢迎来到魔法世界！
-
+say 欢迎来到魔法世界�?
 # 给予起始物品
 give @s minecraft:diamond 3
 give @s minecraft:iron_sword 1
 
-# 给予状态效果
-effect give @s minecraft:strength 60 0
+# 给予状态效�?effect give @s minecraft:strength 60 0
 
 # 播放音效
 playsound minecraft:entity.player.levelup player @s ~ ~ ~ 1.0 1.0
@@ -177,18 +129,14 @@ playsound minecraft:entity.player.levelup player @s ~ ~ ~ 1.0 1.0
 
 #### 带条件的函数
 
-创建 `data/mymod/function/check_player.mcfunction`：
-
+创建 `data/mymod/function/check_player.mcfunction`�?
 ```mcfunction
-# 检查玩家是否满足条件
-execute if entity @s[nbt={Inventory:[{id:"minecraft:diamond",Count:10b}]}] run say 你有10个钻石！
-execute if entity @s[scores={kills=100..}] run say 你已经击杀100个生物了！
-```
+# 检查玩家是否满足条�?execute if entity @s[nbt={Inventory:[{id:"minecraft:diamond",Count:10b}]}] run say 你有10个钻石！
+execute if entity @s[scores={kills=100..}] run say 你已经击杀100个生物了�?```
 
 #### tick.json（每刻执行）
 
-创建 `data/minecraft/tags/function/tick.json`：
-
+创建 `data/minecraft/tags/function/tick.json`�?
 ```json
 {
     "values": [
@@ -197,8 +145,7 @@ execute if entity @s[scores={kills=100..}] run say 你已经击杀100个生物�
 }
 ```
 
-创建 `data/mymod/function/tick.mcfunction`：
-
+创建 `data/mymod/function/tick.mcfunction`�?
 ```mcfunction
 # 每刻执行的逻辑
 # 例如：检查玩家位置并给予效果
@@ -207,33 +154,16 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 ---
 
-### 步骤 4：创建进度（Advancements）
-
-#### 什么是进度？
-
+### 步骤 4：创建进度（Advancements�?
+#### 什么是进度�?
 进度就是"成就"，当玩家完成某些条件时触发：
 
 ```
-┌─────────────────────────────────────────┐
-│           进度触发流程                    │
-│                                         │
-│  玩家行为 → 检查条件 → 触发进度 → 给予奖励│
-│                                         │
-│  例如：                                  │
-│  玩家挖矿 → 背包有钻石 → "钻石猎手"成就  │
-│                        ↓                │
-│                    给予奖励：            │
-│                    - 经验                │
-│                    - 配方解锁            │
-│                    - 物品奖励            │
-│                                         │
-└─────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────�?�?          进度触发流程                    �?�?                                        �?�? 玩家行为 �?检查条�?�?触发进度 �?给予奖励�?�?                                        �?�? 例如�?                                 �?�? 玩家挖矿 �?背包有钻�?�?"钻石猎手"成就  �?�?                       �?               �?�?                   给予奖励�?           �?�?                   - 经验                �?�?                   - 配方解锁            �?�?                   - 物品奖励            �?�?                                        �?└─────────────────────────────────────────�?```
 
 #### 进度文件示例
 
-创建 `data/mymod/advancement/first_magic.json`：
-
+创建 `data/mymod/advancement/first_magic.json`�?
 ```json
 {
     "display": {
@@ -270,8 +200,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 #### 根进度（显示在进度界面）
 
-创建 `data/mymod/advancement/root.json`：
-
+创建 `data/mymod/advancement/root.json`�?
 ```json
 {
     "display": {
@@ -279,7 +208,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
             "item": "minecraft:nether_star"
         },
         "title": "魔法冒险",
-        "description": "开始你的魔法冒险之旅",
+        "description": "开始你的魔法冒险之�?,
         "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
         "show_toast": false,
         "announce_to_chat": false
@@ -292,42 +221,28 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 }
 ```
 
-#### 常用触发器
-
-| 触发器 | 说明 | 条件 |
+#### 常用触发�?
+| 触发�?| 说明 | 条件 |
 |--------|------|------|
-| `inventory_changed` | 背包变化 | 检查物品 |
-| `player_killed_entity` | 击杀实体 | 检查被击杀者 |
-| `recipe_unlocked` | 配方解锁 | 检查配方 |
-| `enter_block` | 进入方块 | 检查方块 |
-| `effects_changed` | 效果变化 | 检查药水效果 |
-| `consume_item` | 消耗物品 | 检查消耗的物品 |
+| `inventory_changed` | 背包变化 | 检查物�?|
+| `player_killed_entity` | 击杀实体 | 检查被击杀�?|
+| `recipe_unlocked` | 配方解锁 | 检查配�?|
+| `enter_block` | 进入方块 | 检查方�?|
+| `effects_changed` | 效果变化 | 检查药水效�?|
+| `consume_item` | 消耗物�?| 检查消耗的物品 |
 
 ---
 
-### 步骤 5：创建战利品表（Loot Tables）
-
-#### 什么是战利品表？
-
+### 步骤 5：创建战利品表（Loot Tables�?
+#### 什么是战利品表�?
 战利品表定义了什么情况下给予什么物品：
 
 ```
-┌─────────────────────────────────────────┐
-│           战利品表用途                    │
-│                                         │
-│  1. 实体掉落（猪、牛、僵尸...）          │
-│  2. 箱子战利品（地牢、神殿...）          │
-│  3. 钓鱼奖励                            │
-│  4. 村民交易礼物                        │
-│  5. 考古奖励                            │
-│                                         │
-└─────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────�?�?          战利品表用�?                   �?�?                                        �?�? 1. 实体掉落（猪、牛、僵�?..�?         �?�? 2. 箱子战利品（地牢、神�?..�?         �?�? 3. 钓鱼奖励                            �?�? 4. 村民交易礼物                        �?�? 5. 考古奖励                            �?�?                                        �?└─────────────────────────────────────────�?```
 
 #### 实体掉落战利品表
 
-创建 `data/mymod/loot_tables/entities/magic_beast.json`：
-
+创建 `data/mymod/loot_tables/entities/magic_beast.json`�?
 ```json
 {
     "pools": [
@@ -378,8 +293,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 #### 箱子战利品表
 
-创建 `data/mymod/loot_tables/chests/magic_treasure.json`：
-
+创建 `data/mymod/loot_tables/chests/magic_treasure.json`�?
 ```json
 {
     "pools": [
@@ -443,40 +357,14 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 ---
 
-### 步骤 6：创建配方（Recipes）
-
-#### 什么是配方？
-
-配方定义如何合成物品：
-
+### 步骤 6：创建配方（Recipes�?
+#### 什么是配方�?
+配方定义如何合成物品�?
 ```
-┌─────────────────────────────────────────┐
-│           配方类型                        │
-│                                         │
-│  1. 有形状合成（需要按形状排列）         │
-│     ┌───┬───┬───┐                      │
-│     │ A │ A │   │  A = 钻石            │
-│     ├───┼───┼───┤  S = 木棍            │
-│     │   │ S │   │                      │
-│     ├───┼───┼───┤                      │
-│     │   │ S │   │                      │
-│     └───┴───┴───┘                      │
-│     = 钻石剑                            │
-│                                         │
-│  2. 无形状合成（材料随意摆放）           │
-│     需要：钻石x2 + 木棍x1               │
-│     = 钻石剑                            │
-│                                         │
-│  3. 熔炉配方（烧制）                    │
-│     输入 + 燃料 → 输出                  │
-│                                         │
-└─────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────�?�?          配方类型                        �?�?                                        �?�? 1. 有形状合成（需要按形状排列�?        �?�?    ┌───┬───┬───�?                     �?�?    �?A �?A �?  �? A = 钻石            �?�?    ├───┼───┼───�? S = 木棍            �?�?    �?  �?S �?  �?                     �?�?    ├───┼───┼───�?                     �?�?    �?  �?S �?  �?                     �?�?    └───┴───┴───�?                     �?�?    = 钻石�?                           �?�?                                        �?�? 2. 无形状合成（材料随意摆放�?          �?�?    需要：钻石x2 + 木棍x1               �?�?    = 钻石�?                           �?�?                                        �?�? 3. 熔炉配方（烧制）                    �?�?    输入 + 燃料 �?输出                  �?�?                                        �?└─────────────────────────────────────────�?```
 
-#### 有形状合成配方
-
-创建 `data/mymod/recipe/magic_staff.json`：
-
+#### 有形状合成配�?
+创建 `data/mymod/recipe/magic_staff.json`�?
 ```json
 {
     "type": "minecraft:crafting_shaped",
@@ -502,10 +390,8 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 }
 ```
 
-#### 无形状合成配方
-
-创建 `data/mymod/recipe/magic_crystal.json`：
-
+#### 无形状合成配�?
+创建 `data/mymod/recipe/magic_crystal.json`�?
 ```json
 {
     "type": "minecraft:crafting_shapeless",
@@ -526,8 +412,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 #### 熔炉配方
 
-创建 `data/mymod/recipe/magic_dust_from_ore.json`：
-
+创建 `data/mymod/recipe/magic_dust_from_ore.json`�?
 ```json
 {
     "type": "minecraft:smelting",
@@ -548,20 +433,18 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 #### 测试步骤
 
-1. **打包数据包**
+1. **打包数据�?*
    ```
-   将文件夹压缩为 zip 格式（注意：不是 rar）
-   MyFirstDatapack.zip
+   将文件夹压缩�?zip 格式（注意：不是 rar�?   MyFirstDatapack.zip
    ```
 
 2. **放入游戏目录**
    ```
-   1. 创建或进入一个世界
-   2. 打开 .minecraft/saves/你的世界/datapacks/
+   1. 创建或进入一个世�?   2. 打开 .minecraft/saves/你的世界/datapacks/
    3. 放入 zip 文件或解压后的文件夹
    ```
 
-3. **重载数据包**
+3. **重载数据�?*
    ```
    在游戏中输入 /reload
    ```
@@ -571,22 +454,21 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
    - 检查配方：/recipe give @s mymod:magic_staff
    - 检查进度：/advancement grant @s everything
    - 测试战利品：/loot give @s loot mymod:entities/magic_beast
-   - 执行函数：/function mymod:welcome
+   - 执行函数�?function mymod:welcome
    ```
 
 #### 常见问题排查
 
 | 问题 | 原因 | 解决方法 |
 |------|------|----------|
-| 配方不显示 | JSON 格式错误 | 检查语法 |
-| 进度不触发 | 条件不满足 | 检查触发器条件 |
-| 战利品表不工作 | 路径错误 | 检查 namespace 和 path |
-| 数据包不加载 | pack_format 错误 | 更新版本号 |
+| 配方不显�?| JSON 格式错误 | 检查语�?|
+| 进度不触�?| 条件不满�?| 检查触发器条件 |
+| 战利品表不工�?| 路径错误 | 检�?namespace �?path |
+| 数据包不加载 | pack_format 错误 | 更新版本�?|
 
 ---
 
-## 完整数据包示例
-
+## 完整数据包示�?
 ### 目录结构
 
 ```
@@ -594,20 +476,20 @@ MagicDatapack/
 ├── pack.mcmeta
 └── data/
     ├── mymod/
-    │   ├── advancement/
-    │   │   ├── root.json
-    │   │   └── first_craft.json
-    │   ├── function/
-    │   │   ├── welcome.mcfunction
-    │   │   └── tick.mcfunction
-    │   ├── loot_tables/
-    │   │   ├── blocks/
-    │   │   │   └── magic_crystal.json
-    │   │   └── entities/
-    │   │       └── magic_beast.json
-    │   └── recipe/
-    │       ├── magic_crystal.json
-    │       └── magic_staff.json
+    �?  ├── advancement/
+    �?  �?  ├── root.json
+    �?  �?  └── first_craft.json
+    �?  ├── function/
+    �?  �?  ├── welcome.mcfunction
+    �?  �?  └── tick.mcfunction
+    �?  ├── loot_tables/
+    �?  �?  ├── blocks/
+    �?  �?  �?  └── magic_crystal.json
+    �?  �?  └── entities/
+    �?  �?      └── magic_beast.json
+    �?  └── recipe/
+    �?      ├── magic_crystal.json
+    �?      └── magic_staff.json
     └── minecraft/
         └── tags/
             └── function/
@@ -620,7 +502,7 @@ MagicDatapack/
 {
     "pack": {
         "pack_format": 34,
-        "description": "魔法数据包 - 添加魔法物品和成就"
+        "description": "魔法数据�?- 添加魔法物品和成�?
     }
 }
 ```
@@ -629,8 +511,7 @@ MagicDatapack/
 
 ## 遇到问题怎么办？
 
-### 调试技巧
-
+### 调试技�?
 1. **查看日志**
    ```
    游戏启动时的日志会显示数据包加载情况
@@ -638,24 +519,20 @@ MagicDatapack/
 
 2. **使用 /datapack 命令**
    ```
-   /datapack list          - 列出已加载的数据包
-   /datapack enable "..."  - 启用数据包
-   /datapack disable "..." - 禁用数据包
-   ```
+   /datapack list          - 列出已加载的数据�?   /datapack enable "..."  - 启用数据�?   /datapack disable "..." - 禁用数据�?   ```
 
-3. **检查 JSON 格式**
+3. **检�?JSON 格式**
    ```
-   使用在线 JSON 验证器检查语法
-   ```
+   使用在线 JSON 验证器检查语�?   ```
 
 ### 常见错误
 
 | 错误信息 | 原因 | 解决方法 |
 |----------|------|----------|
-| `Invalid json` | JSON 格式错误 | 检查逗号、引号 |
+| `Invalid json` | JSON 格式错误 | 检查逗号、引�?|
 | `Unknown trigger` | 触发器不存在 | 检查触发器名称 |
-| `No namespace` | namespace 缺失 | 确保在 data/ 下有 namespace |
-| `Pack format mismatch` | 版本不匹配 | 更新 pack_format |
+| `No namespace` | namespace 缺失 | 确保�?data/ 下有 namespace |
+| `Pack format mismatch` | 版本不匹�?| 更新 pack_format |
 
 ---
 
@@ -663,22 +540,16 @@ MagicDatapack/
 
 完成了基础项目？试试这些挑战：
 
-### 挑战 1：创建自定义进度树
-
+### 挑战 1：创建自定义进度�?
 ```
-root（根进度）
-├── 收集材料
-│   ├── 收集钻石
-│   └── 收集烈焰棒
-├── 制作装备
-│   ├── 制作魔法杖
-│   └── 制作魔法盔甲
-└── 最终成就
-    └── 成为魔法大师
+root（根进度�?├── 收集材料
+�?  ├── 收集钻石
+�?  └── 收集烈焰�?├── 制作装备
+�?  ├── 制作魔法�?�?  └── 制作魔法盔甲
+└── 最终成�?    └── 成为魔法大师
 ```
 
-### 挑战 2：创建条件掉落
-
+### 挑战 2：创建条件掉�?
 ```json
 {
     "pools": [
@@ -717,14 +588,13 @@ execute if entity @s[advancements={mymod:first_craft=true}] run function mymod:g
 
 ---
 
-## 参考资料
-
+## 参考资�?
 ### 相关章节
 
-- [数据包基础](../Part-8-Resource/41-datapack-intro.md)
-- [战利品表](../Part-8-Resource/42-loot-table.md)
-- [进度系统](../Part-8-Resource/43-advancement.md)
-- [配方系统](../Part-8-Resource/44-recipe-system.md)
+- [数据包基础](/mc/1.21/tutorials/Part-8-Resource/41-datapack-intro/)
+- [战利品表](/mc/1.21/tutorials/Part-8-Resource/42-loot-table/)
+- [进度系统](/mc/1.21/tutorials/Part-8-Resource/43-advancement/)
+- [配方系统](/mc/1.21/tutorials/Part-8-Resource/44-recipe-system/)
 
 ### 在线资源
 
@@ -735,23 +605,14 @@ execute if entity @s[advancements={mymod:first_craft=true}] run function mymod:g
 
 ---
 
-## 下一步
-
+## 下一�?
 恭喜你完成了所有四个实战项目！
 
-你已经学会了：
-- ✅ 添加新方块
-- ✅ 添加新物品
-- ✅ 添加新生物
-- ✅ 创建数据包
+你已经学会了�?- �?添加新方�?- �?添加新物�?- �?添加新生�?- �?创建数据�?
+下一步你可以�?- 尝试组合这些知识，创建更复杂的内�?- 学习服务�?客户端同步机�?- 研究性能优化
 
-下一步你可以：
-- 尝试组合这些知识，创建更复杂的内容
-- 学习服务端-客户端同步机制
-- 研究性能优化
-
-> [返回 Part-12 目录](../README.md)
+> [返回 Part-12 目录](./mc/1.21/tutorials/)
 
 ---
 
-*本教程基于 Minecraft 1.21 源码编写*
+*本教程基�?Minecraft 1.21 源码编写*

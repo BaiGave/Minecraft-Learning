@@ -34,7 +34,7 @@
 
 ## 资源链接
 
-- [Iris 源码分析](../analysis/README.md) - 深入理解 Iris 内部架构
+- [Iris 源码分析](/iris/analysis/) - 深入理解 Iris 内部架构
 - [Iris 官网](https://irisshaders.net/) - 下载 Iris
 - [OptiFabric](https://github.com/Drawбота/OptiFabric) - OptiFine 兼容层
 

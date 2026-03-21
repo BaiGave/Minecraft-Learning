@@ -34,7 +34,7 @@
 
 ## 资源链接
 
-- [Sodium 源码分析](../analysis/README.md) - 深入理解 Sodium 内部架构
+- [Sodium 源码分析](/sodium/analysis/) - 深入理解 Sodium 内部架构
 - [Sodium 官网](https://sodium.fabricmc.net/) - 下载 Sodium
 - [Fabric Wiki](https://fabricmc.net/wiki/) - Fabric 开发文档
 
