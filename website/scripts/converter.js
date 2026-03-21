@@ -14,7 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config } = require('./config');
+const { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config, partLearningAdvice } = require('./config');
 
 // ============================================
 // Markdown 解析器
@@ -486,29 +486,137 @@ function generatePrevNext(navItems, currentSlug) {
     return `<div class="prev-next">${prev}${next}</div>`;
 }
 
+// 按 Part 分组教程
+function groupByPart(tutorials) {
+    const groups = {};
+    tutorials.forEach(item => {
+        if (!groups[item.part]) {
+            groups[item.part] = [];
+        }
+        groups[item.part].push(item);
+    });
+    return groups;
+}
+
+// Part 排序顺序（与源码目录 Part-X-XXX 对应，3-Block-Item 保证数字序 3 在 13 前）
+const partOrder = ['0-Prerequisites', '1-Foundation', '2-World', '3-Block', '3-Block-Item', '4-Entity', '5-AI', '6-Network', '7-Command', '8-Resource', '9-Client', '10-Server', '11-Advanced', '12-Practice', '13-Additional'];
+
+function sortParts(partNames) {
+    return partNames.sort((a, b) => {
+        const indexA = partOrder.indexOf(a);
+        const indexB = partOrder.indexOf(b);
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+}
+
+// Part 名称映射
+const partNames = {
+    '0-Prerequisites': 'Part-0: 前置知识',
+    '1-Foundation': 'Part-1: 核心基础 ⭐',
+    '2-World': 'Part-2: 世界系统',
+    '3-Block': 'Part-3: 方块物品',
+    '3-Block-Item': 'Part-3: 方块物品',
+    '4-Entity': 'Part-4: 实体系统',
+    '5-AI': 'Part-5: AI系统',
+    '6-Network': 'Part-6: 网络系统',
+    '7-Command': 'Part-7: 命令系统',
+    '8-Resource': 'Part-8: 资源系统',
+    '9-Client': 'Part-9: 客户端',
+    '10-Server': 'Part-10: 服务端',
+    '11-Advanced': 'Part-11: 进阶主题',
+    '12-Practice': 'Part-12: 实战项目',
+    '13-Additional': 'Part-13: 附加系统'
+};
+
 function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, version = null) {
     const relativePath = version ? '../../../..' : '../../..';
     const versionInfo = version ? ` - ${version}` : '';
 
-    // 教程卡片
-    const tutorialCards = tutorialsNavItems.map((item, index) => `
-        <div class="doc-card" onclick="window.location.href='tutorials/${item.file}.html'" style="animation-delay: ${index * 0.1}s">
-            <div class="doc-icon tutorial-icon">
-                <i class="fas fa-${item.icon}"></i>
-            </div>
-            <div class="doc-content">
-                <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
-                <h3>${item.title}</h3>
-                <p>学习指南</p>
-                <div class="doc-meta">
-                    <span><i class="fas fa-clock"></i> ${config.defaults.readingTime} 分钟</span>
+    // 按 Part 分组教程
+    const partGroups = groupByPart(tutorialsNavItems);
+    const sortedParts = sortParts(Object.keys(partGroups));
+
+    // 是否使用教程课程卡片式布局（MC 且有 part 学习建议时）
+    const useCurriculumLayout = module.slug === 'mc' && partLearningAdvice && typeof partLearningAdvice === 'object';
+
+    // 生成按 Part 分组的教程 HTML
+    const tutorialsByPartHtml = sortedParts.map((partName, partIndex) => {
+        const partItems = partGroups[partName];
+        const partLabel = partNames[partName] || partName;
+        const learningAdvice = useCurriculumLayout && partLearningAdvice[partName];
+        const prevPart = useCurriculumLayout && partIndex > 0 ? sortedParts[partIndex - 1] : null;
+        const nextPart = useCurriculumLayout && partIndex < sortedParts.length - 1 ? sortedParts[partIndex + 1] : null;
+
+        let partContent;
+        if (useCurriculumLayout && learningAdvice) {
+            // 课程卡片式布局：编号块 + 标题 + 要点列表
+            const curriculumCards = partItems.map((item, itemIndex) => {
+                const num = String(itemIndex + 1).padStart(2, '0');
+                const topicsHtml = (item.topics && item.topics.length) ? `
+                    <ul class="curriculum-card-topics">
+                        ${item.topics.map(t => `<li>${t}</li>`).join('')}
+                    </ul>` : '';
+                return `
+                    <div class="curriculum-card" onclick="window.location.href='tutorials/${item.file}.html'">
+                        <div class="curriculum-card-num">${num}</div>
+                        <h4 class="curriculum-card-title">${num}: ${item.title}</h4>
+                        ${topicsHtml}
+                    </div>`;
+            }).join('');
+            const prevLink = prevPart ? `<a href="#" onclick="scrollToPart('part-${prevPart}'); return false;" class="part-prev-next-prev">上一部分 ${partNames[prevPart] || prevPart}</a>` : '';
+            const nextLink = nextPart ? `<a href="#" onclick="scrollToPart('part-${nextPart}'); return false;" class="part-prev-next-next">下一部分 ${partNames[nextPart] || nextPart}</a>` : '';
+            partContent = `
+                <div class="curriculum-grid">
+                    ${curriculumCards}
+                </div>
+                <div class="learning-advice">
+                    <strong>学习建议</strong>
+                    <p>${learningAdvice}</p>
+                </div>
+                <div class="part-prev-next">
+                    ${prevLink}
+                    ${nextLink}
+                </div>`;
+        } else {
+            const partCards = partItems.map((item, itemIndex) => `
+                <div class="doc-card" onclick="window.location.href='tutorials/${item.file}.html'" style="animation-delay: ${(partIndex * 10 + itemIndex) * 0.05}s">
+                    <div class="doc-icon tutorial-icon">
+                        <i class="fas fa-${item.icon}"></i>
+                    </div>
+                    <div class="doc-content">
+                        <span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>
+                        <h3>${item.title}</h3>
+                        <p>学习指南</p>
+                        <div class="doc-meta">
+                            <span><i class="fas fa-clock"></i> ${config.defaults.readingTime} 分钟</span>
+                        </div>
+                    </div>
+                    <div class="doc-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                </div>
+            `).join('');
+            partContent = `<div class="docs-grid">${partCards}</div>`;
+        }
+
+        const isFirstPart = partIndex === 0;
+        return `
+            <div class="part-section ${isFirstPart ? 'expanded' : ''}" id="part-${partName}">
+                <div class="part-header" onclick="togglePart('part-${partName}')">
+                    <h3>${partLabel}</h3>
+                    <div class="part-toggle">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="part-content">
+                ${partContent}
                 </div>
             </div>
-            <div class="doc-arrow">
-                <i class="fas fa-arrow-right"></i>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     // 分析卡片
     const analysisCards = analysisNavItems.map((item, index) => `
@@ -613,6 +721,263 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             background: linear-gradient(135deg, #E07A5F, #F2CC8F);
             color: white;
         }
+        /* 固定侧边栏导航 */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 100;
+            padding: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 3px;
+        }
+        .sidebar-nav-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav-item:hover {
+            background: ${module.color}0D;
+            color: var(--text-primary);
+        }
+        .sidebar-nav-item.active {
+            background: ${module.color}1A;
+            color: ${module.color};
+            border-left-color: ${module.color};
+            font-weight: 600;
+        }
+        .sidebar-toggle {
+            position: fixed;
+            left: 20px;
+            top: 80px;
+            width: 40px;
+            height: 40px;
+            background: ${module.color};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        .sidebar-toggle:hover {
+            background: ${module.color}dd;
+            transform: scale(1.05);
+        }
+        .sidebar-nav.hidden {
+            transform: translateX(-100%);
+        }
+        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+        }
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        @media (max-width: 1024px) {
+            .sidebar-nav {
+                transform: translateX(-100%);
+            }
+            .sidebar-nav.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* 顶部快速导航 */
+        .quick-nav {
+            position: sticky;
+            top: 70px;
+            background: white;
+            border-bottom: 2px solid #e9ecef;
+            padding: 15px 0;
+            z-index: 99;
+            margin-bottom: 30px;
+        }
+        .quick-nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            overflow-x: auto;
+            display: flex;
+            gap: 10px;
+        }
+        .quick-nav::-webkit-scrollbar {
+            height: 4px;
+        }
+        .quick-nav::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 2px;
+        }
+        .quick-nav-item {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .quick-nav-item:hover {
+            background: ${module.color}1A;
+            color: ${module.color};
+        }
+        .quick-nav-item.active {
+            background: ${module.color};
+            color: white;
+            border-color: ${module.color};
+        }
+        
+        /* 折叠式Part布局 */
+        .part-section {
+            margin-bottom: 20px;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .part-section.expanded {
+            box-shadow: var(--shadow-md);
+        }
+        .part-header {
+            border-left: 4px solid ${module.color};
+            padding: 20px 24px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .part-header:hover {
+            background: ${module.color}0D;
+        }
+        .part-header h3 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin: 0;
+            flex: 1;
+        }
+        .part-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: ${module.color}1A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: ${module.color};
+            transition: transform 0.3s ease;
+        }
+        .part-section.expanded .part-toggle {
+            transform: rotate(180deg);
+        }
+        .part-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 24px;
+        }
+        .part-section.expanded .part-content {
+            max-height: 5000px;
+            padding: 24px;
+        }
+        /* 教程课程卡片式布局 */
+        .curriculum-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 900px) {
+            .curriculum-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+            .curriculum-grid { grid-template-columns: 1fr; }
+        }
+        .curriculum-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .curriculum-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .curriculum-card-num {
+            width: 48px;
+            height: 48px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+        }
+        .curriculum-card-title {
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+        }
+        .curriculum-card-topics {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .curriculum-card-topics li { list-style: disc; }
+        .learning-advice {
+            background: rgba(0,0,0,0.04);
+            border-left: 4px solid ${module.color};
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            margin-bottom: 24px;
+        }
+        .learning-advice strong { color: var(--text-primary); }
+        .learning-advice p { margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+        .part-prev-next {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .part-prev-next a {
+            color: ${module.color};
+            font-weight: 600;
+        }
+        .part-prev-next a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -662,8 +1027,30 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         </div>
     </header>
 
-    <section class="section">
+    <!-- 固定侧边栏导航 -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    <nav class="sidebar-nav" id="sidebarNav">
+        ${sortedParts.map(partName => {
+            const partLabel = partNames[partName] || partName;
+            return `<div class="sidebar-nav-item ${partName === sortedParts[0] ? 'active' : ''}" onclick="scrollToPart('part-${partName}')">${partLabel}</div>`;
+        }).join('')}
+    </nav>
+
+    <section class="section main-content" id="mainContent">
         <div class="container">
+            
+            <!-- 顶部快速导航 -->
+            <div class="quick-nav">
+                <div class="quick-nav-container">
+                    ${sortedParts.map((partName, idx) => {
+                        const shortLabel = partName.replace(/^[0-9]+-/, '').replace(/-/g, ' ').substring(0, 10);
+                        return `<div class="quick-nav-item ${idx === 0 ? 'active' : ''}" onclick="scrollToPart('part-${partName}')">${partName}</div>`;
+                    }).join('')}
+                </div>
+            </div>
+            
             ${versionSelector}
 
             <!-- 教程/分析切换标签 -->
@@ -686,8 +1073,8 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                         教程 ${version || ''}
                     </h2>
                 </div>
-                <div class="docs-grid">
-                    ${tutorialCards || '<div class="empty-state"><i class="fas fa-folder-open"></i><p>暂无教程文档</p></div>'}
+                <div class="tutorials-by-part">
+                    ${tutorialsByPartHtml || '<div class="empty-state"><i class="fas fa-folder-open"></i><p>暂无教程文档</p></div>'}
                 </div>
             </div>
 
@@ -709,6 +1096,107 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     </section>
 
     <script>
+        // 折叠/展开Part
+        function togglePart(partId) {
+            const part = document.getElementById(partId);
+            if (part) {
+                part.classList.toggle('expanded');
+                updateActiveNav(partId);
+            }
+        }
+        
+        // 滚动到指定Part并展开
+        function scrollToPart(partId) {
+            const part = document.getElementById(partId);
+            if (part) {
+                // 展开Part
+                if (!part.classList.contains('expanded')) {
+                    part.classList.add('expanded');
+                }
+                // 滚动到Part
+                setTimeout(() => {
+                    const offset = 140; // 导航栏 + 快速导航的高度
+                    const elementPosition = part.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+                // 更新导航状态
+                updateActiveNav(partId);
+            }
+        }
+        
+        // 更新导航高亮
+        function updateActiveNav(partId) {
+            // 更新侧边栏导航
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const sidebarItem = Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item => {
+                return item.getAttribute('onclick') && item.getAttribute('onclick').includes(partId);
+            });
+            if (sidebarItem) {
+                sidebarItem.classList.add('active');
+            }
+            
+            // 更新顶部快速导航
+            document.querySelectorAll('.quick-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const quickNavItem = Array.from(document.querySelectorAll('.quick-nav-item')).find(item => {
+                return item.getAttribute('onclick') && item.getAttribute('onclick').includes(partId);
+            });
+            if (quickNavItem) {
+                quickNavItem.classList.add('active');
+            }
+        }
+        
+        // 切换侧边栏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarNav');
+            const mainContent = document.getElementById('mainContent');
+            if (sidebar && mainContent) {
+                sidebar.classList.toggle('hidden');
+                if (window.innerWidth > 1024) {
+                    mainContent.classList.toggle('expanded');
+                } else {
+                    sidebar.classList.toggle('show');
+                }
+            }
+        }
+        
+        // 监听滚动，自动更新导航高亮
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const parts = document.querySelectorAll('.part-section');
+                const offset = 200;
+                let currentPart = null;
+                
+                parts.forEach(part => {
+                    const rect = part.getBoundingClientRect();
+                    if (rect.top <= offset && rect.bottom >= offset) {
+                        currentPart = part.id;
+                    }
+                });
+                
+                if (currentPart) {
+                    updateActiveNav(currentPart);
+                }
+            }, 100);
+        });
+        
+        // 默认展开第一个Part
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstPart = document.querySelector('.part-section');
+            if (firstPart && !firstPart.classList.contains('expanded')) {
+                firstPart.classList.add('expanded');
+            }
+        });
+        
         function switchDocType(type) {
             const tutorialsSection = document.getElementById('tutorialsSection');
             const analysisSection = document.getElementById('analysisSection');
@@ -779,6 +1267,11 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
+        }
+        .tutorials-by-part {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
         }
         .doc-card {
             background: white;
@@ -1021,8 +1514,16 @@ function generateModuleIndexPage(moduleKey) {
             const actualTutorials = getActualDocFiles(tutorialsSourceDir);
             const actualAnalysis = getActualDocFiles(analysisSourceDir);
 
+            // MC 教程：与 config 合并，补充 title/icon/topics 用于课程卡片展示
+            const navConfig = tutorialsNavigation.mc || [];
+            const tutorialsWithConfig = actualTutorials.map(t => {
+                const fromConfig = navConfig.find(n => n.file === t.file);
+                if (!fromConfig) return t;
+                return { ...t, title: fromConfig.title, icon: fromConfig.icon || t.icon, topics: fromConfig.topics };
+            });
+
             // 生成索引页
-            const indexContent = generateModuleIndex(module, actualTutorials, actualAnalysis, version);
+            const indexContent = generateModuleIndex(module, tutorialsWithConfig, actualAnalysis, version);
             fs.writeFileSync(path.join(versionDir, 'index.html'), indexContent);
             console.log(`生成 ${module.name} ${version} 索引页`);
         });
@@ -1047,6 +1548,22 @@ function getActualDocFiles(sourceDir, recursive = true) {
         const slug = f.name.replace(/\.(md|markdown)$/, '');
         let title = slug.replace(/-/g, ' ');
         let icon = 'file-alt';
+        let part = 'Other';
+
+        // 解析 Part 信息
+        const partMatch = f.path.match(/[\\/]Part-([^\\/]+)[\\/]/);
+        if (partMatch) {
+            part = partMatch[1];
+        }
+
+        // 计算相对路径（保留 Part 目录）
+        const relativePath = f.path.replace(/\\/g, '/');
+        const parts = relativePath.split('/');
+        const tutorialsIndex = parts.indexOf('tutorials');
+        let subPath = '';
+        if (tutorialsIndex !== -1) {
+            subPath = parts.slice(tutorialsIndex + 1).join('/').replace(/\.(md|markdown)$/, '').replace(/\\/g, '/');
+        }
 
         try {
             const content = fs.readFileSync(f.path, 'utf-8');
@@ -1059,9 +1576,10 @@ function getActualDocFiles(sourceDir, recursive = true) {
         }
 
         return {
-            file: slug,
+            file: slug,  // 仅用文件名，输出为扁平 tutorials/xx.html
             title: title,
-            icon: icon
+            icon: icon,
+            part: part
         };
     });
 }

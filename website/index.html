@@ -267,7 +267,12 @@
                             { id: '02-client-module', title: '客户端模块', desc: '客户端渲染、输入与窗口管理', time: '50分钟' },
                             { id: '03-server-module', title: '服务端模块', desc: '服务端Tick循环与世界管理', time: '55分钟' },
                             { id: '04-world-system', title: '世界系统', desc: 'World、Chunk与地形生成机制', time: '60分钟' },
-                            { id: '05-entity-system', title: '实体系统', desc: 'Entity、LivingEntity与属性系统', time: '50分钟' }
+                            { id: '05-entity-system', title: '实体系统', desc: 'Entity、LivingEntity与属性系统', time: '50分钟' },
+                            { id: '06-block-item-system', title: '方块物品系统', desc: '方块、物品与注册机制', time: '55分钟' },
+                            { id: '07-network-protocol', title: '网络协议', desc: '数据包编码与协议状态', time: '60分钟' },
+                            { id: '08-datafixer-system', title: '数据修复系统', desc: 'DataFixerUpper 与版本兼容', time: '45分钟' },
+                            { id: '09-registry-system', title: '注册表系统', desc: 'Registry、MinecraftKey 与 ID 映射', time: '50分钟' },
+                            { id: '10-package-structure', title: '包结构', desc: 'mojang、Minecraft 服务器结构', time: '40分钟' }
                         ]
                     },
                     '1.20': {
@@ -475,8 +480,15 @@
                     ? Object.keys(mod.versions).join(' / ')
                     : '通用';
                 const docCount = mod.versions
-                    ? Object.values(mod.versions)[0].docs.length + '+'
-                    : mod.docs.length + '篇';
+                    ? (() => {
+                        let total = 0;
+                        Object.values(mod.versions).forEach(v => {
+                            if (v.tutorials) total += v.tutorials.length;
+                            if (v.analysis) total += v.analysis.length;
+                        });
+                        return total + '+';
+                    })()
+                    : (mod.docs ? mod.docs.length : 0) + '篇';
 
                 return `
                     <div class="module-card" onclick="selectModule('${key}')" style="--module-color: ${mod.color}">
@@ -671,6 +683,10 @@
             container.innerHTML = '';
 
             Object.entries(versions).forEach(([versionId, version]) => {
+                const tutorialCount = version.tutorials ? version.tutorials.length : 0;
+                const analysisCount = version.analysis ? version.analysis.length : 0;
+                const totalDocs = tutorialCount + analysisCount;
+                
                 const card = document.createElement('div');
                 card.className = 'version-card';
                 card.onclick = () => selectVersion(versionId, version);
@@ -680,7 +696,7 @@
                     </div>
                     <div class="version-info">
                         <h3>${version.name}</h3>
-                        <p>${version.docs.length} 篇文档</p>
+                        <p>${totalDocs} 篇文档 (${tutorialCount} 教程 / ${analysisCount} 分析)</p>
                     </div>
                     <div class="version-arrow">
                         <i class="fas fa-chevron-right"></i>

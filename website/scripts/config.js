@@ -76,6 +76,27 @@ const modules = {
 };
 
 // ============================================
+// 教程 Part 学习建议（用于课程卡片式布局）
+// ============================================
+const partLearningAdvice = {
+    '2-World': '世界系统是 Minecraft 的核心组件之一。理解区块如何存储/加载以及地形如何生成，对掌握游戏底层架构至关重要。',
+    '3-Block': '方块与物品是游戏内容的基础。建议先掌握 BlockState 与 BlockEntity，再学习物品与 Component。',
+    '3-Block-Item': '方块与物品是游戏内容的基础。建议先掌握 BlockState 与 BlockEntity，再学习物品与 Component。',
+    '0-Prerequisites': '前置知识帮助你搭建开发环境并理解项目结构，为后续章节打好基础。',
+    '1-Foundation': '核心基础涵盖注册表、客户端-服务端架构与启动流程，是阅读源码的必备知识。',
+    '4-Entity': '实体系统从 Entity 生命周期到 AI 行为，建议按顺序学习。',
+    '5-AI': 'AI 系统涉及大脑、记忆、传感器与任务调度，是生物行为的核心。',
+    '6-Network': '网络系统理解数据包与同步机制，对多人游戏与 Mod 开发很重要。',
+    '7-Command': '命令系统基于 Brigadier，可扩展原版命令或添加自定义命令。',
+    '8-Resource': '资源包、数据包、战利品表与进度等，是内容驱动开发的基础。',
+    '9-Client': '客户端涵盖渲染、GUI 与输入，适合做视觉或交互类 Mod。',
+    '10-Server': '服务端涵盖玩家管理、存档与专用/集成服务器区别。',
+    '11-Advanced': '进阶主题包括数据修复、流体、村庄与结构等。',
+    '12-Practice': '通过实战项目巩固所学，建议按顺序完成。',
+    '13-Additional': '附加系统包含附魔、物品栏、NBT、粒子、音效等常用系统。'
+};
+
+// ============================================
 // 教程导航结构
 // ============================================
 const tutorialsNavigation = {
@@ -92,13 +113,13 @@ const tutorialsNavigation = {
         { id: 'client-server-arch', title: '客户端-服务端', icon: 'network-wired', file: '05-client-server-arch' },
         { id: 'shared-constants', title: '全局常量', icon: 'tag', file: '06-shared-constants' },
         { id: 'bootstrap-flow', title: '启动引导', icon: 'play', file: '07-bootstrap-flow' },
-        // Part-2: 世界系统
-        { id: 'world-core', title: 'World核心', icon: 'globe', file: '08-world-core' },
-        { id: 'chunk-system', title: 'Chunk系统', icon: 'th', file: '09-chunk-system' },
-        { id: 'biome-system', title: '生物群系', icon: 'tree', file: '10-biome-system' },
-        { id: 'terrain-gen', title: '地形生成', icon: 'mountain', file: '11-terrain-gen' },
-        { id: 'lighting-system', title: '光照系统', icon: 'lightbulb', file: '12-lighting-system' },
-        { id: 'heightmap', title: '高度图', icon: 'chart-area', file: '13-heightmap' },
+        // Part-2: 世界系统（带课程要点，用于教程卡片式展示）
+        { id: 'world-core', title: 'World核心', icon: 'globe', file: '08-world-core', topics: ['World 类结构', 'WorldServer 与 ClientWorld 区别'] },
+        { id: 'chunk-system', title: 'Chunk系统', icon: 'th', file: '09-chunk-system', topics: ['区块加载/卸载', 'ChunkSection', 'NBT 持久化'] },
+        { id: 'biome-system', title: '生物群系', icon: 'tree', file: '10-biome-system', topics: ['生物群系注册', 'BiomeAttributes', '天气对生物群系的影响'] },
+        { id: 'terrain-gen', title: '地形生成', icon: 'mountain', file: '11-terrain-gen', topics: ['ChunkGenerator', 'NoiseGenerator', '洞穴与峡谷生成'] },
+        { id: 'lighting-system', title: '光照系统', icon: 'lightbulb', file: '12-lighting-system', topics: ['BlockLight', 'SkyLight', '光照传播与更新算法'] },
+        { id: 'heightmap', title: '高度图', icon: 'chart-area', file: '13-heightmap', topics: ['高度图类型', 'MotionBlockingHeightMap', 'WorldSurface'] },
         // Part-3: 方块物品
         { id: 'block-basics', title: 'Block基础', icon: 'cube', file: '14-block-basics' },
         { id: 'block-state', title: 'BlockState', icon: 'toggle-on', file: '15-block-state' },
@@ -273,4 +294,4 @@ const config = {
     }
 };
 
-module.exports = { modules, tutorialsNavigation, analysisNavigation, moduleCards, config };
+module.exports = { modules, tutorialsNavigation, analysisNavigation, moduleCards, config, partLearningAdvice };
