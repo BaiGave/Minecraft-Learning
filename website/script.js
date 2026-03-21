@@ -239,6 +239,9 @@ function renderNavigationDropdown() {
     const dropdown = document.getElementById('navDropdown');
     if (!dropdown) return;
 
+    // Skip if already rendered by Catalog module
+    if (dropdown.innerHTML.trim() !== '') return;
+
     // Default module data (fallback if no global moduleData)
     const defaultModuleData = {
         mc: { name: 'Minecraft 原版', docsDir: 'docs/mc', defaultVersion: '1.21', versions: ['1.21'] },
@@ -371,8 +374,12 @@ function initNavbarScrollEffect() {
 
 /**
  * Initialize search functionality
+ * Note: catalog.html has its own search, so skip if on catalog page
  */
 function initSearch() {
+    // Skip if on catalog page (it has its own search)
+    if (document.getElementById('catalogContainer')) return;
+
     const searchInput = $('#searchInput');
     if (!searchInput) return;
 

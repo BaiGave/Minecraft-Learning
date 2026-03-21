@@ -19,18 +19,17 @@
                 <i class="fas fa-cube"></i>
                 <span>Minecraft Learning</span>
             </a>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <button class="mobile-menu-btn" onclick="Catalog.toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
                 <li><a href="index.html">首页</a></li>
                 <li class="dropdown">
                     <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content" id="navDropdown">
-                        <!-- 由 JS 动态生成 -->
-                    </div>
+                    <div class="dropdown-content" id="navDropdown"></div>
                 </li>
                 <li><a href="catalog.html" class="active">文档目录</a></li>
+                <li><a href="roadmap.html">路线图</a></li>
                 <li><a href="about.html">关于</a></li>
             </ul>
         </div>
@@ -52,13 +51,15 @@
             <div class="search-section">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="搜索文档标题或内容...">
+                    <input type="text" id="catalogSearchInput" placeholder="搜索文档标题或内容...">
                 </div>
             </div>
 
-            <!-- 动态生成的目录区域 -->
             <div id="catalogContainer">
-                <!-- 由 JS 动态生成 -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>加载中...</span>
+                </div>
             </div>
         </div>
     </section>
@@ -72,14 +73,13 @@
                 </div>
                 <div class="footer-links">
                     <h4>文档</h4>
-                    <ul id="footerDocsLinks">
-                        <!-- 由 JS 动态生成 -->
-                    </ul>
+                    <ul id="footerDocsLinks"></ul>
                 </div>
                 <div class="footer-links">
                     <h4>资源</h4>
                     <ul>
                         <li><a href="catalog.html">文档目录</a></li>
+                        <li><a href="roadmap.html">学习路线</a></li>
                         <li><a href="about.html">关于</a></li>
                     </ul>
                 </div>
@@ -92,58 +92,65 @@
 
     <script src="script.js"></script>
     <script>
-        // ============================================
-        // 动态加载模块数据 (从 docs-index.json)
-        // ============================================
+    // ============================================
+    // Catalog Module - 完全隔离的目录页逻辑
+    // ============================================
+    const Catalog = (function() {
+        let moduleData = {};
 
         async function loadModuleData() {
             try {
                 const response = await fetch('docs-index.json');
                 const data = await response.json();
-                return data.modules;
+                moduleData = data.modules || {};
+                return moduleData;
             } catch (e) {
                 console.error('加载模块数据失败:', e);
                 return {};
             }
         }
 
-        async function initCatalog() {
+        async function init() {
+            const data = await loadModuleData();
             renderNavigation();
             renderFooter();
-
-            const moduleData = await loadModuleData();
-            renderModulesCatalog(moduleData);
+            renderModulesCatalog();
             initSearch();
         }
 
         function renderNavigation() {
             const dropdown = document.getElementById('navDropdown');
-            dropdown.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
+            if (!dropdown) return;
+
+            const links = Object.entries(moduleData).map(([key, mod]) => {
                 const href = mod.versions
-                    ? `${mod.docsDir}/${mod.defaultVersion || '1.21'}/index.html`
+                    ? `${mod.docsDir}/index.html`
                     : `${mod.docsDir}/index.html`;
                 return `<a href="${href}">${mod.name}</a>`;
             }).join('');
+
+            dropdown.innerHTML = links || '<a href="#">暂无文档</a>';
         }
 
         function renderFooter() {
             const footerLinks = document.getElementById('footerDocsLinks');
+            if (!footerLinks) return;
+
             footerLinks.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                const href = mod.versions
-                    ? `${mod.docsDir}/index.html`
-                    : `${mod.docsDir}/index.html`;
-                return `<li><a href="${href}">${mod.name}</a></li>`;
+                return `<li><a href="${mod.docsDir}/index.html">${mod.name}</a></li>`;
             }).join('');
         }
 
-        function renderModulesCatalog(moduleData) {
+        function renderModulesCatalog() {
             const container = document.getElementById('catalogContainer');
+            if (!container) return;
+
             let html = '';
 
             Object.entries(moduleData).forEach(([key, mod]) => {
                 if (mod.versions) {
                     html += renderVersionedModule(mod);
-                } else {
+                } else if (mod.docs && Object.keys(mod.docs).length > 0) {
                     html += renderSingleModule(mod);
                 }
             });
@@ -206,10 +213,6 @@
         }
 
         function renderSingleModule(mod) {
-            const hasDocs = mod.docs && Object.keys(mod.docs).length > 0;
-
-            if (!hasDocs) return '';
-
             return `
                 <div class="catalog-section" id="${mod.slug}-section">
                     <div class="catalog-header" style="border-left-color: ${mod.color}">
@@ -289,7 +292,10 @@
         }
 
         function initSearch() {
-            document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchInput = document.getElementById('catalogSearchInput');
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
                 document.querySelectorAll('.doc-item').forEach(item => {
                     const text = item.textContent.toLowerCase();
@@ -298,17 +304,17 @@
             });
         }
 
-        function navigateTo(url) {
-            window.location.href = url;
-        }
-
         function toggleMobileMenu() {
             const navLinks = document.querySelector('.nav-links');
-            navLinks.classList.toggle('mobile-open');
+            if (navLinks) navLinks.classList.toggle('mobile-open');
         }
 
-        // 页面加载完成后执行
-        document.addEventListener('DOMContentLoaded', initCatalog);
+        return { init, toggleMobileMenu };
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        Catalog.init();
+    });
     </script>
 
     <style>
@@ -317,9 +323,6 @@
         }
         .catalog-hero .hero-badge {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-        }
-        .catalog-hero .stat-number {
-            color: var(--accent-secondary);
         }
         .search-section {
             max-width: 600px;
@@ -372,10 +375,12 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
         .catalog-link:hover {
             transform: translateX(5px);
             box-shadow: var(--shadow-md);
+            color: white;
         }
         .version-tabs {
             display: flex;
@@ -436,7 +441,8 @@
             background: white;
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
-            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
             transition: all 0.3s ease;
         }
         .doc-item:hover {
@@ -453,6 +459,7 @@
             color: white;
             font-size: 1.2rem;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
         }
         .doc-item:hover .doc-icon {
             transform: rotate(5deg);
@@ -480,6 +487,15 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+        }
+        .loading-state i {
+            font-size: 2rem;
+            margin-bottom: 15px;
         }
         @media (max-width: 768px) {
             .catalog-header {
