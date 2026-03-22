@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    (function () {
+        try {
+            var k = 'mc-learning-theme';
+            var t = localStorage.getItem(k);
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    })();
+    </script>
     <title>Minecraft Learning - MC 源码与模组开发文档站</title>
     <meta name="description" content="Minecraft Learning: 探索 Minecraft 源码与模组开发的深度学习资源，支持 MC 各版本、Sodium、Iris 等热门模组">
     
@@ -12,193 +21,245 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="styles/site-shell.css">
+    <!-- Design System V2 Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/shell.css">
 </head>
 <body>
-    <!-- 顶部进度条 -->
-    <div class="progress-bar" id="progressBar"></div>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">跳过导航，跳转到主要内容</a>
 
-    <!-- 顶栏 - 与 docs/mc/index.html 完全一致的品牌顶栏 -->
-    <nav class="navbar" id="siteNavbar">
-        <div class="nav-container">
-            <a href="index.html" class="nav-logo">
-                <i class="fas fa-cube"></i>
-                <span>Minecraft Learning</span>
+    <!-- Navigation Bar -->
+    <nav class="navbar" id="siteNavbar" role="navigation" aria-label="主导航">
+        <div class="navbar-inner">
+            <a href="index.html" class="navbar-logo">
+                <div class="navbar-logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="navbar-logo-text">Minecraft Learning</span>
             </a>
-            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="index.html" class="active">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content" id="navDropdown">
+            
+            <div class="navbar-links" id="navLinks">
+                <a href="index.html" class="navbar-link active">首页</a>
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-trigger">
+                        文档中心 <i class="fas fa-chevron-down"></i>
+                    </span>
+                    <div class="nav-dropdown-menu" id="navDropdown" role="menu">
                         <!-- 由 JS 动态生成 -->
                     </div>
-                </li>
-                <li><a href="about.html">关于</a></li>
-            </ul>
+                </div>
+                <a href="about.html" class="navbar-link">关于</a>
+            </div>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn active" data-theme="light" aria-label="浅色模式">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="打开菜单">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
-    <!-- Hero Section - 绿色渐变，与 page-hero 视觉一致 -->
-    <header class="page-hero" id="heroSection">
-        <div class="hero-content" style="max-width: 800px;">
-            <!-- 徽章 -->
-            <div class="hero-badge">
-                <i class="fas fa-book-open"></i>
-                开放文档 · 持续更新
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="移动端菜单">
+        <div class="mobile-menu-content">
+            <div class="mobile-nav-section">
+                <div class="mobile-nav-title">导航</div>
+                <a href="index.html" class="mobile-nav-link active">
+                    <i class="fas fa-home"></i>
+                    首页
+                </a>
+                <a href="about.html" class="mobile-nav-link">
+                    <i class="fas fa-info-circle"></i>
+                    关于
+                </a>
             </div>
-            
-            <!-- 标题 -->
-            <h1>Minecraft Learning</h1>
-            
-            <!-- 副标题 -->
-            <p class="hero-subtitle">
-                探索 Minecraft 源码与模组开发的深度学习资源
-            </p>
-            
-            <!-- 搜索框 -->
-            <div style="max-width: 520px; margin: 0 auto var(--space-8);">
-                <div class="search-box" style="position: relative;">
-                    <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6);"></i>
-                    <input type="text" id="heroSearchInput" placeholder="搜索文档标题..." 
-                        style="width: 100%; padding: 14px 48px 14px 48px; border: none; border-radius: 12px; font-size: 1rem; outline: none; background: rgba(255,255,255,0.15); color: #fff; backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                    <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">/</span>
-                </div>
-                <div id="heroSearchResults" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #fff; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); z-index: 100; max-height: 380px; overflow-y: auto; text-align: left;"></div>
-            </div>
-            
-            <!-- 快速入口标签 -->
-            <div id="moduleQuickLinks" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 32px;">
-                <!-- 由 JS 动态生成 -->
-            </div>
-            
-            <!-- 统计数字 -->
-            <div style="display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;">
-                <div class="stat-pill">
-                    <strong id="docCount">–</strong>
-                    <span>文档</span>
-                </div>
-                <div class="stat-pill">
-                    <strong id="moduleCount">–</strong>
-                    <span>模组</span>
-                </div>
-                <div class="stat-pill">
-                    <strong id="versionCount">–</strong>
-                    <span>MC 版本</span>
+            <div class="mobile-nav-section">
+                <div class="mobile-nav-title">文档中心</div>
+                <div id="mobileNavLinks">
+                    <!-- 由 JS 动态生成 -->
                 </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- 模组选择区 -->
-    <section class="section main-content" style="padding: 80px 0; background: var(--bg-light, #f8f9fa);">
-        <div class="container">
-            <h2 class="section-title">
-                <i class="fas fa-puzzle-piece"></i>
-                选择文档
-            </h2>
-            <p class="section-subtitle">选择一个模组或原版开始探索</p>
-            
-            <div class="modules-grid" id="modulesGrid">
-                <!-- 由 JS 动态生成 -->
-            </div>
-        </div>
-    </section>
-
-    <!-- 精选文档 -->
-    <section class="section" style="padding: 80px 0;">
-        <div class="container">
-            <h2 class="section-title">
-                <i class="fas fa-star"></i>
-                精选文档
-            </h2>
-            <p class="section-subtitle">最受欢迎的深度解析文章</p>
-            
-            <div class="featured-grid" id="featuredGrid">
-                <!-- 由 JS 动态生成 -->
-            </div>
-        </div>
-    </section>
-
-    <!-- 快速开始 -->
-    <section class="section" style="padding: 80px 0; background: linear-gradient(135deg, #3d6340 0%, #4A7349 50%, #5B8C5A 100%); color: #fff;">
-        <div class="container">
-            <h2 class="section-title" style="color: #fff;">
-                <i class="fas fa-rocket"></i>
-                快速开始
-            </h2>
-            <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">选择一个方向，立刻开始学习</p>
-            
-            <div class="quickstart-grid">
-                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
-                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #5B8C5A, #6FA070);">
-                        <i class="fas fa-graduation-cap"></i>
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section class="page-hero">
+            <div class="page-hero-content">
+                <span class="badge badge-primary page-hero-badge">
+                    <i class="fas fa-book-open"></i>
+                    开放文档 · 持续更新
+                </span>
+                
+                <h1 class="page-hero-title">Minecraft Learning</h1>
+                
+                <p class="page-hero-subtitle">
+                    探索 Minecraft 源码与模组开发的深度学习资源
+                </p>
+                
+                <!-- Search Box -->
+                <div class="hero-search">
+                    <div class="input-wrapper">
+                        <i class="fas fa-search input-icon"></i>
+                        <input type="text" 
+                               id="heroSearchInput" 
+                               class="input input-lg input--on-dark" 
+                               placeholder="搜索文档标题... (按 / 键快速搜索)"
+                               autocomplete="off">
                     </div>
-                    <h3 style="color: #fff;">新手入门</h3>
-                    <p style="color: rgba(255,255,255,0.75);">从零开始学习 Minecraft 开发</p>
-                    <a href="docs/mc/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
-                        开始学习 <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <div id="heroSearchResults" class="card hero-search-results"></div>
                 </div>
                 
-                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
-                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #3D5A80, #5c7aa3);">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <h3 style="color: #fff;">深度阅读</h3>
-                    <p style="color: rgba(255,255,255,0.75);">深入理解核心架构与系统设计</p>
-                    <a href="docs/mc/1.21/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
-                        浏览 MC 1.21 <i class="fas fa-arrow-right"></i>
-                    </a>
+                <!-- Quick Links -->
+                <div id="moduleQuickLinks" class="hero-chips">
+                    <!-- 由 JS 动态生成 -->
                 </div>
                 
-                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
-                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #E07A5F, #F2CC8F);">
-                        <i class="fas fa-palette"></i>
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="docCount">–</div>
+                        <div class="stat-label">文档</div>
                     </div>
-                    <h3 style="color: #fff;">光影开发</h3>
-                    <p style="color: rgba(255,255,255,0.75);">学习 Iris 与 shader 渲染管线</p>
-                    <a href="docs/iris/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
-                        探索光影 <i class="fas fa-arrow-right"></i>
-                    </a>
+                    <div class="stat-item">
+                        <div class="stat-value" id="moduleCount">–</div>
+                        <div class="stat-label">模组</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="versionCount">–</div>
+                        <div class="stat-label">MC 版本</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="tutorialCount">–</div>
+                        <div class="stat-label">教程</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- Modules Section -->
+        <section class="section section-alt">
+            <div class="content-container">
+                <h2 class="section-title">
+                    <i class="fas fa-puzzle-piece"></i>
+                    选择文档
+                </h2>
+                <p class="section-subtitle">选择一个模组或原版开始探索</p>
+                
+                <div class="grid grid-3" id="modulesGrid">
+                    <!-- 由 JS 动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Section -->
+        <section class="section">
+            <div class="content-container">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i>
+                    精选文档
+                </h2>
+                <p class="section-subtitle">最受欢迎的深度解析文章</p>
+                
+                <div class="grid grid-4" id="featuredGrid">
+                    <!-- 由 JS 动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Quickstart Section -->
+        <section class="section section-premium-cta">
+            <div class="content-container">
+                <h2 class="section-title">
+                    <i class="fas fa-rocket"></i>
+                    快速开始
+                </h2>
+                <p class="section-subtitle">选择一个方向，立刻开始学习</p>
+                
+                <div class="grid grid-3">
+                    <div class="card card-glass card-cta" onclick="location.href='docs/mc/1.21/index.html'">
+                        <div class="feature-icon feature-icon--glass">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3 class="card-cta-title">新手入门</h3>
+                        <p class="card-cta-desc">从零开始学习 Minecraft 开发</p>
+                        <span class="btn btn-primary btn-sm">开始学习 <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    
+                    <div class="card card-glass card-cta" onclick="location.href='docs/mc/1.21/index.html'">
+                        <div class="feature-icon feature-icon--glass">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h3 class="card-cta-title">深度阅读</h3>
+                        <p class="card-cta-desc">深入理解核心架构与系统设计</p>
+                        <span class="btn btn-primary btn-sm">浏览 MC 1.21 <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    
+                    <div class="card card-glass card-cta" onclick="location.href='docs/iris/index.html'">
+                        <div class="feature-icon feature-icon--glass">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h3 class="card-cta-title">光影开发</h3>
+                        <p class="card-cta-desc">学习 Iris 与 shader 渲染管线</p>
+                        <span class="btn btn-primary btn-sm">探索光影 <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
                 <div class="footer-brand">
-                    <h3><i class="fas fa-cube"></i> Minecraft Learning</h3>
-                    <p>探索 Minecraft 源码与模组开发的深度学习资源</p>
+                    <a href="index.html" class="footer-logo">
+                        <div class="footer-logo-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        Minecraft Learning
+                    </a>
+                    <p class="footer-desc">探索 Minecraft 源码与模组开发的深度学习资源</p>
                 </div>
-                <div class="footer-links">
-                    <h4>文档</h4>
-                    <ul id="footerDocsLinks">
+                <div>
+                    <h4 class="footer-section-title">文档</h4>
+                    <div class="footer-links" id="footerDocsLinks">
                         <!-- 由 JS 动态生成 -->
-                    </ul>
+                    </div>
                 </div>
-                <div class="footer-links">
-                    <h4>资源</h4>
-                    <ul>
-                        <li><a href="about.html">关于</a></li>
-                        <li><a href="roadmap.html">学习路线</a></li>
-                    </ul>
+                <div>
+                    <h4 class="footer-section-title">资源</h4>
+                    <div class="footer-links">
+                        <a href="about.html" class="footer-link">关于</a>
+                        <a href="roadmap.html" class="footer-link">学习路线</a>
+                    </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 Minecraft Learning | 基于开放源码研究</p>
+                <p class="footer-copyright">&copy; 2026 Minecraft Learning | 基于开放源码研究</p>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="#" class="footer-social-link" aria-label="Discord">
+                        <i class="fab fa-discord"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>
@@ -206,15 +267,17 @@
     <!-- Scripts -->
     <script src="scripts/site-config.js"></script>
     <script src="site-stats.js"></script>
+    <script src="scripts/theme.js"></script>
     <script>
         // ============================================
-        // 首页脚本
+        // 首页脚本 - Design System V2
         // ============================================
         
         // ── 站点配置 ────────────────────────────────────────────────
         const MODULE_META = {};
         Object.entries(SITE_CONFIG.modules).forEach(([key, mod]) => {
             MODULE_META[key] = {
+                id: key,
                 name: mod.name,
                 slug: mod.slug,
                 icon: mod.icon,
@@ -222,10 +285,33 @@
                 colorGradient: mod.colorGradient,
                 description: mod.description,
                 versions: mod.versions ? Object.keys(mod.versions) : null,
+                defaultVersion: mod.defaultVersion || null,
                 docsDir: mod.docsDir,
                 featured: mod.featured || []
             };
         });
+
+        function sortedModuleIds() {
+            return Object.keys(SITE_CONFIG.modules).sort(
+                (a, b) => (SITE_CONFIG.modules[a].order ?? 999) - (SITE_CONFIG.modules[b].order ?? 999)
+            );
+        }
+
+        /** 精选/搜索：按模组版本与 tutorials|analysis 生成真实路径 */
+        function getFeaturedDocHref(moduleKey, doc) {
+            const mod = SITE_CONFIG.modules[moduleKey];
+            if (!mod || !doc || !doc.id) return '#';
+            const ver =
+                mod.versions && mod.defaultVersion ? `${mod.defaultVersion}/` : '';
+            const sub = doc.type === 'tutorial' ? 'tutorials' : 'analysis';
+            return `${mod.docsDir}/${ver}${sub}/${doc.id}.html`;
+        }
+
+        function moduleHref(moduleKey) {
+            return typeof getDefaultVersionUrl === 'function'
+                ? getDefaultVersionUrl(moduleKey)
+                : '#';
+        }
 
         // ── 站点统计 ────────────────────────────────────────────────
         let siteStats = null;
@@ -267,20 +353,12 @@
             };
         }
 
-        function getDefaultVersionHref(slug) {
-            const m = MODULE_META[slug];
-            const s = getModuleStats(slug);
-            if (!m) return '#';
-            if (s && s.isVersioned && s.defaultVersion)
-                return `${m.docsDir}/${s.defaultVersion}/index.html`;
-            return `${m.docsDir}/index.html`;
-        }
-
         // ── 初始化 ────────────────────────────────────────────────
         async function init() {
             await loadSiteStats();
             renderStats();
             renderNavigation();
+            renderMobileNavigation();
             renderModules();
             renderModuleQuickLinks();
             renderFeatured();
@@ -295,11 +373,13 @@
                 document.getElementById('docCount').textContent = '0';
                 document.getElementById('moduleCount').textContent = Object.keys(MODULE_META).length;
                 document.getElementById('versionCount').textContent = '0';
+                document.getElementById('tutorialCount').textContent = '0';
                 return;
             }
             animateCounter(document.getElementById('docCount'), siteStats.totalDocs);
             animateCounter(document.getElementById('moduleCount'), siteStats.totalModules);
             animateCounter(document.getElementById('versionCount'), siteStats.mcVersions.length);
+            animateCounter(document.getElementById('tutorialCount'), siteStats.totalTutorials || 0);
         }
 
         function animateCounter(el, target) {
@@ -315,22 +395,43 @@
             }, 25);
         }
 
-        // ── 导航下拉 ────────────────────────────────────────────────
+        // ── 导航 ────────────────────────────────────────────────
         function renderNavigation() {
             const container = document.getElementById('navDropdown');
             if (!container) return;
-            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
-                const href = getDefaultVersionHref(key);
-                return `<a href="${href}"><i class="fas ${m.icon}"></i> ${m.name}</a>`;
+            container.innerHTML = sortedModuleIds().map((key) => {
+                const m = MODULE_META[key];
+                const href = moduleHref(key);
+                return `<a href="${href}" class="nav-dropdown-item" role="menuitem">
+                    <div class="nav-dropdown-item-icon"><i class="fas ${m.icon}"></i></div>
+                    <div class="nav-dropdown-item-content">
+                        <div class="nav-dropdown-item-title">${m.name}</div>
+                        <div class="nav-dropdown-item-desc">${m.description}</div>
+                    </div>
+                </a>`;
+            }).join('');
+        }
+
+        function renderMobileNavigation() {
+            const container = document.getElementById('mobileNavLinks');
+            if (!container) return;
+            container.innerHTML = sortedModuleIds().map((key) => {
+                const m = MODULE_META[key];
+                const href = moduleHref(key);
+                return `<a href="${href}" class="mobile-nav-link">
+                    <i class="fas ${m.icon}"></i>
+                    ${m.name}
+                </a>`;
             }).join('');
         }
 
         function renderFooter() {
             const container = document.getElementById('footerDocsLinks');
             if (!container) return;
-            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
-                const href = getDefaultVersionHref(key);
-                return `<li><a href="${href}">${m.name}</a></li>`;
+            container.innerHTML = sortedModuleIds().map((key) => {
+                const m = MODULE_META[key];
+                const href = moduleHref(key);
+                return `<a href="${href}" class="footer-link">${m.name}</a>`;
             }).join('');
         }
 
@@ -338,25 +439,26 @@
         function renderModules() {
             const container = document.getElementById('modulesGrid');
             if (!container) return;
-            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
+            container.innerHTML = sortedModuleIds().map((key) => {
+                const m = MODULE_META[key];
                 const s = getModuleStats(key);
                 const versionText = s && s.isVersioned ? s.versions.join(' / ') : '通用';
                 const docCount = s ? s.total : 0;
                 return `
-                    <div class="module-card" style="--module-color: ${m.color};" onclick="location.href='${getDefaultVersionHref(key)}'">
-                        <div class="module-icon" style="background: ${m.colorGradient};">
+                    <a href="${moduleHref(key)}" class="card card-hover module-card" style="--module-color: ${m.color}; --module-icon-bg: ${m.colorGradient};">
+                        <div class="module-card-icon">
                             <i class="fas ${m.icon}"></i>
                         </div>
-                        <div class="module-info">
-                            <h3>${m.name}</h3>
-                            <p>${m.description}</p>
-                            <div class="module-meta">
-                                <span class="version-badge"><i class="fas fa-code-branch"></i> ${versionText}</span>
-                                <span class="doc-count"><i class="fas fa-file-alt"></i> ${docCount}篇文档</span>
+                        <h3 class="module-card-title">${m.name}</h3>
+                        <p class="module-card-desc">${m.description}</p>
+                        <div class="module-card-footer">
+                            <div class="module-card-meta">
+                                <span><i class="fas fa-code-branch"></i> ${versionText}</span>
+                                <span><i class="fas fa-file-alt"></i> ${docCount} 篇</span>
                             </div>
+                            <i class="fas fa-arrow-right module-card-arrow"></i>
                         </div>
-                        <div class="module-arrow"><i class="fas fa-arrow-right"></i></div>
-                    </div>
+                    </a>
                 `;
             }).join('');
         }
@@ -364,11 +466,15 @@
         function renderModuleQuickLinks() {
             const container = document.getElementById('moduleQuickLinks');
             if (!container) return;
-            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
-                const href = getDefaultVersionHref(key);
+            container.innerHTML = sortedModuleIds().map((key) => {
+                const m = MODULE_META[key];
+                const href = moduleHref(key);
                 const s = getModuleStats(key);
                 const label = s && s.isVersioned ? `${m.name}（${s.versions[0]}）` : m.name;
-                return `<a href="${href}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:999px;color:#fff;font-size:0.85rem;font-weight:500;text-decoration:none;backdrop-filter:blur(4px);transition:background .2s;">${label}</a>`;
+                return `<a href="${href}" class="hero-chip">
+                    <i class="fas ${m.icon}"></i>
+                    ${label}
+                </a>`;
             }).join('');
         }
 
@@ -386,18 +492,17 @@
             });
             container.innerHTML = featured.slice(0, 4).map(item => {
                 const m = MODULE_META[item.module];
+                const fh = getFeaturedDocHref(item.module, item);
                 return `
-                    <div class="card" style="position:relative;overflow:hidden;cursor:pointer;" onclick="location.href='${m.docsDir}/${item.id}.html'">
-                        <div style="position:absolute;top:12px;left:12px;padding:3px 10px;border-radius:999px;font-size:0.7rem;font-weight:700;color:#fff;background:${m.color};z-index:1;">${m.name}</div>
-                        <div style="padding:24px;">
-                            <h3 style="font-size:1.1rem;margin-bottom:8px;margin-top:36px;">${item.title}</h3>
-                            <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">${item.desc}</p>
-                            <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--text-muted);padding-top:12px;border-top:1px solid var(--gray-light, #e9ecef);">
-                                <span><i class="fas fa-graduation-cap"></i> ${item.type === 'tutorial' ? '教程' : '分析'}</span>
-                                <span><i class="fas fa-clock"></i> ${item.time}</span>
-                            </div>
+                    <a href="${fh}" class="card card-hover" style="text-decoration: none; display: block;">
+                        <span class="badge badge-primary" style="margin-bottom: var(--space-3);">${m.name}</span>
+                        <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-2);">${item.title}</h3>
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-4); line-height: var(--leading-relaxed);">${item.desc}</p>
+                        <div style="display: flex; gap: var(--space-4); font-size: var(--text-xs); color: var(--text-tertiary); padding-top: var(--space-3); border-top: 1px solid var(--border-muted);">
+                            <span><i class="fas fa-graduation-cap"></i> ${item.type === 'tutorial' ? '教程' : '分析'}</span>
+                            <span><i class="fas fa-clock"></i> ${item.time}</span>
                         </div>
-                    </div>
+                    </a>
                 `;
             }).join('');
         }
@@ -427,20 +532,22 @@
 
         function renderSearchResults(results, query, container) {
             if (!results.length) {
-                container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.9rem;">
-                    <i class="fas fa-search" style="font-size:1.5rem;margin-bottom:8px;opacity:0.4;"></i>
-                    <p>未找到 "${query}" 相关文档</p>
+                container.innerHTML = `<div style="padding: var(--space-6); text-align: center;">
+                    <i class="fas fa-search" style="font-size: var(--text-2xl); color: var(--text-tertiary); margin-bottom: var(--space-2);"></i>
+                    <p style="color: var(--text-secondary);">未找到 "${query}" 相关文档</p>
                 </div>`;
                 return;
             }
             container.innerHTML = results.map(item => {
                 const m = MODULE_META[item.module];
-                const href = `${item.docsDir}/${item.id}.html`;
-                return `<a href="${href}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gray-light,#e9ecef);text-decoration:none;color:inherit;transition:background .15s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
-                    <i class="fas fa-file-alt" style="color:${m.color};width:1.5rem;text-align:center;flex-shrink:0;"></i>
+                const href = getFeaturedDocHref(item.module, item);
+                return `<a href="${href}" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border-muted);text-decoration:none;color:inherit;transition:background var(--duration-fast);" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+                    <div style="width:32px;height:32px;border-radius:var(--radius-md);background:${m.color};display:flex;align-items:center;justify-content:center;color:white;">
+                        <i class="fas ${m.icon}"></i>
+                    </div>
                     <div>
-                        <div style="font-size:0.9rem;font-weight:600;">${item.title}</div>
-                        <div style="font-size:0.75rem;color:var(--text-muted);">${m.name} · ${item.time}</div>
+                        <div style="font-size:var(--text-sm);font-weight:var(--font-medium);">${item.title}</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${m.name} · ${item.time}</div>
                     </div>
                 </a>`;
             }).join('');
@@ -483,28 +590,32 @@
 
         // ── UI 事件 ────────────────────────────────────────────────
         function toggleMobileMenu() {
-            document.getElementById('navLinks')?.classList.toggle('active');
+            document.getElementById('mobileMenu')?.classList.toggle('active');
         }
 
         function bindUIEvents() {
-            // 阅读进度
-            const progress = document.getElementById('progressBar');
-            if (progress) {
-                window.addEventListener('scroll', () => {
-                    const scrollTop = window.scrollY;
-                    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-                    const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-                    progress.style.width = `${Math.min(percent, 100)}%`;
-                });
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            if (mobileBtn) {
+                mobileBtn.addEventListener('click', toggleMobileMenu);
             }
 
             // 移动端菜单点击外部关闭
             document.addEventListener('click', (e) => {
-                const navLinks = document.getElementById('navLinks');
+                const mobileMenu = document.getElementById('mobileMenu');
                 const mobileBtn = document.getElementById('mobileMenuBtn');
-                if (navLinks && mobileBtn &&
-                    !navLinks.contains(e.target) && !mobileBtn.contains(e.target)) {
-                    navLinks.classList.remove('active');
+                if (mobileMenu && mobileBtn &&
+                    !mobileMenu.contains(e.target) && !mobileBtn.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            });
+
+            // 键盘导航
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu?.classList.contains('active')) {
+                        mobileMenu.classList.remove('active');
+                    }
                 }
             });
         }
@@ -514,110 +625,79 @@
     </script>
 
     <style>
-        /* 精选网格 */
-        .featured-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+        /* Design System V2 - 首页特定样式 */
+        
+        /* 搜索框暗色模式适配 */
+        #heroSearchInput::placeholder {
+            color: rgba(255, 255, 255, 0.5);
         }
-
-        /* 快速开始网格 */
-        .quickstart-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
+        
+        #heroSearchInput:focus {
+            border-color: rgba(255, 255, 255, 0.28) !important;
+            box-shadow: 0 0 0 3px var(--focus-ring-hero) !important;
         }
-
-        .quickstart-card {
-            border-radius: 16px;
-            padding: 32px 24px;
-            text-align: center;
-            transition: transform 0.3s ease, background 0.3s ease;
+        
+        /* 动画 */
+        .page-hero {
+            animation: fadeIn var(--duration-slow) var(--ease-out);
         }
-
-        .quickstart-card:hover {
-            transform: translateY(-4px);
-            background: rgba(255, 255, 255, 0.15) !important;
+        
+        .page-hero-content > * {
+            animation: fadeInUp var(--duration-slow) var(--ease-out);
+            animation-fill-mode: both;
         }
-
-        .quickstart-icon {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            font-size: 1.8rem;
-            color: white;
+        
+        .page-hero-content > *:nth-child(1) { animation-delay: 100ms; }
+        .page-hero-content > *:nth-child(2) { animation-delay: 200ms; }
+        .page-hero-content > *:nth-child(3) { animation-delay: 300ms; }
+        .page-hero-content > *:nth-child(4) { animation-delay: 400ms; }
+        .page-hero-content > *:nth-child(5) { animation-delay: 500ms; }
+        .page-hero-content > *:nth-child(6) { animation-delay: 600ms; }
+        
+        /* 模块卡片悬浮描边（仅装饰，不接收点击，避免误点其它模组链接） */
+        .module-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 0%, var(--module-color, var(--text-tertiary)) 100%);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity var(--duration-normal);
+            pointer-events: none;
         }
-
-        .quickstart-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
+        
+        .module-card:hover::before {
+            opacity: 1;
         }
-
-        .quickstart-card p {
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-
-        .quickstart-card .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        /* 统计数字胶囊 */
-        .stat-pill {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            padding: 8px 20px;
-            border-radius: 12px;
+        
+        /* 玻璃态卡片 */
+        .card-glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .stat-pill strong {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #ffffff;
+        
+        [data-theme="dark"] .card-glass,
+        :root.dark .card-glass {
+            background: rgba(30, 41, 59, 0.8);
         }
-
-        .stat-pill span {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* 搜索框 placeholder 白色 */
-        #heroSearchInput::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        /* 动画 */
-        .hero-content {
-            animation: fadeInUp 0.8s ease;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        
         /* 响应式 */
         @media (max-width: 768px) {
             .page-hero {
-                padding: 100px 20px 60px !important;
-                min-height: auto !important;
+                padding: calc(64px + var(--space-4)) 0 var(--space-6) !important;
             }
-            .page-hero h1 {
-                font-size: 1.8rem !important;
+            
+            .page-hero-title {
+                font-size: var(--text-3xl) !important;
             }
-            .stat-pill {
-                padding: 6px 14px;
-            }
-            .stat-pill strong {
-                font-size: 1.2rem;
+            
+            .page-hero .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--space-3);
             }
         }
     </style>

@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    (function () {
+        try {
+            var k = 'mc-learning-theme';
+            var t = localStorage.getItem(k);
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    })();
+    </script>
     <title>关于 - Minecraft Learning</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="styles/site-shell.css">
@@ -33,6 +42,12 @@
                 </li>
                 <li><a href="about.html" class="active">关于</a></li>
             </ul>
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -63,21 +78,21 @@
                     <h2><i class="fas fa-puzzle-piece"></i> 支持的模组</h2>
                     <div class="mods-grid">
                         <div class="mod-card">
-                            <div class="mod-icon" style="background: linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%);">
+                            <div class="mod-icon" style="background: linear-gradient(135deg, #404040 0%, #737373 100%);">
                                 <i class="fas fa-cube"></i>
                             </div>
                             <h3>Minecraft 原版</h3>
                             <p>支持 1.18 - 1.21 版本</p>
                         </div>
                         <div class="mod-card">
-                            <div class="mod-icon" style="background: linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%);">
+                            <div class="mod-icon" style="background: linear-gradient(135deg, #404040 0%, #737373 100%);">
                                 <i class="fas fa-sun"></i>
                             </div>
                             <h3>Iris 光影</h3>
                             <p>Shader 加载器与渲染管线</p>
                         </div>
                         <div class="mod-card">
-                            <div class="mod-icon" style="background: linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%);">
+                            <div class="mod-icon" style="background: linear-gradient(135deg, #525252 0%, #a3a3a3 100%);">
                                 <i class="fas fa-bolt"></i>
                             </div>
                             <h3>Sodium 优化</h3>
@@ -153,51 +168,34 @@
         </div>
     </footer>
 
+    <script src="scripts/site-config.js"></script>
     <script src="script.js"></script>
+    <script src="scripts/theme.js"></script>
     <script>
-        const moduleData = {
-            mc: {
-                name: 'Minecraft 原版',
-                slug: 'mc',
-                docsDir: 'docs/mc',
-                versions: ['1.21', '1.20', '1.19', '1.18']
-            },
-            iris: {
-                name: 'Iris 光影',
-                slug: 'iris',
-                docsDir: 'docs/iris',
-                versions: null
-            },
-            sodium: {
-                name: 'Sodium 优化',
-                slug: 'sodium',
-                docsDir: 'docs/sodium',
-                versions: null
-            }
-        };
+        function sortedModuleIds() {
+            return Object.keys(SITE_CONFIG.modules).sort(
+                (a, b) => (SITE_CONFIG.modules[a].order ?? 999) - (SITE_CONFIG.modules[b].order ?? 999)
+            );
+        }
 
         function renderNavigation() {
             const dropdown = document.getElementById('navDropdown');
-            if (dropdown) {
-                dropdown.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                    const href = mod.versions
-                        ? `${mod.docsDir}/${mod.versions[0]}/index.html`
-                        : `${mod.docsDir}/index.html`;
-                    return `<a href="${href}">${mod.name}</a>`;
-                }).join('');
-            }
+            if (!dropdown) return;
+            dropdown.innerHTML = sortedModuleIds().map((key) => {
+                const mod = SITE_CONFIG.modules[key];
+                const href = getDefaultVersionUrl(key);
+                return `<a href="${href}">${mod.name}</a>`;
+            }).join('');
         }
 
         function renderFooter() {
             const footerLinks = document.getElementById('footerDocsLinks');
-            if (footerLinks) {
-                footerLinks.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                    const href = mod.versions
-                        ? `${mod.docsDir}/index.html`
-                        : `${mod.docsDir}/index.html`;
-                    return `<li><a href="${href}">${mod.name}</a></li>`;
-                }).join('');
-            }
+            if (!footerLinks) return;
+            footerLinks.innerHTML = sortedModuleIds().map((key) => {
+                const mod = SITE_CONFIG.modules[key];
+                const href = getDefaultVersionUrl(key);
+                return `<li><a href="${href}">${mod.name}</a></li>`;
+            }).join('');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -208,7 +206,7 @@
 
     <style>
         .about-hero {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #171717 50%, #262626 100%);
         }
         .about-content {
             max-width: 900px;

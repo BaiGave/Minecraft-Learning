@@ -3,8 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+    (function () {
+        try {
+            var k = 'mc-learning-theme';
+            var t = localStorage.getItem(k);
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    })();
+    </script>
     <title>文档目录 - Minecraft Learning</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +42,12 @@
                 <li><a href="roadmap.html">路线图</a></li>
                 <li><a href="about.html">关于</a></li>
             </ul>
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -90,7 +106,9 @@
         </div>
     </footer>
 
+    <script src="scripts/site-config.js"></script>
     <script src="script.js"></script>
+    <script src="scripts/theme.js"></script>
     <script>
     // ============================================
     // Catalog Module - 完全隔离的目录页逻辑
@@ -123,9 +141,7 @@
             if (!dropdown) return;
 
             const links = Object.entries(moduleData).map(([key, mod]) => {
-                const href = mod.versions
-                    ? `${mod.docsDir}/index.html`
-                    : `${mod.docsDir}/index.html`;
+                const href = typeof getDefaultVersionUrl === 'function' ? getDefaultVersionUrl(key) : `${mod.docsDir}/index.html`;
                 return `<a href="${href}">${mod.name}</a>`;
             }).join('');
 
@@ -137,7 +153,8 @@
             if (!footerLinks) return;
 
             footerLinks.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                return `<li><a href="${mod.docsDir}/index.html">${mod.name}</a></li>`;
+                const href = typeof getDefaultVersionUrl === 'function' ? getDefaultVersionUrl(key) : `${mod.docsDir}/index.html`;
+                return `<li><a href="${href}">${mod.name}</a></li>`;
             }).join('');
         }
 
@@ -149,9 +166,9 @@
 
             Object.entries(moduleData).forEach(([key, mod]) => {
                 if (mod.versions) {
-                    html += renderVersionedModule(mod);
+                    html += renderVersionedModule(mod, key);
                 } else if (mod.docs && Object.keys(mod.docs).length > 0) {
-                    html += renderSingleModule(mod);
+                    html += renderSingleModule(mod, key);
                 }
             });
 
@@ -172,7 +189,8 @@
             });
         }
 
-        function renderVersionedModule(mod) {
+        function renderVersionedModule(mod, catalogKey) {
+            const indexHref = typeof getDefaultVersionUrl === 'function' ? getDefaultVersionUrl(catalogKey) : `${mod.docsDir}/index.html`;
             const versions = Object.keys(mod.versions);
 
             const versionTabs = `
@@ -202,7 +220,7 @@
                             <h2>${mod.name}</h2>
                             <p>${mod.description}</p>
                         </div>
-                        <a href="${mod.docsDir}/index.html" class="catalog-link" style="background: ${mod.color}">
+                        <a href="${indexHref}" class="catalog-link" style="background: ${mod.color}">
                             访问 <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -212,7 +230,8 @@
             `;
         }
 
-        function renderSingleModule(mod) {
+        function renderSingleModule(mod, catalogKey) {
+            const indexHref = typeof getDefaultVersionUrl === 'function' ? getDefaultVersionUrl(catalogKey) : `${mod.docsDir}/index.html`;
             return `
                 <div class="catalog-section" id="${mod.slug}-section">
                     <div class="catalog-header" style="border-left-color: ${mod.color}">
@@ -223,7 +242,7 @@
                             <h2>${mod.name}</h2>
                             <p>${mod.description}</p>
                         </div>
-                        <a href="${mod.docsDir}/index.html" class="catalog-link" style="background: ${mod.color}">
+                        <a href="${indexHref}" class="catalog-link" style="background: ${mod.color}">
                             访问 <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -319,7 +338,7 @@
 
     <style>
         .catalog-hero {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #171717 50%, #262626 100%);
         }
         .catalog-hero .hero-badge {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-light));

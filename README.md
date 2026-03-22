@@ -181,11 +181,13 @@ node convert.js
 
 ## 技术栈
 
-- **前端**: HTML5, CSS3, Vanilla JavaScript
-- **内容**: Markdown
-- **图标**: Font Awesome 6.4
-- **字体**: Noto Sans SC (Google Fonts)
-- **图表**: Mermaid.js
+- **样式**: Tailwind CSS 3.4 + 自定义 CSS
+- **图标**: Font Awesome 6.5（本地）+ Lucide Icons（新组件）
+- **搜索**: FlexSearch（本地）
+- **代码高亮**: Highlight.js（本地）
+- **数字动画**: CountUp.js（本地）
+- **图表**: Mermaid.js（本地）
+- **字体**: Noto Sans SC（本地 Google Fonts）
 
 ## 浏览器支持
 

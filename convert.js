@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { markdownLinkToHtml } = require('./scripts/safe-markdown-link');
+const { resolveMarkdownLink } = require('./scripts/resolve-markdown-link');
 const { PUBLISH_SITE_URL } = require('./scripts/publish-config');
 
 // ============================================================================
@@ -120,7 +121,9 @@ class ProgressBar {
 const MODULES = {
     mc: {
         name: 'Minecraft 原版',
-        color: '#5B8C5A',
+        /** 高级感：深板岩 + 靛蓝点缀（非绿色） */
+        color: '#312e81',
+        defaultVersion: '1.21',
         versions: ['1.21', '1.20', '1.19', '1.18']
     },
     iris: {
@@ -238,11 +241,52 @@ function escapeHtml(text) {
 }
 
 /**
+ * 行内 Markdown：粗体、斜体、行内代码、链接。
+ * 先处理 [text](<url>)，便于 URL 中含圆括号（如维基条目名）。
+ * @param {string} line   - 待处理行
+ * @param {Object|null} source - SourceFile info for链接解析
+ */
+function formatInlineMarkdown(line, source) {
+    // 链接：优先处理 [text](<url>)，再用 resolveMarkdownLink 做通用解析
+    const angleBracketLink = /\[(.+?)\]\(\s*<([^>]+)>\s*\)/g;
+    const genericLink = /\[(.+?)\]\((.+?)\)/g;
+
+    let result = line;
+
+    // 1. 先处理 <url> 形式（CommonMark 兼容）
+    result = result.replace(angleBracketLink, (_, text, url) => {
+        const resolved = source
+            ? resolveMarkdownLink(url.trim(), source)
+            : { href: url.trim(), isExternal: false, isAnchor: false };
+        const attrs = resolved.isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+        return `<a href="${resolved.href}"${attrs}>${text}</a>`;
+    });
+
+    // 2. 再处理普通 [text](url) 形式
+    result = result.replace(genericLink, (_, text, url) => {
+        const resolved = source
+            ? resolveMarkdownLink(url.trim(), source)
+            : { href: url.trim(), isExternal: false, isAnchor: false };
+        const attrs = resolved.isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+        return `<a href="${resolved.href}"${attrs}>${text}</a>`;
+    });
+
+    // 粗体、斜体、行内代码（无状态依赖，直接替换）
+    result = result
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
+
+    return result;
+}
+
+/**
  * Parse markdown to extract title, content and headings for TOC
  * @param {string} content - Markdown content
+ * @param {Object|null} source - SourceFile info for link resolution
  * @returns {Object} - Parsed result
  */
-function parseMarkdown(content) {
+function parseMarkdown(content, source) {
     const lines = content.split('\n');
     let html = '';
     let headings = [];
@@ -399,12 +443,7 @@ function parseMarkdown(content) {
 
             // Paragraph
             if (line.trim()) {
-                // Inline formatting
-                let formatted = line
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                    .replace(/`(.+?)`/g, '<code>$1</code>')
-                    .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => markdownLinkToHtml(text, url));
+                const formatted = formatInlineMarkdown(line, source);
 
                 html += `<p>${formatted}</p>\n`;
             } else {
@@ -455,9 +494,10 @@ function getModuleHubIndexHref(part) {
  */
 function generateTutorialHTML(module, version, type, part, filename, markdownContent) {
     const moduleConfig = MODULES[module];
-    const moduleColor = moduleConfig ? moduleConfig.color : '#5B8C5A';
 
-    const { title, subtitle, content, headings } = parseMarkdown(markdownContent);
+    // 构建 SourceFile 对象，供 resolveMarkdownLink 做链接转换
+    const source = { module, version, type, part, filename };
+    const { title, subtitle, content, headings } = parseMarkdown(markdownContent, source);
 
     // Generate TOC
     let tocHtml = '';
@@ -565,44 +605,73 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
     ${seoMetaTags}
     <link rel="stylesheet" href="${relPath}styles.css">
-    <link rel="stylesheet" href="${relPath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="${relPath}scripts/theme.js"></script>
 </head>
 <body>
     <div class="reading-progress" id="readingProgress"></div>
 
     <nav class="navbar">
-        <div class="nav-container">
-            <a href="${relPath}index.html" class="nav-logo">
-                <i class="fas fa-cube"></i>
-                <span>Minecraft Learning</span>
+        <div class="navbar-inner">
+            <a href="${relPath}index.html" class="navbar-logo">
+                <div class="navbar-logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="navbar-logo-text">Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <ul class="nav-links">
-                <li><a href="${relPath}index.html">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
-                    <div class="dropdown-content">
-                        <a href="${relPath}docs/mc/index.html">Minecraft 原版</a>
-                        <a href="${relPath}docs/iris/index.html">Iris 光影</a>
-                        <a href="${relPath}docs/sodium/index.html">Sodium 优化</a>
+            <div class="navbar-links">
+                <a href="${relPath}index.html" class="navbar-link">首页</a>
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-trigger">
+                        文档中心 <i class="fas fa-chevron-down"></i>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="${relPath}docs/mc/${MODULES.mc.defaultVersion || '1.21'}/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
+                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
+                            </div>
+                        </a>
+                        <a href="${relPath}docs/iris/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Iris 光影</div>
+                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
+                            </div>
+                        </a>
+                        <a href="${relPath}docs/sodium/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Sodium 优化</div>
+                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
+                            </div>
+                        </a>
                     </div>
-                </li>
-                <li><a href="${relPath}about.html">关于</a></li>
-            </ul>
+                </div>
+                <a href="${relPath}about.html" class="navbar-link">关于</a>
+            </div>
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
         </div>
     </nav>
 
     <div class="tutorial-page">
-        <header class="tutorial-header" style="background: linear-gradient(135deg, ${moduleColor} 0%, ${moduleColor}88 100%);">
+        <header class="tutorial-header">
             <div class="container">
                 <div class="tutorial-nav">
                     <div class="tutorial-breadcrumb">
@@ -623,24 +692,22 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
         <div class="tutorial-container">
             <aside class="tutorial-sidebar">
                 <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
-                    <ul class="sidebar-toc">
-                        ${tocHtml || '<li><span style="color: var(--text-secondary);">暂无目录</span></li>'}
+                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="toc-list">
+                        ${tocHtml || '<li><span style="color: var(--text-tertiary);">暂无目录</span></li>'}
                     </ul>
                 </div>
                 <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
-                    <div class="part-nav">
-                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
-                            <p style="margin-bottom: 8px;"><strong>模组：</strong>${moduleConfig.name}</p>
-                            ${version ? `<p style="margin-bottom: 8px;"><strong>版本：</strong>${version}</p>` : ''}
-                            <p><strong>类型：</strong>${type === 'tutorials' ? '教程' : '源码分析'}</p>
-                        </div>
+                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
+                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
+                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>${moduleConfig.name}</p>
+                        ${version ? `<p style="margin-bottom: var(--space-2);"><strong>版本：</strong>${version}</p>` : ''}
+                        <p><strong>类型：</strong>${type === 'tutorials' ? '教程' : '源码分析'}</p>
                     </div>
                 </div>
             </aside>
 
-            <article class="tutorial-content">
+            <article class="tutorial-content article-content">
                 ${content}
             </article>
         </div>
@@ -660,9 +727,18 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
         // Initialize Mermaid
         mermaid.initialize({
             startOnLoad: true,
-            theme: 'default',
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
             securityLevel: 'loose',
             flowchart: { htmlLabels: true }
+        });
+
+        // Listen for theme changes to update Mermaid
+        window.addEventListener('themechange', (e) => {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
+                });
+            }
         });
 
         // Copy code function

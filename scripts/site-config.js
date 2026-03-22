@@ -76,9 +76,9 @@ const SITE_CONFIG = {
             shortName: 'MC',
             slug: 'mc',
             icon: 'fa-cube',
-            color: '#5B8C5A',
-            colorGradient: 'linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)',
-            accentColor: '#3D5A80',
+            color: '#404040',
+            colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
+            accentColor: '#171717',
             description: '深入理解 Minecraft 的分层架构与核心设计模式',
             category: 'mc',
             order: 1,
@@ -159,9 +159,9 @@ const SITE_CONFIG = {
             shortName: 'Iris',
             slug: 'iris',
             icon: 'fa-sun',
-            color: '#E07A5F',
-            colorGradient: 'linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%)',
-            accentColor: '#D4A574',
+            color: '#404040',
+            colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
+            accentColor: '#171717',
             description: '全面解析 Iris 的 shader 加载与渲染管线设计',
             category: 'shader',
             order: 2,
@@ -199,9 +199,9 @@ const SITE_CONFIG = {
             shortName: 'Sodium',
             slug: 'sodium',
             icon: 'fa-bolt',
-            color: '#F2CC8F',
-            colorGradient: 'linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%)',
-            accentColor: '#E07A5F',
+            color: '#404040',
+            colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
+            accentColor: '#171717',
             description: '探索现代渲染优化与 Sodium 的架构设计',
             category: 'fabric',
             order: 3,
@@ -594,4 +594,10 @@ if (typeof module !== 'undefined' && module.exports) {
         getModulesByCategory,
         buildSearchIndex
     };
+}
+
+// 浏览器端：供首页等静态页使用（与 Node 导出逻辑一致）
+if (typeof window !== 'undefined') {
+    window.SITE_CONFIG = SITE_CONFIG;
+    window.getDefaultVersionUrl = getDefaultVersionUrl;
 }

@@ -214,6 +214,19 @@ function parseMarkdown(text) {
     return html;
 }
 
+// 与 scripts/theme.js 中 STORAGE_KEY 一致，避免首屏闪烁
+const THEME_STORAGE_INLINE = `<script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>`;
+
+function themeNavbarActionsHtml() {
+    return `
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>`;
+}
+
 // ============================================
 // HTML 生成器
 // ============================================
@@ -244,6 +257,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${THEME_STORAGE_INLINE}
     <title>${doc.title} - ${module.name}</title>
     <link rel="stylesheet" href="${relativePath}styles.css">
     <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
@@ -348,7 +362,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
             color: white;
         }
         .doc-type-tag.analysis {
-            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            background: linear-gradient(135deg, #525252, #a3a3a3);
             color: white;
         }
     </style>
@@ -375,6 +389,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
                 </li>
                 <li><a href="${relativePath}about.html">关于</a></li>
             </ul>
+            ${themeNavbarActionsHtml()}
         </div>
     </nav>
 
@@ -428,6 +443,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
     </div>
 
     <script src="${relativePath}script.js"></script>
+    <script src="${relativePath}scripts/theme.js"></script>
     ${config.features.syntaxHighlight ? `<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -567,7 +583,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                         ${item.topics.map(t => `<li>${t}</li>`).join('')}
                     </ul>` : '';
                 return `
-                    <div class="curriculum-card" onclick="window.location.href='tutorials/${item.file}.html'">
+                    <div class="curriculum-card" onclick="window.location.href='tutorials/${item.htmlPath || item.file}.html'">
                         <div class="curriculum-card-head">
                             <span class="curriculum-card-num">${num}</span>
                             <h4 class="curriculum-card-title">${item.title}</h4>
@@ -591,7 +607,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                 </div>`;
         } else {
             const partCards = partItems.map((item, itemIndex) => `
-                <div class="doc-card" onclick="window.location.href='tutorials/${item.file}.html'" style="animation-delay: ${(partIndex * 10 + itemIndex) * 0.05}s">
+                <div class="doc-card" onclick="window.location.href='tutorials/${item.htmlPath || item.file}.html'" style="animation-delay: ${(partIndex * 10 + itemIndex) * 0.05}s">
                     <div class="doc-icon tutorial-icon">
                         <i class="fas fa-${item.icon}"></i>
                     </div>
@@ -693,6 +709,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${THEME_STORAGE_INLINE}
     <title>${module.name}${versionInfo} - Minecraft Learning</title>
     <link rel="stylesheet" href="${relativePath}styles.css">
     <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
@@ -703,7 +720,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     <style>
         .module-index-page { --mi-accent: ${module.color}; --mi-grad: ${module.colorGradient}; }
         .doc-icon.tutorial-icon { background: ${module.colorGradient} !important; }
-        .doc-icon.analysis-icon { background: linear-gradient(135deg, #E07A5F, #F2CC8F) !important; }
+        .doc-icon.analysis-icon { background: linear-gradient(135deg, #525252, #a3a3a3) !important; }
         .sr-only {
             position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
             overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
@@ -783,7 +800,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         .module-index-page .main-content.module-index-main {
             margin-left: 0 !important;
             padding: 0 0 4rem;
-            background: #f3f5f7;
+            background: var(--bg-secondary);
         }
         .module-index-body { max-width: 1100px; padding-top: 0.5rem; }
         /* 顶栏：版本 + 分段切换 + Part 跳转 */
@@ -798,9 +815,9 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             gap: 0.85rem 1.15rem;
             margin: 0 0 1.75rem;
             padding: 0.85rem 1.15rem;
-            background: rgba(255,255,255,0.92);
+            background: var(--bg-elevated);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(0,0,0,0.06);
+            border: 1px solid var(--border-default);
             border-radius: 14px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
         }
@@ -808,8 +825,8 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             font-size: 0.875rem;
             padding: 0.45rem 0.75rem;
             border-radius: 10px;
-            border: 1px solid rgba(0,0,0,0.1);
-            background: #fff;
+            border: 1px solid var(--border-default);
+            background: var(--bg-primary);
             color: var(--text-primary);
             cursor: pointer;
             min-height: 38px;
@@ -827,7 +844,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             display: inline-flex;
             padding: 6px;
             border-radius: 12px;
-            background: rgba(0,0,0,0.05);
+            background: var(--bg-tertiary);
             gap: 8px;
         }
         .seg-tab {
@@ -844,9 +861,9 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             align-items: center;
             gap: 0.35rem;
         }
-        .seg-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.7); }
+        .seg-tab:hover { color: var(--text-primary); background: var(--bg-secondary); }
         .seg-tab.active {
-            background: #fff;
+            background: var(--bg-primary);
             color: var(--mi-accent);
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
@@ -883,22 +900,22 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             color: white;
         }
         .doc-type-badge.analysis {
-            background: linear-gradient(135deg, #E07A5F, #F2CC8F);
+            background: linear-gradient(135deg, #525252, #a3a3a3);
             color: white;
         }
         /* Part 折叠块 */
         .part-section {
             margin-bottom: 22px;
-            background: #fff;
+            background: var(--bg-primary);
             border-radius: 14px;
-            border: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
             transition: box-shadow 0.25s ease, border-color 0.25s;
         }
         .part-section.expanded {
-            box-shadow: 0 8px 28px rgba(0,0,0,0.07);
-            border-color: rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-strong);
         }
         .part-header {
             border-left: none;
@@ -909,10 +926,10 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             justify-content: space-between;
             align-items: center;
             gap: 0.75rem;
-            background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 4%, transparent), transparent);
             transition: background 0.2s;
         }
-        .part-header:hover { background: rgba(0,0,0,0.035); }
+        .part-header:hover { background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
         .part-header h3 {
             font-size: 1.05rem;
             font-weight: 600;
@@ -924,7 +941,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             width: 34px;
             height: 34px;
             border-radius: 10px;
-            background: rgba(0,0,0,0.05);
+            background: var(--bg-tertiary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -932,7 +949,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             transition: transform 0.3s ease, background 0.2s;
             flex-shrink: 0;
         }
-        .part-header:hover .part-toggle { background: ${module.color}18; }
+        .part-header:hover .part-toggle { background: color-mix(in srgb, var(--mi-accent) 14%, transparent); }
         .part-section.expanded .part-toggle { transform: rotate(180deg); }
         .part-content {
             max-height: 0;
@@ -944,7 +961,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         .part-section.expanded .part-content {
             max-height: 5000px;
             padding: 1.1rem 1.25rem 1.4rem;
-            border-top-color: rgba(0,0,0,0.05);
+            border-top-color: var(--border-muted);
         }
         /* 课程卡片网格 */
         .curriculum-grid {
@@ -963,10 +980,10 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             .curriculum-grid { grid-template-columns: 1fr; }
         }
         .curriculum-card {
-            background: #fafbfc;
+            background: var(--bg-secondary);
             border-radius: 12px;
             padding: 0.9rem 1rem;
-            border: 1px solid rgba(0,0,0,0.06);
+            border: 1px solid var(--border-default);
             cursor: pointer;
             transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
         }
@@ -1071,6 +1088,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                 </li>
                 <li><a href="${relativePath}about.html">关于</a></li>
             </ul>
+            ${themeNavbarActionsHtml()}
         </div>
     </nav>
 
@@ -1210,6 +1228,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     </footer>
 
     <script src="${relativePath}script.js"></script>
+    <script src="${relativePath}scripts/theme.js"></script>
     <style>
         .module-index-page .docs-grid {
             display: grid;
@@ -1222,7 +1241,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             gap: 26px;
         }
         .module-index-page .doc-card {
-            background: #fff;
+            background: var(--bg-primary);
             border-radius: 14px;
             padding: 1.25rem 1.35rem;
             display: flex;
@@ -1230,14 +1249,14 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             gap: 18px;
             cursor: pointer;
             transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-            border: 1px solid rgba(0,0,0,0.06);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-sm);
             opacity: 1;
         }
         .module-index-page .doc-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            border-color: ${module.color}44;
+            box-shadow: var(--shadow-md);
+            border-color: color-mix(in srgb, var(--mi-accent) 35%, transparent);
         }
         .module-index-page .doc-icon {
             width: 48px;
@@ -1255,7 +1274,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         .module-index-page .doc-content p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.55rem; line-height: 1.45; }
         .module-index-page .doc-meta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem; }
         .module-index-page .doc-arrow { color: var(--text-secondary); font-size: 1rem; transition: transform 0.2s ease; align-self: center; }
-        .module-index-page .doc-card:hover .doc-arrow { transform: translateX(4px); color: ${module.color}; }
+        .module-index-page .doc-card:hover .doc-arrow { transform: translateX(4px); color: var(--mi-accent); }
     </style>
 </body>
 </html>`;
@@ -1330,9 +1349,9 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
     let sourceDir;
     if (module.versions && module.versions.length > 0) {
         const version = specificVersion || module.defaultVersion || module.versions[0];
-        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, docType);
+        sourceDir = path.resolve(websiteRoot, 'content', module.slug, version, docType);
     } else {
-        sourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, docType);
+        sourceDir = path.resolve(websiteRoot, 'content', module.slug, docType);
     }
 
     if (!fs.existsSync(sourceDir)) {
@@ -1453,8 +1472,8 @@ function generateModuleIndexPage(moduleKey) {
             const versionDir = path.join(outputDir, version);
 
             // 扫描该版本的教程和分析文件
-            const tutorialsSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'tutorials');
-            const analysisSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, 'analysis');
+            const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, 'tutorials');
+            const analysisSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, 'analysis');
 
             const actualTutorials = getActualDocFiles(tutorialsSourceDir);
             const actualAnalysis = getActualDocFiles(analysisSourceDir);
@@ -1474,8 +1493,8 @@ function generateModuleIndexPage(moduleKey) {
         });
     } else {
         // 无版本分支 - 扫描实际存在的文件
-        const tutorialsSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'tutorials');
-        const analysisSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, 'analysis');
+        const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, 'tutorials');
+        const analysisSourceDir = path.resolve(websiteRoot, 'content', module.slug, 'analysis');
 
         const actualTutorials = getActualDocFiles(tutorialsSourceDir);
         const actualAnalysis = getActualDocFiles(analysisSourceDir);
@@ -1520,8 +1539,12 @@ function getActualDocFiles(sourceDir, recursive = true) {
             // 忽略读取错误
         }
 
+        // htmlPath：相对 tutorials/ 的路径（含 Part 子目录），与 convert.js 输出目录一致
+        const htmlPath = subPath || slug;
+
         return {
-            file: slug,  // 仅用文件名，输出为扁平 tutorials/xx.html
+            file: slug,
+            htmlPath,
             title: title,
             icon: icon,
             part: part

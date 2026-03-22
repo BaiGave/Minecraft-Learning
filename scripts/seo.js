@@ -87,16 +87,16 @@ function generateSitemapFromContent(options = {}) {
 
     // Module pages
     const modulePages = [
-        { url: '/docs/mc/index.html', priority: '0.8', changefreq: 'weekly' },
+        { url: '/docs/mc/1.21/index.html', priority: '0.8', changefreq: 'weekly' },
         { url: '/docs/iris/index.html', priority: '0.8', changefreq: 'weekly' },
         { url: '/docs/sodium/index.html', priority: '0.8', changefreq: 'weekly' }
     ];
 
     pages.push(...modulePages);
 
-    // Version pages
-    const versions = ['1.21', '1.20', '1.19', '1.18'];
-    versions.forEach(version => {
+    // MC 各版本索引（modulePages 已含当前默认版本入口时可在此追加其他版本）
+    const mcVersions = [];
+    mcVersions.forEach(version => {
         pages.push({
             url: `/docs/mc/${version}/index.html`,
             priority: '0.7',

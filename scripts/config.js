@@ -35,10 +35,10 @@ const modules = {
         name: 'Minecraft 原版',
         slug: 'mc',
         icon: 'cube',
-        color: '#5B8C5A',
-        colorGradient: 'linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)',
+        color: '#404040',
+        colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
         description: 'Minecraft 核心架构与源码深度解析',
-        versions: ['1.21', '1.20', '1.19', '1.18'],
+        versions: ['1.21'],
         defaultVersion: '1.21',
         docsDir: 'docs/mc',
         theme: 'mc'
@@ -49,8 +49,8 @@ const modules = {
         name: 'Iris 光影',
         slug: 'iris',
         icon: 'sun',
-        color: '#E07A5F',
-        colorGradient: 'linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%)',
+        color: '#404040',
+        colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
         description: 'Shader 加载器与渲染管线深度解析',
         versions: null,
         defaultVersion: null,
@@ -64,8 +64,8 @@ const modules = {
         name: 'Sodium 优化',
         slug: 'sodium',
         icon: 'bolt',
-        color: '#F2CC8F',
-        colorGradient: 'linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%)',
+        color: '#404040',
+        colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
         description: '现代渲染优化与 Sodium 架构设计',
         versions: null,
         defaultVersion: null,
@@ -246,7 +246,7 @@ const analysisNavigation = {
 // ============================================
 const moduleCards = {
     mc: {
-        versions: ['1.21', '1.20', '1.19', '1.18'],
+        versions: ['1.21'],
         tutorialCount: 80,
         analysisCount: 5
     },
