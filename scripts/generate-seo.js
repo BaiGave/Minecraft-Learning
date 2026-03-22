@@ -4,7 +4,7 @@
  */
 const path = require('path');
 const fs = require('fs');
-const { generateSitemapFromContent, generateRobotsTxt } = require('../website/scripts/seo.js');
+const { generateSitemapFromContent, generateRobotsTxt } = require('./seo.js');
 
 const ROOT = path.join(__dirname, '..');
 const contentDir = path.join(ROOT, 'content');

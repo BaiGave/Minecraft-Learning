@@ -1,15 +1,16 @@
 /**
- * 根目录静态页脚本（Legacy 文章列表等）
+ * Website JavaScript - 教程站交互脚本
  *
  * Features:
  * - Mobile menu toggle
  * - Smooth scroll
- * - Article search and filter
+ * - Navigation dropdown
  * - Scroll animations
- * - Code copy functionality
- * - Back to top button
+ * - Progress bar
+ * - Keyboard shortcuts
+ * - Search functionality
  *
- * @module Blog
+ * @module Website
  * @version 1.0.0
  */
 
@@ -83,22 +84,6 @@ function $$(selector, parent = document) {
 }
 
 /**
- * Check if element is in viewport
- * @param {Element} element - Target element
- * @returns {boolean}
- */
-function isInViewport(element) {
-    if (!element) return false;
-    const rect = element.getBoundingClientRect();
-    return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-    );
-}
-
-/**
  * Copy text to clipboard
  * @param {string} text - Text to copy
  * @returns {Promise<boolean>} Success status
@@ -148,7 +133,6 @@ const Toast = {
         `;
         document.body.appendChild(this.container);
 
-        // Add styles
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideIn {
@@ -230,7 +214,7 @@ function toggleMobileMenu() {
 }
 
 /**
- * Close mobile menu when clicking outside
+ * Initialize mobile menu close on outside click
  */
 function initMobileMenuClose() {
     document.addEventListener('click', (e) => {
@@ -245,6 +229,46 @@ function initMobileMenuClose() {
 }
 
 // ============================================================================
+// Navigation Dropdown - 导航下拉菜单
+// ============================================================================
+
+/**
+ * Render navigation dropdown with module data
+ */
+function renderNavigationDropdown() {
+    const dropdown = document.getElementById('navDropdown');
+    if (!dropdown) return;
+
+    // Skip if already rendered by Catalog module
+    if (dropdown.innerHTML.trim() !== '') return;
+
+    // Default module data (fallback if no global moduleData)
+    const defaultModuleData = {
+        mc: { name: 'Minecraft 原版', docsDir: 'docs/mc', defaultVersion: '1.21', versions: ['1.21'] },
+        iris: { name: 'Iris 光影', docsDir: 'docs/iris', versions: null },
+        sodium: { name: 'Sodium 优化', docsDir: 'docs/sodium', versions: null },
+        fabric: { name: 'Fabric 模组', docsDir: 'docs/fabric', versions: null },
+        lithium: { name: 'Lithium 优化', docsDir: 'docs/lithium', versions: null }
+    };
+
+    // Use global moduleData if available, otherwise use default
+    const moduleData = typeof window.moduleData !== 'undefined' ? window.moduleData : defaultModuleData;
+
+    const links = Object.entries(moduleData).map(([key, mod]) => {
+        let href;
+        if (mod.versions && mod.versions.length > 0) {
+            const defaultVersion = mod.defaultVersion || Object.keys(mod.versions)[0] || '1.21';
+            href = `${mod.docsDir}/${defaultVersion}/index.html`;
+        } else {
+            href = `${mod.docsDir}/index.html`;
+        }
+        return `<a href="${href}">${mod.name}</a>`;
+    }).join('');
+
+    dropdown.innerHTML = links || '<a href="#">暂无文档</a>';
+}
+
+// ============================================================================
 // Smooth Scroll - 平滑滚动
 // ============================================================================
 
@@ -255,21 +279,9 @@ function initSmoothScroll() {
     $$('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
-
-            const target = $(targetId);
+            const target = document.querySelector(this.getAttribute('href'));
             if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-
-                // Close mobile menu if open
-                const navLinks = $('.nav-links');
-                if (navLinks) {
-                    navLinks.classList.remove('active');
-                }
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     });
@@ -297,92 +309,91 @@ function initScrollAnimations() {
         });
     }, observerOptions);
 
-    // Observe all article cards
-    $$('.article-card').forEach(card => {
-        observer.observe(card);
+    // Observe cards and sections
+    const selectors = [
+        '.system-card',
+        '.tip-card',
+        '.path-item',
+        '.catalog-part',
+        '.roadmap-card',
+        '.module-card',
+        '.doc-card'
+    ];
+
+    selectors.forEach(selector => {
+        $$(selector).forEach(el => observer.observe(el));
     });
 }
 
 // ============================================================================
-// Article Filtering - 文章筛选
+// Progress Bar - 阅读进度条
 // ============================================================================
 
 /**
- * Filter articles by category
- * @param {string} category - Category to filter by ('all' for all)
+ * Initialize reading progress bar
  */
-function filterArticles(category) {
-    const cards = $$('.article-card');
-    const buttons = $$('.category-btn');
+function initProgressBar() {
+    const progressBar = document.getElementById('progressBar');
+    if (!progressBar) return;
 
-    // Update active button
-    buttons.forEach(btn => btn.classList.remove('active'));
-    const activeBtn = $(`.category-btn[onclick*="'${category}'"]`) || $('.category-btn');
-    if (activeBtn) activeBtn.classList.add('active');
+    const updateProgress = throttle(() => {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+        progressBar.style.width = scrolled + '%';
+    }, 50);
 
-    // Filter cards with animation
-    cards.forEach((card, index) => {
-        const cardCategory = card.dataset.category;
-        const shouldShow = category === 'all' || cardCategory === category;
-
-        if (shouldShow) {
-            card.style.display = '';
-            card.style.animationDelay = `${index * 0.1}s`;
-            // Trigger reflow for animation
-            void card.offsetWidth;
-            card.classList.add('animate-in');
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    // Update empty state
-    const visibleCards = cards.filter(c => c.style.display !== 'none');
-    const emptyState = $('.empty-state');
-    const grid = $('#articles-grid');
-
-    if (emptyState && grid) {
-        if (visibleCards.length === 0 && category !== 'all') {
-            emptyState.style.display = 'block';
-        } else {
-            emptyState.style.display = 'none';
-        }
-    }
+    window.addEventListener('scroll', updateProgress);
 }
 
 // ============================================================================
-// Article Search - 文章搜索
+// Navbar Scroll Effect - 导航栏滚动效果
 // ============================================================================
 
 /**
- * Search articles by query
- * @param {string} query - Search query
+ * Initialize navbar shadow on scroll
  */
-function searchArticles(query) {
-    const cards = $$('.article-card');
-    const searchLower = query.toLowerCase().trim();
+function initNavbarScrollEffect() {
+    const navbar = $('.navbar');
+    if (!navbar) return;
 
-    if (!searchLower) {
-        // Reset all cards
-        cards.forEach(card => {
-            card.style.display = '';
+    const handleScroll = throttle(() => {
+        if (window.scrollY > 100) {
+            navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+        } else {
+            navbar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        }
+    }, 100);
+
+    window.addEventListener('scroll', handleScroll);
+}
+
+// ============================================================================
+// Search - 搜索功能
+// ============================================================================
+
+/**
+ * Initialize search functionality
+ * Note: catalog.html has its own search, so skip if on catalog page
+ */
+function initSearch() {
+    // Skip if on catalog page (it has its own search)
+    if (document.getElementById('catalogContainer')) return;
+
+    const searchInput = $('#searchInput');
+    if (!searchInput) return;
+
+    const handleSearch = debounce((e) => {
+        const query = e.target.value.toLowerCase();
+        const catalogParts = $$('.catalog-part');
+
+        catalogParts.forEach(part => {
+            const text = part.textContent.toLowerCase();
+            part.style.display = text.includes(query) ? 'block' : 'none';
         });
-        return;
-    }
+    }, 300);
 
-    cards.forEach(card => {
-        const title = ($('h2', card)?.textContent || '').toLowerCase();
-        const excerpt = ($('.article-card-excerpt', card)?.textContent || '').toLowerCase();
-        const tags = ($('.tags', card)?.textContent || '').toLowerCase();
-        const category = ($('.article-card-category', card)?.textContent || '').toLowerCase();
-
-        const matches = title.includes(searchLower) ||
-            excerpt.includes(searchLower) ||
-            tags.includes(searchLower) ||
-            category.includes(searchLower);
-
-        card.style.display = matches ? '' : 'none';
-    });
+    searchInput.addEventListener('input', handleSearch);
 }
 
 // ============================================================================
@@ -390,15 +401,19 @@ function searchArticles(query) {
 // ============================================================================
 
 /**
- * Copy code block content
+ * Copy code from code blocks
  * @param {HTMLElement} button - Copy button element
  */
 async function copyCode(button) {
-    const preBlock = button.parentElement.nextElementSibling;
-    if (!preBlock) return;
+    const codeBlock = button.closest('.code-reference')?.querySelector('code') ||
+                      button.parentElement.nextElementSibling?.querySelector('code');
 
-    const code = preBlock.textContent;
-    const success = await copyToClipboard(code);
+    if (!codeBlock) {
+        Toast.error('代码块未找到');
+        return;
+    }
+
+    const success = await copyToClipboard(codeBlock.textContent);
 
     if (success) {
         const originalHTML = button.innerHTML;
@@ -409,7 +424,7 @@ async function copyCode(button) {
             button.innerHTML = originalHTML;
         }, 2000);
     } else {
-        Toast.error('复制失败，请手动复制');
+        Toast.error('复制失败');
     }
 }
 
@@ -417,225 +432,261 @@ async function copyCode(button) {
  * Initialize copy buttons for code blocks
  */
 function initCodeCopy() {
-    const preBlocks = $$('pre');
-    preBlocks.forEach(pre => {
-        // Create wrapper for positioning
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        pre.parentNode.insertBefore(wrapper, pre);
-        wrapper.appendChild(pre);
+    const codeBlocks = $$('.code-reference');
+    codeBlocks.forEach(block => {
+        const copyBtn = block.querySelector('.code-reference-copy');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => copyCode(copyBtn));
+        }
+    });
 
-        // Create copy button
-        const button = document.createElement('button');
-        button.className = 'copy-code-btn';
-        button.innerHTML = '<i class="fas fa-copy"></i> 复制';
-        button.style.cssText = `
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.9);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        `;
+    // Also handle regular pre > code blocks
+    $$('pre code').forEach(code => {
+        const pre = code.parentElement;
+        if (pre.tagName === 'PRE' && !pre.closest('.code-reference')) {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
 
-        // Show on hover
-        pre.addEventListener('mouseenter', () => {
-            button.style.opacity = '1';
-        });
-        pre.addEventListener('mouseleave', () => {
-            button.style.opacity = '0';
-        });
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+            copyBtn.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                background: rgba(255,255,255,0.9);
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                opacity: 0;
+                transition: opacity 0.2s;
+            `;
 
-        button.addEventListener('click', () => copyCode(button));
-        wrapper.appendChild(button);
+            pre.addEventListener('mouseenter', () => {
+                copyBtn.style.opacity = '1';
+            });
+            pre.addEventListener('mouseleave', () => {
+                copyBtn.style.opacity = '0';
+            });
+
+            copyBtn.addEventListener('click', () => copyCode(copyBtn));
+            wrapper.appendChild(copyBtn);
+        }
     });
 }
 
 // ============================================================================
-// Back to Top - 返回顶部
+// Keyboard Shortcuts - 键盘快捷键
 // ============================================================================
 
 /**
- * Create and initialize back to top button
+ * Initialize keyboard shortcuts
  */
-function initBackToTop() {
-    const button = document.createElement('button');
-    button.id = 'back-to-top';
-    button.innerHTML = '<i class="fas fa-arrow-up"></i>';
-    button.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 48px;
-        height: 48px;
-        background: var(--primary-color, #4F46E5);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s;
-        z-index: 999;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-
-    // Add button styles
-    const style = document.createElement('style');
-    style.textContent = `
-        #back-to-top:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // '/' key for quick search (if not in input)
+        if (e.key === '/' && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            const searchInput = $('#searchInput');
+            searchInput?.focus();
         }
-        #back-to-top.visible {
-            opacity: 1;
-            visibility: visible;
+
+        // 'Escape' to close modals
+        if (e.key === 'Escape') {
+            $$('.modal.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            // Close mobile menu
+            const navLinks = $('.nav-links');
+            if (navLinks) {
+                navLinks.classList.remove('active');
+            }
         }
-    `;
-    document.head.appendChild(style);
 
-    document.body.appendChild(button);
+        // 'Alt + Arrow' for tutorial navigation (handled in tutorial.js)
+    });
+}
 
-    // Scroll handler
+// ============================================================================
+// TOC Highlighting - 目录高亮
+// ============================================================================
+
+/**
+ * Initialize table of contents highlighting
+ */
+function initTocHighlighting() {
+    const tocLinks = $$('.sidebar-toc a');
+    const sections = $$('.tutorial-content h2, .tutorial-content h3');
+
+    if (tocLinks.length === 0 || sections.length === 0) return;
+
     const handleScroll = throttle(() => {
-        if (window.scrollY > 300) {
-            button.classList.add('visible');
-        } else {
-            button.classList.remove('visible');
-        }
+        let current = '';
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (window.scrollY >= sectionTop - 200) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
     }, 100);
 
     window.addEventListener('scroll', handleScroll);
+}
 
-    // Click handler
-    button.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+// ============================================================================
+// Smooth Scroll to TOC - 目录锚点滚动
+// ============================================================================
+
+/**
+ * Initialize smooth scroll for TOC links
+ */
+function initTocScroll() {
+    $$('.sidebar-toc a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                const offset = 100;
+                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
     });
 }
 
 // ============================================================================
-// Reading Progress - 阅读进度
+// Sidebar Toggle (Mobile) - 侧边栏切换
 // ============================================================================
 
 /**
- * Initialize reading progress bar
+ * Initialize sidebar toggle button for mobile
  */
-function initReadingProgress() {
-    // Only on article pages
-    if (!$('.article-content')) return;
+function initSidebarToggle() {
+    const toggleBtn = $('.sidebar-toggle');
+    const sidebar = $('.docs-sidebar');
 
-    const progressBar = document.createElement('div');
-    progressBar.className = 'reading-progress-bar';
-    progressBar.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary-color, #4F46E5), var(--secondary-color, #0EA5E9));
-        width: 0%;
-        z-index: 1001;
-        transition: width 0.1s ease;
-    `;
-    document.body.appendChild(progressBar);
+    if (!toggleBtn || !sidebar) return;
 
-    const updateProgress = throttle(() => {
-        const scrollTop = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-        progressBar.style.width = `${Math.min(100, progress)}%`;
-    }, 50);
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+    });
 
-    window.addEventListener('scroll', updateProgress);
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+        if (sidebar.classList.contains('active') &&
+            !sidebar.contains(e.target) &&
+            !toggleBtn.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
 }
 
 // ============================================================================
-// Article Page - 文章页面
+// TOC Toggle (Mobile) - 目录切换
 // ============================================================================
 
 /**
- * Render article content on article.html
+ * Initialize TOC toggle button for mobile
  */
-function initArticlePage() {
-    // Check if we're on the article page
-    const container = $('#article-container');
-    if (!container) return;
+function initTocToggle() {
+    const tocToggle = $('.toc-toggle');
+    const tocSidebar = $('.tutorial-sidebar');
 
-    // Get article ID from URL
-    const params = new URLSearchParams(window.location.search);
-    const articleId = parseInt(params.get('id')) || null;
+    if (!tocToggle || !tocSidebar) return;
 
-    // Find article (assumes articles data is injected via script)
-    if (typeof articles === 'undefined') {
-        console.warn('Articles data not found');
-        return;
-    }
-
-    const article = articles.find(a => a.id === articleId);
-
-    if (article) {
-        renderArticle(article, container);
-        document.title = `${article.title} - 技术博客`;
-    } else {
-        container.innerHTML = `
-            <div class="not-found">
-                <i class="fas fa-file-circle-xmark" style="font-size: 4rem; color: var(--text-muted, #94A3B8); margin-bottom: 24px;"></i>
-                <h2>文章未找到</h2>
-                <p>您访问的文章不存在或已被删除</p>
-                <a href="tech-blog.html" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--primary-color, #4F46E5); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                    <i class="fas fa-home"></i> 返回首页
-                </a>
-            </div>
-        `;
-    }
+    tocToggle.addEventListener('click', () => {
+        tocSidebar.classList.toggle('active');
+    });
 }
 
+// ============================================================================
+// Module Card Interaction - 模组卡片交互
+// ============================================================================
+
 /**
- * Render article to container
- * @param {Object} article - Article data
- * @param {HTMLElement} container - Container element
+ * Initialize module card hover effects with mouse tracking
  */
-function renderArticle(article, container) {
-    const tagsHtml = Array.isArray(article.tags)
-        ? article.tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-        : '';
+function initModuleCardEffects() {
+    const cards = $$('.module-card');
 
-    const iconClass = article.icon || 'fa-solid fa-file-lines';
+    cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-    container.innerHTML = `
-        <div class="article-header-simple">
-            <div class="container-narrow">
-                <a href="tech-blog.html" class="back-link">
-                    <i class="fas fa-arrow-left"></i> 返回文章列表
-                </a>
-                <h1>${article.title}</h1>
-                <div class="article-meta">
-                    <span><i class="far fa-calendar"></i> ${article.date}</span>
-                    <span><i class="far fa-clock"></i> ${article.readingTime} 分钟阅读</span>
-                    <span><i class="far fa-folder"></i> ${article.categoryName}</span>
-                </div>
-                <div class="tags" style="margin-top: 16px;">${tagsHtml}</div>
-            </div>
-        </div>
-        <div class="article-cover">
-            <div class="article-cover-image" style="background: linear-gradient(135deg, var(--primary-color, #4F46E5), var(--secondary-color, #0EA5E9));">
-                <i class="${iconClass}"></i>
-            </div>
-        </div>
-        <article class="article-content">${article.content}</article>
-        <div class="container-narrow">
-            <div class="article-footer">
-                <div class="article-tags">
-                    <div class="article-tags-title"><i class="fas fa-tags"></i> 标签</div>
-                    <div class="tags">${tagsHtml}</div>
-                </div>
-            </div>
-        </div>
-    `;
+            card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
+            card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
+        });
+    });
+}
+
+// ============================================================================
+// Version Selection - 版本选择
+// ============================================================================
+
+/**
+ * Initialize version selection functionality
+ */
+function initVersionSelection() {
+    const versionCards = $$('.version-card');
+
+    versionCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const href = card.dataset.href;
+            if (href) {
+                window.location.href = href;
+            }
+        });
+    });
+}
+
+// ============================================================================
+// Doc Type Tabs - 文档类型标签切换
+// ============================================================================
+
+/**
+ * Initialize doc type tab switching
+ */
+function initDocTypeTabs() {
+    const tabBtns = $$('.tab-btn');
+    const docCards = $$('.doc-card');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+
+            // Update active tab
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Filter cards
+            docCards.forEach(card => {
+                const cardType = card.dataset.type;
+                if (type === 'all' || cardType === type) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
 }
 
 // ============================================================================
@@ -647,33 +698,40 @@ function renderArticle(article, container) {
  */
 function init() {
     try {
-        // Mobile menu
+        // Core functionality
+        renderNavigationDropdown();
         initMobileMenuClose();
-
-        // Smooth scroll
         initSmoothScroll();
-
-        // Scroll animations
         initScrollAnimations();
-
-        // Code copy
+        initProgressBar();
+        initNavbarScrollEffect();
+        initSearch();
         initCodeCopy();
+        initKeyboardShortcuts();
 
-        // Back to top
-        initBackToTop();
+        // TOC functionality (tutorial pages)
+        initTocHighlighting();
+        initTocScroll();
 
-        // Reading progress
-        initReadingProgress();
+        // Mobile toggles
+        initSidebarToggle();
+        initTocToggle();
 
-        // Article page
-        initArticlePage();
+        // Card effects
+        initModuleCardEffects();
 
-        // Log success (only in verbose mode)
+        // Version selection
+        initVersionSelection();
+
+        // Doc type tabs
+        initDocTypeTabs();
+
+        // Log success in debug mode
         if (window.location.search.includes('debug')) {
-            console.log('Blog root script initialized');
+            console.log('Website JS initialized successfully');
         }
     } catch (error) {
-        console.error('Root script initialization failed:', error);
+        console.error('Website JS initialization failed:', error);
     }
 }
 
@@ -684,12 +742,10 @@ if (document.readyState === 'loading') {
     init();
 }
 
-// Export for module usage (if needed)
+// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         toggleMobileMenu,
-        filterArticles,
-        searchArticles,
         copyCode,
         Toast
     };

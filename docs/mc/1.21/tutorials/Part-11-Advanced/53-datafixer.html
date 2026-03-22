@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>第53章 数据修复系统 (DataFixer) - Minecraft 原版 教程</title>
+    <meta name="title" content="第53章 数据修复系统 (DataFixer) - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-11-Advanced/53-datafixer.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-11-Advanced/53-datafixer.html">
+    <meta property="og:title" content="第53章 数据修复系统 (DataFixer) - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="第53章 数据修复系统 (DataFixer) - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "第53章 数据修复系统 (DataFixer)",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.818Z",
+        "dateModified": "2026-03-22T07:07:48.818Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-11-Advanced</span>
+        
+        <span>/</span>
+        <span>第53章 数据修复系统 (DataFixer)</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第53章 数据修复系统 (DataFixer)</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 53-datafixer</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是数据修复-">什么是数据修复？</a></li><li class="h3"><a href="#schema-数据模式-">Schema（数据模式）</a></li><li class="h3"><a href="#fix-修复器-">Fix（修复器）</a></li><li class="h3"><a href="#数据修复类型">数据修复类型</a></li><li><a href="#图解-版本迁移流程">图解：版本迁移流程</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#datafixtypes-枚举">DataFixTypes 枚举</a></li><li class="h3"><a href="#数据修复的核心方法">数据修复的核心方法</a></li><li class="h3"><a href="#自定义数据修复示例">自定义数据修复示例</a></li><li><a href="#实战演示-查看存档版本">实战演示：查看存档版本</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是数据修复</p>
+<p>- 了解 Schema 和 Fix 的概念</p>
+<p>- 掌握从旧版本迁移数据的方法</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- NBT 数据结构基础 (第6章)</p>
+<p>- 游戏存档格式</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是数据修复-">什么是数据修复？</h3>
+
+<p>想象你搬家时，需要把所有东西从旧房子搬到新房子。但是旧房子的一些家具可能不符合新房子的大小，这时候你需要一个"搬家规划师"来调整每件家具。数据修复系统就是 Minecraft 的"搬家规划师"。</p>
+
+<p>当游戏更新到新版本时，旧版本存档中的数据格式可能和新版本不兼容。数据修复系统会自动把旧数据"改造"成新格式，让你的存档能够在新版本中正常使用。</p>
+
+<h3 id="schema-数据模式-">Schema（数据模式）</h3>
+
+<p><strong>Schema 就像是一张"数据蓝图"</strong>，它定义了数据的结构。</p>
+
+<div class="mermaid">
+graph TD
+    A["Schema v100<br/>玩家数据结构"] --> B["Schema v101<br/>新增经验值字段"]
+    B --> C["Schema v102<br/>新增进度系统"]
+    C --> D["Schema v150<br/>物品栏重排"]
+    
+    style A fill:#ffcccc
+    style D fill:#ccffcc
+</div>
+
+<p>在源码中，Schema 定义在 <code>TypeReferences.java</code> 里：</p>
+
+<pre class="code-block"><code>public static final TypeReference PLAYER = new TypeReference(DSL.fields(&quot;player&quot;));
+public static final TypeReference CHUNK = new TypeReference(DSL.fields(&quot;chunk&quot;));</code></pre>
+
+<h3 id="fix-修复器-">Fix（修复器）</h3>
+
+<p><strong>Fix 就像是数据修复的具体"操作手册"</strong>，它告诉系统怎么把数据从 A 版本改成 B 版本。</p>
+
+<div class="mermaid">
+graph LR
+    subgraph "数据修复流程"
+        A["旧数据<br/>NBT格式"] --> B["Fix v100->v101"]
+        B --> C["中间数据"]
+        C --> D["Fix v101->v102"]
+        D --> E["新数据<br/>NBT格式"]
+    end
+    
+    style B fill:#ffffcc
+    style D fill:#ffffcc
+</div>
+
+<h3 id="数据修复类型">数据修复类型</h3>
+
+<p>Minecraft 维护着多种数据类型的修复：</p>
+
+<table><thead><tr><th>类型</th><th>作用</th><th>示例</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>`LEVEL`</td><td>世界整体数据</td><td>游戏难度、生物群系</td></tr><tr><td>`PLAYER`</td><td>玩家数据</td><td>背包、位置、属性</td></tr><tr><td>`CHUNK`</td><td>区块数据</td><td>方块、实体、村民</td></tr><tr><td>`STRUCTURE`</td><td>结构数据</td><td>存档的结构方块</td></tr><tr><td>`RAIDS`</td><td>袭击数据</td><td>村民袭击进度</td></tr></tbody></table>
+
+<h2 id="图解-版本迁移流程">图解：版本迁移流程</h2>
+
+<div class="mermaid">
+sequenceDiagram
+    participant 玩家 as 玩家存档
+    participant 加载器 as 数据加载器
+    participant 检测器 as 版本检测器
+    participant 修复器 as 数据修复器
+    participant 游戏 as 游戏世界
+    
+    玩家->>加载器: 加载存档NBT
+    加载器->>检测器: 读取DataVersion
+    
+    Note over 检测器: 当前版本: 3500<br/>存档版本: 1000
+    
+    检测器->>修复器: 需要升级: 2500步
+    
+    loop 每一步修复
+        修复器->>修复器: 应用Fix规则
+    end
+    
+    修复器-->>游戏: 修复后的数据
+    游戏->>玩家: 游戏开始
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="datafixtypes-枚举">DataFixTypes 枚举</h3>
+
+<p>定义所有需要修复的数据类型：</p>
+
+<pre class="code-block"><code>// 源码位置: DataFixTypes.java
+public enum DataFixTypes {
+    LEVEL(TypeReferences.LEVEL),        // 世界数据
+    PLAYER(TypeReferences.PLAYER),      // 玩家数据
+    CHUNK(TypeReferences.CHUNK),        // 区块数据
+    STRUCTURE(TypeReferences.STRUCTURE), // 结构数据
+    RAID(TypeReferences.RAID),          // 袭击数据
+    // ... 更多类型
+}</code></pre>
+
+<h3 id="数据修复的核心方法">数据修复的核心方法</h3>
+
+<pre class="code-block"><code>public &lt;T&gt; Dynamic&lt;T&gt; update(DataFixer dataFixer, Dynamic&lt;T&gt; dynamic, 
+                             int oldVersion, int newVersion) {
+    // 遍历所有中间版本，逐步修复
+    return dataFixer.update(this.typeReference, dynamic, oldVersion, newVersion);
+}</code></pre>
+
+<h3 id="自定义数据修复示例">自定义数据修复示例</h3>
+
+<p>如果要为你的 Mod 添加数据修复：</p>
+
+<pre class="code-block"><code>// 1. 定义类型引用
+public static final TypeReference MY_MOD_DATA = new TypeReference(
+    DSL.fields(&quot;MyModData&quot;)
+);
+
+// 2. 创建 Fix
+public static DataFix createMyDataFix() {
+    return new DataFix(DSL.field(&quot;oldField&quot;), 
+        ops -&gt; dynamic -&gt; dynamic.update(&quot;oldField&quot;, &quot;newField&quot;));
+}</code></pre>
+
+<h2 id="实战演示-查看存档版本">实战演示：查看存档版本</h2>
+
+<p>你可以使用命令查看当前存档的版本：</p>
+
+<pre class="code-block"><code>/datafu get &lt;玩家&gt; DataVersion</code></pre>
+
+<p>或者在代码中检测：</p>
+
+<pre class="code-block"><code>public int getSaveVersion(NbtCompound nbt) {
+    return nbt.getInt(&quot;DataVersion&quot;);
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────┐
+│                    数据修复系统                          │
+├─────────────────────────────────────────────────────────┤
+│  核心概念：                                             │
+│  • Schema = 数据结构的&quot;蓝图&quot;                            │
+│  • Fix = 从旧版到新版的&quot;操作手册&quot;                       │
+│  • 版本号 = 追踪需要执行哪些修复                         │
+│                                                         │
+│  流程：                                                 │
+│  加载NBT → 检测版本 → 逐步修复 → 加载游戏               │
+│                                                         │
+│  常见修复类型：                                         │
+│  • 重命名字段      • 改变数据结构                       │
+│  • 添加新字段      • 删除废弃字段                       │
+│  • 移动字段位置    • 转换数据类型                       │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：如果游戏版本从 1.12 跳到 1.18（跳过了很多版本），数据修复系统如何处理？</p>
+
+<p>2. <strong>实践题</strong>：在 Mod 开发中，如何为自己的物品添加数据修复支持？</p>
+
+<p>3. <strong>进阶题</strong>：为什么 Minecraft 要使用"逐步修复"而不是"一步到位"？</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Data_Fixer_Upper" target="_blank" rel="noopener noreferrer">Minecraft Wiki: Data Fixer Upper</a></p>
+<p>- <a href="https://github.com/Mojang/DataFixerUpper" target="_blank" rel="noopener noreferrer">Mojang DataFixerUpper Library</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.datafixer.DataFixTypes</code></p>
+<p>  - <code>net.minecraft.datafixer.TypeReferences</code></p>
+<p>  - <code>net.minecraft.datafixer.fix.*</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>DataFixerUpper.java</td><td>`net/minecraft/datafixer/DataFixerUpper.java`</td><td>数据修复器主类</td></tr><tr><td>DynamicOps.java</td><td>`net/minecraft/datafixer/DynamicOps.java`</td><td>动态操作接口</td></tr><tr><td>Schema.java</td><td>`net/minecraft/datafixer/Schema.java`</td><td>数据模式定义</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：DataFixer、Schema、Fix、NBT、Version</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

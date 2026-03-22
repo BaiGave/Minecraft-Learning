@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>第46章 渲染系统 - Minecraft 原版 教程</title>
+    <meta name="title" content="第46章 渲染系统 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/46-render-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/46-render-system.html">
+    <meta property="og:title" content="第46章 渲染系统 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="第46章 渲染系统 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "第46章 渲染系统",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.893Z",
+        "dateModified": "2026-03-22T07:07:48.893Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-9-Client</span>
+        
+        <span>/</span>
+        <span>第46章 渲染系统</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第46章 渲染系统</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 46-render-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是渲染-">什么是渲染？</a></li><li class="h3"><a href="#gamerenderer-vs-worldrenderer">GameRenderer vs WorldRenderer</a></li><li class="h3"><a href="#渲染管线-rendering-pipeline-">渲染管线（Rendering Pipeline）</a></li><li class="h3"><a href="#着色器-shader-">着色器（Shader）</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#渲染管线详细流程">渲染管线详细流程</a></li><li class="h3"><a href="#minecraft-渲染层级">Minecraft 渲染层级</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#gamerenderer-渲染入口">GameRenderer 渲染入口</a></li><li class="h3"><a href="#worldrenderer-世界渲染">WorldRenderer 世界渲染</a></li><li class="h3"><a href="#着色器程序">着色器程序</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-渲染一帧画面">场景：渲染一帧画面</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是渲染系统</p>
+<p>- 了解 GameRenderer 和 WorldRenderer 的区别</p>
+<p>- 掌握渲染管线的基本流程</p>
+<p>- 认识着色器（Shader）的概念</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Minecraft 客户端的基本结构（第45章）</p>
+<p>- 知道什么是"画图"和"3D游戏"</p>
+<p>- 了解材质/贴图的基本概念</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是渲染-">什么是渲染？</h3>
+
+<p>想象你是一个<strong>画家</strong>在画画：</p>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────┐
+│                    渲染 = &quot;画画&quot;                      │
+│                                                      │
+│   画家画画过程:                                        │
+│   1. 准备好画布和颜料                                 │
+│   2. 画背景（天空、白云）                              │
+│   3. 画远处的山                                       │
+│   4. 画近处的树木                                     │
+│   5. 画房子和人物                                     │
+│   6. 画前景的草和花朵                                 │
+│   7. 签名、装裱                                      │
+│                                                      │
+│   Minecraft 渲染过程（类似）:                           │
+│   1. 清理画布（屏幕）                                  │
+│   2. 画天空和太阳                                     │
+│   3. 画远处地形                                       │
+│   4. 画近处方块                                       │
+│   5. 画实体（玩家、生物）                              │
+│   6. 画粒子和特效                                     │
+│   7. 画HUD（血条、背包等）                            │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="gamerenderer-vs-worldrenderer">GameRenderer vs WorldRenderer</h3>
+
+<table><thead><tr><th>组件</th><th>GameRenderer</th><th>WorldRenderer</th></tr></thead><tbody><tr><td>------</td><td>--------------</td><td>---------------</td></tr><tr><td>**负责**</td><td>游戏渲染总控</td><td>世界渲染（方块、地形）</td></tr><tr><td>**位置**</td><td>`render/GameRenderer.java`</td><td>`render/WorldRenderer.java`</td></tr><tr><td>**职责**</td><td>管理相机、绘制HUD、绘制手持物品</td><td>绘制地形、方块、实体</td></tr><tr><td>**比喻**</td><td>画展的总策展人</td><td>负责画风景的画家</td></tr></tbody></table>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────┐
+│                      渲染系统架构                            │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                   GameRenderer                       │    │
+│  │  (总导演)                                            │    │
+│  │                                                      │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌────────────┐ │    │
+│  │  │  相机管理    │  │  着色器管理  │  │  特效处理   │ │    │
+│  │  │  Camera     │  │  Shader     │  │  Post-FX   │ │    │
+│  │  └─────────────┘  └─────────────┘  └────────────┘ │    │
+│  │                                                      │    │
+│  │  ┌─────────────┐  ┌─────────────┐                   │    │
+│  │  │  绘制HUD    │  │  绘制手持物品 │                   │    │
+│  │  │  InGameHud  │  │  HeldItem   │                   │    │
+│  │  └─────────────┘  └─────────────┘                   │    │
+│  │           ↓                                          │    │
+│  └───────────┼──────────────────────────────────────────┘    │
+│              ↓                                                 │
+│  ┌───────────────────────────────────────────────────────┐    │
+│  │                    WorldRenderer                       │    │
+│  │  (风景画家)                                           │    │
+│  │                                                        │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │    │
+│  │  │  天空渲染   │  │  Chunk渲染  │  │  实体渲染   │   │    │
+│  │  │  Sky        │  │  方块地形   │  │  Entities   │   │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘   │    │
+│  │                                                      │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │    │
+│  │  │  粒子渲染   │  │  天气渲染   │  │  区块缓冲   │   │    │
+│  │  │  Particles  │  │  Weather   │  │  Chunks    │   │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘   │    │
+│  └───────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="渲染管线-rendering-pipeline-">渲染管线（Rendering Pipeline）</h3>
+
+<p>渲染就像<strong>工厂流水线</strong>，每一帧都要走完所有步骤：</p>
+
+<pre class="code-block"><code>┌──────────────────────────────────────────────────────────────────┐
+│                      渲染管线流程                                  │
+│                                                                   │
+│  1. 【CPU准备阶段】                                                │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                    │
+│  │ 相机更新 │ → │ 视锥裁剪  │ → │ 排序绘制 │                     │
+│  │ Camera   │    │ Frustum  │    │ Sorting  │                     │
+│  └──────────┘    └──────────┘    └──────────┘                    │
+│                          ↓                                        │
+│  2. 【GPU绘制阶段】                                                │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                    │
+│  │ 顶点处理 │ → │ 图元组装 │ → │  光栅化  │                    │
+│  │ Vertex   │    │ Primitive│    │ Rasterize│                    │
+│  └──────────┘    └──────────┘    └──────────┘                    │
+│                          ↓                                        │
+│  3. 【像素着色】                                                   │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                    │
+│  │ 纹理采样 │ → │ 光照计算 │ → │ 颜色输出 │                    │
+│  │ Texture  │    │ Lighting │    │ Output   │                    │
+│  └──────────┘    └──────────┘    └──────────┘                    │
+│                                                                   │
+│  4. 【后处理】                                                     │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐                    │
+│  │ 模糊效果 │ → │ 色彩调整 │ → │ 输出屏幕 │                    │
+│  │  Blur   │    │  Color   │    │  Screen  │                    │
+│  └──────────┘    └──────────┘    └──────────┘                    │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="着色器-shader-">着色器（Shader）</h3>
+
+<p>着色器就像给画作上色的"调色师"：</p>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────┐
+│                  着色器类型                           │
+│                                                      │
+│  【顶点着色器 Vertex Shader】                          │
+│  - 处理每个顶点的位置                                   │
+│  - 类似于：决定每个颜料点画在哪里                        │
+│  ┌─────────────────────────────────────┐             │
+│  │  input: 顶点坐标                     │             │
+│  │  output: 变换后的位置                 │             │
+│  └─────────────────────────────────────┘             │
+│                                                      │
+│  【片元着色器 Fragment Shader】                        │
+│  - 计算每个像素的颜色                                   │
+│  - 类似于：决定每个位置涂什么颜色                        │
+│  ┌─────────────────────────────────────┐             │
+│  │  input: 纹理坐标、光照等              │             │
+│  │  output: 最终颜色                     │             │
+│  └─────────────────────────────────────┘             │
+│                                                      │
+│  【例子：苦力怕为什么是绿色的？】                        │
+│  - 片元着色器里写着：                                   │
+│  - if (是苦力怕) return 绿色;                          │
+│  - else if (是羊) return 白色;                         │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="渲染管线详细流程">渲染管线详细流程</h3>
+
+<div class="mermaid">
+flowchart TB
+    subgraph CPU["CPU 端处理"]
+        A1["更新相机位置<br/>updateCamera"]
+        A2["视锥体裁剪<br/>Frustum Culling"]
+        A3["准备渲染指令<br/>Build Render List"]
+        A1 --> A2 --> A3
+    end
+
+    subgraph GPU["GPU 端渲染"]
+        B1["顶点着色器<br/>Vertex Shader"]
+        B2["几何处理<br/>Geometry Processing"]
+        B3["图元组装<br/>Primitive Assembly"]
+        B4["光栅化<br/>Rasterization"]
+        B5["片元着色器<br/>Fragment Shader"]
+        B6["后处理<br/>Post Processing"]
+        
+        B1 --> B2 --> B3 --> B4 --> B5 --> B6
+    end
+
+    subgraph World["WorldRenderer"]
+        C1["天空渲染<br/>Sky"]
+        C2["区块渲染<br/>Chunks"]
+        C3["实体渲染<br/>Entities"]
+        C4["粒子渲染<br/>Particles"]
+        C5["天气渲染<br/>Weather"]
+    end
+
+    A3 --> B1
+    B6 --> C1
+    B6 --> C2
+    B6 --> C3
+    B6 --> C4
+    B6 --> C5
+
+    style CPU fill:#e3f2fd
+    style GPU fill:#fff3e0
+    style World fill:#e8f5e9
+</div>
+
+<h3 id="minecraft-渲染层级">Minecraft 渲染层级</h3>
+
+<div class="mermaid">
+graph TD
+    subgraph "渲染顺序（从后到前）"
+        A["天空 Sky"]
+        B["远景地形 Far Terrain"]
+        C["透明区块 Translucent Blocks"]
+        D["半透明物体 Glass/Water"]
+        E["普通实体 Normal Entities"]
+        F["生物实体 Living Entities"]
+        G["手持物品 Held Items"]
+        H["粒子 Particles"]
+        I["下雨/下雪 Weather"]
+        J["迷雾效果 Fog"]
+        K["HUD界面 HUD"]
+    end
+
+    style A fill:#87CEEB
+    style B fill:#228B22
+    style C fill:#4169E1,opacity:0.7
+    style D fill:#00CED1,opacity:0.5
+    style E fill:#FFD700
+    style F fill:#FF6347
+    style G fill:#9370DB
+    style H fill:#FF69B4
+    style I fill:#B0E0E6
+    style J fill:#696969,opacity:0.3
+    style K fill:#DC143C
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="gamerenderer-渲染入口">GameRenderer 渲染入口</h3>
+
+<pre class="code-block"><code>// 源码位置: GameRenderer.java
+
+public class GameRenderer {
+    public final MinecraftClient client;
+    private final Camera camera;
+    
+    public void render(float tickDelta) {
+        // 1. 准备渲染
+        this.client.getProfiler().push(&quot;game_renderer&quot;);
+        
+        // 2. 更新相机
+        this.updateCamera(tickDelta);
+        
+        // 3. 渲染世界
+        this.client.getWorldRenderer().render(tickDelta);
+        
+        // 4. 渲染手持物品
+        if (this.renderHand) {
+            this.renderHand(tickDelta);
+        }
+        
+        // 5. 渲染HUD
+        this.client.getInGameHud().render(tickDelta);
+        
+        // 6. 后处理效果（模糊、泛光等）
+        this.renderPostEffect();
+    }
+}</code></pre>
+
+<h3 id="worldrenderer-世界渲染">WorldRenderer 世界渲染</h3>
+
+<pre class="code-block"><code>// 源码位置: WorldRenderer.java
+
+public class WorldRenderer {
+    // 渲染天空
+    private void renderSky(float tickDelta) { ... }
+    
+    // 渲染地形区块
+    private void renderChunks(...) { ... }
+    
+    // 渲染实体
+    public void renderEntities(...) { ... }
+    
+    // 渲染天气
+    private void renderWeather(...) { ... }
+}</code></pre>
+
+<h3 id="着色器程序">着色器程序</h3>
+
+<pre class="code-block"><code>// 源码位置: GameRenderer.java
+
+public class GameRenderer {
+    // 预加载的着色器程序
+    @Nullable private static ShaderProgram positionProgram;
+    @Nullable private static ShaderProgram positionColorProgram;
+    @Nullable private static ShaderProgram positionTexProgram;
+    @Nullable private static ShaderProgram positionTexColorProgram;
+    @Nullable private static ShaderProgram renderTypeSolidProgram;
+    @Nullable private static ShaderProgram renderTypeCutoutProgram;
+    @Nullable private static ShaderProgram renderTypeTranslucentProgram;
+    // ... 更多着色器
+    
+    public void preloadPrograms(ResourceFactory factory) {
+        // 加载所有着色器
+        this.programs.put(&quot;position&quot;, 
+            new ShaderProgram(factory, &quot;position&quot;));
+        this.programs.put(&quot;rendertype_solid&quot;, 
+            new ShaderProgram(factory, &quot;rendertype_solid&quot;));
+        // ...
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-渲染一帧画面">场景：渲染一帧画面</h3>
+
+<p>1. <strong>玩家转动视角</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // Mouse.updateMouse() 计算鼠标移动</p>
+<p>   this.client.player.changeLookDirection(i, j);</p>
+<p>   <code>`</code></p>
+
+<p>2. <strong>更新相机</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // GameRenderer.updateCamera()</p>
+<p>   camera.update(this.client.world, this.client.getEntity(),</p>
+<p>                 this.client.options.getPerspective().isFirstPerson(),</p>
+<p>                 false, tickDelta);</p>
+<p>   <code>`</code></p>
+
+<p>3. <strong>设置视锥体</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // 创建视锥体用于裁剪</p>
+<p>   Frustum frustum = new Frustum(</p>
+<p>       camera.getRotation().toMatrix4f(),</p>
+<p>       camera.getProjection()</p>
+<p>   );</p>
+<p>   <code>`</code></p>
+
+<p>4. <strong>渲染世界</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // WorldRenderer.render()</p>
+<p>   this.setupCullFrustum();</p>
+<p>   this.getWorld().iterateEntities();</p>
+<p>   this.renderChunks(tickDelta);</p>
+<p>   <code>`</code></p>
+
+<p>5. <strong>渲染HUD</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // InGameHud.render()</p>
+<p>   this.renderHotbar();</p>
+<p>   this.renderHealthBar();</p>
+<p>   this.renderStatusEffects();</p>
+<p>   <code>`</code></p>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>渲染</strong> = 把游戏世界"画"到屏幕上</p>
+<p>2. <strong>GameRenderer</strong> = 渲染系统的总指挥，管理相机、整体流程</p>
+<p>3. <strong>WorldRenderer</strong> = 负责画风景、方块、实体</p>
+<p>4. <strong>渲染管线</strong> = CPU准备 → GPU绘制 → 后处理</p>
+<p>5. <strong>着色器</strong> = GPU上运行的小程序，决定如何给像素上色</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 在源码中找到 <code>GameRenderer.java</code>，阅读 <code>render()</code> 方法</p>
+<p>2. 找出 <code>WorldRenderer.java</code> 中渲染天气的代码</p>
+<p>3. 查看 <code>shaders/</code> 目录，了解 Minecraft 使用的 GLSL 着色器</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- 下一章：<a href="./47-gui-system.html">第47章 GUI系统</a> - 了解界面渲染</p>
+<p>- Part-9：<a href="./45-minecraft-client.html">Minecraft客户端核心</a></p>
+<p>- 着色器语言：GLSL 教程</p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>WorldRenderer.java</td><td>`net/minecraft/client/render/WorldRenderer.java`</td><td>世界渲染器，负责绘制地形、方块、实体</td></tr><tr><td>GameRenderer.java</td><td>`net/minecraft/client/render/GameRenderer.java`</td><td>游戏渲染器总控，管理相机和整体流程</td></tr><tr><td>Shader.java</td><td>`net/minecraft/client/gl/Shader.java`</td><td>着色器基类</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：Render、GameRenderer、WorldRenderer、Shader、Pipeline、Frustum</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

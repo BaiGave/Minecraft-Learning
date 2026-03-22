@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>�?8�?输入处理 - Minecraft 原版 教程</title>
+    <meta name="title" content="�?8�?输入处理 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/48-input-handling.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/48-input-handling.html">
+    <meta property="og:title" content="�?8�?输入处理 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="�?8�?输入处理 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "�?8�?输入处理",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.895Z",
+        "dateModified": "2026-03-22T07:07:48.895Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-9-Client</span>
+        
+        <span>/</span>
+        <span>�?8�?输入处理</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">�?8�?输入处理</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 48-input-handling</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是输入处理-">什么是输入处理�?</a></li><li class="h3"><a href="#mouse-">Mouse �?</a></li><li class="h3"><a href="#客户端预测-client-prediction-">客户端预测（Client Prediction�?</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解什么是输入处理</p>
+<p>- 了解 Keyboard �?Mouse 类的工作原理</p>
+<p>- 掌握快捷键绑定（KeyBinding）系�?- 了解客户端预测的概念</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Minecraft 客户端基本结构（�?5章）</p>
+<p>- 知道什么是键盘、鼠标事�?- 了解 GUI 系统基础（第47章）</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是输入处理-">什么是输入处理�?</h3>
+<p>想象你是一家餐厅的<em>*服务�?</em>�?</p>
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────�?�?              输入处理 = 服务员的工作                  �?�?                                                     �?�?  顾客（玩家）发出需求：                               �?�?  - &quot;我要一份牛�? �?顾客�?E 打开菜单                 �?�?  - &quot;我要喝水&quot; �?顾客�?F 喝手中的�?                   �?�?  - &quot;我要离开&quot; �?顾客�?Esc 退�?                      �?�?                                                     �?�?  服务员（输入系统）需要：                              �?�?  1. 听懂顾客的需求（监听按键/鼠标�?                   �?�?  2. 记住顾客点了什么（记录按键状态）                   �?�?  3. 把需求传给厨房（通知游戏逻辑�?                    �?�?  4. 给顾客反馈（显示界面变化�?                       �?└─────────────────────────────────────────────────────�?```
+
+### 输入设备
+
+| 设备 | Minecraft中的用�?|
+|------|-------------------|
+| **键盘** | 移动（WASD）、跳跃（空格）、交互（E）、聊天（T）等 |
+| **鼠标** | 移动视角、点击按钮、左键攻击、右键使�?|
+| **滚轮** | 切换快捷栏物�?|
+| **手柄** | 移动、视角、快捷键（支持手柄） |
+
+### Keyboard �?
+`Keyboard.java` 负责监听键盘事件�?</code></pre>
+<p>┌─────────────────────────────────────────────────────�?�?             Keyboard 输入处理流程                    �?�?                                                     �?�? 1. 【初始化�?                                      �?�?    keyboard.setup(windowHandle)                     �?�?    �?                                               �?�?    向窗口注册键盘回�?                               �?�?                                                     �?�? 2. 【事件触发�?                                     �?�?    用户按下键盘 �?GLFW 发送事�?                      �?�?    �?                                               �?�?                                                     �?�? 3. 【事件处理�?                                     �?�?    onKeyEvent(keyCode, scanCode, action, mods)      �?�?    �?                                               �?�?                                                     �?�? 4. 【分发处理�?                                     �?�?    ┌────────────┬────────────�?                      �?�?    �?           �?           �?                      �?�? 聊天界面?   游戏菜单�?  游戏内？                      �?�? (ChatScreen)  (PauseScreen)  (World)                �?�?                                                     �?�? 5. 【快捷键检查�?                                   �?�?    KeyBinding.setKeyPressed(key, true)              �?└─────────────────────────────────────────────────────�?<code>`</code></p>
+
+<h3 id="mouse-">Mouse �?</h3>
+<p><code>Mouse.java</code> 负责监听鼠标事件�?</p>
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────�?�?             Mouse 输入处理流程                       �?�?                                                     �?�? 【鼠标按钮�?                                        �?�? ┌─────────┬─────────┬─────────�?                    �?�? �?左键    �?中键    �?右键    �?                    �?�? �?攻击    �?望远�? �?使用    �?                    �?�? �?Button=0�?Button=1�?Button=2�?                    �?�? └─────────┴─────────┴─────────�?                    �?�?                                                     �?�? 【鼠标移动�?                                        �?�? - cursorDeltaX/Y: 鼠标移动�?                        �?�? - 用于旋转视角（第一/第三人称�?                      �?�?                                                     �?�? 【滚轮�?                                           �?�? - eventDeltaVerticalWheel: 垂直滚动�?               �?�? - 用于切换快捷栏物�?                                 �?�?                                                     �?�? 【特殊处理�?                                        �?�? - Mac系统: Ctrl+左键 = 右键                          �?�? - 触屏模式: 模拟鼠标输入                              �?└─────────────────────────────────────────────────────�?```
+
+### KeyBinding 快捷键绑�?
+`KeyBinding` �?Minecraft 的快捷键系统，让玩家可以自定义按键：
+</code></pre>
+<p>┌─────────────────────────────────────────────────────�?�?           KeyBinding 快捷键系�?                     �?�?                                                     �?�? 【按键分类�?                                        �?�? ┌──────────────────────────────────────────────�? �?�? �?MOVEMENT_CATEGORY (移动)                       �? �?�? �?- 前进: W                                      �? �?�? �?- 后退: S                                      �? �?�? �?- 左移: A                                      �? �?�? �?- 右移: D                                      �? �?�? �?- 跳跃: 空格                                    �? �?�? �?- 潜行: 左Shift                                  �? �?�? └──────────────────────────────────────────────�? �?�?                                                     �?�? ┌──────────────────────────────────────────────�? �?�? �?GAMEPLAY_CATEGORY (游戏操作)                   �? �?�? �?- 攻击/破坏: 鼠标左键                           �? �?�? �?- 使用物品: 鼠标右键                            �? �?�? �?- 丢弃物品: Q                                  �? �?�? �?- 物品�? E                                    �? �?�? └──────────────────────────────────────────────�? �?�?                                                     �?�? 【按键状态�?                                        �?�? ┌──────────────────────────────────────────────�? �?�? �?isPressed(): 按键是否正在被按�?                �? �?�? �?wasPressed(): 按键是否刚刚被按下（消费一次）     �? �?�? �?timesPressed: 记录按键被按了多少次              �? �?�? └──────────────────────────────────────────────�? �?└─────────────────────────────────────────────────────�?<code>`</code></p>
+
+<h3 id="客户端预测-client-prediction-">客户端预测（Client Prediction�?</h3>
+<p>网络延迟就像打电话时的延迟：</p>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────�?�?          客户端预�?= 减少&quot;电话延迟&quot;的感�?            �?�?                                                     �?�? 【没有预测的情况�?                                  �?�? 玩家�?W �?等待服务器确�?�?角色才移�?               �?�?          �?                                         �?�?    (延迟200ms = 卡顿明显)                            �?�?                                                     �?�? 【有预测的情况�?                                    �?�? 玩家�?W �?客户端立即移�?�?同时发送数据包              �?�?          �?                                         �?�?    (感觉是即时响�?                                  �?�?          �?                                         �?�?    服务器确�?修正                                    �?�?          �?                                         �?�?    如果预测错误，进�?回滚&quot;                            �?└─────────────────────────────────────────────────────�?```
+
+## 图解（Mermaid�?
+### 输入处理流程
+</code></pre>
+<p>flowchart TB</p>
+<p>    subgraph Input["输入设备"]</p>
+<p>        KB["Keyboard 键盘"]</p>
+<p>        MS["Mouse 鼠标"]</p>
+<p>    end</p>
+
+<p>    subgraph OS["操作系统�?]</p>
+<p>        GLFW["GLFW 事件"]</p>
+<p>    end</p>
+
+<p>    subgraph Minecraft["Minecraft 输入系统"]</p>
+<p>        KHandler["Keyboard.onKeyEvent"]</p>
+<p>        MHandler["Mouse.onMouseButton<br/>Mouse.onCursorPos<br/>Mouse.onMouseScroll"]</p>
+<p>    end</p>
+
+<p>    subgraph Processing["输入处理"]</p>
+<p>        KBind["KeyBinding 更新"]</p>
+<p>        InputObj["Input 对象更新"]</p>
+<p>        Camera["相机旋转"]</p>
+<p>    end</p>
+
+<p>    subgraph Game["游戏逻辑"]</p>
+<p>        Move["玩家移动"]</p>
+<p>        Attack["攻击检�?]</p>
+<p>        Interact["物品交互"]</p>
+<p>    end</p>
+
+<p>    subgraph Render["渲染"]</p>
+<p>        Player["渲染玩家"]</p>
+<p>        World["渲染世界"]</p>
+<p>    end</p>
+
+<p>    KB --> GLFW</p>
+<p>    MS --> GLFW</p>
+<p>    GLFW --> KHandler</p>
+<p>    GLFW --> MHandler</p>
+<p>    KHandler --> KBind</p>
+<p>    MHandler --> KBind</p>
+<p>    KBind --> InputObj</p>
+<p>    InputObj --> Camera</p>
+<p>    Camera --> Move</p>
+<p>    Move --> Attack</p>
+<p>    Attack --> Interact</p>
+<p>    Interact --> Player</p>
+<p>    Player --> World</p>
+
+<p>    style Input fill:#e3f2fd</p>
+<p>    style OS fill:#fff3e0</p>
+<p>    style Minecraft fill:#e8f5e9</p>
+<p>    style Processing fill:#fce4ec</p>
+<p>    style Game fill:#c8e6c9</p>
+<p>    style Render fill:#d1c4e9</p>
+<pre class="code-block"><code>
+### 快捷键绑定系�?</code></pre>
+<p>flowchart LR</p>
+<p>    subgraph Registry["快捷键注�?]</p>
+<p>        A1["new KeyBinding<br/>('key.forward', KEY_W, CATEGORY)"]</p>
+<p>        A2["new KeyBinding<br/>('key.jump', KEY_SPACE, CATEGORY)"]</p>
+<p>        A3["new KeyBinding<br/>('key.inventory', KEY_E, CATEGORY)"]</p>
+<p>    end</p>
+
+<p>    subgraph State["按键状态管�?]</p>
+<p>        B1["KEYS_BY_ID<br/>Map<String, KeyBinding>"]</p>
+<p>        B2["KEY_TO_BINDINGS<br/>Map<Key, KeyBinding>"]</p>
+<p>        B3["pressed: boolean<br/>timesPressed: int"]</p>
+<p>    end</p>
+
+<p>    subgraph Update["每Tick更新"]</p>
+<p>        C1["updatePressedStates()"]</p>
+<p>        C2["调用 isKeyPressed() 检�?]</p>
+<p>        C3["更新 pressed 状�?]</p>
+<p>    end</p>
+
+<p>    subgraph Use["使用快捷�?]</p>
+<p>        D1["wasPressed()"]</p>
+<p>        D2["isPressed()"]</p>
+<p>    end</p>
+
+<p>    Registry --> State</p>
+<p>    State --> Update</p>
+<p>    Update --> Use</p>
+
+<p>    style Registry fill:#e3f2fd</p>
+<p>    style State fill:#fff3e0</p>
+<p>    style Update fill:#e8f5e9</p>
+<p>    style Use fill:#c8e6c9</p>
+<pre class="code-block"><code>
+### 客户端预测与服务器同�?</code></pre>
+<p>sequenceDiagram</p>
+<p>    participant P as 玩家</p>
+<p>    participant C as 客户�?    participant N as 网络</p>
+<p>    participant S as 服务�?    participant W as 世界</p>
+
+<p>    Note over P,S: 玩家向前移动的场�?</p>
+<p>    P->>C: �?W �?    C->>C: 本地预测：移动玩�?+2�?    C->>C: 渲染新位�?    Note right of C: 玩家立即看到移动</p>
+
+<p>    C->>N: 发�?PlayerMoveC2SPacket</p>
+<p>    N->>S: 网络传输</p>
+
+<p>    S->>W: 验证移动请求</p>
+<p>    S->>W: 物理碰撞检�?    S->>W: 实际移动 +1.8格（可能有差异）</p>
+
+<p>    alt 预测正确</p>
+<p>        S->>S: 移动有效</p>
+<p>        S->>N: 发送确�?        N->>C: 同步状态（差异很小�?        C->>C: 微调位置</p>
+<p>    else 预测错误</p>
+<p>        S->>S: 移动被阻�?        S->>N: 发送修正位�?        N->>C: 强制回滚到服务器位置</p>
+<p>        C->>C: 回滚玩家位置</p>
+<p>        Note left of C: 可能看到"瞬移"</p>
+<p>    end</p>
+<pre class="code-block"><code>
+## 核心代码
+
+### Keyboard �?</code></pre>
+<p>// 源码位置: Keyboard.java</p>
+
+<p>public class Keyboard {</p>
+<p>    private final MinecraftClient client;</p>
+
+<p>    // 处理键盘按下/释放</p>
+<p>    private void onKey(long window, int key, int scanCode, int action, int modifiers) {</p>
+<p>        if (action == GLFW.GLFW_PRESS) {</p>
+<p>            // 按键按下</p>
+<p>            KeyBinding.setKeyPressed(InputUtil.Type.KEYSYM.createFromCode(key), true);</p>
+
+<p>            // 处理特殊按键</p>
+<p>            if (key == GLFW.GLFW_KEY_ESCAPE) {</p>
+<p>                // ESC �?- 关闭界面或暂�?                this.client.scheduleStop();</p>
+<p>            } else if (this.client.currentScreen != null) {</p>
+<p>                // 当前有界面，交给界面处理</p>
+<p>                this.client.currentScreen.keyPressed(key, scanCode, modifiers);</p>
+<p>            }</p>
+<p>        } else if (action == GLFW.GLFW_RELEASE) {</p>
+<p>            // 按键释放</p>
+<p>            KeyBinding.setKeyPressed(InputUtil.Type.KEYSYM.createFromCode(key), false);</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### Mouse �?</code></pre>
+<p>// 源码位置: Mouse.java</p>
+
+<p>public class Mouse {</p>
+<p>    private double cursorDeltaX;</p>
+<p>    private double cursorDeltaY;</p>
+
+<p>    // 处理鼠标移动</p>
+<p>    private void onCursorPos(long window, double x, double y) {</p>
+<p>        this.cursorDeltaX += x - this.x;</p>
+<p>        this.cursorDeltaY += y - this.y;</p>
+<p>        this.x = x;</p>
+<p>        this.y = y;</p>
+<p>    }</p>
+
+<p>    // 处理鼠标点击</p>
+<p>    private void onMouseButton(long window, int button, int action, int mods) {</p>
+<p>        if (action == GLFW.GLFW_PRESS) {</p>
+<p>            if (this.client.currentScreen != null) {</p>
+<p>                // 界面点击</p>
+<p>                this.client.currentScreen.mouseClicked(...);</p>
+<p>            } else {</p>
+<p>                // 游戏内点�?                if (button == 0) {</p>
+<p>                    // 左键 - 攻击</p>
+<p>                    this.client.leftButtonClicked = true;</p>
+<p>                } else if (button == 2) {</p>
+<p>                    // 右键 - 使用</p>
+<p>                    this.client.rightButtonClicked = true;</p>
+<p>                }</p>
+<p>            }</p>
+<p>        }</p>
+<p>    }</p>
+
+<p>    // 更新视角（每tick�?    private void updateMouse(double timeDelta) {</p>
+<p>        // 鼠标灵敏度设�?        double sensitivity = this.client.options.getMouseSensitivity().getValue();</p>
+<p>        double multiplier = sensitivity <em> sensitivity </em> sensitivity * 8.0;</p>
+
+<p>        // 计算视角变化</p>
+<p>        double yawDelta = this.cursorDeltaX * multiplier;</p>
+<p>        double pitchDelta = this.cursorDeltaY * multiplier;</p>
+
+<p>        // 更新玩家视角</p>
+<p>        if (this.client.player != null) {</p>
+<p>            this.client.player.changeLookDirection(yawDelta, pitchDelta);</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### KeyBinding 系统
+</code></pre>
+<p>// 源码位置: option/KeyBinding.java</p>
+
+<p>public class KeyBinding implements Comparable<KeyBinding> {</p>
+<p>    // 所有按键绑�?    private static final Map<String, KeyBinding> KEYS_BY_ID = Maps.newHashMap();</p>
+<p>    // 按键到绑定的映射</p>
+<p>    private static final Map<InputUtil.Key, KeyBinding> KEY_TO_BINDINGS = Maps.newHashMap();</p>
+
+<p>    // 按键状�?    private InputUtil.Key boundKey;</p>
+<p>    private boolean pressed;</p>
+<p>    private int timesPressed;  // 按下次数（用�?wasPressed�?    </p>
+<p>    // 创建一个新的快捷键</p>
+<p>    public KeyBinding(String translationKey, int defaultKey, String category) {</p>
+<p>        this.translationKey = translationKey;</p>
+<p>        this.boundKey = InputUtil.Type.KEYSYM.createFromCode(defaultKey);</p>
+<p>        this.category = category;</p>
+<p>        KEYS_BY_ID.put(translationKey, this);</p>
+<p>        KEY_TO_BINDINGS.put(this.boundKey, this);</p>
+<p>    }</p>
+
+<p>    // 按键是否正在被按�?    public boolean isPressed() {</p>
+<p>        return this.pressed;</p>
+<p>    }</p>
+
+<p>    // 按键是否刚刚被按下（消费一次）</p>
+<p>    public boolean wasPressed() {</p>
+<p>        if (this.timesPressed == 0) {</p>
+<p>            return false;</p>
+<p>        }</p>
+<p>        this.timesPressed--;</p>
+<p>        return true;</p>
+<p>    }</p>
+
+<p>    // 每tick更新按键状�?    public static void updatePressedStates() {</p>
+<p>        for (KeyBinding binding : KEYS_BY_ID.values()) {</p>
+<p>            // 检查当前按键是否被按下</p>
+<p>            binding.setPressed(InputUtil.isKeyPressed(</p>
+<p>                MinecraftClient.getInstance().getWindow().getHandle(),</p>
+<p>                binding.boundKey.getCode()</p>
+<p>            ));</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 键盘输入
+</code></pre>
+<p>// 源码位置: input/KeyboardInput.java</p>
+
+<p>public class KeyboardInput extends Input {</p>
+<p>    private final GameOptions settings;</p>
+
+<p>    @Override</p>
+<p>    public void tick(boolean slowDown, float slowDownFactor) {</p>
+<p>        // 检测按键状�?        this.pressingForward = this.settings.forwardKey.isPressed();</p>
+<p>        this.pressingBack = this.settings.backKey.isPressed();</p>
+<p>        this.pressingLeft = this.settings.leftKey.isPressed();</p>
+<p>        this.pressingRight = this.settings.rightKey.isPressed();</p>
+
+<p>        // 计算移动方向</p>
+<p>        this.movementForward = KeyboardInput.getMovementMultiplier(</p>
+<p>            this.pressingForward, this.pressingBack</p>
+<p>        );</p>
+<p>        this.movementSideways = KeyboardInput.getMovementMultiplier(</p>
+<p>            this.pressingLeft, this.pressingRight</p>
+<p>        );</p>
+
+<p>        // 跳跃和潜�?        this.jumping = this.settings.jumpKey.isPressed();</p>
+<p>        this.sneaking = this.settings.sneakKey.isPressed();</p>
+
+<p>        // 减速处理（在水下、岩浆中等）</p>
+<p>        if (slowDown) {</p>
+<p>            this.movementSideways *= slowDownFactor;</p>
+<p>            this.movementForward *= slowDownFactor;</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

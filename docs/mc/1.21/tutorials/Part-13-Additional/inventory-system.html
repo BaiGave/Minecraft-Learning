@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>物品栏容器系�? - Minecraft 原版 教程</title>
+    <meta name="title" content="物品栏容器系�? - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-13-Additional/inventory-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-13-Additional/inventory-system.html">
+    <meta property="og:title" content="物品栏容器系�? - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="物品栏容器系�? - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "物品栏容器系�?",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.833Z",
+        "dateModified": "2026-03-22T07:07:48.833Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-13-Additional</span>
+        
+        <span>/</span>
+        <span>物品栏容器系�?</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">物品栏容器系�?</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> inventory-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#1-什么是物品栏-">1. 什么是物品栏？</a></li><li class="h3"><a href="#2-inventory-接口">2. Inventory 接口</a></li><li class="h3"><a href="#3-物品栏的-槽位-概念">3. 物品栏的"槽位"概念</a></li><li><a href="#图解-物品栏系统结构">图解：物品栏系统结构</a></li><li class="h3"><a href="#整体架构">整体架构</a></li><li class="h3"><a href="#漏斗的工作流-">漏斗的工作流�?</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#1-inventory-接口的方-">1. Inventory 接口的方�?</a></li><li class="h3"><a href="#2-simpleinventory-简单实-">2. SimpleInventory 简单实�?</a></li><li class="h3"><a href="#3-漏斗的实现要-">3. 漏斗的实现要�?</a></li><li class="h3"><a href="#4-客户-服务端同-">4. 客户�?服务端同�?</a></li><li><a href="#实战演示-创建一个带物品栏的方块">实战演示：创建一个带物品栏的方块</a></li><li class="h3"><a href="#步骤-1-创建方块实-">步骤 1：创建方块实�?</a></li><li class="h3"><a href="#步骤-2-创-screenhandler">步骤 2：创�?ScreenHandler</a></li><li><a href="#小结">小结</a></li><li class="h3"><a href="#关键要点">关键要点</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#内部链接">内部链接</a></li><li class="h3"><a href="#源码文件">源码文件</a></li><li class="h3"><a href="#继续学习">继续学习</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                <h2 id="目标">目标</h2>
+
+<p>学完本教程后，你将能够：</p>
+<p>- 理解 Minecraft 物品栏（Inventory）系统的核心概念</p>
+<p>- 掌握 <code>Inventory</code> 接口的用�?- 了解不同类型的物品栏实现（玩家、箱子、漏斗、熔炉）</p>
+<p>- 理解客户�?服务端的物品栏同步机�?- 学会使用 <code>ScreenHandler</code> 容器接口</p>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- Java 基础（接口、抽象类、继承）</p>
+<p>- 了解 Minecraft 方块实体（BlockEntity）概�?- 知道什么是 ItemStack（物品堆�?</p>
+<hr>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="1-什么是物品栏-">1. 什么是物品栏？</h3>
+
+<p>想象一下，<em>*物品栏就像你的背�?</em>。它是一个有固定格子数的容器，每个格子可以放一组物品�?</p>
+<p>就像现实中的储物柜：</p>
+<p>- 每个柜子（格子）可以放东�?- 柜子有编号，�?0 开�?- 有的柜子可以放任意物品，有的只能放特定物�?</p>
+<div class="mermaid">
+graph LR
+    A["背包/物品�?br/>Inventory"] --> B["格子 0: �?]
+    A --> C["格子 1: 3个钻�?]
+    A --> D["格子 2: 1把铁�?]
+    A --> E["格子 N: ..."]
+    
+    style A fill:#e1f5fe
+    style B fill:#c8e6c9
+    style C fill:#c8e6c9
+    style D fill:#c8e6c9
+    style E fill:#c8e6c9
+</div>
+
+<h3 id="2-inventory-接口">2. Inventory 接口</h3>
+
+<p><code>Inventory</code> �?Minecraft 中所有物品栏�?标准规范"。任何实现这个接口的类，都可以：</p>
+<p>- 存放和取出物�?- 被玩家打开（如果是一个方块实体）</p>
+<p>- 与漏斗等红石机械交互</p>
+
+<div class="mermaid">
+classDiagram
+    class Inventory {
+        <<interface>>
+        +size() int
+        +isEmpty() boolean
+        +getStack(slot) ItemStack
+        +setStack(slot, stack) void
+        +removeStack(slot) ItemStack
+        +removeStack(slot, amount) ItemStack
+        +markDirty() void
+        +canPlayerUse(player) boolean
+    }
+    
+    class SimpleInventory {
+        +SimpleInventory(size)
+        +addListener(listener)
+        +addStack(stack) ItemStack
+        +removeItem(item, count) ItemStack
+    }
+    
+    class HopperBlockEntity {
+        +INVENTORY_SIZE = 5
+        +serverTick()
+        +extract()
+        +insert()
+    }
+    
+    class PlayerInventory {
+        +main: 36�?        +armor: 4�?        +offHand: 1�?    }
+    
+    Inventory <|.. SimpleInventory
+    Inventory <|.. HopperBlockEntity
+    Inventory <|.. PlayerInventory
+</div>
+
+<h3 id="3-物品栏的-槽位-概念">3. 物品栏的"槽位"概念</h3>
+
+<p><em>*槽位（Slot�?</em> = 物品栏中的格子，编号�?0 开�?</p>
+<div class="mermaid">
+graph TB
+    subgraph "玩家物品�?
+        subgraph "热bar (9�?"
+            H0["0: 钻石�?]
+            H1["1: �?]
+            H2["2: 面包 x64"]
+            H3["3: �?]
+            H4["4: �?]
+            H5["5: �?]
+            H6["6: �?]
+            H7["7: �?]
+            H8["8: 弓箭"]
+        end
+        
+        subgraph "主背�?(27�?"
+            M0["9: �?]
+            M1["10: 铁矿�?]
+            M2["11: 煤炭"]
+            M3["..."]
+            M26["35: �?]
+        end
+    end
+</div>
+
+<blockquote>**小贴�?*：槽位编号是连续的！ - 热bar: 0-8 - 主背�? 9-35 - 装备�? (特殊槽位) - 副手: 40</blockquote>
+
+<hr>
+
+<h2 id="图解-物品栏系统结构">图解：物品栏系统结构</h2>
+
+<h3 id="整体架构">整体架构</h3>
+
+<div class="mermaid">
+flowchart TB
+    subgraph "服务�?
+        SH["ScreenHandler<br/>容器处理�?]
+        BE["BlockEntity<br/>方块实体"]
+        PE["PlayerEntity<br/>玩家实体"]
+        
+        BE --> INV_BE["持有 Inventory"]
+        PE --> INV_P["PlayerInventory"]
+        SH --> "背书" INV_BE
+        SH --> "背书" INV_P
+    end
+    
+    subgraph "客户�?
+        CSH["Client ScreenHandler<br/>客户端容器处理器"]
+        GUI["GUI 界面<br/>HandledScreen"]
+        
+        CSH --> GUI
+    end
+    
+    subgraph "同步"
+        SYNC["服务�?�?客户�?br/>Packet 同步"]
+    end
+    
+    SH <--> SYNC
+    CSH <--> SYNC
+    
+    style SH fill:#81c784
+    style CSH fill:#90caf9
+    style SYNC fill:#fff59d
+</div>
+
+<h3 id="漏斗的工作流-">漏斗的工作流�?</h3>
+<p>漏斗是一个很好的例子，展示了物品栏系统如何工作：</p>
+
+<div class="mermaid">
+flowchart LR
+    subgraph "漏斗 Tick 流程"
+        T1["1. 检查冷却时�?]
+        T2["2. 尝试向下方输出物�?]
+        T3["3. 尝试从上�?实体提取物品"]
+        T4["4. 标记为脏（保存）"]
+    end
+    
+    T1 --> T2 --> T3 --> T4
+    
+    subgraph "提取逻辑"
+        E1["找上方方�?实体"]
+        E2["找漏斗可用的槽位"]
+        E3["转移1个物�?]
+    end
+    
+    T3 --> E1 --> E2 --> E3
+</div>
+
+<hr>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="1-inventory-接口的方-">1. Inventory 接口的方�?</h3>
+<pre class="code-block"><code>// net.minecraft.inventory.Inventory
+public interface Inventory extends Clearable {
+    
+    // 返回物品栏的格子数量
+    int size();
+    
+    // 检查是否所有格子都为空
+    boolean isEmpty();
+    
+    // 获取指定格子的物�?    ItemStack getStack(int slot);
+    
+    // 设置指定格子的物�?    void setStack(int slot, ItemStack stack);
+    
+    // 移除指定格子的物品（全部�?    ItemStack removeStack(int slot);
+    
+    // 移除指定格子的一部分物品
+    ItemStack removeStack(int slot, int amount);
+    
+    // 标记物品栏已修改（重要！每次修改后都要调用）
+    void markDirty();
+    
+    // 检查玩家是否可以使用这个物品栏
+    boolean canPlayerUse(PlayerEntity player);
+}</code></pre>
+
+<h3 id="2-simpleinventory-简单实-">2. SimpleInventory 简单实�?</h3>
+<p><code>SimpleInventory</code> 是一个通用的物品栏实现，适合临时存储�?</p>
+<pre class="code-block"><code>// 创建一个有 9 个格子的物品�?SimpleInventory inventory = new SimpleInventory(9);
+
+// 放物品进�?inventory.setStack(0, new ItemStack(Items.DIAMOND, 5));
+
+// 取物品出�?ItemStack stack = inventory.getStack(0);
+
+// 添加物品（自动找空位或堆叠）
+inventory.addStack(new ItemStack(Items.DIAMOND, 3));
+
+// 监听物品栏变�?inventory.addListener(inventory -&gt; {
+    System.out.println(&quot;物品栏被修改了！&quot;);
+});</code></pre>
+
+<h3 id="3-漏斗的实现要-">3. 漏斗的实现要�?</h3>
+<p>漏斗（<code>HopperBlockEntity</code>）展示了完整的物品栏系统�?</p>
+<pre class="code-block"><code>public class HopperBlockEntity extends LootableContainerBlockEntity implements Hopper {
+    
+    // 漏斗�?5 个格�?    public static final int INVENTORY_SIZE = 5;
+    private DefaultedList&lt;ItemStack&gt; inventory = DefaultedList.ofSize(5, ItemStack.EMPTY);
+    
+    @Override
+    public int size() {
+        return this.inventory.size();
+    }
+    
+    // 服务�?tick 时调�?    public static void serverTick(World world, BlockPos pos, 
+                                   BlockState state, HopperBlockEntity blockEntity) {
+        
+        // 冷却检�?        if (blockEntity.needsCooldown()) {
+            return;
+        }
+        
+        // 尝试插入物品到下方容�?        if (!blockEntity.isFull()) {
+            HopperBlockEntity.insert(world, pos, blockEntity);
+        }
+        
+        // 尝试从上方提取物�?        if (!blockEntity.isEmpty()) {
+            HopperBlockEntity.extract(world, blockEntity);
+        }
+    }
+    
+    // 物品转移核心逻辑
+    public static ItemStack transfer(Inventory from, Inventory to, 
+                                      ItemStack stack, Direction side) {
+        // 遍历目标物品栏的所有槽�?        for (int i = 0; i &lt; to.size(); i++) {
+            ItemStack existing = to.getStack(i);
+            
+            if (existing.isEmpty()) {
+                // 槽位为空，直接放�?                to.setStack(i, stack);
+                return ItemStack.EMPTY;
+            } 
+            else if (canMergeItems(existing, stack)) {
+                // 槽位有同类物品，尝试堆叠
+                int space = stack.getMaxCount() - existing.getCount();
+                if (space &gt; 0) {
+                    existing.increment(space);
+                    stack.decrement(space);
+                }
+            }
+        }
+        return stack; // 返回未放入的物品
+    }
+}</code></pre>
+
+<h3 id="4-客户-服务端同-">4. 客户�?服务端同�?</h3>
+<div class="mermaid">
+sequenceDiagram
+    participant P as 玩家
+    participant S as 服务�?    participant C as 客户�?    
+    Note over P,S: 打开容器（如漏斗�?    P->>S: 点击方块
+    S->>S: 创建 ScreenHandler
+    S->>C: 发送同步数�?    
+    Note over P,C: 显示容器界面
+    
+    Note over P,S: 操作物品
+    P->>S: 发�?SlotClick 数据�?    S->>S: 更新 Inventory
+    S->>S: 调用 markDirty()
+    S->>C: 发送更新数据包
+    
+    Note over P,S: 关闭容器
+    P->>S: 关闭请求
+    S->>S: 调用 onClose()
+    S->>C: 确认关闭
+</div>
+
+<hr>
+
+<h2 id="实战演示-创建一个带物品栏的方块">实战演示：创建一个带物品栏的方块</h2>
+
+<h3 id="步骤-1-创建方块实-">步骤 1：创建方块实�?</h3>
+<pre class="code-block"><code>// MyInventoryBlockEntity.java
+public class MyInventoryBlockEntity extends LootableContainerBlockEntity {
+    
+    private final DefaultedList&lt;ItemStack&gt; inventory = 
+        DefaultedList.ofSize(9, ItemStack.EMPTY);
+    
+    public MyInventoryBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.MY_BLOCK, pos, state);
+    }
+    
+    @Override
+    public int size() {
+        return this.inventory.size();
+    }
+    
+    @Override
+    protected Text getContainerName() {
+        return Text.translatable(&quot;block.my_mod.my_inventory_block&quot;);
+    }
+    
+    @Override
+    protected ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
+        return new MyScreenHandler(syncId, playerInventory, this);
+    }
+}</code></pre>
+
+<h3 id="步骤-2-创-screenhandler">步骤 2：创�?ScreenHandler</h3>
+
+<pre class="code-block"><code>// MyScreenHandler.java
+public class MyScreenHandler extends ScreenHandler {
+    
+    private final Inventory inventory;
+    
+    public MyScreenHandler(int syncId, PlayerInventory playerInventory, 
+                          Inventory inventory) {
+        super(Registry.SCREEN_HANDLER_TYPE, syncId);
+        this.inventory = inventory;
+        
+        // 添加方块物品栏的格子
+        for (int row = 0; row &lt; 3; row++) {
+            for (int col = 0; col &lt; 9; col++) {
+                this.addSlot(new Slot(inventory, col + row * 9, 8 + col * 18, 18 + row * 18));
+            }
+        }
+        
+        // 添加玩家物品栏的格子
+        for (int row = 0; row &lt; 3; row++) {
+            for (int col = 0; col &lt; 9; col++) {
+                this.addSlot(new Slot(playerInventory, 9 + col + row * 9, 
+                    8 + col * 18, 84 + row * 18));
+            }
+        }
+        
+        // 添加热bar
+        for (int i = 0; i &lt; 9; i++) {
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+        }
+    }
+    
+    @Override
+    public boolean canUse(PlayerEntity player) {
+        return this.inventory.canPlayerUse(player);
+    }
+    
+    @Override
+    public ItemStack quickMove(PlayerEntity player, int slotIndex) {
+        ItemStack stack = ItemStack.EMPTY;
+        Slot slot = this.getSlot(slotIndex);
+        
+        if (slot.hasStack()) {
+            ItemStack slotStack = slot.getStack();
+            stack = slotStack.copy();
+            
+            // 从容器移动到玩家背包
+            if (slotIndex &lt; 27) {
+                if (!this.insertItem(slotStack, 27, 36, false)) {
+                    return ItemStack.EMPTY;
+                }
+            } 
+            // 从玩家背包移动到容器
+            else if (!this.insertItem(slotStack, 0, 27, false)) {
+                return ItemStack.EMPTY;
+            }
+            
+            if (slotStack.isEmpty()) {
+                slot.setStack(ItemStack.EMPTY);
+            } else {
+                slot.markDirty();
+            }
+        }
+        
+        return stack;
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+<div class="mermaid">
+mindmap
+  root((物品栏系�?)
+    Inventory 接口
+      size() - 格子数量
+      getStack() - 获取物品
+      setStack() - 放置物品
+      markDirty() - 标记修改
+    SimpleInventory
+      临时物品�?      可添加监听器
+      适合客户端同�?    方块实体物品�?      继承 LootableContainerBlockEntity
+      实现 createScreenHandler
+      NBT 保存/读取
+    ScreenHandler
+      连接 Inventory �?GUI
+      处理客户端同�?      管理 Slot
+    漏斗系统
+      提取逻辑
+      插入逻辑
+      冷却机制
+</div>
+
+<h3 id="关键要点">关键要点</h3>
+
+<table><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`Inventory`</td><td>物品栏的标准接口，任何存放物品的地方都应该实现它</td></tr><tr><td>`markDirty()`</td><td>每次修改物品栏后必须调用，用于同步和保存</td></tr><tr><td>`ScreenHandler`</td><td>服务端的容器逻辑，处理玩家交互和同步</td></tr><tr><td>`Slot`</td><td>物品栏中的单个格子，连接 Inventory �?GUI</td></tr><tr><td>槽位编号</td><td>�?0 开始，连续编号，记住这个顺序很重要</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>基础练习</strong>：创建一个有 3x3 物品栏的自定义方�?</p>
+<p>2. <strong>进阶练习</strong>：让漏斗只能提取特定类型的物品（使用 <code>canTransferTo</code> 方法�?</p>
+<p>3. <strong>挑战练习</strong>：创建一�?过滤器漏�?，上面可以放漏斗，下面的物品栏会按过滤器分类存储物品</p>
+
+<hr>
+
+<h2 id="相关链接">相关链接</h2>
+
+<h3 id="内部链接">内部链接</h3>
+
+<p>- <a href="/mc/1.21/tutorials/Part-3-Block-Item/17-item-basics/">Part-3: 物品基础</a> - 物品基础知识</p>
+<p>- <a href="/mc/1.21/tutorials/Part-3-Block-Item/16-block-entity/">Part-3: 方块实体</a> - 方块实体教程</p>
+<p>- <a href="./nbt-data-system.html">Part-13: NBT 数据系统</a> - 数据存储</p>
+
+<h3 id="源码文件">源码文件</h3>
+
+<p>- <code>net.minecraft.inventory.Inventory</code> - 物品栏接�?- <code>net.minecraft.inventory.SimpleInventory</code> - 简单实�?- <code>net.minecraft.block.entity.HopperBlockEntity</code> - 漏斗</p>
+<p>- <code>net.minecraft.screen.ScreenHandler</code> - 容器处理�?</p>
+<hr>
+
+<h3 id="继续学习">继续学习</h3>
+
+<p>- <a href="./particle-system.html">Part-13: 粒子系统</a> - 视觉效果</p>
+<p>- <a href="./sound-system.html">Part-13: 声音系统</a> - 音效</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

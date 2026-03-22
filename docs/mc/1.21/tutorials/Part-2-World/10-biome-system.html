@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>10 - 生物群系系统：Biome 的多彩世�? - Minecraft 原版 教程</title>
+    <meta name="title" content="10 - 生物群系系统：Biome 的多彩世�? - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-2-World/10-biome-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-2-World/10-biome-system.html">
+    <meta property="og:title" content="10 - 生物群系系统：Biome 的多彩世�? - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="10 - 生物群系系统：Biome 的多彩世�? - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "10 - 生物群系系统：Biome 的多彩世�?",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.846Z",
+        "dateModified": "2026-03-22T07:07:48.846Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-2-World</span>
+        
+        <span>/</span>
+        <span>10 - 生物群系系统：Biome 的多彩世�?</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">10 - 生物群系系统：Biome 的多彩世�?</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 10-biome-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#生物群系是什么-">生物群系是什么？</a></li><li class="h3"><a href="#温度和降雨-决定生物群系的关-">温度和降雨：决定生物群系的关�?</a></li><li class="h3"><a href="#biome-类的结构">Biome 类的结构</a></li><li class="h3"><a href="#天气参数">天气参数</a></li><li class="h3"><a href="#降水的决-">降水的决�?</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#温度计算">温度计算</a></li><li class="h3"><a href="#冰和雪的生成条件">冰和雪的生成条件</a></li><li class="h3"><a href="#生物群系的视觉效-">生物群系的视觉效�?</a></li><li class="h3"><a href="#生物群系如何存储-chunk-">生物群系如何存储�?Chunk �?</a></li><li><a href="#图解-生物群系生成流-">图解：生物群系生成流�?</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#生物群系的应用场-">生物群系的应用场�?</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#思考题">思考题</a></li><li class="h3"><a href="#动手-">动手�?</a></li><li><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                <h2 id="目标">目标</h2>
+
+<p>学完本章后，你将理解�?- Biome 类是什么，它包含哪些信�?- 温度和降雨如何决定生物群�?- 生物群系是如何存储在 Chunk 中的</p>
+<p>- 生物群系在游戏中的实际应�?</p>
+<h2 id="前置知识">前置知识</h2>
+
+<p>- <a href="./09-chunk-system.html">09-区块系统</a> - 理解 Chunk 的结�?- <a href="/mc/1.21/tutorials/Part-1-Foundation/04-registry-system/">04-注册表系�?md</a> - 理解注册表机�?</p>
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="生物群系是什么-">生物群系是什么？</h3>
+
+<p>想象你在中国旅游�?</p>
+<p>- <strong>东北哈尔�?<em> �?冬天很冷，下雪，有冰�?- </strong>海南三亚<strong> �?常年温暖，海滩，椰子�?- </strong>西藏高原</em>* �?空气稀薄，草原，牦�?</p>
+<p><em>*Minecraft 的生物群�?</em> = 世界各地�?气候区"在游戏里的实现！</p>
+
+<p>每个生物群系决定了：</p>
+<p>- 地表的方块（草地、沙子、雪�?- 植被（树木、花、草�?- 天气（是否下雨、下雪）</p>
+<p>- 可以生成的生物（猪、牛、羊只在草原�?</p>
+<div class="mermaid">
+flowchart LR
+    subgraph Biomes["生物群系分类"]
+        direction TB
+        Temperate["温带"]
+        Cold["寒冷"]
+        Warm["温暖"]
+        Special["特殊"]
+    end
+
+    Temperate -->|森林| Forest["森林/ birch森林"]
+    Temperate -->|平原| Plains["平原/向日葵平�?]
+    Temperate -->|沼泽| Swamp["沼泽"]
+
+    Cold -->|针叶林| Taiga["针叶�?]
+    Cold -->|雪地| Snowy["积雪冻原"]
+
+    Warm -->|沙漠| Desert["沙漠"]
+    Warm -->|草原| Savanna["热带草原"]
+
+    Special -->|地狱| Nether["下界"]
+    Special -->|末地| End["末地"]
+</div>
+
+<h3 id="温度和降雨-决定生物群系的关-">温度和降雨：决定生物群系的关�?</h3>
+<p><strong>生活比喻</strong>�?</p>
+<table><thead><tr><th>温度 (Temperature)</th><th>降雨 (Downfall)</th><th>现实类比</th><th>MC 生物群系</th></tr></thead><tbody><tr><td>-------------------</td><td>-----------------</td><td>---------</td><td>-------------</td></tr><tr><td>�?</td><td>�?</td><td>热带雨林</td><td>丛林</td></tr><tr><td>�?</td><td>�?</td><td>沙漠</td><td>沙漠</td></tr><tr><td>中等</td><td>中等</td><td>温带</td><td>森林/平原</td></tr><tr><td>�?</td><td>�?</td><td>寒带</td><td>针叶�?</td></tr><tr><td>很低</td><td>任意</td><td>冻土</td><td>积雪冻原</td></tr></tbody></table>
+
+<div class="mermaid">
+flowchart TB
+    subgraph Climate["气候参�?]
+        Temp["温度 Temperature"]
+        Down["降雨 Downfall"]
+    end
+
+    subgraph Decision["生物群系决策"]
+        Temp -->|高| TempHigh{{"温度 > 0.5?"}}
+        Temp -->|低| TempLow{{"温度 <= 0.5?"}}
+
+        TempHigh -->|降雨高| Jungle["丛林"]
+        TempHigh -->|降雨低| Desert["沙漠"]
+        TempHigh -->|降雨中| Savanna["热带草原"]
+
+        TempLow -->|降雨高| Taiga["针叶�?]
+        TempLow -->|降雨低| Snow["积雪冻原"]
+    end
+
+    Temp --> Decision
+    Down --> Decision
+</div>
+
+<h3 id="biome-类的结构">Biome 类的结构</h3>
+
+<blockquote>⚠️ <strong>注意</strong>：以下代码基�?CFR 反编译，实际源码可能略有差异。建议结�?Minecraft 源码仓库交叉验证�?</blockquote>
+<p>源码路径：<code>net/minecraft/world/biome/Biome.java</code></p>
+
+<pre class="code-block"><code>public final class Biome {
+    // 天气参数
+    private final Weather weather;
+
+    // 生成设置（矿石、树木等特征�?    private final GenerationSettings generationSettings;
+
+    // 出生设置（什么生物在这里生成�?    private final SpawnSettings spawnSettings;
+
+    // 视觉效果（天空颜色、粒子、声音等�?    private final BiomeEffects effects;
+}</code></pre>
+
+<h3 id="天气参数">天气参数</h3>
+
+<pre class="code-block"><code>record Weather(
+    boolean hasPrecipitation,    // 是否降水
+    float temperature,           // 温度 (0.0 - 1.0)
+    TemperatureModifier modifier, // 温度修正�?    float downfall              // 降雨�?(0.0 - 1.0)
+)</code></pre>
+
+<p><strong>温度会随高度变化</strong>�?</p>
+<pre class="code-block"><code>private float computeTemperature(BlockPos pos) {
+    float baseTemp = this.weather.temperatureModifier
+        .getModifiedTemperature(pos, this.getTemperature());
+
+    // 高度超过 80 格，温度会下�?    if (pos.getY() &gt; 80) {
+        float noise = TEMPERATURE_NOISE.sample(pos.getX() / 8.0f,
+                                          pos.getZ() / 8.0f, false) * 8.0;
+        return baseTemp - (noise + (float)pos.getY() - 80.0f) * 0.05f / 40.0f;
+    }
+    return baseTemp;
+}</code></pre>
+
+<h3 id="降水的决-">降水的决�?</h3>
+<pre class="code-block"><code>public boolean hasPrecipitation() {
+    return this.weather.hasPrecipitation();
+}
+
+@Override
+public Precipitation getPrecipitation(BlockPos pos) {
+    if (!this.hasPrecipitation()) {
+        return Precipitation.NONE;
+    }
+    // 温度低于某个阈值就是雪，否则是�?    return this.isCold(pos) ? Precipitation.SNOW : Precipitation.RAIN;
+}</code></pre>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="温度计算">温度计算</h3>
+
+<pre class="code-block"><code>private float computeTemperature(BlockPos pos) {
+    // 从天气设置获取基础温度
+    float f = this.weather.temperatureModifier
+        .getModifiedTemperature(pos, this.getTemperature());
+
+    // 高处温度下降（海拔效应）
+    if (pos.getY() &gt; 80) {
+        // 添加噪声来调节温度变�?        float g = (float)(TEMPERATURE_NOISE.sample(
+            (float)pos.getX() / 8.0f,
+            (float)pos.getZ() / 8.0f,
+            false
+        ) * 8.0);
+
+        // 高度每增�?40 格，温度降低 0.05
+        return f - (g + (float)pos.getY() - 80.0f) * 0.05f / 40.0f;
+    }
+    return f;
+}</code></pre>
+
+<h3 id="冰和雪的生成条件">冰和雪的生成条件</h3>
+
+<pre class="code-block"><code>public boolean canSetIce(WorldView world, BlockPos blockPos) {
+    return this.canSetIce(world, blockPos, true);
+}
+
+public boolean canSetIce(WorldView world, BlockPos pos, boolean doWaterCheck) {
+    // 1. 不能是夏季生物群�?    if (this.doesNotSnow(pos)) {
+        return false;
+    }
+
+    // 2. 位置必须在有效高度范围内
+    if (pos.getY() &gt;= world.getBottomY() &amp;&amp; pos.getY() &lt; world.getTopY()
+        &amp;&amp; world.getLightLevel(LightType.BLOCK, pos) &lt; 10) {
+
+        // 3. 必须是水方块
+        BlockState blockState = world.getBlockState(pos);
+        FluidState fluidState = world.getFluidState(pos);
+        if (fluidState.getFluid() == Fluids.WATER
+            &amp;&amp; blockState.getBlock() instanceof FluidBlock) {
+
+            // 4. 周围也要有水（角落可能不结冰�?            boolean bl = world.isWater(pos.west())
+                      &amp;&amp; world.isWater(pos.east())
+                      &amp;&amp; world.isWater(pos.north())
+                      &amp;&amp; world.isWater(pos.south());
+
+            if (!doWaterCheck || bl) {
+                return true;  // 结冰�?            }
+        }
+    }
+    return false;
+}</code></pre>
+
+<h3 id="生物群系的视觉效-">生物群系的视觉效�?</h3>
+<pre class="code-block"><code>public int getGrassColorAt(double x, double z) {
+    // 从效果设置获取颜�?    int baseColor = this.effects.getGrassColor()
+        .orElseGet(this::getDefaultGrassColor);
+
+    // 根据温度和降雨调整颜�?    return this.effects.getGrassColorModifier()
+        .getModifiedGrassColor(x, z, baseColor);
+}</code></pre>
+
+<h3 id="生物群系如何存储-chunk-">生物群系如何存储�?Chunk �?</h3>
+<p>每个 <strong>ChunkSection</strong> 都存储了生物群系信息�?</p>
+<pre class="code-block"><code>public class ChunkSection {
+    // 生物群系数据
+    private ReadableContainer&lt;RegistryEntry&lt;Biome&gt;&gt; biomeContainer;
+}</code></pre>
+
+<p>生物群系是以 <strong>4x4x4 的块</strong>为单位存储的（而不是每个方块一个）�?</p>
+<pre class="code-block"><code>public void populateBiomes(BiomeSupplier biomeSupplier, ...) {
+    PalettedContainer&lt;RegistryEntry&lt;Biome&gt;&gt; palettedContainer =
+        this.biomeContainer.slice();
+
+    // 4x4x4 的网�?    for (int j = 0; j &lt; 4; ++j) {
+        for (int k = 0; k &lt; 4; ++k) {
+            for (int l = 0; l &lt; 4; ++l) {
+                // 计算生物群系
+                palettedContainer.swapUnsafe(j, k, l,
+                    biomeSupplier.getBiome(x + j, y + k, z + l, sampler));
+            }
+        }
+    }
+}</code></pre>
+
+<h2 id="图解-生物群系生成流-">图解：生物群系生成流�?</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Input["输入"]
+        Seed["世界种子"]
+        Pos["位置 (x, z)"]
+    end
+
+    subgraph BiomeSource["生物群系来源"]
+        Noise["多维噪声采样"]
+        Noise --> Temp["温度噪声"]
+        Noise --> Humid["湿度噪声"]
+        Noise --> Elev["海拔噪声"]
+    end
+
+    subgraph Classification["生物群系分类"]
+        Temp --> TempValue{{"温度�?}}
+        Humid --> HumidValue{{"降雨�?}}
+
+        TempValue -->|高温 + 高湿| Jungle["丛林"]
+        TempValue -->|高温 + 低湿| Desert["沙漠"]
+        TempValue -->|中温 + 中湿| Forest["森林"]
+        TempValue -->|低温 + 高湿| Taiga["针叶�?]
+        TempValue -->|低温 + 低湿| Snow["积雪冻原"]
+    end
+
+    subgraph Output["输出"]
+        Biome["生物群系"]
+        Gen["生成特征"]
+        Spawn["生成生物"]
+        Weather["天气"]
+    end
+
+    Classification --> Output
+
+    Seed --> BiomeSource
+    Pos --> BiomeSource
+</div>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="生物群系的应用场-">生物群系的应用场�?</h3>
+<p>1. <strong>地表生成</strong>（见 11-地形生成.md�?   - 草地颜色</p>
+<p>   - 地表方块（草方块 vs 沙砾 vs 沙子�?</p>
+<p>2. <strong>实体生成</strong></p>
+<p>   <code>`</code>java</p>
+<p>   // 在什么生物群系可以生成什么生�?   Pool<SpawnSettings.SpawnEntry> getEntitySpawnList(</p>
+<p>       RegistryEntry<Biome> biome,  // 生物群系</p>
+<p>       SpawnGroup group             // 生物分类</p>
+<p>   )</p>
+<p>   <code>`</code></p>
+
+<p>3. <strong>方块放置</strong></p>
+<p>   - 积雪冻原的村庄不会生成（太冷�?   - 丛林会生成藤�?</p>
+<p>4. <em>*方块特�?</em></p>
+<p>   - 下界不会生成冰（岩浆更多�?   - 冰刺高原有特殊的冰结�?</p>
+<h2 id="小结">小结</h2>
+
+<table><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>Biome</td><td>表示一个气候区的类</td></tr><tr><td>Temperature</td><td>温度参数，决定是否下�?</td></tr><tr><td>Downfall</td><td>降雨参数，影响湿�?</td></tr><tr><td>GenerationSettings</td><td>该生物群系如何生成地形特�?</td></tr><tr><td>SpawnSettings</td><td>该生物群系可以生成什么生�?</td></tr><tr><td>BiomeEffects</td><td>视觉效果（颜色、粒子、声音）</td></tr></tbody></table>
+
+<p><strong>关键理解</strong>�?- <strong>温度 + 降雨 = 生物群系</strong>：这两个参数决定了具体的生物群系</p>
+<p>- <strong>高度影响温度</strong>：高海拔地区温度更低</p>
+<p>- <strong>生物群系是分层的</strong>：生成特征、出生设置、视觉效果各司其�?</p>
+<h2 id="练习">练习</h2>
+
+<h3 id="思考题">思考题</h3>
+
+<p>1. 为什么在 Minecraft 中山顶可能是雪，而山脚是森林�?2. 如果你要添加一个新�?火山"生物群系，它应该有什么特点？</p>
+<p>3. 生物群系和矿石生成有什么关系？</p>
+
+<h3 id="动手-">动手�?</h3>
+<p>在源码中找到以下内容�?</p>
+<p>1. 查看 <code>Biome.java</code> �?Biome 类的字段</p>
+<p>2. 查看 <code>Biome.java</code> �?Weather record 的定�?3. 理解 <code>Biome.java</code> 中温度计算逻辑</p>
+<p>4. <strong>在游戏中验证</strong>：进入不同的生物群系，观察：</p>
+<p>   - 天空颜色</p>
+<p>   - 草的颜色</p>
+<p>   - 天气（是否下�?下雪�?</p>
+<h2 id="源码文件位置">源码文件位置</h2>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Biome.java</td><td>`net/minecraft/world/biome/Biome.java`</td><td>生物群系基类</td></tr><tr><td>BiomeKeys.java</td><td>`net/minecraft/world/biome/BiomeKeys.java`</td><td>生物群系�?</td></tr><tr><td>BiomeRegistry.java</td><td>`net/minecraft/registry/BiomeRegistry.java`</td><td>生物群系注册�?</td></tr></tbody></table>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./11-terrain-gen.html">11-地形生成</a> - 生物群系如何影响地形生成</p>
+<p>- <a href="./09-chunk-system.html">09-区块系统</a> - 生物群系如何存储�?Chunk �?- Minecraft Wiki: <a href="https://minecraft.wiki/w/Biome" target="_blank" rel="noopener noreferrer">Biome</a></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

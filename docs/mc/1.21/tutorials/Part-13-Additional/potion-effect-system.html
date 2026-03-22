@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Minecraft 药水效果系统详解 - Minecraft 原版 教程</title>
+    <meta name="title" content="Minecraft 药水效果系统详解 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-13-Additional/potion-effect-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-13-Additional/potion-effect-system.html">
+    <meta property="og:title" content="Minecraft 药水效果系统详解 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Minecraft 药水效果系统详解 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Minecraft 药水效果系统详解",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.837Z",
+        "dateModified": "2026-03-22T07:07:48.837Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-13-Additional</span>
+        
+        <span>/</span>
+        <span>Minecraft 药水效果系统详解</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Minecraft 药水效果系统详解</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> potion-effect-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是药水效果系统-">什么是药水效果系统�?</a></li><li class="h3"><a href="#生活比喻-药水效-生病时吃的药">生活比喻：药水效�?= 生病时吃的药</a></li><li class="h3"><a href="#效果系统的组-">效果系统的组�?</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本教程后，你将能够：</p>
+<p>- 理解 Minecraft 药水效果系统的核心概�?- 掌握 StatusEffect、StatusEffectInstance 的使�?- 学会创建自定义药水效�?- 了解效果叠加规则和实现原�?</p>
+<h2 id="前置知识">前置知识</h2>
+
+<p>- Java 基础（类、抽象类、枚举）</p>
+<p>- <a href="/mc/1.21/tutorials/Part-4-Entity/20-entity-intro/">实体系统</a> - 药水效果作用于实�?- <a href="/mc/1.21/tutorials/Part-4-Entity/24-entity-attributes/">属性系统</a> - 效果可以修改属�?- <a href="./particle-system.html">粒子系统</a> - 效果会显示粒�?</p>
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是药水效果系统-">什么是药水效果系统�?</h3>
+<p>想象你在�?RPG 游戏�?- <strong>Buff</strong> = 正面效果（如攻击增强、移动加速）</p>
+<p>- <strong>Debuff</strong> = 负面效果（如中毒、减速）</p>
+
+<p>Minecraft 的药水效果系统就像一�?<em>*状态监控系�?</em>。当你喝下药水或被女巫扔药水时，游戏中会添加一个效果（StatusEffect）到你的身上。这个效果会持续一段时间（Duration），期间可能改变你的属性、移动速度或生成粒子�?</p>
+<h3 id="生活比喻-药水效-生病时吃的药">生活比喻：药水效�?= 生病时吃的药</h3>
+
+<p>想象你感冒了去看医生，医生给你开的药就像 Minecraft 中的药水效果�?</p>
+<table><thead><tr><th>现实中的�?</th><th>Minecraft 中的对应</th></tr></thead><tbody><tr><td>-----------</td><td>-------------------</td></tr><tr><td>药品种类（感冒药、止痛药�?</td><td>StatusEffect（速度、力量）</td></tr><tr><td>药效等级（普通、加强）</td><td>amplifier�?=一级，1=二级�?</td></tr><tr><td>药效持续时间</td><td>duration�?00 tick = 30秒）</td></tr><tr><td>吃药后身体变化（退烧、止痛）</td><td>属性修改、伤害、粒子效�?</td></tr><tr><td>药效退�?</td><td>效果消失</td></tr></tbody></table>
+
+<h3 id="效果系统的组-">效果系统的组�?</h3>
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────�?�?                   药水效果系统组成                         �?├─────────────────────────────────────────────────────────�?�?                                                        �?�?  StatusEffect (效果定义)                                �?�?     ├── 颜色、分类、图�?                               �?�?     ├── 属性修改器                                      �?�?     └── 持续效果更新逻辑                                �?�?                                                        �?�?  StatusEffectInstance (效果实例)                        �?�?     ├── 持续时间、等�?                                 �?�?     ├── 粒子显示、叠加规�?                             �?�?     └── 隐藏的上一个效�?                               �?�?                                                        �?�?  LivingEntity (应用主体)                                �?�?     ├── activeStatusEffects (效果列表)                  �?�?     └── addStatusEffect() / removeStatusEffect()      �?�?                                                        �?└─────────────────────────────────────────────────────────�?```
+
+## 图解（Mermaid�?
+### 效果系统结构�?</code></pre>
+<p>flowchart TD</p>
+<p>    A[玩家喝下药水] --> B[创建 StatusEffectInstance]</p>
+<p>    B --> C[调用 LivingEntity#addStatusEffect]</p>
+<p>    C --> D[检查是否已存在效果]</p>
+<p>    D -->|新效果| E[直接添加到活动效果列表]</p>
+<p>    D -->|已存在| F{升级规则检查}</p>
+<p>    F -->|更高等级| G[替换为新效果]</p>
+<p>    F -->|更低等级| H[保留当前效果]</p>
+<p>    F -->|同等级| I[刷新持续时间]</p>
+<p>    E --> J[启动效果更新循环]</p>
+<p>    G --> J</p>
+<p>    J --> K[�?tick 更新效果]</p>
+<p>    K --> L[修改属�?造成伤害]</p>
+<p>    L --> M[显示粒子效果]</p>
+<p>    M --> N{时间耗尽?}</p>
+<p>    N -->|否| K</p>
+<p>    N -->|是| O[移除效果]</p>
+
+<p>    style A fill:#e8f5e8</p>
+<p>    style O fill:#ffebee</p>
+<pre class="code-block"><code>
+### 效果系统类关系图
+</code></pre>
+<p>classDiagram</p>
+<p>    class StatusEffect {</p>
+<p>        +StatusEffectCategory category</p>
+<p>        +int color</p>
+<p>        +int fadeTicks</p>
+<p>        +applyUpdateEffect() boolean</p>
+<p>        +canApplyUpdateEffect() boolean</p>
+<p>        +addAttributeModifier()</p>
+<p>        +createParticle() ParticleEffect</p>
+<p>    }</p>
+
+<p>    class StatusEffectInstance {</p>
+<p>        +RegistryEntry~StatusEffect~ type</p>
+<p>        +int duration</p>
+<p>        +int amplifier</p>
+<p>        +boolean ambient</p>
+<p>        +boolean showParticles</p>
+<p>        +StatusEffectInstance hiddenEffect</p>
+<p>        +upgrade() boolean</p>
+<p>        +update() boolean</p>
+<p>    }</p>
+
+<p>    class StatusEffectCategory {</p>
+<p>        <<enumeration>></p>
+<p>        +BENEFICIAL (蓝色)</p>
+<p>        +HARMFUL (红色)</p>
+<p>        +NEUTRAL (蓝色)</p>
+<p>    }</p>
+
+<p>    class StatusEffects {</p>
+<p>        <<static registry>></p>
+<p>        +SPEED</p>
+<p>        +SLOWNESS</p>
+<p>        +POISON</p>
+<p>        +REGENERATION</p>
+<p>        +...</p>
+<p>    }</p>
+
+<p>    class LivingEntity {</p>
+<p>        +Map~StatusEffect, StatusEffectInstance~ activeStatusEffects</p>
+<p>        +addStatusEffect()</p>
+<p>        +removeStatusEffect()</p>
+<p>        +hasStatusEffect()</p>
+<p>        +getStatusEffect()</p>
+<p>    }</p>
+
+<p>    StatusEffect "1" --> "*" StatusEffectInstance : 创建</p>
+<p>    StatusEffectInstance --> StatusEffectCategory : 分类</p>
+<p>    StatusEffects --> StatusEffect : 注册</p>
+<p>    LivingEntity "1" --> "*" StatusEffectInstance : 拥有</p>
+
+<p>    note for StatusEffect "相当�?药品种类'"</p>
+<p>    note for StatusEffectInstance "相当�?实际吃的�?"</p>
+<pre class="code-block"><code>
+### 效果应用时序�?</code></pre>
+<p>sequenceDiagram</p>
+<p>    participant Player as 玩家</p>
+<p>    participant LE as LivingEntity</p>
+<p>    participant SE as StatusEffect</p>
+<p>    participant SEI as StatusEffectInstance</p>
+
+<p>    Player->>LE: 喝下力量药水</p>
+<p>    LE->>SEI: 创建效果实例 (60�? I�?</p>
+<p>    LE->>LE: 检查是否有同类效果</p>
+<p>    LE->>SEI: 尝试升级 (upgrade)</p>
+<p>    Note over SEI: 如果新效果更强则替换</p>
+
+<p>    loop 每tick (0.05�?</p>
+<p>        SEI->>SEI: update() - 减少时间</p>
+<p>        SEI->>SE: canApplyUpdateEffect()</p>
+<p>        SE->>SE: 检查是否可以更�?        SE->>LE: applyUpdateEffect()</p>
+<p>        LE->>LE: 修改属�?造成伤害</p>
+<p>    end</p>
+
+<p>    SEI-->>LE: 时间归零</p>
+<p>    LE->>LE: 移除效果</p>
+<p>    Note over LE: 播放效果结束动画</p>
+<pre class="code-block"><code>
+## 核心代码
+
+### 1. StatusEffect - 状态效果定�?
+`StatusEffect` 代表一种效果类型，定义了效果的基本属性和行为�?</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.StatusEffect</p>
+<p>public class StatusEffect implements ToggleableFeature {</p>
+<p>    private final StatusEffectCategory category;  // 效果分类</p>
+<p>    private final int color;                     // 效果颜色（用于粒子）</p>
+<p>    private final Map<RegistryEntry<EntityAttribute>, EffectAttributeModifierCreator> attributeModifiers;</p>
+
+<p>    protected StatusEffect(StatusEffectCategory category, int color) {</p>
+<p>        this.category = category;</p>
+<p>        this.color = color;</p>
+<p>    }</p>
+
+<p>    // 每tick更新时调用，返回false会移除效�?    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {</p>
+<p>        return true;  // 默认不做任何�?    }</p>
+
+<p>    // 判断是否可以继续更新</p>
+<p>    public boolean canApplyUpdateEffect(int duration, int amplifier) {</p>
+<p>        return false;  // 默认不可更新（瞬间效果）</p>
+<p>    }</p>
+
+<p>    // 创建效果粒子</p>
+<p>    public ParticleEffect createParticle(StatusEffectInstance effect) {</p>
+<p>        return EntityEffectParticleEffect.create(</p>
+<p>            ParticleTypes.ENTITY_EFFECT, </p>
+<p>            ColorHelper.Argb.withAlpha(255, color)</p>
+<p>        );</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 2. StatusEffectCategory - 效果分类
+</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.StatusEffectCategory</p>
+<p>public enum StatusEffectCategory {</p>
+<p>    BENEFICIAL(Formatting.BLUE),   // 正面效果（蓝色）</p>
+<p>    HARMFUL(Formatting.RED),       // 负面效果（红色）</p>
+<p>    NEUTRAL(Formatting.BLUE);      // 中性效果（蓝色�?}</p>
+<pre class="code-block"><code>
+### 3. StatusEffectInstance - 效果实例
+
+`StatusEffectInstance` 代表应用到实体上的具体效果实例�?</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.StatusEffectInstance</p>
+<p>public class StatusEffectInstance implements Comparable<StatusEffectInstance> {</p>
+<p>    public static final int INFINITE = -1;  // 无限持续</p>
+
+<p>    private final RegistryEntry<StatusEffect> type;  // 效果类型</p>
+<p>    private int duration;                   // 持续时间（tick�?    private int amplifier;                 // 等级�? = I级）</p>
+<p>    private boolean ambient;                // 是否是环境效果（如信标）</p>
+<p>    private boolean showParticles;         // 是否显示粒子</p>
+<p>    private boolean showIcon;               // 是否显示图标</p>
+
+<p>    @Nullable</p>
+<p>    private StatusEffectInstance hiddenEffect;  // 隐藏的旧效果（升级时保留�?    </p>
+<p>    public StatusEffectInstance(</p>
+<p>        RegistryEntry<StatusEffect> effect,</p>
+<p>        int duration,</p>
+<p>        int amplifier</p>
+<p>    ) {</p>
+<p>        this(effect, duration, amplifier, false, true);</p>
+<p>    }</p>
+
+<p>    // 升级效果</p>
+<p>    public boolean upgrade(StatusEffectInstance that) {</p>
+<p>        if (that.amplifier > this.amplifier) {</p>
+<p>            // 保留旧效果（当新效果结束时恢复）</p>
+<p>            this.hiddenEffect = new StatusEffectInstance(this);</p>
+<p>            this.amplifier = that.amplifier;</p>
+<p>            this.duration = that.duration;</p>
+<p>            return true;</p>
+<p>        }</p>
+<p>        return false;</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 4. 原版效果注册示例
+</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.StatusEffects</p>
+<p>public class StatusEffects {</p>
+<p>    // 速度效果 - 增加移动速度</p>
+<p>    public static final RegistryEntry<StatusEffect> SPEED = </p>
+<p>        StatusEffects.register("speed", </p>
+<p>            new StatusEffect(StatusEffectCategory.BENEFICIAL, 3402751)</p>
+<p>                .addAttributeModifier(</p>
+<p>                    EntityAttributes.GENERIC_MOVEMENT_SPEED,</p>
+<p>                    Identifier.ofVanilla("effect.speed"),</p>
+<p>                    0.2f,  // 增加 20% 速度</p>
+<p>                    EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL</p>
+<p>                )</p>
+<p>        );</p>
+
+<p>    // 缓慢效果 - 减少移动速度</p>
+<p>    public static final RegistryEntry<StatusEffect> SLOWNESS = </p>
+<p>        StatusEffects.register("slowness", </p>
+<p>            new StatusEffect(StatusEffectCategory.HARMFUL, 9154528)</p>
+<p>                .addAttributeModifier(</p>
+<p>                    EntityAttributes.GENERIC_MOVEMENT_SPEED,</p>
+<p>                    Identifier.ofVanilla("effect.slowness"),</p>
+<p>                    -0.15f,  // 减少 15% 速度</p>
+<p>                    EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL</p>
+<p>                )</p>
+<p>        );</p>
+
+<p>    // 力量效果 - 增加攻击伤害</p>
+<p>    public static final RegistryEntry<StatusEffect> STRENGTH = </p>
+<p>        StatusEffects.register("strength", </p>
+<p>            new StatusEffect(StatusEffectCategory.BENEFICIAL, 16762624)</p>
+<p>                .addAttributeModifier(</p>
+<p>                    EntityAttributes.GENERIC_ATTACK_DAMAGE,</p>
+<p>                    Identifier.ofVanilla("effect.strength"),</p>
+<p>                    3.0,  // 增加 3 点基础伤害</p>
+<p>                    EntityAttributeModifier.Operation.ADD_VALUE</p>
+<p>                )</p>
+<p>        );</p>
+
+<p>    // 中毒效果 - 持续伤害</p>
+<p>    public static final RegistryEntry<StatusEffect> POISON = </p>
+<p>        StatusEffects.register("poison", </p>
+<p>            new PoisonStatusEffect(StatusEffectCategory.HARMFUL, 8889187)</p>
+<p>        );</p>
+
+<p>    // 即时治疗效果</p>
+<p>    public static final RegistryEntry<StatusEffect> INSTANT_HEALTH = </p>
+<p>        StatusEffects.register("instant_health", </p>
+<p>            new InstantHealthOrDamageStatusEffect(</p>
+<p>                StatusEffectCategory.BENEFICIAL, </p>
+<p>                16262179, </p>
+<p>                false  // false = 治疗, true = 伤害</p>
+<p>            )</p>
+<p>        );</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 5. 特殊效果�?
+#### PoisonStatusEffect - 中毒效果
+</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.PoisonStatusEffect</p>
+<p>public class PoisonStatusEffect extends StatusEffect {</p>
+<p>    public PoisonStatusEffect(StatusEffectCategory category, int color) {</p>
+<p>        super(category, color);</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public boolean canApplyUpdateEffect(int duration, int amplifier) {</p>
+<p>        // �?25 tick（约 1.25 秒）造成一次伤�?        int tickInterval = 25 >> amplifier;  // 等级越高间隔越短</p>
+<p>        return duration % tickInterval == 0;</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {</p>
+<p>        if (entity.canTakeDamage()) {</p>
+<p>            // 造成 1 点伤害（等级越高伤害越高�?            entity.damage(</p>
+<p>                DamageSource.MAGIC, </p>
+<p>                1.0f << amplifier</p>
+<p>            );</p>
+<p>        }</p>
+<p>        return true;</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+#### RegenerationStatusEffect - 再生效果
+</code></pre>
+<p>// 源码位置: net.minecraft.entity.effect.RegenerationStatusEffect</p>
+<p>public class RegenerationStatusEffect extends StatusEffect {</p>
+<p>    public RegenerationStatusEffect(StatusEffectCategory category, int color) {</p>
+<p>        super(category, color);</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public boolean canApplyUpdateEffect(int duration, int amplifier) {</p>
+<p>        // �?50 tick（约 2.5 秒）治疗一�?        int tickInterval = 50 >> amplifier;</p>
+<p>        return duration % tickInterval == 0;</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {</p>
+<p>        if (entity.canTakeDamage()) {</p>
+<p>            entity.heal(1.0f << amplifier);</p>
+<p>        }</p>
+<p>        return true;</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+## 实战演示
+
+### 场景 1：给玩家添加效果
+</code></pre>
+<p>// 方法1：使用效果实�?public void giveSpeedEffect(PlayerEntity player) {</p>
+<p>    StatusEffectInstance effect = new StatusEffectInstance(</p>
+<p>        StatusEffects.SPEED,    // 速度效果</p>
+<p>        600,                     // 持续 600 tick (30�?</p>
+<p>        0                        // 等级 0 (I�?</p>
+<p>    );</p>
+<p>    player.addStatusEffect(effect);</p>
+<p>}</p>
+
+<p>// 方法2：快捷方法（省略实例创建�?public void giveStrengthEffect(PlayerEntity player) {</p>
+<p>    player.addStatusEffect(</p>
+<p>        StatusEffects.STRENGTH,</p>
+<p>        1200,  // 持续 60�?        1      // 等级 1 (II�?</p>
+<p>    );</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 场景 2：检查和管理效果
+</code></pre>
+<p>// 检查是否有某种效果</p>
+<p>public boolean hasSpeedEffect(PlayerEntity player) {</p>
+<p>    return player.hasStatusEffect(StatusEffects.SPEED);</p>
+<p>}</p>
+
+<p>// 获取效果等级</p>
+<p>public int getSpeedLevel(PlayerEntity player) {</p>
+<p>    StatusEffectInstance effect = player.getStatusEffect(StatusEffects.SPEED);</p>
+<p>    return effect != null ? effect.getAmplifier() : -1;</p>
+<p>}</p>
+
+<p>// 移除效果</p>
+<p>public void removeSpeedEffect(PlayerEntity player) {</p>
+<p>    player.removeStatusEffect(StatusEffects.SPEED);</p>
+<p>}</p>
+
+<p>// 清除所有负面效�?public void curePlayer(PlayerEntity player) {</p>
+<p>    for (StatusEffectInstance effect : player.getStatusEffects()) {</p>
+<p>        if (effect.getEffectType().value().getCategory() == StatusEffectCategory.HARMFUL) {</p>
+<p>            player.removeStatusEffect(effect.getEffectType());</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 场景 3：创建自定义效果
+</code></pre>
+<p>// 第一步：创建自定义效果类</p>
+<p>public class FireAuraStatusEffect extends StatusEffect {</p>
+<p>    public FireAuraStatusEffect() {</p>
+<p>        super(StatusEffectCategory.BENEFICIAL, 0xFF5500);  // 橙色</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public boolean canApplyUpdateEffect(int duration, int amplifier) {</p>
+<p>        return true;  // 每tick都应�?    }</p>
+
+<p>    @Override</p>
+<p>    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {</p>
+<p>        // 对附近的敌人造成火焰伤害</p>
+<p>        List<LivingEntity> nearby = entity.getWorld().getEntitiesByClass(</p>
+<p>            LivingEntity.class,</p>
+<p>            entity.getBoundingBox().expand(3.0),</p>
+<p>            e -> e != entity && entity.isTeammate(e)</p>
+<p>        );</p>
+
+<p>        for (LivingEntity target : nearby) {</p>
+<p>            target.setOnFire(true);</p>
+<p>            target.damage(DamageSource.IN_FIRE, 1.0f << amplifier);</p>
+<p>        }</p>
+<p>        return true;</p>
+<p>    }</p>
+<p>}</p>
+
+<p>// 第二步：注册效果</p>
+<p>public static final RegistryEntry<StatusEffect> FIRE_AURA = </p>
+<p>    StatusEffects.register("fire_aura", new FireAuraStatusEffect());</p>
+
+<p>// 第三步：添加效果</p>
+<p>public void activateFireAura(PlayerEntity player) {</p>
+<p>    player.addStatusEffect(</p>
+<p>        FireAuraEffects.FIRE_AURA,</p>
+<p>        600,  // 30�?        0     // I�?    );</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 场景 4：药水物�?</code></pre>
+<p>// 创建自定义药水物�?public class FireAuraPotion extends PotionItem {</p>
+<p>    public FireAuraPotion(Settings settings) {</p>
+<p>        super(settings);</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {</p>
+<p>        // 添加效果</p>
+<p>        user.addStatusEffect(new StatusEffectInstance(</p>
+<p>            ModEffects.FIRE_AURA,</p>
+<p>            1200,  // 60�?            0      // I�?        ));</p>
+
+<p>        // 播放喝药水音�?        world.playSound(null, user.getX(), user.getY(), user.getZ(),</p>
+<p>            SoundEvents.ENTITY_GENERIC_DRINK, </p>
+<p>            SoundCategory.PLAYERS, 1.0f, 1.0f</p>
+<p>        );</p>
+
+<p>        // 消耗药�?        return PotionItem.useChargedItem(stack, world, user);</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 场景 5：信标效果（环境效果�?</code></pre>
+<p>// 环境效果的特点是粒子更透明</p>
+<p>public void giveBeaconEffect(PlayerEntity player) {</p>
+<p>    StatusEffectInstance effect = new StatusEffectInstance(</p>
+<p>        StatusEffects.SPEED,</p>
+<p>        1800,   // 90�?        1,      // II�?        true,   // ambient = true（环境效果，粒子更透明�?        true,   // showParticles</p>
+<p>        true    // showIcon</p>
+<p>    );</p>
+<p>    player.addStatusEffect(effect);</p>
+<p>}</p>
+<pre class="code-block"><code>
+## 效果叠加规则
+
+### 等级叠加规则
+</code></pre>
+<p>规则 1: 高等级效果替换低等级效果</p>
+<p>  如果喝下 II 级速度时已经有 I 级：</p>
+<p>    �?II 级速度替换 I �?    �?�?II 级结束时，自动恢�?I 级（如果有残留时间）</p>
+
+<p>规则 2: 同等级刷新时�?  如果喝下 II 级速度时已经有 II 级：</p>
+<p>    �?时间刷新为新的持续时�?</p>
+<p>规则 3: 不同效果互不影响</p>
+<p>  速度 + 跳跃提升 = 可以同时存在</p>
+<pre class="code-block"><code>
+### 效果冲突检�?</code></pre>
+<p>// 检查是否会被替�?public boolean willEffectBeReplaced(LivingEntity entity, StatusEffect effect, int amplifier) {</p>
+<p>    StatusEffectInstance current = entity.getStatusEffect(effect);</p>
+<p>    if (current == null) {</p>
+<p>        return false;  // 没有当前效果，不会被替换</p>
+<p>    }</p>
+<p>    return current.getAmplifier() > amplifier;</p>
+<p>}</p>
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

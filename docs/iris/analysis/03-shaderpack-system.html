@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Iris 着色器包系统 - Iris 光影 教程</title>
+    <meta name="title" content="Iris 着色器包系统 - Iris 光影 教程">
+    <meta name="description" content="深入学习 Iris 光影 源码，理解其内部工作原理">
+    <meta name="keywords" content="Iris 光影, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/iris/analysis/03-shaderpack-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/iris/analysis/03-shaderpack-system.html">
+    <meta property="og:title" content="Iris 着色器包系统 - Iris 光影 教程">
+    <meta property="og:description" content="深入学习 Iris 光影 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Iris 着色器包系统 - Iris 光影">
+    <meta name="twitter:description" content="深入学习 Iris 光影 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Iris 着色器包系统",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.919Z",
+        "dateModified": "2026-03-22T07:07:48.919Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #E07A5F 0%, #E07A5F88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Iris 光影</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Iris 着色器包系统</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Iris 着色器包系统</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge iris">Iris 光影</span>
+                    
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 03-shaderpack-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#1-概述">1. 概述</a></li><li><a href="#2-shaderpack-核心结构">2. ShaderPack 核心结构</a></li><li class="h3"><a href="#2-1-加载流程">2.1 加载流程</a></li><li><a href="#3-程序管理">3. 程序管理</a></li><li class="h3"><a href="#3-1-programset">3.1 ProgramSet</a></li><li class="h3"><a href="#3-2-programsource">3.2 ProgramSource</a></li><li class="h3"><a href="#3-3-programarrayid">3.3 ProgramArrayId</a></li><li><a href="#4-include-处理器">4. Include 处理器</a></li><li class="h3"><a href="#4-1-includegraph">4.1 IncludeGraph</a></li><li class="h3"><a href="#4-2-includeprocessor">4.2 IncludeProcessor</a></li><li><a href="#5-glsl-预处理器">5. GLSL 预处理器</a></li><li class="h3"><a href="#5-1-jcppprocessor">5.1 JcppProcessor</a></li><li class="h3"><a href="#5-2-支持的预处理指令">5.2 支持的预处理指令</a></li><li><a href="#6-id-映射">6. ID 映射</a></li><li class="h3"><a href="#6-1-idmap">6.1 IdMap</a></li><li class="h3"><a href="#6-2-加载流程">6.2 加载流程</a></li><li><a href="#7-shaderproperties">7. ShaderProperties</a></li><li class="h3"><a href="#7-1-属性文件格式">7.1 属性文件格式</a></li><li class="h3"><a href="#7-2-解析">7.2 解析</a></li><li><a href="#8-维度支持">8. 维度支持</a></li><li class="h3"><a href="#8-1-维度属性">8.1 维度属性</a></li><li class="h3"><a href="#8-2-programset-切换">8.2 ProgramSet 切换</a></li><li><a href="#9-功能标志">9. 功能标志</a></li><li><a href="#10-相关文档">10. 相关文档</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Iris 光影</p>
+                            
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>加载、解析、预处理与程序管理</blockquote>
+
+<h2 id="1-概述">1. 概述</h2>
+
+<p>Iris 的着色器包系统负责加载、解析和预处理第三方光影包，实现与 OptiFine shadersmod 的兼容性。</p>
+
+<p><strong>核心文件</strong>：</p>
+
+<table><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`ShaderPack`</td><td>`shaderpack/ShaderPack.java`</td></tr><tr><td>`ProgramSet`</td><td>`shaderpack/programs/ProgramSet.java`</td></tr><tr><td>`ProgramSource`</td><td>`shaderpack/programs/ProgramSource.java`</td></tr><tr><td>`IdMap`</td><td>`shaderpack/IdMap.java`</td></tr><tr><td>`ShaderProperties`</td><td>`shaderpack/properties/ShaderProperties.java`</td></tr><tr><td>`IncludeProcessor`</td><td>`shaderpack/include/IncludeProcessor.java`</td></tr><tr><td>`JcppProcessor`</td><td>`shaderpack/preprocessor/JcppProcessor.java`</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="2-shaderpack-核心结构">2. ShaderPack 核心结构</h2>
+
+<pre class="code-block"><code>public class ShaderPack {
+    // 程序集
+    private final ProgramSet base;
+    
+    // ID 映射
+    private final IdMap idMap;
+    
+    // 语言映射
+    private final LanguageMap languageMap;
+    
+    // 自定义纹理
+    private final EnumMap&lt;TextureStage, Object2ObjectMap&lt;String, CustomTextureData&gt;&gt; customTextureDataMap;
+    private final CustomTextureData customNoiseTexture;
+    
+    // 自定义 Uniform
+    public final CustomUniforms.Builder customUniforms;
+    
+    // 选项和菜单
+    private final ShaderPackOptions shaderPackOptions;
+    private final OptionMenuContainer menuContainer;
+    private final ProfileSet.ProfileResult profile;
+    
+    // 功能标志
+    private final Set&lt;FeatureFlags&gt; activeFeatures;
+    
+    // Iris 自定义图像
+    private final List&lt;ImageInformation&gt; irisCustomImages;
+}</code></pre>
+
+<h3 id="2-1-加载流程">2.1 加载流程</h3>
+
+<pre class="code-block"><code>public ShaderPack(Path root, Map&lt;String, String&gt; changedConfigs, 
+                  ImmutableList&lt;StringPair&gt; environmentDefines) {
+    // 1. 扫描着色器源文件
+    IncludeGraph graph = new IncludeGraph(root, starts.build());
+    
+    // 2. 加载语言文件
+    this.languageMap = new LanguageMap(root.resolve(&quot;lang&quot;));
+    
+    // 3. 解析选项
+    this.shaderPackOptions = new ShaderPackOptions(graph, changedConfigs);
+    
+    // 4. 加载属性
+    this.shaderProperties = loadProperties(root, &quot;shaders.properties&quot;)
+        .map(source -&gt; new ShaderProperties(source, shaderPackOptions, finalEnvironmentDefines))
+        .orElseGet(ShaderProperties::empty);
+    
+    // 5. 检测功能标志
+    activeFeatures = new HashSet&lt;&gt;();
+    for (FeatureFlags flag : shaderProperties.getRequiredFeatureFlags()) {
+        activeFeatures.add(FeatureFlags.getValue(flag));
+    }
+    
+    // 6. 加载程序集
+    this.sourceProvider = (path) -&gt; {
+        // GLSL 预处理
+        String source = JcppProcessor.glslPreprocessSource(source, environmentDefines);
+        return source;
+    };
+    
+    this.base = new ProgramSet(AbsolutePackPath.fromAbsolutePath(&quot;/&quot;), sourceProvider, ...);
+    
+    // 7. 加载 ID 映射
+    this.idMap = new IdMap(root, shaderPackOptions, environmentDefines);
+}</code></pre>
+
+<hr>
+
+<h2 id="3-程序管理">3. 程序管理</h2>
+
+<h3 id="3-1-programset">3.1 ProgramSet</h3>
+
+<pre class="code-block"><code>public class ProgramSet implements ProgramSetInterface {
+    private final AbsolutePackPath basePath;
+    private final Function&lt;AbsolutePackPath, String&gt; sourceProvider;
+    private final ShaderProperties shaderProperties;
+    
+    // 各阶段的程序
+    public ProgramSource[] getComposite(ProgramArrayId id) { ... }
+    public ProgramSource[] getShadowComposite(ProgramArrayId id) { ... }
+    public ComputeSource[] getCompute(ProgramArrayId id) { ... }
+    public ComputeSource[] getSetup(ProgramArrayId id) { ... }
+}</code></pre>
+
+<h3 id="3-2-programsource">3.2 ProgramSource</h3>
+
+<pre class="code-block"><code>public class ProgramSource {
+    private final String name;
+    private final AbsolutePackPath path;
+    
+    // 着色器源代码
+    private final Optional&lt;String&gt; vertexSource;
+    private final Optional&lt;String&gt; fragmentSource;
+    private final Optional&lt;String&gt; geometrySource;
+    private final Optional&lt;String&gt; computeSource;
+    
+    // 指令
+    private final ProgramDirectives directives;
+    
+    public Optional&lt;String&gt; getVertexSource() { return vertexSource; }
+    public Optional&lt;String&gt; getFragmentSource() { return fragmentSource; }
+    public ProgramDirectives getDirectives() { return directives; }
+}</code></pre>
+
+<h3 id="3-3-programarrayid">3.3 ProgramArrayId</h3>
+
+<p>程序数组标识符：</p>
+
+<pre class="code-block"><code>public enum ProgramArrayId {
+    // Composite
+    Begin,
+    Prepare,
+    Deferred,
+    Composite,
+    
+    // Shadow
+    ShadowSolid,
+    ShadowCutout,
+    ShadowTranslucent,
+    ShadowComposite,
+    
+    // Terrain
+    TerrainSolid,
+    TerrainCutout,
+    TerrainTranslucent,
+    TerrainEntity,
+    
+    // Special
+    SkyBasic,
+    SkyTextured,
+    Clouds,
+    Weather,
+    Water,
+    
+    // ...
+}</code></pre>
+
+<hr>
+
+<h2 id="4-include-处理器">4. Include 处理器</h2>
+
+<h3 id="4-1-includegraph">4.1 IncludeGraph</h3>
+
+<pre class="code-block"><code>public class IncludeGraph {
+    private final Map&lt;AbsolutePackPath, FileNode&gt; nodes = new HashMap&lt;&gt;();
+    private final Map&lt;AbsolutePackPath, IOException&gt; failures = new HashMap&lt;&gt;();
+    
+    public IncludeGraph(Path root, ImmutableList&lt;AbsolutePackPath&gt; starts) {
+        // 1. 遍历所有着色器文件
+        for (AbsolutePackPath path : starts) {
+            traverseAndBuildGraph(root, path);
+        }
+    }
+    
+    private void traverseAndBuildGraph(Path root, AbsolutePackPath path) {
+        FileNode node = new FileNode(path);
+        
+        // 2. 解析 #include 指令
+        String content = readFile(root.resolve(path));
+        for (String line : content.split(&quot;\n&quot;)) {
+            if (line.startsWith(&quot;#include&quot;)) {
+                String includePath = parseInclude(line);
+                AbsolutePackPath includeAbsPath = resolveInclude(path, includePath);
+                
+                // 3. 递归处理
+                if (!nodes.containsKey(includeAbsPath)) {
+                    traverseAndBuildGraph(root, includeAbsPath);
+                }
+                
+                node.addDependency(includeAbsPath);
+            }
+        }
+        
+        nodes.put(path, node);
+    }
+}</code></pre>
+
+<h3 id="4-2-includeprocessor">4.2 IncludeProcessor</h3>
+
+<pre class="code-block"><code>public class IncludeProcessor {
+    private final IncludeGraph graph;
+    
+    public ImmutableList&lt;String&gt; getIncludedFile(AbsolutePackPath path) {
+        FileNode node = graph.getNode(path);
+        if (node == null) {
+            return null;
+        }
+        
+        List&lt;String&gt; result = new ArrayList&lt;&gt;();
+        for (AbsolutePackPath dep : node.getDependencies()) {
+            // 递归包含依赖
+            ImmutableList&lt;String&gt; depContent = getIncludedFile(dep);
+            if (depContent != null) {
+                result.addAll(depContent);
+            }
+        }
+        
+        // 添加自身内容
+        result.addAll(node.getContent());
+        
+        return ImmutableList.copyOf(result);
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="5-glsl-预处理器">5. GLSL 预处理器</h2>
+
+<h3 id="5-1-jcppprocessor">5.1 JcppProcessor</h3>
+
+<pre class="code-block"><code>public class JcppProcessor {
+    private static final JCPP pp = new JCPP();
+    
+    static {
+        pp.addInput(new PropertiesCommentListener());
+        pp.addInput(new PropertyCollectingListener());
+    }
+    
+    public static String glslPreprocessSource(String source, 
+                                               Iterable&lt;StringPair&gt; environmentDefines) {
+        // 1. 设置输入
+        Reader reader = new StringReader(source);
+        SimpleCharStream chars = new SimpleCharStream(reader);
+        JCPP.PPTokenManager tm = pp.new PPTokenManager(chars);
+        
+        // 2. 配置预处理器
+        CPreprocessor张艺驰 mc = new CPreprocessor();
+        mc.addInput(new GlslCollectingListener());
+        
+        // 3. 添加环境定义
+        for (StringPair define : environmentDefines) {
+            mc.addMacro(define.getFirst(), define.getSecond());
+        }
+        
+        // 4. 处理
+        mc.run();
+        
+        // 5. 返回处理后的源代码
+        return mc.getOutput();
+    }
+}</code></pre>
+
+<h3 id="5-2-支持的预处理指令">5.2 支持的预处理指令</h3>
+
+<p>- <code>#define</code> - 宏定义</p>
+<p>- <code>#ifdef</code> / <code>#ifndef</code> - 条件编译</p>
+<p>- <code>#include</code> - 文件包含</p>
+<p>- <code>#version</code> - GLSL 版本</p>
+<p>- <code>#extension</code> - 扩展声明</p>
+
+<hr>
+
+<h2 id="6-id-映射">6. ID 映射</h2>
+
+<h3 id="6-1-idmap">6.1 IdMap</h3>
+
+<pre class="code-block"><code>public class IdMap {
+    // 方块属性
+    private final Int2ObjectMap&lt;Properties&gt; blockProperties;
+    private final int[][] blockStateIds;
+    
+    // 实体 ID
+    private final Int2IntMap entityIdMap;
+    
+    // 物品 ID
+    private final Int2IntMap itemIdMap;
+    
+    // 皮革盔甲颜色
+    private final Int2IntMap leatherArmorColors;
+    
+    public Int2IntMap getEntityIdMap() {
+        return entityIdMap;
+    }
+    
+    public Int2IntMap getItemIdMap() {
+        return itemIdMap;
+    }
+    
+    public Int2ObjectMap&lt;Properties&gt; getBlockProperties() {
+        return blockProperties;
+    }
+}</code></pre>
+
+<h3 id="6-2-加载流程">6.2 加载流程</h3>
+
+<pre class="code-block"><code>public IdMap(Path root, ShaderPackOptions options, 
+             Iterable&lt;StringPair&gt; environmentDefines) {
+    // 1. 加载 blocks.properties
+    Properties blockProps = loadProperties(root, &quot;blocks.properties&quot;);
+    
+    // 2. 解析方块映射
+    blockProperties = new Int2ObjectArrayMap&lt;&gt;();
+    for (Map.Entry&lt;Object, Object&gt; entry : blockProps.entrySet()) {
+        String key = (String) entry.getKey();
+        String value = (String) entry.getValue();
+        
+        if (key.startsWith(&quot;block.&quot;)) {
+            BlockEntry blockEntry = BlockEntry.parse(key.substring(6), value);
+            int blockId = getBlockId(blockEntry.getBlockName());
+            blockProperties.put(blockId, blockEntry);
+        }
+    }
+    
+    // 3. 加载 entity.properties
+    Properties entityProps = loadProperties(root, &quot;entity.properties&quot;);
+    entityIdMap = parseIdMap(entityProps);
+    
+    // 4. 加载 item.properties
+    Properties itemProps = loadProperties(root, &quot;item.properties&quot;);
+    itemIdMap = parseIdMap(itemProps);
+}</code></pre>
+
+<hr>
+
+<h2 id="7-shaderproperties">7. ShaderProperties</h2>
+
+<h3 id="7-1-属性文件格式">7.1 属性文件格式</h3>
+
+<pre class="code-block"><code># shaders.properties
+shadowMapResolution=2048
+shadowDistance=64.0
+shadowDistanceRenderMul=1.0
+fogMode=exp2
+oldLighting=true</code></pre>
+
+<h3 id="7-2-解析">7.2 解析</h3>
+
+<pre class="code-block"><code>public class ShaderProperties {
+    // 阴影设置
+    private final float shadowDistance;
+    private final int shadowMapResolution;
+    
+    // 雾设置
+    private final FogMode fogMode;
+    private final float fogStart;
+    private final float fogEnd;
+    
+    // 渲染设置
+    private final boolean oldLighting;
+    private final boolean separateEntityDraws;
+    
+    // 粒子渲染
+    private final ParticleRenderingSettings particleRendering;
+    
+    // 自定义纹理
+    private final Map&lt;TextureStage, Map&lt;String, String&gt;&gt; customTextures;
+}</code></pre>
+
+<hr>
+
+<h2 id="8-维度支持">8. 维度支持</h2>
+
+<h3 id="8-1-维度属性">8.1 维度属性</h3>
+
+<pre class="code-block"><code># dimension.properties
+dimension.overworld=world0
+dimension.nether=world-1
+dimension.end=world1</code></pre>
+
+<h3 id="8-2-programset-切换">8.2 ProgramSet 切换</h3>
+
+<pre class="code-block"><code>public ProgramSet getProgramSet(NamespacedId dimension) {
+    ProgramSetInterface overrides = this.overrides.computeIfAbsent(dimension, dim -&gt; {
+        if (dimensionMap.containsKey(dimension)) {
+            String name = dimensionMap.get(dimension);
+            if (dimensionIds.contains(name)) {
+                // 加载维度特定的程序集
+                return new ProgramSet(
+                    AbsolutePackPath.fromAbsolutePath(&quot;/&quot; + name),
+                    sourceProvider, shaderProperties, this);
+            }
+        }
+        return ProgramSetInterface.Empty.INSTANCE;
+    });
+    
+    // 如果没有覆盖，返回基础程序集
+    if (overrides instanceof ProgramSet) {
+        return (ProgramSet) overrides;
+    } else {
+        return base;
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="9-功能标志">9. 功能标志</h2>
+
+<pre class="code-block"><code>public enum FeatureFlags {
+    // 必需标志
+    SSBO,           // Shader Storage Buffer Objects
+    CULL,           // 背面剔除
+    SEPARATE_HARDWARE_SAMPLERS,  // 分离硬件采样器
+    
+    // 可选标志
+    CUSTOM_IMAGES,  // 自定义图像
+    FIXED_SUN,      // 固定太阳位置
+    NO_PREVIEW_RENDER,  // 禁用预览渲染
+    
+    // 检测
+    GBUFFERS_GEOMETRY,  // 几何着色器
+    GBUFFERS_TEXT,       // 文本渲染
+    GBUFFERS_ENTITIES_COLOR,  // 实体颜色
+    HAND_TRANSLUCENT;   // 手部半透明
+}</code></pre>
+
+<hr>
+
+<h2 id="10-相关文档">10. 相关文档</h2>
+
+<p>- <a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</p>
+<p>- <a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线</p>
+<p>- <a href="04-shadow-system.html">04-shadow-system</a> - 阴影系统</p>
+<p>- <a href="05-framebuffer-texture.html">05-framebuffer-texture</a> - 帧缓冲与纹理</p>
+<p>- <a href="06-uniforms.html">06-uniforms</a> - Uniform 管理</p>
+
+<hr>
+
+<p><em>生成时间: 2026-03-19</em></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

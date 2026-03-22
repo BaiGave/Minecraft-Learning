@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Minecraft 1.21 数据修复（DataFixer）系统分析 - Minecraft 原版 教程</title>
+    <meta name="title" content="Minecraft 1.21 数据修复（DataFixer）系统分析 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/analysis/08-datafixer-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/analysis/08-datafixer-system.html">
+    <meta property="og:title" content="Minecraft 1.21 数据修复（DataFixer）系统分析 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Minecraft 1.21 数据修复（DataFixer）系统分析 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Minecraft 1.21 数据修复（DataFixer）系统分析",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.908Z",
+        "dateModified": "2026-03-22T07:07:48.908Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Minecraft 1.21 数据修复（DataFixer）系统分析</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Minecraft 1.21 数据修复（DataFixer）系统分析</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 08-datafixer-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目录">目录</a></li><li><a href="#概述">概述</a></li><li><a href="#架构设计">架构设计</a></li><li class="h3"><a href="#2-1-整体架构">2.1 整体架构</a></li><li class="h3"><a href="#2-2-核心组件">2.2 核心组件</a></li><li class="h3"><a href="#2-3-mojang-datafixerlib">2.3 Mojang DataFixerLib</a></li><li><a href="#schema-系统">Schema 系统</a></li><li class="h3"><a href="#3-1-schema-概述">3.1 Schema 概述</a></li><li class="h3"><a href="#3-2-schema-定义示例">3.2 Schema 定义示例</a></li><li class="h3"><a href="#3-3-dsl-类型定义">3.3 DSL 类型定义</a></li><li class="h3"><a href="#3-4-版本链">3.4 版本链</a></li><li><a href="#fix-系统">Fix 系统</a></li><li class="h3"><a href="#4-1-fix-概述">4.1 Fix 概述</a></li><li class="h3"><a href="#4-2-fix-类型层次">4.2 Fix 类型层次</a></li><li class="h3"><a href="#4-3-choicefix">4.3 ChoiceFix</a></li><li class="h3"><a href="#4-4-注册修复">4.4 注册修复</a></li><li><a href="#版本管理">版本管理</a></li><li class="h3"><a href="#5-1-版本常量">5.1 版本常量</a></li><li class="h3"><a href="#5-2-数据版本检查">5.2 数据版本检查</a></li><li class="h3"><a href="#5-3-增量修复">5.3 增量修复</a></li><li><a href="#数据转换流程">数据转换流程</a></li><li class="h3"><a href="#6-1-世界加载流程中的数据修复">6.1 世界加载流程中的数据修复</a></li><li class="h3"><a href="#6-2-nbt-数据修复">6.2 NBT 数据修复</a></li><li class="h3"><a href="#6-3-chunk-数据修复">6.3 Chunk 数据修复</a></li><li><a href="#常见修复类型">常见修复类型</a></li><li class="h3"><a href="#7-1-方块名扁平化-1-13-">7.1 方块名扁平化 (1.13)</a></li><li class="h3"><a href="#7-2-物品堆叠组件化-1-20-5-">7.2 物品堆叠组件化 (1.20.5)</a></li><li class="h3"><a href="#7-3-实体方块状态修复">7.3 实体方块状态修复</a></li><li class="h3"><a href="#7-4-uuid-修复">7.4 UUID 修复</a></li><li class="h3"><a href="#7-5-命名空间重命名">7.5 命名空间重命名</a></li><li><a href="#typereferences-类型引用">TypeReferences 类型引用</a></li><li class="h3"><a href="#8-1-类型引用常量">8.1 类型引用常量</a></li><li class="h3"><a href="#8-2-类型定义使用">8.2 类型定义使用</a></li><li><a href="#实际应用场景">实际应用场景</a></li><li class="h3"><a href="#9-1-加载旧存档">9.1 加载旧存档</a></li><li class="h3"><a href="#9-2-修复世界难度">9.2 修复世界难度</a></li><li class="h3"><a href="#9-3-修复物品附魔">9.3 修复物品附魔</a></li><li><a href="#关键代码引用">关键代码引用</a></li><li class="h3"><a href="#10-1-创建-datafixer">10.1 创建 DataFixer</a></li><li class="h3"><a href="#10-2-使用-fixerupper">10.2 使用 FixerUpper</a></li><li class="h3"><a href="#10-3-自定义-fix">10.3 自定义 Fix</a></li><li><a href="#架构图">架构图</a></li><li><a href="#总结">总结</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目录">目录</h2>
+<p>1. <a href="#概述">概述</a></p>
+<p>2. <a href="#架构设计">架构设计</a></p>
+<p>3. <a href="#schema-系统">Schema 系统</a></p>
+<p>4. <a href="#fix-系统">Fix 系统</a></p>
+<p>5. <a href="#版本管理">版本管理</a></p>
+<p>6. <a href="#数据转换流程">数据转换流程</a></p>
+<p>7. <a href="#常见修复类型">常见修复类型</a></p>
+<p>8. <a href="#typereferences-类型引用">TypeReferences 类型引用</a></p>
+<p>9. <a href="#实际应用场景">实际应用场景</a></p>
+<p>10. <a href="#关键代码引用">关键代码引用</a></p>
+
+<hr>
+
+<h2 id="概述">概述</h2>
+
+<p>Minecraft 的 DataFixer 系统（也称为 DataFixerUpper）是游戏用于处理世界数据随版本迁移的核心组件。当游戏更新时，某些数据结构（如方块ID、物品ID、NBT格式）会发生变化，DataFixer 系统确保旧版本的世界数据能够正确转换到新版本。</p>
+
+<p><strong>核心目标：</strong></p>
+<p>- 确保旧世界数据可以加载到新版本</p>
+<p>- 保持游戏逻辑的向后兼容性</p>
+<p>- 支持增量版本迁移（可以跳过多个版本）</p>
+<p>- 自动化数据转换减少手动修复</p>
+
+<p><strong>使用场景：</strong></p>
+<p>- 加载旧版本创建的存档</p>
+<p>- 导入旧版本的 NBT 数据</p>
+<p>- 迁移配置和进度数据</p>
+<p>- 处理数据包和战利品表</p>
+
+<hr>
+
+<h2 id="架构设计">架构设计</h2>
+
+<h3 id="2-1-整体架构">2.1 整体架构</h3>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────────────┐
+│                      DataFixer 架构                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐ │
+│  │     Schemas     │───&gt;│     Schemas     │───&gt;│     Schemas     │ │
+│  │    (数据模式)    │    │    (数据模式)    │    │    (数据模式)    │ │
+│  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘ │
+│           │                     │                     │           │
+│           └─────────────────────┼─────────────────────┘           │
+│                                 ▼                                   │
+│                    ┌─────────────────────┐                        │
+│                    │   DataFixerUpper   │                        │
+│                    │   (修复器上层)       │                        │
+│                    └──────────┬──────────┘                        │
+│                               │                                     │
+│                    ┌─────────┴─────────┐                        │
+│                    │    DataFixerUpper   │                        │
+│                    │    (增量修复器)      │                        │
+│                    └─────────┬─────────┘                        │
+│                              │                                   │
+│           ┌─────────────────┼─────────────────┐                 │
+│           ▼                 ▼                 ▼                 │
+│  ┌────────────────┐ ┌────────────────┐ ┌────────────────┐       │
+│  │     Fix_1      │ │     Fix_2      │ │     Fix_N      │       │
+│  │   (版本1修复)   │ │   (版本2修复)   │ │   (版本N修复)   │       │
+│  └────────────────┘ └────────────────┘ └────────────────┘       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+
+<h3 id="2-2-核心组件">2.2 核心组件</h3>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/Schemas.java</code></p>
+
+<pre class="code-block"><code>// Schemas 类管理所有的数据模式版本
+public class Schemas {
+    
+    // 版本号到模式的映射
+    private final Int2ObjectMap&lt;Schema&gt; versions;
+    
+    // 初始化标志
+    private volatile boolean initialized;
+    
+    // 获取指定版本的 Schema
+    public Schema getSchema(int version) {
+        return versions.get(version);
+    }
+}</code></pre>
+
+<h3 id="2-3-mojang-datafixerlib">2.3 Mojang DataFixerLib</h3>
+
+<p>Minecraft 使用了 Mojang 的 DataFixerLib 库，该库提供：</p>
+
+<p>- <strong>DynamicOps</strong>：通用数据操作接口</p>
+<p>- <strong>TypeCache</strong>：类型缓存优化</p>
+<p>- <strong>FunctionAdapter</strong>：函数适配</p>
+<p>- <strong> optic</strong>：光学系统（类似 lens，用于数据导航）</p>
+
+<pre class="code-block"><code>// DataFixerBuilder 用于构建修复器
+DataFixerBuilder builder = new DataFixerBuilder(DataFixerConstants.DATA_VERSION);
+
+// 添加版本范围
+builder.addSchema(1343, factory);
+builder.addSchema(1344, factory);
+// ...
+
+// 构建修复器
+DataFixer fixerUpper = builder.build();</code></pre>
+
+<hr>
+
+<h2 id="schema-系统">Schema 系统</h2>
+
+<h3 id="3-1-schema-概述">3.1 Schema 概述</h3>
+
+<p>Schema 定义了数据的结构和验证规则，每个游戏版本对应一个 Schema。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/schema/</code></p>
+
+<h3 id="3-2-schema-定义示例">3.2 Schema 定义示例</h3>
+
+<pre class="code-block"><code>// Schema1460.java - 1.14.4 版本的 Schema
+public class Schema1460 extends Schema {
+    
+    public Schema1460(int versionKey, Schema parent) {
+        super(versionKey, parent);
+    }
+    
+    public void registerTypes(SchemaFactory factory) {
+        // 注册类型定义
+        factory.registerSimple(
+            new LazyTypeReference(&quot;Level&quot;), 
+            () -&gt; DSL.and(
+                DSL.fields(&quot;Level&quot;,
+                    DSL.optionalFields(&quot;Player&quot;, TypeReferences.PLAYER)
+                )
+            )
+        );
+        
+        // 注册方块类型
+        factory.registerSimple(
+            new LazyTypeReference(&quot;BlockEntity&quot;), 
+            () -&gt; DSL.fields(&quot;BlockEntity&quot;,
+                TypeReferences.BLOCK_ENTITY.in(p -&gt; p.get(&quot;id&quot;))
+            )
+        );
+    }
+}</code></pre>
+
+<h3 id="3-3-dsl-类型定义">3.3 DSL 类型定义</h3>
+
+<p>DataFixer 使用领域特定语言（DSL）定义数据结构：</p>
+
+<pre class="code-block"><code>// 基本类型
+DSL::remainder  // 保留所有未处理的字段
+DSL::optionalFields  // 可选字段
+DSL::fields  // 必需字段
+DSL::choice  // 联合类型
+
+// 类型引用
+TypeReferences.PLAYER  // 玩家类型
+TypeReferences.BLOCK_ENTITY  // 方块实体类型
+TypeReferences.ITEM_STACK  // 物品堆叠类型
+
+// 约束
+DSL.constType(TypeSerializer)  // 常量类型
+DSL.enumType(Class)  // 枚举类型</code></pre>
+
+<h3 id="3-4-版本链">3.4 版本链</h3>
+
+<p>Schema 版本形成链式结构：</p>
+
+<pre class="code-block"><code>Schema 1343 (1.8)
+    ↓
+Schema 1451 (1.9)
+    ↓
+Schema 1451 (1.10)
+    ↓
+Schema 1451 (1.11)
+    ↓
+Schema 1451 (1.12)
+    ↓
+Schema 1515 (1.13)
+    ↓
+Schema 1631 (1.14)
+    ↓
+Schema 2202 (1.15)
+    ↓
+Schema 2586 (1.16)
+    ↓
+Schema 3120 (1.17)
+    ↓
+Schema 3465 (1.19)
+    ↓
+Schema 3578 (1.20)
+    ↓
+Schema 3705 (1.21)</code></pre>
+
+<hr>
+
+<h2 id="fix-系统">Fix 系统</h2>
+
+<h3 id="4-1-fix-概述">4.1 Fix 概述</h3>
+
+<p>Fix 是实际执行数据转换的组件。每个 Fix 针对特定版本的特定类型执行转换。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/fix/</code></p>
+
+<h3 id="4-2-fix-类型层次">4.2 Fix 类型层次</h3>
+
+<pre class="code-block"><code>Fix
+├── ChoiceFix  (类型选择修复)
+├── RenameFix  (重命名修复)
+├── AddFix     (添加字段修复)
+└── [其他专用修复...]
+    ├── BlockNameFlatteningFix  (方块名扁平化)
+    ├── ItemStackComponentizationFix  (物品组件化)
+    └── EntityBlockStateFix  (实体方块状态)</code></pre>
+
+<h3 id="4-3-choicefix">4.3 ChoiceFix</h3>
+
+<p>ChoiceFix 用于处理类型分支：</p>
+
+<pre class="code-block"><code>// ChoiceFix.java 简化示意
+public class ChoiceFix extends Fix {
+    
+    private final Type&lt;?&gt; type;
+    private final List&lt;Pair&lt;TypeChoiceFix, UnaryOperator&gt;&gt; choices;
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        // 根据条件选择不同的修复策略
+        String type = data.get(&quot;id&quot;).asString(&quot;&quot;);
+        for (Pair&lt;TypeChoiceFix, UnaryOperator&gt; choice : choices) {
+            if (choice.getFirst().test(data)) {
+                return choice.getSecond().apply(data);
+            }
+        }
+        return data;
+    }
+}</code></pre>
+
+<h3 id="4-4-注册修复">4.4 注册修复</h3>
+
+<pre class="code-block"><code>// 在 Schema 中注册修复
+public class Schema1629 extends Schema {
+    
+    @Override
+    public void registerFixes(FixerUpper upper) {
+        // 注册方块名修复
+        this.registerFix(
+            upper, 
+            &quot;Block Name&quot;, 
+            new BlockNameFlatteningFix(this)
+        );
+        
+        // 注册物品ID修复
+        this.registerFix(
+            upper, 
+            &quot;Item Id&quot;, 
+            new ItemIdFix(this)
+        );
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="版本管理">版本管理</h2>
+
+<h3 id="5-1-版本常量">5.1 版本常量</h3>
+
+<pre class="code-block"><code>// SharedConstants.java
+public class SharedConstants {
+    
+    // 当前数据版本
+    public static final int CURRENT_DATA_VERSION = 3705;
+    
+    // 版本历史（部分）
+    // 1.8: 1343
+    // 1.9: 1451
+    // 1.10: 1451
+    // 1.11: 1451
+    // 1.12: 1451
+    // 1.13: 1515
+    // 1.14: 1631
+    // 1.15: 2202
+    // 1.16: 2586
+    // 1.17: 3120
+    // 1.18: 3120
+    // 1.19: 3465
+    // 1.19.4: 3337
+    // 1.20: 3578
+    // 1.21: 3705
+}</code></pre>
+
+<h3 id="5-2-数据版本检查">5.2 数据版本检查</h3>
+
+<pre class="code-block"><code>// LevelDataGeneratorOptionsFix.java
+public class LevelDataGeneratorOptionsFix extends ChoiceFix {
+    
+    private static final int MIN_VERSION = 1494;
+    private static final int MAX_VERSION = 1629;
+    
+    @Override
+    public int getDataVersion() {
+        return MAX_VERSION;
+    }
+    
+    @Override
+    public boolean shouldFix(
+        Dynamic&lt;?&gt; data, 
+        Dynamic&lt;?&gt; comp
+    ) {
+        return data.getDataVersion() &gt;= MIN_VERSION &amp;&amp; 
+               data.getDataVersion() &lt; MAX_VERSION;
+    }
+}</code></pre>
+
+<h3 id="5-3-增量修复">5.3 增量修复</h3>
+
+<p>DataFixer 支持增量修复，可以从任意版本迁移到当前版本：</p>
+
+<pre class="code-block"><code>// 假设玩家存档是版本 2000
+// 当前版本是 3705
+
+// 修复器会按顺序执行：
+// 2000 -&gt; 2001 -&gt; 2002 -&gt; ... -&gt; 3705
+
+// 这确保了即使跳过多个版本也能正确迁移
+public Dynamic&lt;?&gt; update(
+    DynamicOps ops, 
+    Dynamic input, 
+    int version, 
+    int targetVersion
+) {
+    if (version &gt;= targetVersion) {
+        return input;
+    }
+    
+    Dynamic current = input;
+    for (int v = version; v &lt; targetVersion; v++) {
+        Fix fix = getFix(v);
+        current = fix.fix(current);
+    }
+    return current;
+}</code></pre>
+
+<hr>
+
+<h2 id="数据转换流程">数据转换流程</h2>
+
+<h3 id="6-1-世界加载流程中的数据修复">6.1 世界加载流程中的数据修复</h3>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────────────┐
+│                    世界加载数据修复流程                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. 读取世界文件
+   │
+   ▼
+2. 提取数据版本
+   │
+   ▼
+3. 版本比较
+   │
+   ├── 当前版本 == 数据版本 ──&gt; 直接使用，无需修复
+   │
+   └── 当前版本 &gt; 数据版本 ──&gt; 执行数据修复
+       │
+       ▼
+4. 创建 DataFixerUpper
+       │
+       ▼
+5. 遍历版本链，执行修复
+       │
+       ▼
+6. 返回修复后的数据
+       │
+       ▼
+7. 加载世界</code></pre>
+
+<h3 id="6-2-nbt-数据修复">6.2 NBT 数据修复</h3>
+
+<pre class="code-block"><code>// 使用 DataFixer 修复 NBT
+public NbtCompound fixNbt(NbtCompound nbt, int fromVersion, int toVersion) {
+    
+    // 将 NBT 转换为 Dynamic
+    Dynamic&lt;NbtElement&gt; dynamic = Dynamic.convert(
+        NbtOps.INSTANCE,  // NBT 操作
+        JsonOps.INSTANCE,  // JSON 操作
+        nbt
+    );
+    
+    // 添加版本信息
+    dynamic = dynamic.set(&quot;DataVersion&quot;, dynamic.createInt(fromVersion));
+    
+    // 执行修复
+    dynamic = fixerUpper.update(
+        dynamic, 
+        fromVersion, 
+        toVersion
+    );
+    
+    // 提取修复后的数据
+    return (NbtCompound) dynamic.getValue();
+}</code></pre>
+
+<h3 id="6-3-chunk-数据修复">6.3 Chunk 数据修复</h3>
+
+<p>Chunk 数据修复是性能关键路径：</p>
+
+<pre class="code-block"><code>// Chunk 数据修复流程
+public ProtoChunk fixChunk(
+    ProtoChunk chunk, 
+    int version
+) {
+    // 1. 检查是否需要修复
+    if (version &gt;= CURRENT_DATA_VERSION) {
+        return chunk;
+    }
+    
+    // 2. 修复方块状态
+    chunk.setBlockStateArray(
+        fixBlockStateArray(chunk.getBlockStateArray(), version)
+    );
+    
+    // 3. 修复方块实体
+    for (BlockEntity entity : chunk.getBlockEntities()) {
+        entity.read(fixNbt(entity.toNbt(), version));
+    }
+    
+    // 4. 修复生物群系
+    chunk.setBiomes(fixBiomes(chunk.getBiomes(), version));
+    
+    return chunk;
+}</code></pre>
+
+<hr>
+
+<h2 id="常见修复类型">常见修复类型</h2>
+
+<h3 id="7-1-方块名扁平化-1-13-">7.1 方块名扁平化 (1.13)</h3>
+
+<p>将数字 ID 转换为命名空间 ID：</p>
+
+<pre class="code-block"><code>// BlockNameFlatteningFix.java
+public class BlockNameFlatteningFix extends ChoiceFix {
+    
+    // 映射表: 数字ID -&gt; 字符串ID
+    // 1 -&gt; &quot;minecraft:air&quot;
+    // 2 -&gt; &quot;minecraft:stone&quot;
+    // ...
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        // 将 &quot;id&quot; 字段从整数转换为字符串
+        int id = data.get(&quot;id&quot;).asInt(0);
+        String name = getBlockName(id);
+        return data.set(&quot;id&quot;, data.createString(name));
+    }
+}</code></pre>
+
+<h3 id="7-2-物品堆叠组件化-1-20-5-">7.2 物品堆叠组件化 (1.20.5)</h3>
+
+<p>将物品的 NBT 数据转换为组件系统：</p>
+
+<pre class="code-block"><code>// ItemStackComponentizationFix.java
+public class ItemStackComponentizationFix extends Fix {
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        // 1. 提取旧 NBT 格式中的数据
+        String displayName = data.get(&quot;display&quot;).get(&quot;Name&quot;).asString(&quot;&quot;);
+        List&lt;String&gt; lore = data.get(&quot;display&quot;).get(&quot;Lore&quot;).asList(...);
+        
+        // 2. 转换为新组件格式
+        Dynamic&lt;?&gt; components = data.createMap(Map.of(
+            &quot;custom_name&quot;, data.createString(displayName),
+            &quot;lore&quot;, data.createList(lore.stream())
+        ));
+        
+        // 3. 用新格式替换旧格式
+        return data.remove(&quot;tag&quot;).set(&quot;components&quot;, components);
+    }
+}</code></pre>
+
+<h3 id="7-3-实体方块状态修复">7.3 实体方块状态修复</h3>
+
+<pre class="code-block"><code>// EntityBlockStateFix.java
+public class EntityBlockStateFix extends ChoiceFix {
+    
+    // 修复格式变化
+    // 旧: {BlockState: &quot;minecraft:facing=north&quot;}
+    // 新: {BlockState: {Facing: &quot;north&quot;}}
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        String blockState = data.get(&quot;BlockState&quot;).asString(&quot;&quot;);
+        if (blockState.isEmpty()) {
+            return data;
+        }
+        
+        // 解析方块状态字符串
+        Map&lt;String, String&gt; state = parseBlockState(blockState);
+        
+        // 转换为对象格式
+        Dynamic&lt;?&gt; stateObj = data.createMap(
+            state.entrySet().stream()
+                .map(e -&gt; Map.entry(e.getKey(), data.createString(e.getValue())))
+                .collect(Collectors.toMap())
+        );
+        
+        return data.set(&quot;BlockState&quot;, stateObj);
+    }
+}</code></pre>
+
+<h3 id="7-4-uuid-修复">7.4 UUID 修复</h3>
+
+<pre class="code-block"><code>// EntityUuidFix.java
+// 修复数字数组格式的 UUID 为字符串格式
+
+// 旧格式: [Long, Long] (两个长整数)
+// 新格式: String (标准 UUID 字符串)
+
+// 格式: &quot;xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&quot;</code></pre>
+
+<h3 id="7-5-命名空间重命名">7.5 命名空间重命名</h3>
+
+<pre class="code-block"><code>// AdvancementRenameFix.java
+// 修复进度 ID 的命名空间
+
+// 旧: &quot;achievements.mineStone&quot;
+// 新: &quot;minecraft:adventure/mine_a_block&quot;</code></pre>
+
+<hr>
+
+<h2 id="typereferences-类型引用">TypeReferences 类型引用</h2>
+
+<h3 id="8-1-类型引用常量">8.1 类型引用常量</h3>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/datafixer/TypeReferences.java</code></p>
+
+<pre class="code-block"><code>public class TypeReferences {
+    
+    // 世界数据
+    public static final TypeReference LEVEL = new TypeReference(&quot;Level&quot;);
+    public static final TypeReference GAME_OPTIONS = new TypeReference(&quot;GameOptions&quot;);
+    public static final TypeReference PLAYER = new TypeReference(&quot;Player&quot;);
+    
+    // 方块相关
+    public static final TypeReference CHUNK = new TypeReference(&quot;Chunk&quot;);
+    public static final TypeReference BLOCK_ENTITY = new TypeReference(&quot;BlockEntity&quot;);
+    public static final TypeReference BLOCK_STATE = new TypeReference(&quot;BlockState&quot;);
+    
+    // 物品相关
+    public static final TypeReference ITEM_STACK = new TypeReference(&quot;ItemStack&quot;);
+    public static final TypeReference ITEM = new TypeReference(&quot;Item&quot;);
+    
+    // 实体相关
+    public static final TypeReference ENTITY = new TypeReference(&quot;Entity&quot;);
+    public static final TypeReference ENTITY_CHUNK = new TypeReference(&quot;EntityChunk&quot;);
+    
+    // 进度相关
+    public static final TypeReference ADVANCEMENTS = new TypeReference(&quot;Advancements&quot;);
+    public static final TypeReference ADVANCEMENT = new TypeReference(&quot;Advancement&quot;);
+    
+    // 结构相关
+    public static final TypeReference STRUCTURE = new TypeReference(&quot;Structure&quot;);
+    
+    // 其他
+    public static final TypeReference POI_CHUNK = new TypeReference(&quot;POIChunk&quot;);
+    public static final TypeReference STATS = new TypeReference(&quot;Stats&quot;);
+    public static final TypeReference RECIPE = new TypeReference(&quot;Recipe&quot;);
+}</code></pre>
+
+<h3 id="8-2-类型定义使用">8.2 类型定义使用</h3>
+
+<pre class="code-block"><code>// 在 Schema 中使用类型引用
+public void registerTypes(SchemaFactory factory) {
+    
+    // 定义玩家类型
+    factory.registerSimple(
+        PLAYER, 
+        () -&gt; DSL.fields(
+            &quot;player&quot;,
+            DSL.optionalFields(
+                &quot;Inventory&quot;,
+                DSL.list(TypeReferences.ITEM_STACK),
+                &quot;EnderItems&quot;,
+                DSL.list(TypeReferences.ITEM_STACK),
+                &quot;Abilities&quot;
+            )
+        )
+    );
+    
+    // 定义物品堆叠类型
+    factory.registerSimple(
+        ITEM_STACK, 
+        () -&gt; DSL.fields(
+            &quot;Item&quot;,
+            TypeReferences.ITEM.in(DSL::field),
+            DSL.optionalFields(
+                &quot;tag&quot;,  // NBT 数据
+                DSL.remainder()
+            )
+        )
+    );
+}</code></pre>
+
+<hr>
+
+<h2 id="实际应用场景">实际应用场景</h2>
+
+<h3 id="9-1-加载旧存档">9.1 加载旧存档</h3>
+
+<pre class="code-block"><code>// ServerLifecycleHooks.java
+public ServerWorld loadWorld(
+    ServerWorld world, 
+    SaveProperties properties, 
+    WorldDetails worldDetails
+) {
+    // 1. 获取存档数据版本
+    int dataVersion = properties.getDataVersion();
+    
+    // 2. 比较版本
+    if (dataVersion &lt; SharedConstants.CURRENT_DATA_VERSION) {
+        // 3. 修复世界数据
+        worldData.fixData();
+    }
+    
+    // 4. 加载世界
+    return new ServerWorld(...);
+}</code></pre>
+
+<h3 id="9-2-修复世界难度">9.2 修复世界难度</h3>
+
+<pre class="code-block"><code>// LevelDataGeneratorOptionsFix.java
+public class LevelDataGeneratorOptionsFix extends ChoiceFix {
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        // 修复难度设置格式变化
+        String difficulty = data.get(&quot;difficulty&quot;).asString(&quot;hard&quot;);
+        return data.set(
+            &quot;difficulty&quot;, 
+            data.createString(&quot;hard&quot;.equals(difficulty) ? &quot;hard&quot; : difficulty)
+        );
+    }
+}</code></pre>
+
+<h3 id="9-3-修复物品附魔">9.3 修复物品附魔</h3>
+
+<pre class="code-block"><code>// ItemStackEnchantmentFix.java
+public class ItemStackEnchantmentFix extends ChoiceFix {
+    
+    // 1.13+ 格式: {Enchantments: [{id: &quot;minecraft:sharpness&quot;, lvl: 1}]}
+    // 1.12  格式: {ench: [{id: 16, lvl: 1}]} (数字ID)
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        // 提取旧格式数据
+        ListTag ench = data.get(&quot;ench&quot;).asList();
+        
+        // 转换为新格式
+        ListTag newEnch = new ListTag();
+        for (Tag tag : ench) {
+            int oldId = ((IntTag) tag.get(&quot;id&quot;)).asInt();
+            int level = ((IntTag) tag.get(&quot;lvl&quot;)).asInt();
+            
+            String newId = convertEnchantmentId(oldId);
+            
+            CompoundTag newTag = new CompoundTag();
+            newTag.put(&quot;id&quot;, StringTag.of(&quot;minecraft:&quot; + newId));
+            newTag.put(&quot;lvl&quot;, IntTag.of(level));
+            
+            newEnch.add(newTag);
+        }
+        
+        return data.remove(&quot;ench&quot;).set(&quot;Enchantments&quot;, newEnch);
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="关键代码引用">关键代码引用</h2>
+
+<h3 id="10-1-创建-datafixer">10.1 创建 DataFixer</h3>
+
+<pre class="code-block"><code>// DataFixers.java
+public static DataFixerUpper createUpperFixer() {
+    DataFixerBuilder builder = new DataFixerBuilder(
+        SharedConstants.CURRENT_DATA_VERSION
+    );
+    
+    // 添加所有版本 Schema
+    Schemas.getInstance().getSchemas().forEach((version, schema) -&gt; {
+        builder.addSchema(version, schema::registerTypes);
+    });
+    
+    // 构建并返回
+    return builder.build();
+}</code></pre>
+
+<h3 id="10-2-使用-fixerupper">10.2 使用 FixerUpper</h3>
+
+<pre class="code-block"><code>// 修复 NBT 数据
+DynamicOps&lt;NbtElement&gt; ops = NbtOps.INSTANCE;
+
+// 将 NBT 转换为 Dynamic
+Dynamic&lt;NbtElement&gt; dynamic = Dynamic.convert(ops, input);
+
+// 执行版本修复
+dynamic = fixerUpper.update(
+    dynamic,  // 输入数据
+    inputVersion,  // 起始版本
+    SharedConstants.CURRENT_DATA_VERSION  // 目标版本
+);
+
+// 转换回 NBT
+NbtCompound result = (NbtCompound) dynamic.getValue();</code></pre>
+
+<h3 id="10-3-自定义-fix">10.3 自定义 Fix</h3>
+
+<pre class="code-block"><code>// 创建自定义修复
+public class MyCustomFix extends Fix {
+    
+    private final Map&lt;String, String&gt; renames;
+    
+    public MyCustomFix(Schema schema, Map&lt;String, String&gt; renames) {
+        super(schema, &quot;custom_fix&quot;);
+        this.renames = renames;
+    }
+    
+    @Override
+    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
+        String oldName = data.get(&quot;name&quot;).asString(&quot;&quot;);
+        String newName = renames.getOrDefault(oldName, oldName);
+        
+        return data.set(&quot;name&quot;, data.createString(newName));
+    }
+}
+
+// 注册修复
+public class MySchema extends Schema {
+    
+    @Override
+    public void registerFixes(FixerUpper upper) {
+        Map&lt;String, String&gt; renames = Map.of(
+            &quot;old_block&quot;, &quot;new_block&quot;,
+            &quot;old_item&quot;, &quot;new_item&quot;
+        );
+        
+        registerFix(upper, &quot;Custom Rename&quot;, new MyCustomFix(this, renames));
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="架构图">架构图</h2>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────────────┐
+│                        版本与修复映射                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  版本号: 1343 ──┬──&gt; Schema1343 ──&gt; Fix[1343-&gt;1451]              │
+│                 │                                                  │
+│  版本号: 1451 ──┼──&gt; Schema1451 ──&gt; Fix[1451-&gt;1515]              │
+│                 │                                                  │
+│  版本号: 1515 ──┼──&gt; Schema1515 ──&gt; Fix[1515-&gt;1631]              │
+│                 │                                                  │
+│  版本号: 1631 ──┼──&gt; Schema1631 ──&gt; Fix[1631-&gt;2202]              │
+│                 │                                                  │
+│  版本号: 2202 ──┼──&gt; Schema2202 ──&gt; Fix[2202-&gt;2586]              │
+│                 │                                                  │
+│  版本号: 2586 ──┼──&gt; Schema2586 ──&gt; Fix[2586-&gt;3120]              │
+│                 │                                                  │
+│  版本号: 3120 ──┼──&gt; Schema3120 ──&gt; Fix[3120-&gt;3465]              │
+│                 │                                                  │
+│  版本号: 3465 ──┼──&gt; Schema3465 ──&gt; Fix[3465-&gt;3578]              │
+│                 │                                                  │
+│  版本号: 3578 ──┼──&gt; Schema3578 ──&gt; Fix[3578-&gt;3705]              │
+│                 │                                                  │
+│  版本号: 3705 ──┴──&gt; Schema3705 (当前版本)                        │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                           数据修复流程                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  输入数据 ──&gt; [版本检查] ──&gt; [需要修复?] ──┬──&gt; 否 ──&gt; 直接返回     │
+│                                          │                          │
+│                                          └──&gt; 是 ──&gt; [逐版本修复]   │
+│                                                          │          │
+│                                                     ┌────┴────┐    │
+│                                                     │  Fix 1  │    │
+│                                                     └────┬────┘    │
+│                                                          │          │
+│                                                     ┌────┴────┐    │
+│                                                     │  Fix 2  │    │
+│                                                     └────┬────┘    │
+│                                                          │          │
+│                                                          ▼          │
+│                                                    ┌─────────┐      │
+│                                                    │  输出数据 │      │
+│                                                    └─────────┘      │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+
+<hr>
+
+<h2 id="总结">总结</h2>
+
+<p>Minecraft 的 DataFixer 系统是一个精心设计的版本迁移框架：</p>
+
+<p>1. <strong>增量修复</strong>：支持从任意旧版本迁移到新版本</p>
+<p>2. <strong>Schema 驱动</strong>：通过模式定义验证数据结构</p>
+<p>3. <strong>类型安全</strong>：TypeReference 提供强类型的数据引用</p>
+<p>4. <strong>DSL 表达</strong>：领域特定语言简化类型定义</p>
+<p>5. <strong>自动化处理</strong>：在世界加载时自动执行修复</p>
+
+<p>这套系统确保了 Minecraft 能够保持对旧世界数据的兼容性，同时允许开发者在更新中自由改变数据结构。</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

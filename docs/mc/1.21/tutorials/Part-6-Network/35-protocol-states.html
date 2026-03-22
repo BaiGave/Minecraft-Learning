@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>第35章 协议状态机详解 - Minecraft 原版 教程</title>
+    <meta name="title" content="第35章 协议状态机详解 - Minecraft 原版 教程">
+    <meta name="description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-6-Network/35-protocol-states.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-6-Network/35-protocol-states.html">
+    <meta property="og:title" content="第35章 协议状态机详解 - Minecraft 原版 教程">
+    <meta property="og:description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="第35章 协议状态机详解 - Minecraft 原版">
+    <meta name="twitter:description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "第35章 协议状态机详解",
+        "description": "：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.876Z",
+        "dateModified": "2026-03-22T07:07:48.876Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-6-Network</span>
+        
+        <span>/</span>
+        <span>第35章 协议状态机详解</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第35章 协议状态机详解</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 35-protocol-states</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是协议状态机-">什么是协议状态机？</a></li><li class="h3"><a href="#五个协议状态">五个协议状态</a></li><li class="h3"><a href="#状态转换流程图">状态转换流程图</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#minecraft-连接状态转换图">Minecraft 连接状态转换图</a></li><li class="h3"><a href="#1-21-新增的-configuration-阶段">1.21 新增的 CONFIGURATION 阶段</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#状态定义">状态定义</a></li><li class="h3"><a href="#握手包">握手包</a></li><li class="h3"><a href="#状态切换">状态切换</a></li><li class="h3"><a href="#各阶段的监听器">各阶段的监听器</a></li><li><a href="#各阶段详解">各阶段详解</a></li><li class="h3"><a href="#1-handshaking-握手阶段-">1. HANDSHAKING (握手阶段)</a></li><li class="h3"><a href="#2-status-状态查询-">2. STATUS (状态查询)</a></li><li class="h3"><a href="#3-login-登录阶段-">3. LOGIN (登录阶段)</a></li><li class="h3"><a href="#4-configuration-配置阶段-1-21-">4. CONFIGURATION (配置阶段) [1.21+]</a></li><li class="h3"><a href="#5-play-游戏阶段-">5. PLAY (游戏阶段)</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#完整的连接流程">完整的连接流程</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解 Minecraft 协议的五个状态阶段</p>
+<p>- 掌握 HANDSHAKING → LOGIN → CONFIGURATION → PLAY 的转换流程</p>
+<p>- 了解 1.21 新增的 CONFIGURATION 阶段的作用</p>
+<p>- 理解各阶段发送的不同数据包</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 完成 <a href="./34-packet-system.html">第34章 数据包系统</a></p>
+<p>- 理解 Packet 和 PacketListener 的关系</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是协议状态机-">什么是协议状态机？</h3>
+
+<p>就像打电话的过程：</p>
+
+<pre class="code-block"><code>拿起手机 ──&gt; 拨号 ──&gt; 对方接听 ──&gt; 通话 ──&gt; 挂断</code></pre>
+
+<p>Minecraft 连接也有类似的过程：</p>
+
+<pre class="code-block"><code>握手 ──&gt; 登录 ──&gt; 配置 ──&gt; 游戏 ──&gt; 断开</code></pre>
+
+<h3 id="五个协议状态">五个协议状态</h3>
+
+<pre class="code-block"><code>// 源码位置: NetworkPhase.java
+
+public enum NetworkPhase {
+    HANDSHAKING(&quot;handshake&quot;),   // 握手 - 建立连接
+    PLAY(&quot;play&quot;),               // 游戏 - 正常游玩
+    STATUS(&quot;status&quot;),           // 状态 - 获取服务器信息
+    LOGIN(&quot;login&quot;),             // 登录 - 验证玩家身份
+    CONFIGURATION(&quot;configuration&quot;); // 配置 - 1.21新增的阶段
+}</code></pre>
+
+<h3 id="状态转换流程图">状态转换流程图</h3>
+
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> HANDSHAKING: 启动连接
+    
+    state HANDSHAKING {
+        [*] --> 发送握手包
+        发送握手包 --> 选择意图
+    }
+    
+    HANDSHAKING --> LOGIN: 意图=LOGIN
+    HANDSHAKING --> STATUS: 意图=STATUS
+    
+    state LOGIN {
+        [*] --> 发送登录包
+        发送登录包 --> 等待成功
+        等待成功 --> 验证完成
+    }
+    
+    LOGIN --> CONFIGURATION: 1.21+ 版本
+    LOGIN --> PLAY: 旧版本直接进入PLAY
+    
+    state CONFIGURATION {
+        [*] --> 发送配置包
+        发送配置包 --> 客户端准备完成
+        客户端准备完成 --> 配置完成
+    }
+    
+    CONFIGURATION --> PLAY: 完成配置
+    PLAY --> [*]: 断开连接
+    
+    state STATUS {
+        [*] --> 响应ping请求
+    }
+    
+    STATUS --> [*]: 关闭连接
+</div>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="minecraft-连接状态转换图">Minecraft 连接状态转换图</h3>
+
+<div class="mermaid">
+flowchart LR
+    subgraph Phases["协议状态"]
+        HS["HANDSHAKING<br/>握手"]
+        ST["STATUS<br/>状态查询"]
+        LN["LOGIN<br/>登录验证"]
+        CF["CONFIGURATION<br/>配置 (1.21+)"]
+        PL["PLAY<br/>游戏"]
+    end
+    
+    HS -->|"HandshakeC2SPacket<br/>intent=LOGIN"| LN
+    HS -->|"HandshakeC2SPacket<br/>intent=STATUS"| ST
+    
+    LN -->|"LoginSuccessS2CPacket"| CF
+    LN -->|"LoginSuccessS2CPacket"| PL
+    
+    CF -->|"FinishConfigurationC2SPacket"| PL
+    
+    PL -.->|"Disconnect"|[*]
+    ST -.->|"断开"|[*]
+    
+    style HS fill:#bbdefb
+    style LN fill:#c8e6c9
+    style CF fill:#fff9c4
+    style PL fill:#ffcdd2
+    style ST fill:#e1bee7
+</div>
+
+<h3 id="1-21-新增的-configuration-阶段">1.21 新增的 CONFIGURATION 阶段</h3>
+
+<div class="mermaid">
+flowchart TB
+    subgraph OldFlow["旧版本 (< 1.20.3)"]
+        A1["握手"] --> B1["登录"]
+        B1 --> C1["游戏"]
+    end
+    
+    subgraph NewFlow["新版本 (>= 1.21)"]
+        A2["握手"] --> B2["登录"]
+        B2 --> C2["配置"]
+        C2 --> D2["游戏"]
+    end
+    
+    style NewFlow fill:#e8f5e9
+    style OldFlow fill:#ffebee
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="状态定义">状态定义</h3>
+
+<pre class="code-block"><code>// 源码位置: NetworkPhase.java
+
+public enum NetworkPhase {
+    HANDSHAKING(&quot;handshake&quot;),
+    PLAY(&quot;play&quot;),
+    STATUS(&quot;status&quot;),
+    LOGIN(&quot;login&quot;),
+    CONFIGURATION(&quot;configuration&quot;);  // 1.21 新增
+
+    private final String id;
+
+    private NetworkPhase(String id) {
+        this.id = id;
+    }
+}</code></pre>
+
+<h3 id="握手包">握手包</h3>
+
+<pre class="code-block"><code>// 源码位置: HandshakeC2SPacket.java
+
+public class HandshakeC2SPacket implements Packet&lt;ServerHandshakePacketListener&gt; {
+    private final int protocolVersion;   // 协议版本
+    private final String serverAddress;  // 服务器地址
+    private final int serverPort;        // 服务器端口
+    private final ConnectionIntent intent; // 连接意图
+
+    // intent 可以是: HANDSHAKE, STATUS, LOGIN, TRANSFER
+}</code></pre>
+
+<h3 id="状态切换">状态切换</h3>
+
+<pre class="code-block"><code>// 源码位置: ClientConnection.java
+
+// 切换入站协议（接收数据的方向）
+public &lt;T extends PacketListener&gt; void transitionInbound(NetworkState&lt;T&gt; state, T packetListener) {
+    this.packetListener = packetListener;
+    // 更新解码器
+    NetworkStateTransitions.DecoderTransitioner decoderTransitioner = 
+        NetworkStateTransitions.decoderTransitioner(state);
+    // 同步切换
+    ClientConnection.syncUninterruptibly(this.channel.writeAndFlush(decoderTransitioner));
+}
+
+// 切换出站协议（发送数据的方向）
+public void transitionOutbound(NetworkState&lt;?&gt; newState) {
+    NetworkStateTransitions.EncoderTransitioner encoderTransitioner = 
+        NetworkStateTransitions.encoderTransitioner(newState);
+    ClientConnection.syncUninterruptibly(this.channel.writeAndFlush(encoderTransitioner.andThen(context -&gt; {
+        this.duringLogin = bl;
+    })));
+}</code></pre>
+
+<h3 id="各阶段的监听器">各阶段的监听器</h3>
+
+<pre class="code-block"><code>// 源码位置: listener/PacketListener.java
+
+public interface PacketListener {
+    NetworkSide getSide();    // 服务端bound 或 客户端bound
+    NetworkPhase getPhase();  // 当前处于哪个阶段
+    void onDisconnected(DisconnectionInfo info);  // 断开连接回调
+}
+
+// 不同阶段的监听器
+public interface ServerHandshakePacketListener extends PacketListener {}
+public interface ClientLoginPacketListener extends PacketListener {}      // LOGIN
+public interface ClientConfigurationPacketListener extends PacketListener {} // CONFIGURATION
+public interface ClientPlayPacketListener extends PacketListener {}       // PLAY</code></pre>
+
+<h2 id="各阶段详解">各阶段详解</h2>
+
+<h3 id="1-handshaking-握手阶段-">1. HANDSHAKING (握手阶段)</h3>
+
+<p><strong>目的</strong>：建立初始连接，确定后续要做什么</p>
+
+<p><strong>发送的包</strong>：</p>
+<p>- <code>HandshakeC2SPacket</code>：包含协议版本、服务器地址、连接意图</p>
+
+<h3 id="2-status-状态查询-">2. STATUS (状态查询)</h3>
+
+<p><strong>目的</strong>：获取服务器信息（用于服务器列表）</p>
+
+<p><strong>发送的包</strong>：</p>
+<p>- <code>QueryResponseS2CPacket</code>：服务器信息</p>
+<p>- <code>PingResultS2CPacket</code>：ping 结果</p>
+
+<h3 id="3-login-登录阶段-">3. LOGIN (登录阶段)</h3>
+
+<p><strong>目的</strong>：验证玩家身份</p>
+
+<p><strong>发送的包</strong>：</p>
+<p>- 客户端：<code>LoginHelloC2SPacket</code>（包含用户名）</p>
+<p>- 服务端：<code>LoginSuccessS2CPacket</code>（验证成功）或 <code>LoginDisconnectS2CPacket</code>（验证失败）</p>
+
+<h3 id="4-configuration-配置阶段-1-21-">4. CONFIGURATION (配置阶段) [1.21+]</h3>
+
+<p><strong>目的</strong>：在游戏开始前完成客户端配置同步</p>
+
+<p><strong>为什么需要</strong>：将原本在 LOGIN 阶段的一些配置移到独立阶段，让协议更清晰</p>
+
+<p><strong>发送的包</strong>：</p>
+<p>- <code>DynamicRegistriesS2CPacket</code>：注册表数据</p>
+<p>- <code>ServerLinksS2CPacket</code>：服务器链接</p>
+<p>- <code>KnownPacksS2CPacket</code>：可用数据包列表</p>
+<p>- <code>SelectKnownPacksC2SPacket</code>：客户端选择的包</p>
+
+<h3 id="5-play-游戏阶段-">5. PLAY (游戏阶段)</h3>
+
+<p><strong>目的</strong>：正常游戏</p>
+
+<p><strong>发送的包</strong>：</p>
+<p>- 位置移动、聊天、物品栏、实体更新、方块更新等所有游戏相关包</p>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="完整的连接流程">完整的连接流程</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务端
+
+    Note over C,S: 1. HANDSHAKING 阶段
+    C->>S: HandshakeC2SPacket
+    Note right of C: intent = LOGIN, 协议版本 = 765
+
+    Note over C,S: 2. LOGIN 阶段
+    C->>S: LoginHelloC2SPacket
+    Note right of C: 用户名 = "Steve"
+    S-->>C: LoginSuccessS2CPacket
+    Note left of S: 验证成功！
+
+    Note over C,S: 3. CONFIGURATION 阶段 (1.21+)
+    S->>C: KnownPacksS2CPacket
+    Note left of S: 提供数据包列表
+    C->>S: SelectKnownPacksC2SPacket
+    Note right of C: 选择需要的包
+    S->>C: DynamicRegistriesS2CPacket
+    S->>C: FinishConfigurationS2CPacket
+
+    Note over C,S: 4. PLAY 阶段
+    C->>S: PlayerMoveC2SPacket
+    S->>C: EntitySpawnS2CPacket
+    C->>S: ChatMessageC2SPacket
+    S->>C: ChatMessageS2CPacket
+</div>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>协议状态机</strong> = 把连接过程分成多个有序阶段</p>
+<p>2. <strong>五个状态</strong>：HANDSHAKING → LOGIN → CONFIGURATION → PLAY（或 STATUS）</p>
+<p>3. <strong>CONFIGURATION (1.21+)</strong> = 新增的配置阶段，用于游戏开始前的配置同步</p>
+<p>4. <strong>状态切换</strong> = 不同阶段使用不同的 PacketListener 和数据包集合</p>
+<p>5. <strong>PacketListener</strong> = 每个阶段有不同的监听器接口</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. 在源码中找到 <code>NetworkPhase.java</code>，查看所有状态</p>
+<p>2. 理解为什么 1.21 要增加 CONFIGURATION 阶段</p>
+<p>3. 查找 <code>LoginPackets.java</code> 中有哪些登录相关的包</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- 上一章：<a href="./34-packet-system.html">第34章 数据包系统</a></p>
+<p>- 下一章：<a href="./36-sync-mechanism.html">第36章 同步机制</a></p>
+<p>- Minecraft Wiki 协议文档</p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>NetworkState.java</td><td>`net/minecraft/network/NetworkState.java`</td><td>网络状态管理</td></tr><tr><td>ConnectionIntent.java</td><td>`net/minecraft/network/ConnectionIntent.java`</td><td>连接意图枚举</td></tr><tr><td>NetworkPhase.java</td><td>`net/minecraft/network/NetworkPhase.java`</td><td>网络阶段定义</td></tr></tbody></table>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：协议状态机、握手、登录、配置、游戏、NetworkPhase</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>�?5�?Minecraft 客户端核�? - Minecraft 原版 教程</title>
+    <meta name="title" content="�?5�?Minecraft 客户端核�? - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/45-minecraft-client.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-9-Client/45-minecraft-client.html">
+    <meta property="og:title" content="�?5�?Minecraft 客户端核�? - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="�?5�?Minecraft 客户端核�? - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "�?5�?Minecraft 客户端核�?",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.892Z",
+        "dateModified": "2026-03-22T07:07:48.892Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-9-Client</span>
+        
+        <span>/</span>
+        <span>�?5�?Minecraft 客户端核�?</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">�?5�?Minecraft 客户端核�?</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 45-minecraft-client</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是-minecraftclient-">什么是 MinecraftClient�?</a></li><li class="h3"><a href="#线程模型">线程模型</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                <h2 id="目标">目标</h2>
+
+<p>- 理解 <code>MinecraftClient</code> 是什�?- 了解客户端的游戏主循�?- 掌握客户端的线程模型</p>
+<p>- 区分客户端和服务端的不同职责</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Java 基础（线程、对象）</p>
+<p>- 知道什么是游戏循环（Game Loop�?- 了解 Part-6 网络部分的基本概�?</p>
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是-minecraftclient-">什么是 MinecraftClient�?</h3>
+<p>想象一下你家门口的<strong>快递柜</strong>�?</p>
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────�?�?                   MinecraftClient                    �?�?                                                     �?�?  它是客户端的&quot;大脑&quot;，负责：                            �?�?  - 显示画面给玩家看                                   �?�?  - 接收玩家的键盘鼠标操�?                             �?�?  - 播放声音效果                                       �?�?  - 管理网络连接（和服务器通信�?                        �?└─────────────────────────────────────────────────────�?```
+
+`MinecraftClient` �?Minecraft 客户端的主类，就像厨房里�?*总厨师长**�?
+- **服务端（MinecraftServer�?*：负�?做菜&quot;（游戏逻辑、生成世界）
+- **客户端（MinecraftClient�?*：负�?摆盘&quot;（把游戏画面展示给玩家）
+
+### 客户�?vs 服务�?
+| 职责 | 客户�?(Client) | 服务�?(Server) |
+|------|----------------|-----------------|
+| **显示画面** | �?必须�?| �?不需�?|
+| **处理输入** | �?必须�?| �?不需�?|
+| **生成世界** | �?不负�?| �?必须 |
+| **物理模拟** | 预测性模�?| 权威模拟 |
+| **多人通信** | 发送操作，接收结果 | 接收操作，广播结�?|
+
+### 游戏主循�?
+就像动画片的制作原理——每秒播放多张图片，让你感觉画面�?�?�?</code></pre>
+<p>Minecraft 的主循环 = 无限循环 + 两大任务</p>
+
+<p>┌──────────────────────────────────────────────────────────�?�?                   游戏主循�?(run方法)                    �?�?                                                         �?�?  while (游戏在运�? {                                    �?�?      ┌─────────────────────────────────�?               �?�?      �?1. 处理输入                     �?               �?�?      �?   - 键盘有没有按�?              �?               �?�?      �?   - 鼠标有没有动�?              �?               �?�?      └─────────────────────────────────�?               �?�?                   �?                                     �?�?      ┌─────────────────────────────────�?               �?�?      �?2. 更新游戏逻辑（Tick�?          �?               �?�?      �?   - 移动玩家                    �?               �?�?      �?   - 更新实体                    �?               �?�?      └─────────────────────────────────�?               �?�?                   �?                                     �?�?      ┌─────────────────────────────────�?               �?�?      �?3. 渲染画面（Render�?           �?               �?�?      �?   - 画天�?                     �?               �?�?      �?   - 画方�?                     �?               �?�?      �?   - 画玩�?                     �?               �?�?      �?   - 画HUD                       �?               �?�?      └─────────────────────────────────�?               �?�?  }                                                      �?└──────────────────────────────────────────────────────────�?<code>`</code></p>
+
+<h3 id="线程模型">线程模型</h3>
+
+<p>Minecraft 客户端像一�?<em>餐厅厨房</em>*，有多个厨师同时工作�?</p>
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────────�?�?                     客户端线程模�?                               �?�?                                                                 �?�? ┌──────────────────�?                                            �?�? �?  主线�?         �? �?运行游戏主循�?(run方法)                    �?�? �?  (Client Thread) �? �?处理输入、更新逻辑、渲�?                   �?�? └────────┬─────────�?                                            �?�?          �?                                                       �?�?          ├──────────────────┬──────────────────�?                 �?�?          �?                 �?                 �?                 �?�? ┌─────────────�?   ┌─────────────�?   ┌─────────────�?          �?�? �? 渲染线程    �?   �? 资源加载线程 �?   �? 网络线程    �?          �?�? �? (Render)   �?   �? (Resource) �?   �? (Network) �?          �?�? └─────────────�?   └─────────────�?   └─────────────�?          �?�?      �?                 �?                 �?                      �?�?      �?                 �?                 �?                      �?�? 画到屏幕�?       加载材质/模型        接收/发送数据包               �?└─────────────────────────────────────────────────────────────────�?```
+
+## 图解（Mermaid�?
+### MinecraftClient 组件关系�?</code></pre>
+<p>flowchart TB</p>
+<p>    subgraph MC["MinecraftClient (客户端大�?"]</p>
+<p>        direction TB</p>
+<p>        main["run() 主循�?]</p>
+<p>        tick["tick() 游戏更新"]</p>
+<p>        render["render() 画面渲染"]</p>
+<p>    end</p>
+
+<p>    subgraph Input["输入系统"]</p>
+<p>        keyboard["Keyboard 键盘"]</p>
+<p>        mouse["Mouse 鼠标"]</p>
+<p>    end</p>
+
+<p>    subgraph Render["渲染系统"]</p>
+<p>        gameRenderer["GameRenderer 游戏渲染�?]</p>
+<p>        worldRenderer["WorldRenderer 世界渲染�?]</p>
+<p>        inGameHud["InGameHud 屏幕HUD"]</p>
+<p>    end</p>
+
+<p>    subgraph Network["网络系统"]</p>
+<p>        connection["ClientPlayNetworkHandler"]</p>
+<p>        player["ClientPlayerEntity"]</p>
+<p>    end</p>
+
+<p>    subgraph World["世界"]</p>
+<p>        clientWorld["ClientWorld 客户端世�?]</p>
+<p>    end</p>
+
+<p>    main --> tick</p>
+<p>    main --> render</p>
+<p>    tick --> Input</p>
+<p>    tick --> Network</p>
+<p>    tick --> World</p>
+<p>    render --> Render</p>
+<p>    Input --> tick</p>
+<p>    keyboard --> Mouse</p>
+<p>    Network --> World</p>
+<p>    World --> Render</p>
+<p>    worldRenderer --> clientWorld</p>
+<p>    gameRenderer --> inGameHud</p>
+
+<p>    style MC fill:#e3f2fd</p>
+<p>    style Input fill:#fff3e0</p>
+<p>    style Render fill:#e8f5e9</p>
+<p>    style Network fill:#f3e5f5</p>
+<p>    style World fill:#fce4ec</p>
+<pre class="code-block"><code>
+### 客户端与服务器通信流程
+</code></pre>
+<p>sequenceDiagram</p>
+<p>    participant Player as 玩家</p>
+<p>    participant Client as MinecraftClient</p>
+<p>    participant Network as 网络�?    participant Server as 服务�?    participant World as 游戏世界</p>
+
+<p>    Note over Player,Server: 单人模式 vs 多人模式</p>
+
+<p>    rect rgb(200, 230, 200)</p>
+<p>        Note over Player,World: 单人模式 (集成服务�?</p>
+<p>        Player->>Client: �?W 键移�?        Client->>Client: 本地预测移动</p>
+<p>        Client->>Client: 渲染画面</p>
+<p>        Client->>World: 更新玩家位置</p>
+<p>    end</p>
+
+<p>    rect rgb(200, 200, 230)</p>
+<p>        Note over Player,Server: 多人模式 (远程服务�?</p>
+<p>        Player->>Client: �?W 键移�?        Client->>Client: 本地预测移动</p>
+<p>        Client->>Network: 发�?PlayerMoveC2SPacket</p>
+<p>        Network->>Server: 网络传输</p>
+<p>        Server->>Server: 验证并更新位�?        Server->>World: 广播玩家移动</p>
+<p>        World->>Network: 世界状态更�?        Network->>Client: 同步状�?        Client->>Client: 渲染画面</p>
+<p>    end</p>
+<pre class="code-block"><code>
+## 核心代码
+
+### MinecraftClient 的关键组�?</code></pre>
+<p>// 源码位置: MinecraftClient.java</p>
+
+<p>public class MinecraftClient {</p>
+<p>    // ====== 输入设备 ======</p>
+<p>    public final Mouse mouse;           // 鼠标</p>
+<p>    public final Keyboard keyboard;     // 键盘</p>
+
+<p>    // ====== 渲染系统 ======</p>
+<p>    public final GameRenderer gameRenderer;   // 游戏渲染�?    public final WorldRenderer worldRenderer; // 世界渲染�?    public final InGameHud inGameHud;        // 屏幕HUD</p>
+
+<p>    // ====== 世界与玩�?======</p>
+<p>    @Nullable public ClientWorld world;      // 客户端世�?    @Nullable public ClientPlayerEntity player; // 玩家实体</p>
+
+<p>    // ====== 网络 ======</p>
+<p>    @Nullable public ClientPlayNetworkHandler networkHandler;</p>
+<p>    @Nullable public IntegratedServer server; // 集成服务�?单人)</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 游戏主循环核心代�?</code></pre>
+<p>// 源码位置: MinecraftClient.java - run()方法</p>
+
+<p>public void run() {</p>
+<p>    // 主循�?    while (this.running) {</p>
+<p>        try {</p>
+<p>            // 开始性能分析</p>
+<p>            profiler.startTick();</p>
+
+<p>            // 渲染一�?            this.render(!bl);  // bl = 是否是崩溃后恢复</p>
+
+<p>            profiler.endTick();</p>
+<p>        } catch (OutOfMemoryError e) {</p>
+<p>            // 内存不足处理</p>
+<p>            this.cleanUpAfterCrash();</p>
+<p>            this.setScreen(new OutOfMemoryScreen());</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### Tick（游戏更新）
+</code></pre>
+<p>// 源码位置: MinecraftClient.java - tick()方法</p>
+
+<p>public void tick(boolean paused) {</p>
+<p>    if (!paused) {</p>
+<p>        // 更新输入（键盘、鼠标状态）</p>
+<p>        this.mouse.tick();</p>
+<p>        this.keyboard.tick();</p>
+
+<p>        // 更新玩家输入</p>
+<p>        if (this.player != null) {</p>
+<p>            this.player.input.tick(this.world.isRainingAt(this.player.getBlockPos()));</p>
+<p>        }</p>
+
+<p>        // 更新网络</p>
+<p>        if (this.networkHandler != null) {</p>
+<p>            this.networkHandler.tick();</p>
+<p>        }</p>
+
+<p>        // 更新HUD</p>
+<p>        this.inGameHud.tick(paused);</p>
+<p>    }</p>
+<p>}</p>
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

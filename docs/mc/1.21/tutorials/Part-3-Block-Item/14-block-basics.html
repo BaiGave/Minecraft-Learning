@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>14 - Block 类：方块的基础 - Minecraft 原版 教程</title>
+    <meta name="title" content="14 - Block 类：方块的基础 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-3-Block-Item/14-block-basics.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-3-Block-Item/14-block-basics.html">
+    <meta property="og:title" content="14 - Block 类：方块的基础 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="14 - Block 类：方块的基础 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "14 - Block 类：方块的基础",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.851Z",
+        "dateModified": "2026-03-22T07:07:48.851Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-3-Block-Item</span>
+        
+        <span>/</span>
+        <span>14 - Block 类：方块的基础</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">14 - Block 类：方块的基础</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 14-block-basics</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#block-类是什么-">Block 类是什么？</a></li><li class="h3"><a href="#block-vs-abstractblock">Block vs AbstractBlock</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- Block 类是什么，它在 Minecraft 中扮演什么角�?- Block �?AbstractBlock 的关�?- 方块的物理属性（硬度、爆炸抗性等�?- 如何创建一个自定义方块</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- <a href="/mc/1.21/tutorials/Part-1-Foundation/04-registry-system/">04-注册表系�?md</a> - 理解 Minecraft 的注册表机制</p>
+<p>- <a href="/mc/1.21/tutorials/Part-2-World/08-world-core/">08-世界核心</a> - 了解方块在世界中的位�?</p>
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="block-类是什么-">Block 类是什么？</h3>
+
+<p>想象 Minecraft 世界是一堆积木。每个积木块就是 <strong>Block（方块）</strong>�?</p>
+<p>- 一�?Block �?= 一种积木模�?- 比如"石头"模板只有一个，但世界上有无数块石头</p>
+<p>- 所有石头共享相同的属性（颜色、硬度、形状）</p>
+
+<h3 id="block-vs-abstractblock">Block vs AbstractBlock</h3>
+
+<pre class="code-block"><code>AbstractBlock（抽象方块）
+    �?    ├── 定义方块的通用属性和逻辑
+    �?  ├── 硬度、爆炸抗�?    �?  ├── 碰撞箱、透明�?    �?  ├── 放置/破坏行为
+    �?  └── 与其他方块的交互
+    �?    └── Block（具体方块）
+            �?            ├── 继承 AbstractBlock
+            ├── 每种具体方块（如石头、木头）
+            └── 定义自己的特�?```
+
+**简单理�?*�?- `AbstractBlock` = 积木�?设计图模�?
+- `Block` = 具体用设计图做出的积�?
+### 方块属性（方块的基本特性）
+
+| 属�?| 说明 | 比喻 |
+|------|------|------|
+| **hardness** | 硬度，破坏所需时间 | 积木�?坚固程度&quot; |
+| **resistance** | 爆炸抗�?| 积木能承受多少锤子敲�?|
+| **soundGroup** | 音效�?| 积木碰撞的声�?|
+| **collidable** | 是否有碰撞箱 | 积木能否被穿�?|
+| **randomTicks** | 是否随机刻更�?| 积木是否会自己变�?|
+
+## 图解（Mermaid�?
+### Block 继承关系�?</code></pre>
+<p>classDiagram</p>
+<p>    class ToggleableFeature {</p>
+<p>        <<interface>></p>
+<p>        +getRequiredFeatures() FeatureSet</p>
+<p>    }</p>
+
+<p>    class AbstractBlock {</p>
+<p>        +Settings settings</p>
+<p>        +collidable: boolean</p>
+<p>        +resistance: float</p>
+<p>        +randomTicks: boolean</p>
+<p>        +soundGroup: BlockSoundGroup</p>
+<p>        -onUse()</p>
+<p>        -neighborUpdate()</p>
+<p>        -randomTick()</p>
+<p>    }</p>
+
+<p>    class Block {</p>
+<p>        +stateManager: StateManager~Block, BlockState~</p>
+<p>        +defaultState: BlockState</p>
+<p>        +getDefaultState() BlockState</p>
+<p>        +getPlacementState() BlockState</p>
+<p>        +onPlaced()</p>
+<p>        +afterBreak()</p>
+<p>    }</p>
+
+<p>    class ItemConvertible {</p>
+<p>        <<interface>></p>
+<p>        +asItem() Item</p>
+<p>    }</p>
+
+<p>    class FabricBlock {</p>
+<p>        <<interface>></p>
+<p>    }</p>
+
+<p>    ToggleableFeature <|.. AbstractBlock</p>
+<p>    AbstractBlock <|-- Block</p>
+<p>    ItemConvertible <|.. Block</p>
+<p>    FabricBlock <|.. Block</p>
+<pre class="code-block"><code>
+### 方块生命周期�?</code></pre>
+<p>flowchart TD</p>
+<p>    A[玩家放置方块] --> B[Block.getPlacementState]</p>
+<p>    B --> C{检查能否放置}</p>
+<p>    C -->|可以| D[onBlockAdded]</p>
+<p>    C -->|不可以| E[放置失败]</p>
+<p>    D --> F[neighborUpdate相邻方块更新]</p>
+<p>    F --> G[方块正常运行]</p>
+<p>    G --> H[玩家破坏方块]</p>
+<p>    H --> I[onBreak]</p>
+<p>    I --> J[afterBreak掉落物品]</p>
+<p>    J --> K[方块消失]</p>
+<pre class="code-block"><code>
+## 核心代码
+
+&gt; ⚠️ **注意**：以下代码基�?CFR 反编译，实际源码可能略有差异。建议结�?Minecraft 源码仓库交叉验证�?
+### 创建最简单的方块
+</code></pre>
+<p>// 在你�?mod 主类�?public class MyMod implements ModInitializer {</p>
+
+<p>    // 定义方块</p>
+<p>    public static final Block MY_BLOCK = Registry.register(</p>
+<p>        Registries.BLOCK,</p>
+<p>        Identifier.of("mymod", "my_block"),</p>
+<p>        new Block(AbstractBlock.Settings.create()</p>
+<p>            .strength(1.5f, 6.0f)  // 硬度1.5, 爆炸抗�?.0</p>
+<p>            .sounds(BlockSoundGroup.STONE)  // 石头音效</p>
+<p>        )</p>
+<p>    );</p>
+
+<p>    @Override</p>
+<p>    public void onInitialize() {</p>
+<p>        // 方块已被注册</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+### 常见的方块属性设�?</code></pre>
+<p>// 1. 石头类方�?new Block(AbstractBlock.Settings.create()</p>
+<p>    .strength(1.5f, 6.0f)</p>
+<p>    .sounds(BlockSoundGroup.STONE)</p>
+<p>);</p>
+
+<p>// 2. 泥土类方�?new Block(AbstractBlock.Settings.create()</p>
+<p>    .strength(0.5f)</p>
+<p>    .sounds(BlockSoundGroup.GRASS)</p>
+<p>    .ticksRandomly()  // 需要随机刻</p>
+<p>);</p>
+
+<p>// 3. 透明方块（如空气、树叶）</p>
+<p>new Block(AbstractBlock.Settings.create()</p>
+<p>    .noCollision()     // 无碰撞箱</p>
+<p>    .nonOpaque()       // 不阻挡光�?);</p>
+
+<p>// 4. 需要特定工具的方块</p>
+<p>new Block(AbstractBlock.Settings.create()</p>
+<p>    .strength(3.0f, 3.0f)</p>
+<p>    .requiresTool()    // 需要镐�?);</p>
+
+<p>// 5. 可燃方块（如木头�?new Block(AbstractBlock.Settings.create()</p>
+<p>    .strength(2.0f)</p>
+<p>    .burnable()        // 可以被火烧掉</p>
+<p>);</p>
+
+<p>// 6. 液体方块</p>
+<p>new Block(AbstractBlock.Settings.create()</p>
+<p>    .liquid()</p>
+<p>    .noCollision()</p>
+<p>);</p>
+<pre class="code-block"><code>
+### 方块音效组（BlockSoundGroup�?</code></pre>
+<p>// 常用音效�?BlockSoundGroup.WOOD      // 木头</p>
+<p>BlockSoundGroup.STONE      // 石头</p>
+<p>BlockSoundGroup.GRASS      // �?BlockSoundGroup.SAND       // 沙子</p>
+<p>BlockSoundGroup.METAL      // 金属</p>
+<p>BlockSoundGroup.GLASS      // 玻璃</p>
+<p>BlockSoundGroup.WOOL       // 羊毛</p>
+<p>BlockSoundGroup.BAMBOO     // 竹子</p>
+<p>BlockSoundGroup.SNOW       // �?BlockSoundGroup.LAVA       // 岩浆</p>
+<pre class="code-block"><code>
+## 实战演示
+
+### 案例：创建一个会发光的方�?</code></pre>
+<p>public static final Block GLOWING_BLOCK = Registry.register(</p>
+<p>    Registries.BLOCK,</p>
+<p>    Identifier.of("mymod", "glowing_block"),</p>
+<p>    new Block(AbstractBlock.Settings.create()</p>
+<p>        .strength(1.0f)</p>
+<p>        .luminance(state -> 15)  // 亮度等级15（最亮）</p>
+<p>        .sounds(BlockSoundGroup.METAL)</p>
+<p>    )</p>
+<p>);</p>
+<pre class="code-block"><code>
+### 案例：创建一�?随机tick&quot;的草方块
+</code></pre>
+<p>// 草会在附近没有草时变成泥�?public static final Block GRASS = Registry.register(</p>
+<p>    Registries.BLOCK,</p>
+<p>    Identifier.of("mymod", "my_grass"),</p>
+<p>    new Block(AbstractBlock.Settings.create()</p>
+<p>        .strength(0.6f)</p>
+<p>        .sounds(BlockSoundGroup.GRASS)</p>
+<p>        .ticksRandomly()  // 开启随机刻</p>
+<p>    )</p>
+<p>);</p>
+
+<p>// 然后在方块类中重�?randomTick 方法</p>
+<p>public class MyGrassBlock extends Block {</p>
+<p>    public MyGrassBlock(Settings settings) {</p>
+<p>        super(settings);</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    protected void randomTick(BlockState state, ServerWorld world,</p>
+<p>                              BlockPos pos, Random random) {</p>
+<p>        // 检查上方是否有其他方块</p>
+<p>        if (!world.isSkyVisible(pos)) {</p>
+<p>            // 变成泥土</p>
+<p>            world.setBlockState(pos, Blocks.DIRT.getDefaultState());</p>
+<p>        }</p>
+<p>    }</p>
+<p>}</p>
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

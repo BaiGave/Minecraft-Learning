@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>项目2：添加新物品 - Minecraft 原版 教程</title>
+    <meta name="title" content="项目2：添加新物品 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-12-Practice/99-project2-item.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-12-Practice/99-project2-item.html">
+    <meta property="og:title" content="项目2：添加新物品 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="项目2：添加新物品 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "项目2：添加新物品",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.829Z",
+        "dateModified": "2026-03-22T07:07:48.829Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-12-Practice</span>
+        
+        <span>/</span>
+        <span>项目2：添加新物品</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">项目2：添加新物品</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 99-project2-item</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#项目目标">项目目标</a></li><li><a href="#项目概览">项目概览</a></li><li><a href="#所需知识">所需知识</a></li><li><a href="#步骤详解">步骤详解</a></li><li class="h3"><a href="#步骤-1-什么是物品-">步骤 1：什么是物品�?</a></li><li class="h3"><a href="#物品-vs-方块">物品 vs 方块</a></li><li class="h3"><a href="#步骤-2-注册物-">步骤 2：注册物�?</a></li><li class="h3"><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#物品模型-json">物品模型 JSON</a></li><li class="h3"><a href="#步骤-7-测-">步骤 7：测�?</a></li><li class="h3"><a href="#测试步骤">测试步骤</a></li><li class="h3"><a href="#常见问题排查">常见问题排查</a></li><li><a href="#完整代码">完整代码</a></li><li class="h3"><a href="#mod-主类">Mod 主类</a></li><li class="h3"><a href="#自定义物品类">自定义物品类</a></li><li><a href="#遇到问题怎么办-">遇到问题怎么办？</a></li><li class="h3"><a href="#调试技-">调试技�?</a></li><li class="h3"><a href="#常见错误">常见错误</a></li><li><a href="#扩展挑战">扩展挑战</a></li><li class="h3"><a href="#挑战-1-创建食物物-">挑战 1：创建食物物�?</a></li><li class="h3"><a href="#挑战-2-创建弓类物-">挑战 2：创建弓类物�?</a></li><li class="h3"><a href="#挑战-3-创建工具物-">挑战 3：创建工具物�?</a></li><li><a href="#参考资-">参考资�?</a></li><li class="h3"><a href="#相关章节">相关章节</a></li><li class="h3"><a href="#源码参-">源码参�?</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>创建一个可以发射火球的"魔法魔杖"�?</blockquote>
+<hr>
+
+<h2 id="项目目标">项目目标</h2>
+
+<p>学完这个项目后，你将掌握�?- 如何注册一个自定义物品</p>
+<p>- 如何创建物品类并设置属�?- 如何添加使用效果</p>
+<p>- 如何创建合成配方（JSON�?- 如何添加材质</p>
+<p>- 如何测试物品</p>
+
+<hr>
+
+<h2 id="项目概览">项目概览</h2>
+
+<div class="mermaid">
+flowchart TD
+    A[开始项目] --> B[注册物品]
+    B --> C[创建物品类]
+    C --> D[添加使用效果]
+    D --> E[创建配方JSON]
+    E --> F[添加材质]
+    F --> G[测试游戏]
+    
+    style A fill:#90EE90
+    style G fill:#87CEEB
+</div>
+
+<hr>
+
+<h2 id="所需知识">所需知识</h2>
+
+<p>- 注册表基础（Part-1 �?章）</p>
+<p>- 物品基础（Part-3 �?7章）</p>
+<p>- 配方系统（Part-8 �?4章）</p>
+<p>- 数据包结构（Part-8 �?1章）</p>
+
+<hr>
+
+<h2 id="步骤详解">步骤详解</h2>
+
+<h3 id="步骤-1-什么是物品-">步骤 1：什么是物品�?</h3>
+<h4 id="物品-vs-方块">物品 vs 方块</h4>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────�?�?                                        �?�?   物品 (Item)                          �?�?     �?                                 �?�?     ├── 可以吃的 = 食物                  �?�?     �?  └── 苹果、金萝卜、蛋�?..      �?�?     �?                                 �?�?     ├── 可以用的 = 工具/武器            �?�?     �?  └── 镐子、斧头、剑...         �?�?     �?                                 �?�?     └── 可以放的 = BlockItem            �?�?         └── 对应一个方�?              �?�?                                        �?└─────────────────────────────────────────�?```
+
+#### 生活中的比喻
+</code></pre>
+<p>物品就像超市里的商品�?</p>
+<p>┌─────────────────────────────────────────�?�? 物品类型        �? 超市类比            �?├─────────────────┼─────────────────────  �?�? 食物           �? 食品区（可以吃）     �?�? 工具           �? 五金区（可以用）     �?�? 方块物品       �? 建材区（可以放）     �?�? 弹药           �? 射击区（可以扔）     �?└─────────────────────────────────────────�?<code>`</code></p>
+
+<hr>
+
+<h3 id="步骤-2-注册物-">步骤 2：注册物�?</h3>
+<h4 id="核心概念">核心概念</h4>
+
+<p>注册物品和注册方块类似，都是"上户�?�?</p>
+<pre class="code-block"><code>┌─────────────────────────────────────────�?�?          Minecraft 注册�?              �?�?                                        �?�? namespace:path = 唯一�?身份证号&quot;       �?�?                                        �?�? &quot;minecraft:diamond_sword&quot; �?钻石�?     �?�? &quot;minecraft:apple&quot;        �?苹果         �?�? &quot;mymod:magic_wand&quot;      �?你的魔法魔杖  �?�?                                        �?└─────────────────────────────────────────�?```
+
+#### 代码实现
+
+�?Mod 主类中添加：
+</code></pre>
+<p>public class MyMod implements ModInitializer {</p>
+
+<p>    // 定义一个魔法魔杖物�?    public static final Item MAGIC_WAND = Registry.register(</p>
+<p>        Registries.ITEM,                            // 1. 注册到物品注册表</p>
+<p>        Identifier.of("mymod", "magic_wand"),      // 2. ID = "mymod:magic_wand"</p>
+<p>        new MagicWandItem(new Item.Settings()      // 3. 创建物品实例</p>
+<p>            .maxCount(1)                           // 只能堆叠1�?            .maxDamage(100)                        // 100点耐久�?            .rarity(Rarity.RARE)                   // 稀有度：蓝�?        )</p>
+<p>    );</p>
+
+<p>    @Override</p>
+<p>    public void onInitialize() {</p>
+<p>        // 物品注册完成�?    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+**三要素口诀**�?```
+Registry.register(注册�? Identifier, new 物品)
+         �?          �?         �?       放哪柜子     起什么名    什么样�?```
+
+---
+
+### 步骤 3：创建物品类
+
+#### 为什么需要自定义物品类？
+
+普通物品只能设置属性，但如果你想：
+- 右键使用时发射火�?- 持有时发�?- 使用时有特殊动画
+
+就需要创建自定义物品类�?
+#### 代码实现
+</code></pre>
+<p>// src/main/java/com/mymod/item/MagicWandItem.java</p>
+
+<p>public class MagicWandItem extends Item {</p>
+
+<p>    public MagicWandItem(Settings settings) {</p>
+<p>        super(settings);</p>
+<p>    }</p>
+
+<p>    // 右键使用物品</p>
+<p>    @Override</p>
+<p>    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {</p>
+<p>        if (!world.isClient) {</p>
+<p>            // 在服务端执行</p>
+
+<p>            // 创建火球</p>
+<p>            FireballEntity fireball = new FireballEntity(</p>
+<p>                EntityType.FIREBALL,     // 火球类型</p>
+<p>                world                    // 世界</p>
+<p>            );</p>
+
+<p>            // 设置火球位置（在玩家前方�?            Vec3d direction = player.getRotationVecClient();</p>
+<p>            fireball.setPosition(</p>
+<p>                player.getX() + direction.x * 1.5,</p>
+<p>                player.getY() + direction.y * 1.5 + 1.5,</p>
+<p>                player.getZ() + direction.z * 1.5</p>
+<p>            );</p>
+
+<p>            // 设置火球方向</p>
+<p>            fireball.setVelocity(direction.x <em> 2, direction.y </em> 2, direction.z * 2);</p>
+
+<p>            // 生成火球</p>
+<p>            world.spawnEntity(fireball);</p>
+
+<p>            // 消耗耐久�?            ItemStack stack = player.getStackInHand(hand);</p>
+<p>            stack.damage(1, player, EquipmentSlot.MAINHAND);</p>
+
+<p>            // 播放音效</p>
+<p>            world.playSound(</p>
+<p>                null, </p>
+<p>                player.getX(), player.getY(), player.getZ(),</p>
+<p>                SoundEvents.ENTITY_BLAZE_SHOOT,</p>
+<p>                SoundCategory.PLAYERS,</p>
+<p>                0.5f, </p>
+<p>                1.5f</p>
+<p>            );</p>
+
+<p>            return TypedActionResult.success(stack);</p>
+<p>        }</p>
+
+<p>        return TypedActionResult.pass(player.getStackInHand(hand));</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+---
+
+### 步骤 4：添加使用效�?
+#### 常见使用效果
+</code></pre>
+<p>// 1. 发射投射�?@Override</p>
+<p>public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {</p>
+<p>    // 创建箭矢/火球/末影珍珠�?    ProjectileEntity projectile = new ArrowEntity(world, player);</p>
+<p>    // 设置位置和方�?    projectile.setPosition(...);</p>
+<p>    projectile.setVelocity(...);</p>
+<p>    world.spawnEntity(projectile);</p>
+<p>    return TypedActionResult.success(stack);</p>
+<p>}</p>
+
+<p>// 2. 给予药水效果</p>
+<p>@Override</p>
+<p>public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {</p>
+<p>    player.addStatusEffect(new StatusEffectInstance(</p>
+<p>        StatusEffects.STRENGTH,    // 力量效果</p>
+<p>        60 * 20,                   // 持续60�?        0                          // 等级0（第一级）</p>
+<p>    ));</p>
+<p>    return TypedActionResult.success(stack);</p>
+<p>}</p>
+
+<p>// 3. 传送玩�?@Override</p>
+<p>public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {</p>
+<p>    // 传送到主世界出生点</p>
+<p>    ServerWorld overworld = world.getServer().getWorld(World.OVERWORLD);</p>
+<p>    BlockPos spawn = overworld.getSpawnPos();</p>
+<p>    player.teleport(spawn.getX(), spawn.getY(), spawn.getZ());</p>
+<p>    return TypedActionResult.success(stack);</p>
+<p>}</p>
+
+<p>// 4. 消耗物品并给予新物�?@Override</p>
+<p>public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {</p>
+<p>    // 消�?个物�?    stack.decrement(1);</p>
+
+<p>    // 给予新物品（空瓶子）</p>
+<p>    if (stack.isEmpty()) {</p>
+<p>        return new ItemStack(Items.GLASS_BOTTLE);</p>
+<p>    }</p>
+
+<p>    return stack;</p>
+<p>}</p>
+<pre class="code-block"><code>
+#### 完整示例：传送魔�?</code></pre>
+<p>public class TeleportWandItem extends Item {</p>
+
+<p>    public TeleportWandItem(Settings settings) {</p>
+<p>        super(settings);</p>
+<p>    }</p>
+
+<p>    @Override</p>
+<p>    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {</p>
+<p>        if (!world.isClient && world.getServer() != null) {</p>
+<p>            // 获取主世�?            ServerWorld overworld = world.getServer().getWorld(World.OVERWORLD);</p>
+<p>            if (overworld == null) {</p>
+<p>                return TypedActionResult.fail(player.getStackInHand(hand));</p>
+<p>            }</p>
+
+<p>            // 传送到100格上�?            int teleportY = (int) overworld.getTopY();</p>
+<p>            player.teleport(</p>
+<p>                overworld,</p>
+<p>                player.getX(), teleportY, player.getZ(),</p>
+<p>                player.getYaw(), player.getPitch()</p>
+<p>            );</p>
+
+<p>            // 消耗耐久</p>
+<p>            player.getStackInHand(hand).damage(1, player, EquipmentSlot.MAINHAND);</p>
+
+<p>            // 粒子效果</p>
+<p>            ((ServerWorld) world).spawnParticles(</p>
+<p>                Particles.PORTAL,</p>
+<p>                player.getX(), player.getY(), player.getZ(),</p>
+<p>                20, 0.5, 1, 0.5, 0.1</p>
+<p>            );</p>
+
+<p>            return TypedActionResult.success(player.getStackInHand(hand));</p>
+<p>        }</p>
+
+<p>        return TypedActionResult.pass(player.getStackInHand(hand));</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+---
+
+### 步骤 5：创建合成配方（JSON�?
+#### 配方文件结构
+</code></pre>
+<p>data/</p>
+<p>└── mymod/</p>
+<p>    └── recipes/</p>
+<p>        └── magic_wand.json</p>
+<pre class="code-block"><code>
+#### 有形状合成配�?</code></pre>
+<p>{</p>
+<p>    "type": "minecraft:crafting_shaped",</p>
+<p>    "category": "equipment",</p>
+<p>    "group": "magic_wands",</p>
+<p>    "pattern": [</p>
+<p>        "  E",</p>
+<p>        " S ",</p>
+<p>        "S  "</p>
+<p>    ],</p>
+<p>    "key": {</p>
+<p>        "E": {</p>
+<p>            "item": "minecraft:ender_eye"</p>
+<p>        },</p>
+<p>        "S": {</p>
+<p>            "item": "minecraft:stick"</p>
+<p>        }</p>
+<p>    },</p>
+<p>    "result": {</p>
+<p>        "item": "mymod:magic_wand",</p>
+<p>        "count": 1</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+#### 配方图示
+</code></pre>
+<p>合成台预览：</p>
+<p>  [ ] [E] [ ]     E = 末影之眼</p>
+<p>  [S] [ ] [ ]  =  S = 木棍</p>
+<p>  [S] [ ] [ ]</p>
+
+<p>结果：魔法魔�?x1</p>
+<pre class="code-block"><code>
+#### 无形状合成配�?</code></pre>
+<p>{</p>
+<p>    "type": "minecraft:crafting_shapeless",</p>
+<p>    "category": "misc",</p>
+<p>    "ingredients": [</p>
+<p>        {"item": "minecraft:diamond"},</p>
+<p>        {"item": "minecraft:diamond"},</p>
+<p>        {"item": "minecraft:blaze_rod"},</p>
+<p>        {"item": "minecraft:stick"}</p>
+<p>    ],</p>
+<p>    "result": {</p>
+<p>        "item": "mymod:magic_wand",</p>
+<p>        "count": 1</p>
+<p>    }</p>
+<p>}</p>
+<pre class="code-block"><code>
+---
+
+### 步骤 6：添加材�?
+#### 材质文件结构
+</code></pre>
+<p>resources/</p>
+<p>└── assets/</p>
+<p>    └── mymod/</p>
+<p>        └── textures/</p>
+<p>            └── item/</p>
+<p>                └── magic_wand.png    # 物品材质�?6x16�?<code>`</code></p>
+
+<h4 id="物品模型-json">物品模型 JSON</h4>
+
+<pre class="code-block"><code>{
+    &quot;parent&quot;: &quot;minecraft:item/handheld&quot;,
+    &quot;textures&quot;: {
+        &quot;layer0&quot;: &quot;mymod:item/magic_wand&quot;
+    }
+}</code></pre>
+
+<hr>
+
+<h3 id="步骤-7-测-">步骤 7：测�?</h3>
+<h4 id="测试步骤">测试步骤</h4>
+
+<p>1. <strong>启动游戏</strong></p>
+<p>   <code>`</code></p>
+<p>   运行你的 Mod 开发环�?   <code>`</code></p>
+
+<p>2. <strong>进入世界</strong></p>
+<p>   <code>`</code></p>
+<p>   创建一个新世界或进入已有世�?   <code>`</code></p>
+
+<p>3. <strong>获取物品</strong></p>
+<p>   <code>`</code></p>
+<p>   /give @s mymod:magic_wand</p>
+<p>   <code>`</code></p>
+
+<p>4. <strong>测试功能</strong></p>
+<p>   - 右键使用，观察是否发射火�?   - 检查耐久度是否减�?   - 尝试用完耐久�?</p>
+<p>5. <strong>测试配方</strong></p>
+<p>   <code>`</code></p>
+<p>   /reload</p>
+<p>   打开合成�?   放置对应材料进行合成</p>
+<p>   <code>`</code></p>
+
+<h4 id="常见问题排查">常见问题排查</h4>
+
+<table><thead><tr><th>问题</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>物品不显�?</td><td>物品模型路径错误</td><td>检�?textures 目录</td></tr><tr><td>右键无反�?</td><td>客户�?服务端分�?</td><td>确保逻辑�?`!world.isClient`</td></tr><tr><td>耐久度不减少</td><td>需要在 `use()` 中手动调�?</td><td>`stack.damage(1, player, ...)`</td></tr><tr><td>配方找不�?</td><td>JSON 格式错误或位置错�?</td><td>检�?data 目录结构</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="完整代码">完整代码</h2>
+
+<h3 id="mod-主类">Mod 主类</h3>
+
+<pre class="code-block"><code>package com.mymod;
+
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
+import net.fabricmc.api.ModInitializer;
+import com.mymod.item.MagicWandItem;
+
+public class MyMod implements ModInitializer {
+    
+    // 注册魔法魔杖
+    public static final Item MAGIC_WAND = Registry.register(
+        Registries.ITEM,
+        Identifier.of(&quot;mymod&quot;, &quot;magic_wand&quot;),
+        new MagicWandItem(new Item.Settings()
+            .maxCount(1)
+            .maxDamage(100)
+            .rarity(Rarity.RARE)
+        )
+    );
+    
+    @Override
+    public void onInitialize() {
+        System.out.println(&quot;魔法魔杖 Mod 已加载！&quot;);
+    }
+}</code></pre>
+
+<h3 id="自定义物品类">自定义物品类</h3>
+
+<pre class="code-block"><code>package com.mymod.item;
+
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.entity.projectile.FireballEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.world.World;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.component.EquipmentSlot;
+
+public class MagicWandItem extends Item {
+    
+    public MagicWandItem(Settings settings) {
+        super(settings);
+    }
+    
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient) {
+            // 获取玩家朝向
+            Vec3d direction = player.getRotationVecClient();
+            
+            // 创建火球
+            FireballEntity fireball = new FireballEntity(
+                EntityType.FIREBALL,
+                world
+            );
+            
+            // 设置火球位置
+            fireball.setPosition(
+                player.getX() + direction.x * 1.5,
+                player.getY() + direction.y * 1.5 + 1.5,
+                player.getZ() + direction.z * 1.5
+            );
+            
+            // 设置火球速度
+            fireball.setVelocity(direction.x * 2, direction.y * 2, direction.z * 2);
+            
+            // 生成火球
+            world.spawnEntity(fireball);
+            
+            // 消耗耐久
+            ItemStack stack = player.getStackInHand(hand);
+            stack.damage(1, player, EquipmentSlot.MAINHAND);
+            
+            // 播放音效
+            world.playSound(
+                null,
+                player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ENTITY_BLAZE_SHOOT,
+                SoundCategory.PLAYERS,
+                0.5f, 1.5f
+            );
+            
+            return TypedActionResult.success(stack);
+        }
+        
+        return TypedActionResult.pass(player.getStackInHand(hand));
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="遇到问题怎么办-">遇到问题怎么办？</h2>
+
+<h3 id="调试技-">调试技�?</h3>
+<p>1. <strong>查看日志</strong></p>
+<p>   <code>`</code></p>
+<p>   游戏崩溃时查看终端输�?   <code>`</code></p>
+
+<p>2. <strong>逐步测试</strong></p>
+<p>   <code>`</code></p>
+<p>   先创建最简单的物品</p>
+<p>   �?添加一个功�?   �?再添加一个功�?   <code>`</code></p>
+
+<p>3. <strong>使用命令测试</strong></p>
+<p>   <code>`</code></p>
+<p>   /give @s mymod:magic_wand{Enchantments:[{id:"minecraft:unbreaking",lvl:10}]}</p>
+<p>   <code>`</code></p>
+
+<h3 id="常见错误">常见错误</h3>
+
+<table><thead><tr><th>错误信息</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td>----------</td><td>------</td><td>----------</td></tr><tr><td>`Registry is frozen`</td><td>注册时机错误</td><td>确保�?`onInitialize` 中注�?</td></tr><tr><td>`NullPointerException`</td><td>world �?null</td><td>检�?`world.isClient` 条件</td></tr><tr><td>`ConcurrentModificationException`</td><td>在遍历中修改集合</td><td>使用 `List` 而非直接遍历</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="扩展挑战">扩展挑战</h2>
+
+<p>完成了基础项目？试试这些挑战：</p>
+
+<h3 id="挑战-1-创建食物物-">挑战 1：创建食物物�?</h3>
+<pre class="code-block"><code>public class MagicAppleItem extends Item {
+    
+    public MagicAppleItem(Settings settings) {
+        super(settings.food(new FoodComponent.Builder()
+            .hunger(10)                    // 恢复10点饥�?            .saturationModifier(15f)      // 高饱和度
+            .statusEffect(
+                new StatusEffectInstance(StatusEffects.REGENERATION, 200, 1),
+                1.0f                      // 100%概率
+            )
+            .alwaysEdible()               // 饱腹时也能吃
+            .build()
+        ));
+    }
+}</code></pre>
+
+<h3 id="挑战-2-创建弓类物-">挑战 2：创建弓类物�?</h3>
+<pre class="code-block"><code>public class LightningBowItem extends BowItem {
+    
+    @Override
+    public void onStoppedUsing(ItemStack stack, World world, 
+                               LivingEntity user, int remainingUseTicks) {
+        // 发射雷电箭矢
+        // 类似原版弓的逻辑
+    }
+}</code></pre>
+
+<h3 id="挑战-3-创建工具物-">挑战 3：创建工具物�?</h3>
+<pre class="code-block"><code>public class MagicPickaxeItem extends PickaxeItem {
+    
+    public MagicPickaxeItem(ToolMaterial material, float attackDamage, 
+                           float attackSpeed, Settings settings) {
+        super(material, attackDamage, attackSpeed, settings);
+    }
+    
+    @Override
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        // 击中时给予力量效�?        attacker.addStatusEffect(new StatusEffectInstance(
+            StatusEffects.STRENGTH, 60 * 20, 0
+        ));
+        return super.postHit(stack, target, attacker);
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="参考资-">参考资�?</h2>
+<h3 id="相关章节">相关章节</h3>
+
+<p>- <a href="/mc/1.21/tutorials/Part-1-Foundation/04-registry-system/">注册表基础</a></p>
+<p>- <a href="/mc/1.21/tutorials/Part-3-Block-Item/17-item-basics/">Item 基础</a></p>
+<p>- <a href="/mc/1.21/tutorials/Part-3-Block-Item/18-item-stack/">ItemStack</a></p>
+<p>- <a href="/mc/1.21/tutorials/Part-8-Resource/44-recipe-system/">配方系统</a></p>
+<p>- <a href="/mc/1.21/tutorials/Part-8-Resource/41-datapack-intro/">数据包</a></p>
+
+<h3 id="源码参-">源码参�?</h3>
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

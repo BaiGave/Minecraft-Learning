@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>第五十章：玩家大管家 - PlayerManager - Minecraft 原版 教程</title>
+    <meta name="title" content="第五十章：玩家大管家 - PlayerManager - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-10-Server/50-player-manager.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-10-Server/50-player-manager.html">
+    <meta property="og:title" content="第五十章：玩家大管家 - PlayerManager - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="第五十章：玩家大管家 - PlayerManager - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "第五十章：玩家大管家 - PlayerManager",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.814Z",
+        "dateModified": "2026-03-22T07:07:48.814Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-10-Server</span>
+        
+        <span>/</span>
+        <span>第五十章：玩家大管家 - PlayerManager</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第五十章：玩家大管家 - PlayerManager</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 50-player-manager</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#playermanager-是什么-">PlayerManager 是什么？</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#玩家登录流程图">玩家登录流程图</a></li><li class="h3"><a href="#playermanager-组件关系图">PlayerManager 组件关系图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#玩家连接处理">玩家连接处理</a></li><li class="h3"><a href="#玩家连接检查">玩家连接检查</a></li><li class="h3"><a href="#玩家离开处理">玩家离开处理</a></li><li class="h3"><a href="#玩家数据保存">玩家数据保存</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-玩家完整登录过程">场景：玩家完整登录过程</a></li><li><a href="#玩家数据存储位置">玩家数据存储位置</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>- 理解 PlayerManager 是什么</p>
+<p>- 掌握玩家登录流程</p>
+<p>- 了解玩家列表的管理方式</p>
+<p>- 认识玩家数据的同步机制</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 理解 MinecraftServer 的基本架构（上一章）</p>
+<p>- 了解什么是玩家实体（PlayerEntity）</p>
+<p>- 知道网络连接的基本概念</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="playermanager-是什么-">PlayerManager 是什么？</h3>
+
+<p>想象 PlayerManager 是<strong>酒店的前台</strong>：</p>
+
+<p>- <strong>接待员（onPlayerConnect）</strong>：办理入住（玩家连接）</p>
+<p>- <strong>房间管理（players 列表）</strong>：管理所有入住的客人</p>
+<p>- <strong>会员系统（op/whitelist）</strong>：管理权限和访问控制</p>
+<p>- <strong>行李寄存（PlayerData）</strong>：保存玩家的背包、位置等信息</p>
+
+<p><code>PlayerManager</code> 负责：</p>
+<p>- 管理所有在线玩家</p>
+<p>- 处理玩家的加入和离开</p>
+<p>- 保存和加载玩家数据</p>
+<p>- 管理 OP、白名单、封禁列表</p>
+
+<pre class="code-block"><code>// 源码位置：net/minecraft/server/PlayerManager.java
+public abstract class PlayerManager {
+    
+    // 玩家存储
+    private final List&lt;ServerPlayerEntity&gt; players;           // 所有玩家
+    private final Map&lt;UUID, ServerPlayerEntity&gt; playerMap;   // UUID 索引
+    
+    // 权限管理
+    private final BannedPlayerList bannedProfiles;            // 封禁玩家
+    private final BannedIpList bannedIps;                    // 封禁IP
+    private final OperatorList ops;                          // OP列表
+    private final Whitelist whitelist;                        // 白名单
+    
+    // 数据存储
+    private final Map&lt;UUID, ServerStatHandler&gt; statisticsMap;    // 统计
+    private final Map&lt;UUID, PlayerAdvancementTracker&gt; advancementTrackers;  // 进度
+}</code></pre>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="玩家登录流程图">玩家登录流程图</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant Client as 玩家客户端
+    participant Conn as ClientConnection
+    participant Login as 登录处理器
+    participant PM as PlayerManager
+    participant World as ServerWorld
+    
+    Client->>Conn: 建立连接
+    Conn->>Login: 创建登录处理器
+    
+    Login->>PM: checkCanJoin() 检查是否可以加入
+    PM-->>Login: 返回检查结果
+    
+    alt 检查通过
+        Login->>PM: onPlayerConnect() 处理玩家加入
+        PM->>PM: 创建 ServerPlayerEntity
+        PM->>World: 查找/加载玩家数据
+        PM-->>Client: 发送 GameJoinS2CPacket
+        Client->>Client: 进入游戏世界
+        Note over PM: 广播 "XXX 加入了游戏"
+    else 检查失败
+        Login-->>Client: 发送断开连接原因
+        Client->>Client: 显示错误信息
+    end
+</div>
+
+<h3 id="playermanager-组件关系图">PlayerManager 组件关系图</h3>
+
+<div class="mermaid">
+graph LR
+    subgraph "PlayerManager 架构"
+        PM[PlayerManager<br/>玩家管理器]
+        
+        subgraph "玩家存储"
+            PL[players List<br/>玩家列表]
+            PM2[playerMap Map<br/>UUID索引]
+        end
+        
+        subgraph "权限系统"
+            BL[BannedPlayerList<br/>封禁玩家]
+            OP[OperatorList<br/>OP列表]
+            WL[Whitelist<br/>白名单]
+        end
+        
+        subgraph "数据管理"
+            ST[StatisticsMap<br/>统计]
+            AD[AdvancementTrackers<br/>进度]
+        end
+    end
+    
+    PM --> PL
+    PM --> PM2
+    PM --> BL
+    PM --> OP
+    PM --> WL
+    PM --> ST
+    PM --> AD
+    
+    style PM fill:#e1f5fe
+    style PL fill:#c8e6c9
+    style BL fill:#ffcdd2
+    style OP fill:#fff9c4
+</div>
+
+<h2 id="核心代码">核心代码</h2>
+
+<h3 id="玩家连接处理">玩家连接处理</h3>
+
+<pre class="code-block"><code>// PlayerManager.java - 玩家连接的核心方法
+public void onPlayerConnect(ClientConnection connection, 
+                            ServerPlayerEntity player, 
+                            ConnectedClientData clientData) {
+    
+    // 1. 加载玩家数据
+    NbtCompound nbtCompound;
+    Optional&lt;Object&gt; optional = this.loadPlayerData(player);
+    
+    // 2. 确定出生世界
+    RegistryKey&lt;World&gt; registryKey = optional.flatMap(...).orElse(World.OVERWORLD);
+    ServerWorld serverWorld = this.server.getWorld(registryKey);
+    player.setServerWorld(serverWorld);
+    
+    // 3. 创建网络处理器
+    ServerPlayNetworkHandler serverPlayNetworkHandler = 
+        new ServerPlayNetworkHandler(this.server, connection, player, clientData);
+    
+    // 4. 发送初始数据包
+    serverPlayNetworkHandler.sendPacket(new GameJoinS2CPacket(...));
+    serverPlayNetworkHandler.sendPacket(new DifficultyS2CPacket(...));
+    serverPlayNetworkHandler.sendPacket(new PlayerAbilitiesS2CPacket(...));
+    
+    // 5. 发送玩家列表
+    serverPlayNetworkHandler.sendPacket(PlayerListS2CPacket.entryFromPlayer(this.players));
+    
+    // 6. 添加到玩家列表
+    this.players.add(player);
+    this.playerMap.put(player.getUuid(), player);
+    
+    // 7. 广播加入消息
+    this.broadcast(Text.translatable(&quot;multiplayer.player.joined&quot;, player.getDisplayName()), false);
+}</code></pre>
+
+<h3 id="玩家连接检查">玩家连接检查</h3>
+
+<pre class="code-block"><code>// 检查玩家是否可以加入
+@Nullable
+public Text checkCanJoin(SocketAddress address, GameProfile profile) {
+    
+    // 1. 检查是否被封禁
+    if (this.bannedProfiles.contains(profile)) {
+        BannedPlayerEntry entry = (BannedPlayerEntry)this.bannedProfiles.get(profile);
+        return Text.translatable(&quot;multiplayer.disconnect.banned.reason&quot;, entry.getReason());
+    }
+    
+    // 2. 检查白名单
+    if (!this.isWhitelisted(profile)) {
+        return Text.translatable(&quot;multiplayer.disconnect.not_whitelisted&quot;);
+    }
+    
+    // 3. 检查IP封禁
+    if (this.bannedIps.isBanned(address)) {
+        return Text.translatable(&quot;multiplayer.disconnect.banned_ip.reason&quot;, ...);
+    }
+    
+    // 4. 检查服务器是否满员
+    if (this.players.size() &gt;= this.maxPlayers &amp;&amp; !this.canBypassPlayerLimit(profile)) {
+        return Text.translatable(&quot;multiplayer.disconnect.server_full&quot;);
+    }
+    
+    return null;  // null = 可以加入
+}</code></pre>
+
+<h3 id="玩家离开处理">玩家离开处理</h3>
+
+<pre class="code-block"><code>// 移除玩家
+public void remove(ServerPlayerEntity player) {
+    // 1. 保存玩家数据
+    this.savePlayerData(player);
+    
+    // 2. 处理载具（如果玩家在船上或矿车里）
+    if (player.hasVehicle() &amp;&amp; (entity2 = player.getRootVehicle()).hasPlayerRider()) {
+        player.stopRiding();
+        entity2.streamPassengersAndSelf().forEach(Entity::discard);
+    }
+    
+    // 3. 从世界移除玩家
+    serverWorld.removePlayer(player, Entity.RemovalReason.UNLOADED_WITH_PLAYER);
+    
+    // 4. 从列表移除
+    this.players.remove(player);
+    this.playerMap.remove(player.getUuid());
+    
+    // 5. 广播离开消息
+    this.sendToAll(new PlayerRemoveS2CPacket(List.of(player.getUuid())));
+}</code></pre>
+
+<h3 id="玩家数据保存">玩家数据保存</h3>
+
+<pre class="code-block"><code>// 保存玩家数据
+protected void savePlayerData(ServerPlayerEntity player) {
+    // 保存到磁盘
+    this.saveHandler.savePlayerData(player);
+    
+    // 保存统计
+    ServerStatHandler statHandler = this.statisticsMap.get(player.getUuid());
+    if (statHandler != null) {
+        statHandler.save();
+    }
+    
+    // 保存进度
+    PlayerAdvancementTracker tracker = this.advancementTrackers.get(player.getUuid());
+    if (tracker != null) {
+        tracker.save();
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-玩家完整登录过程">场景：玩家完整登录过程</h3>
+
+<pre class="code-block"><code>🎮 玩家点击&quot;加入服务器&quot;后的流程：
+
+1️⃣ 连接建立（Tick 0）
+   └─&gt; ClientConnection 创建网络连接
+   └─&gt; ServerLoginNetworkHandler 处理登录
+
+2️⃣ 身份验证（Tick 1-5）
+   └─&gt; 检查服务器是否在线模式
+   └─&gt; 在线模式：验证微软账户
+   └─&gt; 离线模式：允许任何名字
+
+3️⃣ 权限检查（Tick 6）
+   └─&gt; checkCanJoin() 返回 null？
+       ├─ 是 → 继续登录
+       └─ 否 → 断开连接
+
+4️⃣ 世界初始化（Tick 7-10）
+   └─&gt; 创建 ServerPlayerEntity
+   └─&gt; 加载玩家背包、位置等数据
+   └─&gt; 确定出生世界
+
+5️⃣ 进入游戏（Tick 11）
+   └─&gt; 发送 GameJoinS2CPacket
+   └─&gt; 发送区块数据
+   └─&gt; 广播加入消息
+
+6️⃣ 游戏进行中
+   └─&gt; 每 Tick 更新位置、状态
+   └─&gt; 每 600 Tick 更新延迟显示
+   └─&gt; 定期保存数据</code></pre>
+
+<h2 id="玩家数据存储位置">玩家数据存储位置</h2>
+
+<p>玩家的数据存储在 <code>world/playerdata/</code> 目录下：</p>
+
+<pre class="code-block"><code>📁 世界目录/
+├── 📁 playerdata/          # 玩家数据
+│   ├── xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.dat  # UUID命名的文件
+│   └── ...
+├── 📁 stats/               # 统计信息
+│   └── xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.json
+├── 📁 advancements/         # 进度成就
+│   └── xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.json
+└── 📁 raids/               # 袭击数据</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>PlayerManager 是玩家大管家</strong>：管理所有玩家的加入、离开、数据</p>
+<p>2. <strong>登录流程严格</strong>：先检查权限，再加载数据，最后进入世界</p>
+<p>3. <strong>玩家数据持久化</strong>：玩家的背包、位置、进度都会保存</p>
+<p>4. <strong>权限管理完整</strong>：支持 OP、白名单、封禁列表</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>思考题</strong>：如果玩家在游戏中突然断线，PlayerManager 如何处理？</p>
+<p>2. <strong>找一找</strong>：阅读 <code>respawnPlayer()</code> 方法，了解玩家如何重生</p>
+<p>3. <strong>实践</strong>：查看 <code>broadcast()</code> 方法，理解聊天消息如何广播给所有玩家</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./Part-11-Network/">Part-11 网络通信</a> - 了解 ClientConnection 如何工作</p>
+<p>- <a href="./Part-12-Entity/">Part-12 实体系统</a> - 了解 ServerPlayerEntity</p>
+<p>- 源码：<code>net/minecraft/server/PlayerManager.java</code></p>
+<p>- 独立服务器：<code>net/minecraft/server/dedicated/DedicatedPlayerManager.java</code></p>
+<p>- 整合服务器：<code>net/minecraft/server/integrated/IntegratedPlayerManager.java</code></p>
+
+<hr>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>PlayerManager.java</td><td>`net/minecraft/server/PlayerManager.java`</td><td>玩家管理器基类</td></tr><tr><td>ServerPlayerEntity.java</td><td>`net/minecraft/server/network/ServerPlayerEntity.java`</td><td>服务端玩家实体</td></tr><tr><td>PlayerList.java</td><td>`net/minecraft/server/PlayerList.java`</td><td>玩家列表（1.20前使用）</td></tr></tbody></table>
+
+<hr>
+
+<p><strong>关键词</strong>：PlayerManager、ServerPlayerEntity、Login、Logout</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

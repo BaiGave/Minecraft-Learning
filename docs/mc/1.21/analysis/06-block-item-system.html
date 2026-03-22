@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Minecraft 1.21 方块物品系统分析 - Minecraft 原版 教程</title>
+    <meta name="title" content="Minecraft 1.21 方块物品系统分析 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/analysis/06-block-item-system.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/analysis/06-block-item-system.html">
+    <meta property="og:title" content="Minecraft 1.21 方块物品系统分析 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Minecraft 1.21 方块物品系统分析 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Minecraft 1.21 方块物品系统分析",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.905Z",
+        "dateModified": "2026-03-22T07:07:48.905Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Minecraft 1.21 方块物品系统分析</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Minecraft 1.21 方块物品系统分析</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 06-block-item-system</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目录">目录</a></li><li><a href="#概述">概述</a></li><li><a href="#方块系统架构">方块系统架构</a></li><li class="h3"><a href="#1-1-block-类层次结构">1.1 Block 类层次结构</a></li><li class="h3"><a href="#1-2-block-类的核心职责">1.2 Block 类的核心职责</a></li><li class="h3"><a href="#1-3-方块状态-blockstate-机制">1.3 方块状态（BlockState）机制</a></li><li class="h3"><a href="#1-4-abstractblock-类">1.4 AbstractBlock 类</a></li><li><a href="#物品系统架构">物品系统架构</a></li><li class="h3"><a href="#2-1-item-类结构">2.1 Item 类结构</a></li><li class="h3"><a href="#2-2-itemstack-物品堆叠">2.2 ItemStack - 物品堆叠</a></li><li class="h3"><a href="#2-3-itemstack-组件系统">2.3 ItemStack 组件系统</a></li><li class="h3"><a href="#2-4-item-的生命周期方法">2.4 Item 的生命周期方法</a></li><li><a href="#方块实体机制">方块实体机制</a></li><li class="h3"><a href="#3-1-blockentity-概述">3.1 BlockEntity 概述</a></li><li class="h3"><a href="#3-2-blockentitytype-方块实体类型注册">3.2 BlockEntityType - 方块实体类型注册</a></li><li class="h3"><a href="#3-3-预定义方块实体类型">3.3 预定义方块实体类型</a></li><li class="h3"><a href="#3-4-nbt-数据持久化">3.4 NBT 数据持久化</a></li><li class="h3"><a href="#3-5-客户端同步机制">3.5 客户端同步机制</a></li><li><a href="#组件系统">组件系统</a></li><li class="h3"><a href="#4-1-componentmap-架构">4.1 ComponentMap 架构</a></li><li class="h3"><a href="#4-2-物品组件-vs-堆叠组件">4.2 物品组件 vs 堆叠组件</a></li><li><a href="#状态管理系统">状态管理系统</a></li><li class="h3"><a href="#5-1-statemanager-架构">5.1 StateManager 架构</a></li><li class="h3"><a href="#5-2-常用属性类型">5.2 常用属性类型</a></li><li class="h3"><a href="#5-3-状态转换">5.3 状态转换</a></li><li><a href="#关键代码引用">关键代码引用</a></li><li class="h3"><a href="#方块注册">方块注册</a></li><li class="h3"><a href="#物品注册">物品注册</a></li><li class="h3"><a href="#方块实体操作">方块实体操作</a></li><li><a href="#架构图">架构图</a></li><li><a href="#总结">总结</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目录">目录</h2>
+<p>1. <a href="#概述">概述</a></p>
+<p>2. <a href="#方块系统架构">方块系统架构</a></p>
+<p>3. <a href="#物品系统架构">物品系统架构</a></p>
+<p>4. <a href="#方块实体机制">方块实体机制</a></p>
+<p>5. <a href="#组件系统">组件系统</a></p>
+<p>6. <a href="#状态管理系统">状态管理系统</a></p>
+<p>7. <a href="#关键代码引用">关键代码引用</a></p>
+
+<hr>
+
+<h2 id="概述">概述</h2>
+
+<p>Minecraft 1.21 的方块物品系统是游戏的核心子系统之一，负责管理世界中的静态元素（方块）和可交互物品。本分析文档基于反编译源代码，深入探讨其设计架构和实现机制。</p>
+
+<p><strong>核心设计原则：</strong></p>
+<p>- 每种方块/物品类型只有一个实例（单例模式）</p>
+<p>- 方块状态（BlockState）表示方块的运行时变体</p>
+<p>- 物品堆叠（ItemStack）存储具体物品数量和组件数据</p>
+<p>- 方块实体（BlockEntity）用于存储需要持久化的额外数据</p>
+
+<hr>
+
+<h2 id="方块系统架构">方块系统架构</h2>
+
+<h3 id="1-1-block-类层次结构">1.1 Block 类层次结构</h3>
+
+<pre class="code-block"><code>Block (net.minecraft.block.Block)
+├── AbstractBlock
+│   └── Block
+│       ├── AirBlock
+│       ├── LeavesBlock
+│       ├── WoodBlock
+│       └── [其他具体方块...]
+└── BlockWithEntity (带有方块实体的方块)
+    └── [具体方块如Chest, Furnace...]</code></pre>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/block/Block.java</code></p>
+
+<h3 id="1-2-block-类的核心职责">1.2 Block 类的核心职责</h3>
+
+<pre class="code-block"><code>98:780:..../source/net/minecraft/block/Block.java
+public class Block
+extends AbstractBlock
+implements ItemConvertible,
+FabricBlock {
+    
+    // 注册表条目 - 每个方块类型对应一个注册表引用
+    private final RegistryEntry.Reference&lt;Block&gt; registryEntry = Registries.BLOCK.createEntry(this);
+    
+    // 方块状态管理器
+    protected final StateManager&lt;Block, BlockState&gt; stateManager;
+    private BlockState defaultState;
+    
+    // 用于方块状态ID映射
+    public static final IdList&lt;BlockState&gt; STATE_IDS = new IdList();
+    
+    // 通知标志位
+    public static final int NOTIFY_NEIGHBORS = 1;
+    public static final int NOTIFY_LISTENERS = 2;
+    public static final int NO_REDRAW = 4;
+    public static final int REDRAW_ON_MAIN_THREAD = 8;
+    // ...
+}</code></pre>
+
+<h3 id="1-3-方块状态-blockstate-机制">1.3 方块状态（BlockState）机制</h3>
+
+<p>方块状态是方块在游戏世界中的具体表现形式，同一种方块可以有多个不同的状态。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/block/BlockState.java</code></p>
+
+<pre class="code-block"><code>15:28:..../source/net/minecraft/block/BlockState.java
+public class BlockState
+extends AbstractBlock.AbstractBlockState
+implements FabricBlockState {
+    
+    public static final Codec&lt;BlockState&gt; CODEC = BlockState.createCodec(
+        Registries.BLOCK.getCodec(), 
+        Block::getDefaultState
+    ).stable();
+}</code></pre>
+
+<p><strong>BlockState 的特点：</strong></p>
+<p>- 使用 <code>Reference2ObjectArrayMap</code> 存储属性值对</p>
+<p>- 每个状态通过属性组合唯一标识</p>
+<p>- 支持稳定的序列化/反序列化（CODEC）</p>
+<p>- 缓存机制提高性能</p>
+
+<h3 id="1-4-abstractblock-类">1.4 AbstractBlock 类</h3>
+
+<p>AbstractBlock 提供了方块行为的核心抽象，是所有具体方块类的基类。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/block/AbstractBlock.java</code></p>
+
+<p><strong>关键方法执行顺序：</strong></p>
+
+<p><strong>放置相关（Placement）：</strong></p>
+<table><thead><tr><th>顺序</th><th>方法</th><th>用途</th><th>玩家</th><th>发射器</th><th>setBlockState</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td><td>------</td><td>--------</td><td>---------------</td></tr><tr><td>1</td><td>canReplace</td><td>检查当前方块是否可替换</td><td>✓</td><td>✓</td><td>✗</td></tr><tr><td>2</td><td>getPlacementState</td><td>获取放置状态</td><td>✓</td><td>✓</td><td>✗</td></tr><tr><td>3</td><td>canPlaceAt</td><td>检查放置限制</td><td>✓</td><td>✓</td><td>✗</td></tr><tr><td>4</td><td>onStateReplaced</td><td>移除旧状态逻辑</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td>5</td><td>onBlockAdded</td><td>添加新状态逻辑</td><td>✓</td><td>✓</td><td>✓</td></tr><tr><td>6</td><td>neighborUpdate</td><td>邻居方块更新</td><td>✓</td><td>✓</td><td>✓</td></tr></tbody></table>
+
+<p><strong>破坏相关（Breaking）：</strong></p>
+<table><thead><tr><th>顺序</th><th>方法</th><th>用途</th><th>玩家挖掘</th><th>爆炸</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td><td>----------</td><td>------</td></tr><tr><td>1</td><td>onBlockBreakStart</td><td>开始破坏回调</td><td>✓</td><td>✗</td></tr><tr><td>2</td><td>calcBlockBreakingDelta</td><td>计算破坏速度</td><td>✓</td><td>✗</td></tr><tr><td>3</td><td>onBreak</td><td>破坏前处理</td><td>✓</td><td>✗</td></tr><tr><td>4</td><td>onStateReplaced</td><td>状态替换</td><td>✓</td><td>✓</td></tr><tr><td>5</td><td>neighborUpdate</td><td>邻居更新</td><td>✓</td><td>✓</td></tr><tr><td>6</td><td>getDroppedStacks</td><td>获取掉落物</td><td>✓</td><td>✓</td></tr><tr><td>7</td><td>onStacksDropped</td><td>掉落物处理</td><td>✓</td><td>✓</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="物品系统架构">物品系统架构</h2>
+
+<h3 id="2-1-item-类结构">2.1 Item 类结构</h3>
+
+<pre class="code-block"><code>96:808:..../source/net/minecraft/item/Item.java
+public class Item
+implements ToggleableFeature,
+ItemConvertible,
+FabricItem {
+    
+    // 物品到方块的映射
+    public static final Map&lt;Block, Item&gt; BLOCK_ITEMS = Maps.newHashMap();
+    
+    // 注册表条目
+    private final RegistryEntry.Reference&lt;Item&gt; registryEntry = Registries.ITEM.createEntry(this);
+    
+    // 组件数据
+    private final ComponentMap components;
+    
+    // 配方剩余物品
+    @Nullable
+    private final Item recipeRemainder;
+}</code></pre>
+
+<h3 id="2-2-itemstack-物品堆叠">2.2 ItemStack - 物品堆叠</h3>
+
+<p>ItemStack 是物品系统的核心数据容器，存储具体的物品数量和组件数据。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/item/ItemStack.java</code></p>
+
+<pre class="code-block"><code>148:1373:..../source/net/minecraft/item/ItemStack.java
+public final class ItemStack
+implements ComponentHolder,
+FabricItemStack {
+    
+    // 序列化编解码器
+    public static final Codec&lt;ItemStack&gt; CODEC = ...
+    public static final Codec&lt;ItemStack&gt; UNCOUNTED_CODEC = ...
+    public static final Codec&lt;ItemStack&gt; VALIDATED_CODEC = ...
+    
+    // 网络传输编解码器
+    public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKET_CODEC = ...
+    public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; PACKET_CODEC = ...
+    
+    // 物品数量
+    private int count;
+    
+    // 动画时间
+    private int bobbingAnimationTime;
+    
+    // 物品引用（非空时）
+    @Deprecated
+    @Nullable
+    private final Item item;
+    
+    // 组件映射
+    final ComponentMapImpl components;
+}</code></pre>
+
+<h3 id="2-3-itemstack-组件系统">2.3 ItemStack 组件系统</h3>
+
+<p>Minecraft 1.21 引入的组件系统是物品数据的核心存储机制。</p>
+
+<pre class="code-block"><code>// 组件操作示例
+ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+
+// 设置组件
+stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(&quot;My Sword&quot;));
+
+// 获取组件
+int damage = stack.getDamage();
+
+// 移除组件
+stack.remove(DataComponentTypes.ENCHANTMENTS);</code></pre>
+
+<p><strong>核心组件类型：</strong></p>
+<p>- <code>DataComponentTypes.ENCHANTMENTS</code> - 附魔</p>
+<p>- <code>DataComponentTypes.CUSTOM_NAME</code> - 自定义名称</p>
+<p>- <code>DataComponentTypes.DAMAGE</code> - 耐久度损伤</p>
+<p>- <code>DataComponentTypes.MAX_DAMAGE</code> - 最大耐久度</p>
+<p>- <code>DataComponentTypes.FOOD</code> - 食物属性</p>
+<p>- <code>DataComponentTypes.DYED_COLOR</code> - 染色颜色</p>
+<p>- <code>DataComponentTypes.LORE</code> - 物品描述</p>
+
+<h3 id="2-4-item-的生命周期方法">2.4 Item 的生命周期方法</h3>
+
+<table><thead><tr><th>方法</th><th>描述</th><th>典型用途</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>`use()`</td><td>玩家开始使用物品时调用</td><td>食物消耗、弓拉弦</td></tr><tr><td>`finishUsing()`</td><td>物品使用完成后调用</td><td>食物恢复饥饿值</td></tr><tr><td>`usageTick()`</td><td>使用过程中的每tick调用</td><td>弩充能</td></tr><tr><td>`onStoppedUsing()`</td><td>提前停止使用时调用</td><td>弓的取消</td></tr><tr><td>`useOnBlock()`</td><td>在方块上使用物品</td><td>放置方块</td></tr><tr><td>`useOnEntity()`</td><td>在实体上使用物品</td><td>给生物装备鞍</td></tr><tr><td>`postMine()`</td><td>成功挖掘方块后调用</td><td>工具耐久度消耗</td></tr><tr><td>`postHit()`</td><td>攻击实体后调用</td><td>武器耐久度消耗</td></tr><tr><td>`inventoryTick()`</td><td>物品在背包中每tick调用</td><td>物品特殊效果</td></tr><tr><td>`onCraft()`</td><td>物品被合成时调用</td><td>添加成就进度</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="方块实体机制">方块实体机制</h2>
+
+<h3 id="3-1-blockentity-概述">3.1 BlockEntity 概述</h3>
+
+<p>BlockEntity 用于存储方块的额外数据，适用于那些无法用 BlockState 表示的数据，如容器物品、计分板值等。</p>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/block/entity/BlockEntity.java</code></p>
+
+<pre class="code-block"><code>73:518:..../source/net/minecraft/block/entity/BlockEntity.java
+public abstract class BlockEntity
+implements RenderDataBlockEntity,
+AttachmentTarget {
+    
+    // 方块实体类型
+    private final BlockEntityType&lt;?&gt; type;
+    
+    // 所属世界（可能为null）
+    @Nullable
+    protected World world;
+    
+    // 方块位置
+    protected final BlockPos pos;
+    
+    // 缓存的方块状态
+    private BlockState cachedState;
+    
+    // 组件数据
+    private ComponentMap components = ComponentMap.EMPTY;
+}</code></pre>
+
+<h3 id="3-2-blockentitytype-方块实体类型注册">3.2 BlockEntityType - 方块实体类型注册</h3>
+
+<p><strong>核心文件：</strong> <code>..../source/net/minecraft/block/entity/BlockEntityType.java</code></p>
+
+<pre class="code-block"><code>87:226:..../source/net/minecraft/block/entity/BlockEntityType.java
+public class BlockEntityType&lt;T extends BlockEntity&gt;
+implements FabricBlockEntityType {
+    
+    // 预定义的方块实体类型
+    public static final BlockEntityType&lt;FurnaceBlockEntity&gt; FURNACE = 
+        BlockEntityType.create(&quot;furnace&quot;, 
+            Builder.create(FurnaceBlockEntity::new, Blocks.FURNACE));
+    
+    public static final BlockEntityType&lt;ChestBlockEntity&gt; CHEST = 
+        BlockEntityType.create(&quot;chest&quot;, 
+            Builder.create(ChestBlockEntity::new, Blocks.CHEST));
+    
+    // ... 更多预定义类型
+    
+    // 工厂方法
+    private final BlockEntityFactory&lt;? extends T&gt; factory;
+    
+    // 关联的方块集合
+    private final Set&lt;Block&gt; blocks;
+    
+    // 数据修复器类型
+    private final Type&lt;?&gt; type;
+}</code></pre>
+
+<h3 id="3-3-预定义方块实体类型">3.3 预定义方块实体类型</h3>
+
+<table><thead><tr><th>类型</th><th>ID</th><th>关联方块</th></tr></thead><tbody><tr><td>------</td><td>-----</td><td>----------</td></tr><tr><td>FURNACE</td><td>furnace</td><td>熔炉</td></tr><tr><td>CHEST</td><td>chest</td><td>箱子</td></tr><tr><td>TRAPPED_CHEST</td><td>trapped_chest</td><td>陷阱箱</td></tr><tr><td>ENDER_CHEST</td><td>ender_chest</td><td>末影箱</td></tr><tr><td>JUKEBOX</td><td>jukebox</td><td>唱片机</td></tr><tr><td>DISPENSER</td><td>dispenser</td><td>发射器</td></tr><tr><td>DROPPER</td><td>dropper</td><td>投掷器</td></tr><tr><td>SIGN</td><td>sign</td><td>所有木质告示牌</td></tr><tr><td>HANGING_SIGN</td><td>hanging_sign</td><td>所有悬挂告示牌</td></tr><tr><td>MOB_SPAWNER</td><td>mob_spawner</td><td>刷怪笼</td></tr><tr><td>PISTON</td><td>piston</td><td>活塞</td></tr><tr><td>BREWING_STAND</td><td>brewing_stand</td><td>酿造台</td></tr><tr><td>ENCHANTING_TABLE</td><td>enchanting_table</td><td>附魔台</td></tr><tr><td>BEACON</td><td>beacon</td><td>信标</td></tr><tr><td>SKULL</td><td>skull</td><td>头颅</td></tr><tr><td>HOPPER</td><td>hopper</td><td>漏斗</td></tr><tr><td>COMPARATOR</td><td>comparator</td><td>比较器</td></tr><tr><td>SHULKER_BOX</td><td>shulker_box</td><td>潜影盒</td></tr><tr><td>CAMPFIRE</td><td>campfire</td><td>营火</td></tr><tr><td>BEEHIVE</td><td>beehive</td><td>蜂巢</td></tr><tr><td>SCULK_SENSOR</td><td>sculk_sensor</td><td>幽匿感测体</td></tr><tr><td>TRIAL_SPAWNER</td><td>trial_spawner</td><td>试用刷怪笼</td></tr><tr><td>VAULT</td><td>vault</td><td>保险箱</td></tr></tbody></table>
+
+<h3 id="3-4-nbt-数据持久化">3.4 NBT 数据持久化</h3>
+
+<p>BlockEntity 使用 NBT 格式进行数据持久化：</p>
+
+<pre class="code-block"><code>// 写入NBT
+public final NbtCompound createNbt(RegistryWrapper.WrapperLookup registryLookup) {
+    NbtCompound nbtCompound = new NbtCompound();
+    this.writeNbt(nbtCompound, registryLookup);
+    Components.CODEC.encodeStart(registryLookup.getOps(NbtOps.INSTANCE), this.components)
+        .resultOrPartial(...)
+        .ifPresent(nbt -&gt; nbtCompound.copyFrom((NbtCompound)nbt));
+    return nbtCompound;
+}
+
+// 从NBT读取
+public static BlockEntity createFromNbt(BlockPos pos, BlockState state, 
+    NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    String string = nbt.getString(&quot;id&quot;);
+    Identifier identifier = Identifier.tryParse(string);
+    // ...
+}</code></pre>
+
+<h3 id="3-5-客户端同步机制">3.5 客户端同步机制</h3>
+
+<p>BlockEntity 的数据不会自动同步到客户端，需要显式声明：</p>
+
+<pre class="code-block"><code>// 返回同步数据包
+@Nullable
+public Packet&lt;ClientPlayPacketListener&gt; toUpdatePacket() {
+    return BlockEntityUpdateS2CPacket.create(this);
+}
+
+// 返回初始数据
+public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
+    return this.createNbt(registryLookup);
+}</code></pre>
+
+<hr>
+
+<h2 id="组件系统">组件系统</h2>
+
+<h3 id="4-1-componentmap-架构">4.1 ComponentMap 架构</h3>
+
+<p>Minecraft 1.21 的组件系统是对原有 NBT 数据的抽象封装。</p>
+
+<pre class="code-block"><code>// 组件类型定义
+public interface ComponentType&lt;T&gt; {
+    Codec&lt;T&gt; getCodec();
+    PacketCodec&lt;RegistryByteBuf, T&gt; getPacketCodec();
+}
+
+// 组件映射接口
+public interface ComponentHolder {
+    ComponentMap getComponents();
+    &lt;T&gt; T get(ComponentType&lt;T&gt; type);
+    &lt;T&gt; T getOrDefault(ComponentType&lt;T&gt; type, T fallback);
+    &lt;T&gt; T set(ComponentType&lt;T&gt; type, @Nullable T value);
+    &lt;T&gt; T remove(ComponentType&lt;? extends T&gt; type);
+}</code></pre>
+
+<h3 id="4-2-物品组件-vs-堆叠组件">4.2 物品组件 vs 堆叠组件</h3>
+
+<p><strong>物品级别组件（Item Components）：</strong></p>
+<p>- 在 Item 构造时定义</p>
+<p>- 所有使用该物品的堆叠都共享</p>
+<p>- 示例：<code>MAX_STACK_SIZE</code>, <code>FOOD</code>, <code>RARITY</code></p>
+
+<p><strong>堆叠级别组件（Stack Components）：</strong></p>
+<p>- 存储在 ItemStack 中</p>
+<p>- 每个堆叠实例独立</p>
+<p>- 示例：<code>CUSTOM_NAME</code>, <code>ENCHANTMENTS</code>, <code>DAMAGE</code></p>
+
+<hr>
+
+<h2 id="状态管理系统">状态管理系统</h2>
+
+<h3 id="5-1-statemanager-架构">5.1 StateManager 架构</h3>
+
+<p>StateManager 负责管理方块的所有可能状态。</p>
+
+<pre class="code-block"><code>// 状态管理器构建
+StateManager.Builder&lt;Block, BlockState&gt; builder = 
+    new StateManager.Builder&lt;Block, BlockState&gt;(this);
+this.appendProperties(builder);
+this.stateManager = builder.build(Block::getDefaultState, BlockState::new);</code></pre>
+
+<h3 id="5-2-常用属性类型">5.2 常用属性类型</h3>
+
+<pre class="code-block"><code>// 布尔属性
+BooleanProperty FACING = BooleanProperty.of(&quot;facing&quot;);
+
+// 整数属性
+IntProperty POWER = IntProperty.of(&quot;power&quot;, 0, 15);
+
+// 枚举属性
+EnumProperty&lt;Direction&gt; FACING = EnumProperty.of(&quot;facing&quot;, Direction.class);
+
+// 方向属性
+DirectionProperty HORIZONTAL_FACING = DirectionProperty.create(&quot;facing&quot;, 
+    Direction.Type.HORIZONTAL);</code></pre>
+
+<h3 id="5-3-状态转换">5.3 状态转换</h3>
+
+<pre class="code-block"><code>// 获取属性值
+BlockState state = world.getBlockState(pos);
+Direction facing = state.get(FacingBlock.FACING);
+
+// 设置属性值
+BlockState newState = state.with(FacingBlock.FACING, Direction.NORTH);
+
+// 检查属性
+boolean isPowered = state.get(PowerableBlock.POWERED);
+
+// 状态相等性
+boolean equals = state1.equals(state2);</code></pre>
+
+<hr>
+
+<h2 id="关键代码引用">关键代码引用</h2>
+
+<h3 id="方块注册">方块注册</h3>
+
+<pre class="code-block"><code>// 注册方块
+Registry.register(Registries.BLOCK, 
+    Identifier.ofVanilla(&quot;diamond_block&quot;), 
+    DIAMOND_BLOCK);
+
+// 获取注册表中的方块
+Block block = Registries.BLOCK.get(Identifier.ofVanilla(&quot;diamond_block&quot;));
+
+// 获取方块的注册键
+RegistryKey&lt;Block&gt; key = RegistryKey.of(Registries.BLOCK_KEY, 
+    Identifier.ofVanilla(&quot;diamond_block&quot;));</code></pre>
+
+<h3 id="物品注册">物品注册</h3>
+
+<pre class="code-block"><code>// 注册物品
+Registry.register(Registries.ITEM, 
+    Identifier.ofVanilla(&quot;diamond&quot;), 
+    DIAMOND);
+
+// 创建物品堆叠
+ItemStack stack = new ItemStack(Items.DIAMOND, 64);
+
+// 检查物品类型
+if (stack.isOf(Items.DIAMOND)) {
+    // 是钻石
+}</code></pre>
+
+<h3 id="方块实体操作">方块实体操作</h3>
+
+<pre class="code-block"><code>// 获取方块实体
+BlockEntity be = world.getBlockEntity(pos);
+
+// 检查类型
+if (be instanceof ChestBlockEntity chest) {
+    ChestBlock chestBlock = (ChestBlock) chest;
+    // 操作箱子
+}
+
+// 标记为脏（需要保存）
+be.markDirty();
+
+// 触发客户端同步
+serverWorld.getChunkManager().markForUpdate(pos);</code></pre>
+
+<hr>
+
+<h2 id="架构图">架构图</h2>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────┐
+│                      Minecraft 世界                          │
+├─────────────────────────────────────────────────────────────┤
+│  ChunkSection                                               │
+│  ├── BlockState[] (方块状态数组, 索引到方块状态映射)          │
+│  └── BlockEntity[] (仅需要额外数据的方块)                   │
+├─────────────────────────────────────────────────────────────┤
+│  BlockState                                                │
+│  ├── Block (方块类型引用)                                   │
+│  └── Map&lt;Property&lt;?&gt;, Comparable&lt;?&gt;&gt; (属性值映射)           │
+├─────────────────────────────────────────────────────────────┤
+│  Block (单例)                                              │
+│  ├── StateManager&lt;Block, BlockState&gt;                      │
+│  ├── AbstractBlock.Settings                                │
+│  └── Block 业务逻辑方法                                     │
+├─────────────────────────────────────────────────────────────┤
+│  BlockEntity                                               │
+│  ├── BlockEntityType&lt;?&gt;                                    │
+│  ├── BlockPos                                              │
+│  ├── ComponentMap                                          │
+│  └── NBT 数据                                               │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                    玩家背包/物品系统                         │
+├─────────────────────────────────────────────────────────────┤
+│  Inventory                                                 │
+│  └── ItemStack[] (物品堆叠数组)                             │
+├─────────────────────────────────────────────────────────────┤
+│  ItemStack                                                 │
+│  ├── Item (物品类型引用)                                    │
+│  ├── int count (数量)                                      │
+│  └── ComponentMap (组件数据)                                │
+├─────────────────────────────────────────────────────────────┤
+│  Item (单例)                                               │
+│  ├── ComponentMap (物品级别组件)                           │
+│  └── Item 业务逻辑方法                                      │
+├─────────────────────────────────────────────────────────────┤
+│  ComponentMap                                              │
+│  ├── Map&lt;ComponentType&lt;?&gt;, Object&gt;                        │
+│  └── 组件变更追踪                                           │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      注册表系统                              │
+├─────────────────────────────────────────────────────────────┤
+│  Registries.ROOT                                          │
+│  └── Map&lt;Identifier, Registry&lt;?&gt;&gt;                         │
+│      ├── Registries.BLOCK → Registry&lt;Block&gt;               │
+│      ├── Registries.ITEM → Registry&lt;Item&gt;                 │
+│      ├── Registries.BLOCK_ENTITY_TYPE → Registry&lt;BlockEntityType&gt; │
+│      └── [其他注册表...]                                    │
+├─────────────────────────────────────────────────────────────┤
+│  Registry&lt;T&gt;                                              │
+│  ├── Map&lt;Identifier, T&gt; (ID到值)                          │
+│  ├── Map&lt;RegistryKey&lt;T&gt;, T&gt; (键到值)                      │
+│  ├── Map&lt;T, RegistryEntry.Reference&lt;T&gt;&gt; (值到引用)       │
+│  └── List&lt;RegistryEntry.Reference&lt;T&gt;&gt; (ID到引用)         │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<hr>
+
+<h2 id="总结">总结</h2>
+
+<p>Minecraft 1.21 的方块物品系统展现了高度模块化的设计：</p>
+
+<p>1. <strong>分离关注点</strong>：Block/Item 定义类型，BlockState/ItemStack 定义实例</p>
+<p>2. <strong>组件化设计</strong>：使用 ComponentMap 替代直接 NBT 操作</p>
+<p>3. <strong>注册表驱动</strong>：所有游戏对象通过注册表统一管理</p>
+<p>4. <strong>双向映射</strong>：支持 ID、RegistryKey、RegistryEntry 三种访问方式</p>
+<p>5. <strong>持久化支持</strong>：NBT 和组件系统提供灵活的数据持久化机制</p>
+
+<p>这套系统为 Mod 开发提供了清晰的扩展点，同时也保持了游戏的核心性能。</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

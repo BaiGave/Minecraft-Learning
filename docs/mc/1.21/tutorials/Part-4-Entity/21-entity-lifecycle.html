@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>第21章 Entity 生命周期——实体的生老病死 - Minecraft 原版 教程</title>
+    <meta name="title" content="第21章 Entity 生命周期——实体的生老病死 - Minecraft 原版 教程">
+    <meta name="description" content="：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-4-Entity/21-entity-lifecycle.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-4-Entity/21-entity-lifecycle.html">
+    <meta property="og:title" content="第21章 Entity 生命周期——实体的生老病死 - Minecraft 原版 教程">
+    <meta property="og:description" content="：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="第21章 Entity 生命周期——实体的生老病死 - Minecraft 原版">
+    <meta name="twitter:description" content="：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "第21章 Entity 生命周期——实体的生老病死",
+        "description": "：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.859Z",
+        "dateModified": "2026-03-22T07:07:48.860Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-4-Entity</span>
+        
+        <span>/</span>
+        <span>第21章 Entity 生命周期——实体的生老病死</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">第21章 Entity 生命周期——实体的生老病死</h1>
+                <p class="tutorial-subtitle">：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p>
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 21-entity-lifecycle</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是实体生命周期-">什么是实体生命周期？</a></li><li class="h3"><a href="#minecraft-中的-tick-刻-">Minecraft 中的 tick（刻）</a></li><li class="h3"><a href="#实体生命周期流程图">实体生命周期流程图</a></li><li><a href="#图解">图解</a></li><li class="h3"><a href="#tick-方法的执行顺序">tick() 方法的执行顺序</a></li><li class="h3"><a href="#生活中的比喻-餐厅的一天">生活中的比喻：餐厅的一天</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#实体创建">实体创建</a></li><li class="h3"><a href="#tick-方法详解">tick() 方法详解</a></li><li class="h3"><a href="#mobentity-的-tick-">MobEntity 的 tick()</a></li><li class="h3"><a href="#实体销毁">实体销毁</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-创建一个会移动的实体">场景：创建一个会移动的实体</a></li><li class="h3"><a href="#场景-实体的出生和死亡特效">场景：实体的出生和死亡特效</a></li><li class="h3"><a href="#场景-检查实体的生命周期状态">场景：检查实体的生命周期状态</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#练习-1-打印实体年龄">练习 1：打印实体年龄</a></li><li class="h3"><a href="#练习-2-实现-限时实体-">练习 2：实现"限时实体"</a></li><li class="h3"><a href="#练习-3-实现-移动寻路-">练习 3：实现"移动寻路"</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</blockquote>
+
+<h2 id="目标">目标</h2>
+
+<p>- 理解实体的创建、移动、更新、销毁过程</p>
+<p>- 掌握 tick() 方法的作用</p>
+<p>- 了解实体生命周期各个阶段</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 了解 Entity 是什么（第20章）</p>
+<p>- 了解 Minecraft 的 tick（刻）概念</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="什么是实体生命周期-">什么是实体生命周期？</h3>
+
+<p><strong>生命周期</strong>就像人的一生：</p>
+<p>- <strong>出生</strong> = 实体被创建</p>
+<p>- <strong>成长</strong> = 实体每刻更新（tick）</p>
+<p>- <strong>移动</strong> = 实体在世界中移动</p>
+<p>- <strong>死亡</strong> = 实体被移除</p>
+
+<h3 id="minecraft-中的-tick-刻-">Minecraft 中的 tick（刻）</h3>
+
+<p>Minecraft 世界每秒钟运行 <strong>20 次 tick</strong>（每 50 毫秒一次）。</p>
+
+<pre class="code-block"><code>1 秒 = 20 tick
+1 tick = 50 毫秒
+
+游戏运行中...
+├── tick 1: 所有实体更新一次
+├── tick 2: 所有实体更新一次
+├── ...
+└── tick 20: 所有实体更新一次
+    └── 然后回到 tick 1</code></pre>
+
+<h3 id="实体生命周期流程图">实体生命周期流程图</h3>
+
+<pre class="code-block"><code>                    ┌─────────────────────────────────────────────────────┐
+                    │                   游戏世界                          │
+                    └─────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+                    ┌─────────────────────────────────────────────────────┐
+                    │ 1. 创建（Spawn）                                   │
+                    │    - /summon 命令                                  │
+                    │    - 自然生成                                       │
+                    │    - 物品掉落                                       │
+                    │    - 玩家投掷                                       │
+                    └─────────────────────────┬───────────────────────────┘
+                                              │
+                                              ▼
+                    ┌─────────────────────────────────────────────────────┐
+                    │ 2. 初始化（Initialize）                            │
+                    │    - 设置属性                                       │
+                    │    - 初始化数据                                     │
+                    │    - 设置出生特效                                   │
+                    └─────────────────────────┬───────────────────────────┘
+                                              │
+                                              ▼
+                    ┌─────────────────────────────────────────────────────┐
+                    │ 3. 每刻更新（tick）← 一直循环直到死亡或移除          │
+                    │                                                     │
+                    │    ┌─────────────┐  ┌─────────────┐  ┌────────────┐│
+                    │    │ baseTick()  │→│ tick()      │→│ postTick() ││
+                    │    │ 基础更新     │  │ 子类更新    │  │ 后处理     ││
+                    │    └─────────────┘  └─────────────┘  └────────────┘│
+                    │         ↑                                    │     │
+                    │         └──────────── 循环 ───────────────────┘     │
+                    └─────────────────────────┬───────────────────────────┘
+                                              │
+                           ┌──────────────────┼──────────────────┐
+                           │                  │                  │
+                           ▼                  ▼                  ▼
+                    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+                    │ 自然移除    │    │ 死亡掉落    │    │ 玩家杀死    │
+                    │ (远距离)   │    │ (生命值归零)│    │ (玩家攻击)  │
+                    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+                           │                  │                  │
+                           └──────────────────┼──────────────────┘
+                                              │
+                                              ▼
+                    ┌─────────────────────────────────────────────────────┐
+                    │ 4. 销毁（Remove/Discard）                          │
+                    │    - 从世界移除                                      │
+                    │    - 触发死亡事件                                    │
+                    │    - 掉落物品/经验                                   │
+                    └─────────────────────────────────────────────────────┘</code></pre>
+
+<h2 id="图解">图解</h2>
+
+<h3 id="tick-方法的执行顺序">tick() 方法的执行顺序</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant Server as 服务器 tick
+    participant Entity as Entity
+    participant SubEntity as 子类实体
+
+    Server->>Entity: baseTick()
+    Note over Entity: 基础更新
+    Note over Entity: - 检查呼吸<br/>- 检查药水效果<br/>- 检查状态
+
+    Entity->>SubEntity: tick()
+    Note over SubEntity: 子类特殊更新
+    Note over SubEntity: - AI 行为<br/>- 移动<br/>- 攻击
+
+    Entity->>Entity: postTick()
+    Note over Entity: 后处理
+    Note over Entity: - 保存位置<br/>- 更新动画
+</div>
+
+<h3 id="生活中的比喻-餐厅的一天">生活中的比喻：餐厅的一天</h3>
+
+<pre class="code-block"><code>实体生命周期就像餐厅的一天：
+
+早上开门（创建）
+    ↓
+服务员准备迎接客人（初始化）
+    ↓
+一天营业（tick 循环）
+    ├── 每桌客人点菜（处理输入）
+    ├── 上菜（处理逻辑）
+    └── 收拾桌子（清理）
+    ↓
+打烊（销毁）</code></pre>
+
+<h2 id="核心代码">核心代码</h2>
+
+<blockquote><strong>注意</strong>：以下代码基于 CFR 反编译结果，可能与实际源码略有差异。</blockquote>
+
+<h3 id="实体创建">实体创建</h3>
+
+<pre class="code-block"><code>// EntityType.java - 创建实体的工厂方法
+public class EntityType&lt;T extends Entity&gt; {
+
+    // 创建实体（但不添加到世界）
+    public T create(World world) {
+        // 检查特性开关
+        if (!this.isEnabled(world.getEnabledFeatures())) {
+            return null;
+        }
+        // 调用工厂方法创建实例
+        return this.factory.create(this, world);
+    }
+
+    // 创建并生成到世界中
+    public T spawn(ServerWorld world, BlockPos pos, SpawnReason reason) {
+        T entity = this.create(world);
+        if (entity != null) {
+            // 设置位置
+            entity.setPosition(pos.getX(), pos.getY(), pos.getZ());
+            // 添加到世界
+            world.spawnEntity(entity);
+        }
+        return entity;
+    }
+}</code></pre>
+
+<h3 id="tick-方法详解">tick() 方法详解</h3>
+
+<pre class="code-block"><code>// Entity.java - 每刻更新的核心方法
+public abstract class Entity {
+
+    public int age;  // 实体存在的刻数
+
+    // 每刻调用的主方法
+    public void baseTick() {
+        // 1. 更新前一帧数据（用于插值）
+        this.prevX = this.x;
+        this.prevY = this.y;
+        this.prevZ = this.z;
+
+        // 2. 处理呼吸
+        if (!this.isFireImmune()) {
+            // 检查是否在水中
+            this.updateWaterState();
+        }
+
+        // 3. 火焰燃烧
+        if (this.isOnFire()) {
+            this.tickFire();
+        }
+
+        // 4. 更新位置
+        this.updatePosition();
+
+        // 5. 碰撞检测
+        this.checkBlockCollision();
+
+        // 6. 增加年龄
+        this.age++;
+    }
+
+    // 子类可以重写这个方法
+    public void tick() {
+        // 默认空实现
+    }
+}</code></pre>
+
+<h3 id="mobentity-的-tick-">MobEntity 的 tick()</h3>
+
+<pre class="code-block"><code>// MobEntity.java - 生物的每刻更新
+public class MobEntity extends LivingEntity {
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // 每5刻更新一次AI目标
+        if (this.age % 5 == 0) {
+            this.updateGoalControls();
+        }
+    }
+
+    // AI 更新的核心方法
+    @Override
+    protected void tickNewAi() {
+        // 每刻递增
+        ++this.despawnCounter;
+
+        // 感知系统
+        this.visibilityCache.clear();
+
+        // 目标选择（选择攻击目标）
+        this.targetSelector.tick();
+
+        // AI 行为（移动、攻击等）
+        this.goalSelector.tick();
+
+        // 导航系统（寻路）
+        this.navigation.tick();
+
+        // 生物特殊逻辑
+        this.mobTick();
+
+        // 控制器更新
+        this.moveControl.tick();    // 移动控制
+        this.lookControl.tick();   // 视角控制
+        this.jumpControl.tick();   // 跳跃控制
+    }
+}</code></pre>
+
+<h3 id="实体销毁">实体销毁</h3>
+
+<pre class="code-block"><code>// Entity.java - 移除实体
+public abstract class Entity {
+
+    // 标记移除原因
+    public enum RemovalReason {
+        KILLED,           // 被杀死
+        DISCARDED,        // 被丢弃
+        UNLOADED_TO_CHUNK, // 区块卸载
+        CHANGED_DIMENSION // 切换维度
+    }
+
+    // 移除实体
+    public void remove(RemovalReason reason) {
+        this.removalReason = reason;
+        // 从世界移除
+        this.getWorld().removeEntity(this, reason);
+    }
+
+    // 丢弃实体（不触发死亡）
+    public void discard() {
+        this.remove(RemovalReason.DISCARDED);
+    }
+
+    // 杀死实体（触发掉落）
+    public void kill() {
+        this.damage(this.getDamageSources().genericKill(), Float.MAX_VALUE);
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="场景-创建一个会移动的实体">场景：创建一个会移动的实体</h3>
+
+<pre class="code-block"><code>public class MovingEntity extends MobEntity {
+
+    private int moveTimer = 0;
+    private static final int MOVE_INTERVAL = 20; // 每秒移动一次
+
+    public MovingEntity(EntityType&lt;?&gt; type, World world) {
+        super(type, world);
+    }
+
+    @Override
+    protected void mobTick() {
+        super.mobTick();
+
+        moveTimer++;
+
+        // 每秒移动一次
+        if (moveTimer &gt;= MOVE_INTERVAL) {
+            moveTimer = 0;
+
+            // 随机选择一个方向
+            float randomAngle = this.random.nextFloat() * 360;
+            double dx = MathHelper.cos(randomAngle) * 0.5;
+            double dz = MathHelper.sin(randomAngle) * 0.5;
+
+            // 设置速度
+            this.setVelocity(dx, this.getVelocity().y, dz);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // 检查是否掉落虚空
+        if (this.getY() &lt; -64) {
+            this.discard(); // 自动移除
+        }
+    }
+}</code></pre>
+
+<h3 id="场景-实体的出生和死亡特效">场景：实体的出生和死亡特效</h3>
+
+<pre class="code-block"><code>public class SpecialEntity extends MobEntity {
+
+    @Override
+    public void playSpawnEffects() {
+        // 播放生成特效
+        if (this.getWorld().isClient) {
+            // 生成粒子效果
+            for (int i = 0; i &lt; 20; i++) {
+                this.getWorld().addParticle(
+                    ParticleTypes.POOF,
+                    this.getX() + randomGaussian() * 2,
+                    this.getY() + randomGaussian() * 2,
+                    this.getZ() + randomGaussian() * 2,
+                    0, 0, 0
+                );
+            }
+        } else {
+            // 服务端发送状态给客户端
+            this.getWorld().sendEntityStatus(this, EntityStatuses.PLAY_SPAWN_EFFECTS);
+        }
+    }
+
+    @Override
+    protected void dropLoot(DamageSource source, boolean causedByPlayer) {
+        super.dropLoot(source, causedByPlayer);
+
+        // 自定义掉落物
+        if (causedByPlayer) {
+            // 掉落一个附魔金苹果
+            this.dropStack(new ItemStack(Items.ENCHANTED_GOLDEN_APPLE));
+        }
+    }
+}</code></pre>
+
+<h3 id="场景-检查实体的生命周期状态">场景：检查实体的生命周期状态</h3>
+
+<pre class="code-block"><code>public class EntityUtils {
+
+    // 检查实体是否活着
+    public static boolean isAlive(Entity entity) {
+        return entity != null &amp;&amp; !entity.isRemoved() &amp;&amp; entity.isAlive();
+    }
+
+    // 检查实体是否刚出生（第一刻）
+    public static boolean isNewborn(Entity entity) {
+        return entity.age &lt; 5;
+    }
+
+    // 获取实体存活时间（秒）
+    public static int getAliveTime(Entity entity) {
+        return entity.age / 20; // 20 tick = 1 秒
+    }
+
+    // 检查实体是否太老（可能被移除）
+    public static boolean isOld(Entity entity, int maxSeconds) {
+        return entity.age &gt; maxSeconds * 20;
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>实体生命周期四个阶段</strong></p>
+<p>   - <strong>创建</strong>：使用 EntityType 创建实例</p>
+<p>   - <strong>初始化</strong>：设置属性、播放出生特效</p>
+<p>   - <strong>tick 循环</strong>：每刻调用 baseTick() → tick() → postTick()</p>
+<p>   - <strong>销毁</strong>：remove() 或 discard()</p>
+
+<p>2. <strong>tick() 是实体的"心跳"</strong></p>
+<p>   - 每秒执行 20 次</p>
+<p>   - 包含所有逻辑更新</p>
+
+<p>3. <strong>MobEntity 的 tickNewAi() 包含</strong></p>
+<p>   - 目标选择（targetSelector）</p>
+<p>   - AI 行为（goalSelector）</p>
+<p>   - 导航系统（navigation）</p>
+<p>   - 控制器（move/look/jump control）</p>
+
+<p>4. <strong>RemovalReason 决定移除方式</strong></p>
+<p>   - KILLED：触发死亡，掉落战利品</p>
+<p>   - DISCARDED：不掉落任何东西</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="练习-1-打印实体年龄">练习 1：打印实体年龄</h3>
+
+<pre class="code-block"><code>// 在 mod 中创建一个实体，每秒打印一次自己的年龄
+// 格式：&quot;实体已存活 X 秒&quot;
+// 提示：age / 20 = 秒数</code></pre>
+
+<h3 id="练习-2-实现-限时实体-">练习 2：实现"限时实体"</h3>
+
+<pre class="code-block"><code>// 创建一个只能在世界上存活 60 秒的实体
+// 60 秒后自动消失（不掉落任何东西）
+// 提示：在 tick() 中检查 age</code></pre>
+
+<h3 id="练习-3-实现-移动寻路-">练习 3：实现"移动寻路"</h3>
+
+<pre class="code-block"><code>// 创建一个会随机移动的生物
+// 使用 navigation.startMovingTo() 方法
+// 让它随机找一个位置然后走过去</code></pre>
+
+<h2 id="相关链接">相关链接</h2>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Entity.java</td><td>`net/minecraft/entity/Entity.java`</td><td>包含 tick() 方法</td></tr><tr><td>ServerWorld.java</td><td>`net/minecraft/server/world/ServerWorld.java`</td><td>包含 spawnEntity()</td></tr></tbody></table>
+
+<p>- <strong>上一章</strong>：<a href="./20-entity-intro.html">第20章 Entity 简介</a></p>
+<p>- <strong>下一章</strong>：<a href="./22-living-entity.html">第22章 LivingEntity</a></p>
+<p>- <strong>相关源码</strong>：</p>
+<p>  - <code>net/minecraft/entity/Entity.java</code> - tick()、baseTick()</p>
+<p>  - <code>net/minecraft/entity/mob/MobEntity.java</code> - tickNewAi()</p>
+<p>  - <code>net/minecraft/entity/EntityType.java</code> - create()、spawn()</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

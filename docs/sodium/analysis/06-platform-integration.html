@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Sodium 平台集成机制 - Sodium 优化 教程</title>
+    <meta name="title" content="Sodium 平台集成机制 - Sodium 优化 教程">
+    <meta name="description" content="深入学习 Sodium 优化 源码，理解其内部工作原理">
+    <meta name="keywords" content="Sodium 优化, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/sodium/analysis/06-platform-integration.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/sodium/analysis/06-platform-integration.html">
+    <meta property="og:title" content="Sodium 平台集成机制 - Sodium 优化 教程">
+    <meta property="og:description" content="深入学习 Sodium 优化 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Sodium 平台集成机制 - Sodium 优化">
+    <meta name="twitter:description" content="深入学习 Sodium 优化 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Sodium 平台集成机制",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.932Z",
+        "dateModified": "2026-03-22T07:07:48.932Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #F2CC8F 0%, #F2CC8F88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Sodium 优化</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Sodium 平台集成机制</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Sodium 平台集成机制</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge sodium">Sodium 优化</span>
+                    
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 06-platform-integration</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#1-概述">1. 概述</a></li><li><a href="#2-服务加载模式">2. 服务加载模式</a></li><li class="h3"><a href="#2-1-services-类">2.1 Services 类</a></li><li class="h3"><a href="#2-2-服务接口定义">2.2 服务接口定义</a></li><li class="h3"><a href="#2-3-服务配置文件">2.3 服务配置文件</a></li><li><a href="#3-fabric-集成">3. Fabric 集成</a></li><li class="h3"><a href="#3-1-mod-入口">3.1 Mod 入口</a></li><li class="h3"><a href="#3-2-fabric-特定实现">3.2 Fabric 特定实现</a></li><li class="h3"><a href="#3-3-fabric-mixin-配置">3.3 Fabric Mixin 配置</a></li><li class="h3"><a href="#3-4-levelrenderer-mixin">3.4 LevelRenderer Mixin</a></li><li><a href="#4-neoforge-集成">4. NeoForge 集成</a></li><li class="h3"><a href="#4-1-mod-入口">4.1 Mod 入口</a></li><li class="h3"><a href="#4-2-neoforge-特定实现">4.2 NeoForge 特定实现</a></li><li class="h3"><a href="#4-3-neoforge-mixin-配置">4.3 NeoForge Mixin 配置</a></li><li><a href="#5-mixin-系统">5. Mixin 系统</a></li><li class="h3"><a href="#5-1-mixin-优先级">5.1 Mixin 优先级</a></li><li class="h3"><a href="#5-2-注入点类型">5.2 注入点类型</a></li><li class="h3"><a href="#5-3-修改器类型">5.3 修改器类型</a></li><li><a href="#6-access-widener">6. Access Widener</a></li><li class="h3"><a href="#6-1-用途">6.1 用途</a></li><li class="h3"><a href="#6-2-注册">6.2 注册</a></li><li><a href="#7-frapi-集成">7. FRAPI 集成</a></li><li class="h3"><a href="#7-1-frapi-是什么">7.1 FRAPI 是什么</a></li><li class="h3"><a href="#7-2-frapiprovider">7.2 FRAPIProvider</a></li><li class="h3"><a href="#7-3-renderer-实现">7.3 Renderer 实现</a></li><li><a href="#8-配置系统">8. 配置系统</a></li><li class="h3"><a href="#8-1-fabric-配置加载">8.1 Fabric 配置加载</a></li><li class="h3"><a href="#8-2-neoforge-配置加载">8.2 NeoForge 配置加载</a></li><li><a href="#9-平台检测">9. 平台检测</a></li><li><a href="#10-相关文档">10. 相关文档</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Sodium 优化</p>
+                            
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>Fabric 和 NeoForge 的服务加载与 Mixin 配置</blockquote>
+
+<h2 id="1-概述">1. 概述</h2>
+
+<p>Sodium 需要同时支持 Fabric 和 NeoForge 两个模组加载器。通过服务加载模式和 Mixin 配置实现平台无关的代码设计。</p>
+
+<p><strong>核心文件</strong>：</p>
+
+<table><thead><tr><th>文件</th><th>平台</th><th>路径</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>`Services`</td><td>Common</td><td>`common/.../services/Services.java`</td></tr><tr><td>`FabricBlockAccess`</td><td>Fabric</td><td>`fabric/.../FabricBlockAccess.java`</td></tr><tr><td>`NeoForgeBlockAccess`</td><td>NeoForge</td><td>`neoforge/.../NeoForgeBlockAccess.java`</td></tr><tr><td>`SodiumFabricMod`</td><td>Fabric</td><td>`fabric/.../SodiumFabricMod.java`</td></tr><tr><td>`SodiumForgeMod`</td><td>NeoForge</td><td>`neoforge/.../SodiumForgeMod.java`</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="2-服务加载模式">2. 服务加载模式</h2>
+
+<h3 id="2-1-services-类">2.1 Services 类</h3>
+
+<pre class="code-block"><code>public class Services {
+    private static final Map&lt;Class&lt;?&gt;, Object&gt; cache = new ConcurrentHashMap&lt;&gt;();
+    
+    public static &lt;T&gt; T load(Class&lt;T&gt; clazz) {
+        return cache.computeIfAbsent(clazz, Services::loadInternal);
+    }
+    
+    private static &lt;T&gt; T loadInternal(Class&lt;T&gt; clazz) {
+        // 获取服务加载器
+        ServiceLoader&lt;T&gt; loader = ServiceLoader.load(clazz, clazz.getClassLoader());
+        
+        // 遍历所有实现
+        Iterator&lt;T&gt; iterator = loader.iterator();
+        if (!iterator.hasNext()) {
+            throw new ServiceConfigurationError(&quot;No provider for &quot; + clazz.getName());
+        }
+        
+        T service = iterator.next();
+        
+        // 检查是否有多个实现
+        if (iterator.hasNext()) {
+            throw new ServiceConfigurationError(&quot;Multiple providers for &quot; + clazz.getName());
+        }
+        
+        return service;
+    }
+}</code></pre>
+
+<h3 id="2-2-服务接口定义">2.2 服务接口定义</h3>
+
+<p><strong>PlatformBlockAccess</strong>：</p>
+
+<pre class="code-block"><code>public interface PlatformBlockAccess {
+    PlatformBlockAccess INSTANCE = Services.load(PlatformBlockAccess.class);
+    
+    /**
+     * 获取方块的光照发射值
+     */
+    int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos);
+    
+    /**
+     * 检查方块是否应该跳过渲染
+     */
+    boolean shouldSkipRender(BlockState state);
+    
+    /**
+     * 获取方块的纹理
+     */
+    BlockRenderProperties getRenderProperties(BlockState state);
+    
+    /**
+     * 检查方块是否有大型碰撞形状
+     */
+    boolean hasLargeCollisionShape(BlockState state);
+}</code></pre>
+
+<p><strong>PlatformLevelAccess</strong>：</p>
+
+<pre class="code-block"><code>public interface PlatformLevelAccess {
+    PlatformLevelAccess INSTANCE = Services.load(PlatformLevelAccess.class);
+    
+    /**
+     * 获取世界类型标识
+     */
+    WorldType getWorldType(ClientWorld world);
+    
+    /**
+     * 获取维度类型
+     */
+    DimensionType getDimensionType(ClientWorld world);
+    
+    /**
+     * 检查是否是过度世界
+     */
+    boolean isNether(ClientWorld world);
+}</code></pre>
+
+<h3 id="2-3-服务配置文件">2.3 服务配置文件</h3>
+
+<p><strong>Fabric META-INF/services</strong>：</p>
+
+<pre class="code-block"><code>fabric/src/main/resources/META-INF/services/
+└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess</code></pre>
+
+<p>文件内容：</p>
+<pre class="code-block"><code>net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess
+# 或
+net.caffeinemc.mods.sodium.client.platform.linux.LinuxBlockAccess</code></pre>
+
+<p><strong>NeoForge META-INF/services</strong>：</p>
+
+<pre class="code-block"><code>neoforge/src/main/resources/META-INF/services/
+└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess</code></pre>
+
+<p>文件内容：</p>
+<pre class="code-block"><code>net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess</code></pre>
+
+<hr>
+
+<h2 id="3-fabric-集成">3. Fabric 集成</h2>
+
+<h3 id="3-1-mod-入口">3.1 Mod 入口</h3>
+
+<pre class="code-block"><code>@Environment(EnvType.CLIENT)
+public class SodiumFabricMod implements ClientModInitializer {
+    private static final String MOD_ID = &quot;sodium&quot;;
+    private static String version;
+    
+    @Override
+    public void onInitializeClient() {
+        version = FabricLoader.getInstance()
+            .getModContainer(MOD_ID)
+            .map(ModContainer::getMetadata)
+            .map(Version::getFriendlyString)
+            .orElse(&quot;unknown&quot;);
+        
+        // 初始化核心模块
+        SodiumClientMod.onInitialization(version);
+        
+        // 收集配置入口点
+        ConfigLoaderFabric.collectConfigEntryPoints();
+        
+        // 注册 FRAPI
+        FRAPIProvider.getInstance().register();
+        
+        // 注册 Flawless Frames
+        FabricLoader.getInstance()
+            .getEntrypoints(&quot;frex_flawless_frames&quot;, FlawlessFramesEntryPoint.class)
+            .forEach(ep -&gt; ep.accept(FlawlessFrames.getProvider()));
+        
+        SodiumFabricMod.LOGGER.info(&quot;Sodium initialized on Fabric&quot;);
+    }
+}</code></pre>
+
+<h3 id="3-2-fabric-特定实现">3.2 Fabric 特定实现</h3>
+
+<pre class="code-block"><code>public class FabricBlockAccess implements PlatformBlockAccess {
+    
+    @Override
+    public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+        // Fabric 实现
+        return state.getLightEmission(level, pos);
+    }
+    
+    @Override
+    public boolean shouldSkipRender(BlockState state) {
+        // 检查方块是否透明
+        return state.isSolid() &amp;&amp; state.getRenderShape() == RenderShape.INVISIBLE;
+    }
+    
+    @Override
+    public BlockRenderProperties getRenderProperties(BlockState state) {
+        RenderShape shape = state.getRenderShape();
+        return new BlockRenderProperties(
+            shape == RenderShape.SOLID,
+            shape == RenderShape.TRANSLUCENT,
+            state.isSolid()
+        );
+    }
+}</code></pre>
+
+<h3 id="3-3-fabric-mixin-配置">3.3 Fabric Mixin 配置</h3>
+
+<pre class="code-block"><code>{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
+  &quot;client&quot;: [
+    &quot;core.render.world.LevelRendererMixin&quot;,
+    &quot;core.render.world.sky.LevelSkyMixin&quot;,
+    &quot;core.render.world.clouds.CloudRendererMixin&quot;,
+    &quot;features.render.entity.EntityRendererMixin&quot;,
+    &quot;features.options.GameOptionsMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+
+<h3 id="3-4-levelrenderer-mixin">3.4 LevelRenderer Mixin</h3>
+
+<pre class="code-block"><code>@Mixin(LevelRenderer.class)
+public abstract class LevelRendererMixin implements WorldRenderer {
+    
+    @Shadow
+    @Final
+    private Minecraft client;
+    
+    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;renderLevel&quot;)
+    private void onRenderLevel(PoseStack matrices, 
+                               float tickDelta, 
+                               long limitTimeNano,
+                               boolean renderBlockOutline,
+                               Camera camera,
+                               GameRenderer gameRenderer,
+                               Matrix4f projectionMatrix,
+                               CallbackInfo ci) {
+        // 在渲染开始前调用 Sodium
+        SodiumWorldRenderer.getInstance()
+            .onRenderStarted((LevelRenderer)(Object)this, camera);
+    }
+    
+    @Inject(at = @At(&quot;RETURN&quot;), method = &quot;renderLevel&quot;)
+    private void onRenderLevelEnd(CallbackInfo ci) {
+        // 渲染结束后清理
+        SodiumWorldRenderer.getInstance().onRenderEnded();
+    }
+    
+    @Redirect(method = &quot;renderLevel&quot;,
+              at = @At(value = &quot;INVOKE&quot;, 
+                       target = &quot;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;compileChunks()V&quot;))
+    private void redirectCompileChunks(ChunkRenderDispatcher dispatcher) {
+        // 重定向到 Sodium 的异步编译
+        // 原版编译被禁用
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="4-neoforge-集成">4. NeoForge 集成</h2>
+
+<h3 id="4-1-mod-入口">4.1 Mod 入口</h3>
+
+<pre class="code-block"><code>@Mod(value = Sodium.MOD_ID, dist = Dist.CLIENT)
+public class SodiumForgeMod {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    
+    public SodiumForgeMod(IEventBus modBus, ModContainer modContainer) {
+        // 注册配置屏幕
+        modContainer.registerExtensionPoint(IConfigScreenFactory.class, 
+            (minecraft, parent) -&gt; VideoSettingsScreen.createScreen(parent));
+        
+        // 初始化核心
+        SodiumClientMod.onInitialization(modContainer.getVersion());
+        
+        // 注册事件处理器
+        modBus.addListener(this::onClientSetup);
+        
+        // 注册 FRAPI
+        FRAPIProvider.getInstance().register();
+        
+        LOGGER.info(&quot;Sodium initialized on NeoForge&quot;);
+    }
+    
+    private void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -&gt; {
+            // 配置加载
+            ConfigLoaderForge.collectConfigEntryPoints();
+        });
+    }
+}</code></pre>
+
+<h3 id="4-2-neoforge-特定实现">4.2 NeoForge 特定实现</h3>
+
+<pre class="code-block"><code>public class NeoForgeBlockAccess implements PlatformBlockAccess {
+    
+    @Override
+    public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+        // NeoForge 实现
+        if (state.hasEmissiveLighting(level, pos)) {
+            return state.getEmissiveLight(level, pos);
+        }
+        return state.getLightEmission();
+    }
+    
+    @Override
+    public boolean shouldSkipRender(BlockState state) {
+        // NeoForge 的跳过渲染逻辑
+        return state.is(Blocks.AIR) || 
+               state.getRenderShape() == VoxelShape.EMPTY;
+    }
+    
+    @Override
+    public BlockRenderProperties getRenderProperties(BlockState state) {
+        VoxelShape shape = state.getOcclusionShape();
+        return new BlockRenderProperties(
+            !shape.isEmpty(),
+            state.useNeighborBrightness(),
+            state.isSolid()
+        );
+    }
+}</code></pre>
+
+<h3 id="4-3-neoforge-mixin-配置">4.3 NeoForge Mixin 配置</h3>
+
+<pre class="code-block"><code>{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_21&quot;,
+  &quot;client&quot;: [
+    &quot;platform.neoforge.LevelRendererMixin&quot;,
+    &quot;platform.neoforge.GameRendererMixin&quot;,
+    &quot;platform.neoforge.LevelSliceMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+
+<hr>
+
+<h2 id="5-mixin-系统">5. Mixin 系统</h2>
+
+<h3 id="5-1-mixin-优先级">5.1 Mixin 优先级</h3>
+
+<pre class="code-block"><code>// 高优先级确保在 Minecraft 之前执行
+@Mixin(value = Minecraft.class, priority = 1000)
+public class MinecraftMixin { ... }
+
+// 默认优先级
+@Mixin(ChunkRenderDispatcher.class)
+public class ChunkRenderDispatcherMixin { ... }
+
+// 低优先级确保在其他 Mixin 之后执行
+@Mixin(value = BlockColors.class, priority = 999)
+public class BlockColorsMixin { ... }</code></pre>
+
+<h3 id="5-2-注入点类型">5.2 注入点类型</h3>
+
+<table><thead><tr><th>注解</th><th>用途</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`@At("HEAD")`</td><td>方法执行前</td></tr><tr><td>`@At("RETURN")`</td><td>方法正常返回后</td></tr><tr><td>`@At("TAIL")`</td><td>方法执行后（包括异常）</td></tr><tr><td>`@At("INVOKE")`</td><td>调用特定方法时</td></tr><tr><td>`@At("FIELD")`</td><td>访问字段时</td></tr></tbody></table>
+
+<h3 id="5-3-修改器类型">5.3 修改器类型</h3>
+
+<table><thead><tr><th>注解</th><th>用途</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`@Inject`</td><td>插入新代码</td></tr><tr><td>`@Redirect`</td><td>重定向方法调用</td></tr><tr><td>`@ModifyArg`</td><td>修改方法参数</td></tr><tr><td>`@ModifyVariable`</td><td>修改局部变量</td></tr><tr><td>`@WrapOperation`</td><td>包装方法调用</td></tr><tr><td>`@Shadow`</td><td>引用目标类的方法/字段</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="6-access-widener">6. Access Widener</h2>
+
+<h3 id="6-1-用途">6.1 用途</h3>
+
+<p>Access Widener 允许 mod 访问 Minecraft 类的私有成员：</p>
+
+<pre class="code-block"><code># sodium-common.accesswidener
+accessWidener v2 named
+
+# 访问类
+accessible class net/minecraft/world/level/BlockAndTintGetter
+accessible class net/minecraft/world/level/Level
+accessible class net/minecraft/client/renderer/chunk/ChunkRenderDispatcher
+
+# 访问字段
+accessible field net/minecraft/world/level/Level watching
+accessible field net/minecraft/client/renderer/chunk/ChunkRenderDispatcher builtSections
+
+# 访问方法
+accessible method net/minecraft/world/level/Level getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;</code></pre>
+
+<h3 id="6-2-注册">6.2 注册</h3>
+
+<pre class="code-block"><code>// build.gradle.kts
+accessWidener(&quot;src/main/resources/sodium-${platform}.accesswidener&quot;)</code></pre>
+
+<hr>
+
+<h2 id="7-frapi-集成">7. FRAPI 集成</h2>
+
+<h3 id="7-1-frapi-是什么">7.1 FRAPI 是什么</h3>
+
+<p>FRAPI (Fabric Renderer API) 允许第三方 mod 使用 Sodium 的渲染系统。</p>
+
+<h3 id="7-2-frapiprovider">7.2 FRAPIProvider</h3>
+
+<pre class="code-block"><code>public class FRAPIProvider {
+    private static final FRAPIProvider INSTANCE = new FRAPIProvider();
+    private boolean registered = false;
+    
+    public static FRAPIProvider getInstance() {
+        return INSTANCE;
+    }
+    
+    public void register() {
+        if (registered) return;
+        
+        // 注册到 FRAPI
+        Loader.instance().extend(
+            SodiumRenderer.INSTANCE,
+            SodiumWorldRendererAccessor.getInstance()
+        );
+        
+        registered = true;
+    }
+}</code></pre>
+
+<h3 id="7-3-renderer-实现">7.3 Renderer 实现</h3>
+
+<pre class="code-block"><code>public class SodiumRenderer implements Renderer {
+    public static final SodiumRenderer INSTANCE = new SodiumRenderer();
+    
+    private SodiumRenderer() {}
+    
+    @Override
+    public MutableMesh mutableMesh() {
+        return new MutableMeshImpl();
+    }
+    
+    @Override
+    public MutableMesh mutableMesh(MeshBuilder&lt;?&gt; builder) {
+        return new MutableMeshImpl(builder);
+    }
+    
+    @Override
+    public MeshBuilder&lt;?&gt; meshBuilder() {
+        return SodiumMeshBuilder.INSTANCE;
+    }
+    
+    @Override
+    public void render(ModelBlockRenderer renderer, 
+                       BakedModel model,
+                       BlockState state,
+                       BlockPos pos,
+                       Level level,
+                       PoseStack matrixStack,
+                       RenderType renderType) {
+        // 使用 Sodium 的渲染管道
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="8-配置系统">8. 配置系统</h2>
+
+<h3 id="8-1-fabric-配置加载">8.1 Fabric 配置加载</h3>
+
+<pre class="code-block"><code>public class ConfigLoaderFabric {
+    public static void collectConfigEntryPoints() {
+        // 收集所有配置选项
+        SodiumConfig.collectOptions(new FabricConfigOptions());
+        
+        // 监听配置变化
+        FabricLoader.getInstance().getConfigDir();
+    }
+}</code></pre>
+
+<h3 id="8-2-neoforge-配置加载">8.2 NeoForge 配置加载</h3>
+
+<pre class="code-block"><code>public class ConfigLoaderForge {
+    public static void collectConfigEntryPoints() {
+        // 收集配置
+        SodiumConfig.collectOptions(new ForgeConfigOptions());
+        
+        // 注册配置ChangedListener
+        ModLoadingContext.get().registerExtensionPoint(
+            IConfigScreenFactory.class,
+            (mc, parent) -&gt; VideoSettingsScreen.createScreen(parent)
+        );
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="9-平台检测">9. 平台检测</h2>
+
+<pre class="code-block"><code>// 检测当前平台
+public enum Platform {
+    FABRIC,
+    NEOFORGE;
+    
+    public static Platform getCurrent() {
+        // 通过类存在性检测
+        if (Class.forName(&quot;net.fabricmc.api.EnvType&quot;) != null) {
+            return FABRIC;
+        }
+        return NEOFORGE;
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="10-相关文档">10. 相关文档</h2>
+
+<p>- <a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</p>
+<p>- <a href="02-chunk-render-system.html">02-chunk-render-system</a> - 区块渲染系统</p>
+<p>- <a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线</p>
+
+<hr>
+
+<p><em>生成时间: 2026-03-19</em></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

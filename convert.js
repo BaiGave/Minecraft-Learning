@@ -1,29 +1,27 @@
 /**
- * 博客文章转换脚本
- * 将 Markdown 文件转换为 HTML
+ * Markdown to HTML Converter for Minecraft Tutorial Website
+ * Converts tutorial markdown files to styled HTML pages
  *
  * Features:
- * - 详细的日志输出
- * - 错误处理
- * - 进度条显示
- * - 统计摘要
- *
- * 使用方法：
- * 1. 将 Markdown 文件放到 posts/ 目录
- * 2. 运行 node convert.js
- * 3. 文章列表写入 tech-blog.html；仓库根 index.html 跳转至 website/（Minecraft Learning）
+ * - Detailed logging with timestamps
+ * - Error handling with file-level granularity
+ * - Progress bar for long operations
+ * - Statistics summary
  */
 
 const fs = require('fs');
 const path = require('path');
+const { markdownLinkToHtml } = require('./scripts/safe-markdown-link');
+const { PUBLISH_SITE_URL } = require('./scripts/publish-config');
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
 const CONFIG = {
-    postsDir: path.join(__dirname, 'posts'),
-    outputDir: __dirname,
+    tutorialsDir: path.join(__dirname, 'content'),
+    outputDir: path.join(__dirname, 'docs'),
+    websiteDir: __dirname,
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     dryRun: process.argv.includes('--dry-run')
 };
@@ -64,11 +62,12 @@ const Logger = {
     },
 
     stats(data) {
-        const { articles, errors, duration } = data;
+        const { converted, errors, warnings, duration } = data;
         console.log(`\n${this.cyan}${'─'.repeat(40)}${this.reset}`);
         console.log(`${this.bright}转换统计:${this.reset}`);
-        console.log(`  ${this.green}成功: ${articles}${this.reset}`);
+        console.log(`  ${this.green}成功: ${converted}${this.reset}`);
         if (errors > 0) console.log(`  ${this.red}错误: ${errors}${this.reset}`);
+        if (warnings > 0) console.log(`  ${this.yellow}警告: ${warnings}${this.reset}`);
         console.log(`  ${this.dim}耗时: ${(duration / 1000).toFixed(2)}s${this.reset}`);
         console.log(`${this.cyan}${'─'.repeat(40)}${this.reset}\n`);
     }
@@ -115,17 +114,42 @@ class ProgressBar {
 }
 
 // ============================================================================
-// Statistics
+// Part Configuration
 // ============================================================================
 
-const stats = {
-    articles: 0,
-    errors: 0,
-    startTime: Date.now(),
-
-    get duration() {
-        return Date.now() - this.startTime;
+const MODULES = {
+    mc: {
+        name: 'Minecraft 原版',
+        color: '#5B8C5A',
+        versions: ['1.21', '1.20', '1.19', '1.18']
+    },
+    iris: {
+        name: 'Iris 光影',
+        color: '#E07A5F',
+        versions: null
+    },
+    sodium: {
+        name: 'Sodium 优化',
+        color: '#F2CC8F',
+        versions: null
     }
+};
+
+const PARTS = {
+    'Part-0-Prerequisites': { num: 0, title: '前置知识', color: '#34495e', prev: null, next: 'part-1.html' },
+    'Part-1-Foundation': { num: 1, title: '核心基础', color: '#c0392b', prev: 'part-0.html', next: 'part-2.html' },
+    'Part-2-World': { num: 2, title: '世界系统', color: '#27ae60', prev: 'part-1.html', next: 'part-3.html' },
+    'Part-3-Block-Item': { num: 3, title: '方块物品', color: '#2980b9', prev: 'part-2.html', next: 'part-4.html' },
+    'Part-4-Entity': { num: 4, title: '实体系统', color: '#8e44ad', prev: 'part-3.html', next: 'part-5.html' },
+    'Part-5-AI': { num: 5, title: 'AI系统', color: '#e67e22', prev: 'part-4.html', next: 'part-6.html' },
+    'Part-6-Network': { num: 6, title: '网络系统', color: '#1abc9c', prev: 'part-5.html', next: 'part-7.html' },
+    'Part-7-Command': { num: 7, title: '命令系统', color: '#e74c3c', prev: 'part-6.html', next: 'part-8.html' },
+    'Part-8-Resource': { num: 8, title: '资源系统', color: '#f39c12', prev: 'part-7.html', next: 'part-9.html' },
+    'Part-9-Client': { num: 9, title: '客户端', color: '#3498db', prev: 'part-8.html', next: 'part-10.html' },
+    'Part-10-Server': { num: 10, title: '服务端', color: '#9b59b6', prev: 'part-9.html', next: 'part-11.html' },
+    'Part-11-Advanced': { num: 11, title: '进阶主题', color: '#16a085', prev: 'part-10.html', next: 'part-12.html' },
+    'Part-12-Practice': { num: 12, title: '实战项目', color: '#d35400', prev: 'part-11.html', next: 'part-13.html' },
+    'Part-13-Additional': { num: 13, title: '附加系统', color: '#7f8c8d', prev: 'part-12.html', next: null }
 };
 
 // ============================================================================
@@ -133,14 +157,27 @@ const stats = {
 // ============================================================================
 
 /**
- * Read file with error handling
+ * Ensure directory exists
+ * @param {string} dir - Directory path
+ */
+function ensureDir(dir) {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        Logger.info(`Created directory: ${dir}`);
+    }
+}
+
+/**
+ * Read file with BOM handling
+ * @param {string} filePath - File path
+ * @returns {string|null} - File content or null on error
  */
 function readFile(filePath) {
     try {
         const content = fs.readFileSync(filePath, 'utf8');
         return content.replace(/^\uFEFF/, '');
     } catch (e) {
-        Logger.error(`Failed to read: ${filePath}`);
+        Logger.error(`Failed to read file: ${filePath}`);
         if (CONFIG.verbose) {
             Logger.error(e.message);
         }
@@ -150,13 +187,16 @@ function readFile(filePath) {
 
 /**
  * Write file with error handling
+ * @param {string} filePath - File path
+ * @param {string} content - Content to write
+ * @returns {boolean} - Success status
  */
 function writeFile(filePath, content) {
     try {
         fs.writeFileSync(filePath, content, 'utf8');
         return true;
     } catch (e) {
-        Logger.error(`Failed to write: ${filePath}`);
+        Logger.error(`Failed to write file: ${filePath}`);
         if (CONFIG.verbose) {
             Logger.error(e.message);
         }
@@ -165,14 +205,19 @@ function writeFile(filePath, content) {
 }
 
 /**
- * Ensure directory exists
+ * Copy file with error handling
+ * @param {string} src - Source path
+ * @param {string} dest - Destination path
+ * @returns {boolean} - Success status
  */
-function ensureDir(dir) {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+function copyFile(src, dest) {
+    try {
+        fs.copyFileSync(src, dest);
         return true;
+    } catch (e) {
+        Logger.error(`Failed to copy: ${src} -> ${dest}`);
+        return false;
     }
-    return false;
 }
 
 // ============================================================================
@@ -180,664 +225,723 @@ function ensureDir(dir) {
 // ============================================================================
 
 /**
- * Parse frontmatter from markdown content
+ * Escape HTML entities
+ * @param {string} text - Text to escape
+ * @returns {string} - Escaped text
  */
-function parseFrontmatter(content) {
-    const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
-    const match = content.match(frontmatterRegex);
-
-    if (!match) {
-        return { metadata: {}, content: content };
-    }
-
-    const frontmatter = match[1];
-    const metadata = {};
-
-    frontmatter.split('\n').forEach(line => {
-        const colonIndex = line.indexOf(':');
-        if (colonIndex > 0) {
-            const key = line.substring(0, colonIndex).trim();
-            let value = line.substring(colonIndex + 1).trim();
-
-            // Handle arrays
-            if (value.startsWith('[') && value.endsWith(']')) {
-                value = value.slice(1, -1).split(',').map(v => v.trim().replace(/['"]/g, ''));
-            }
-
-            metadata[key] = value;
-        }
-    });
-
-    return {
-        metadata,
-        content: content.substring(match[0].length)
-    };
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 /**
- * Simple markdown to HTML parser
+ * Parse markdown to extract title, content and headings for TOC
+ * @param {string} content - Markdown content
+ * @returns {Object} - Parsed result
  */
-function parseMarkdown(text) {
-    let html = text
-        // Code blocks
-        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>\n')
-        // Blockquotes
-        .replace(/^> (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
+function parseMarkdown(content) {
+    const lines = content.split('\n');
+    let html = '';
+    let headings = [];
+    let codeBlockType = null; // null | 'code' | 'mermaid' | 'ref'
+    let codeContent = [];
+    let codeRefFile = '';
+    let inTable = false;
+    let tableBuffer = [];
+    let inBlockquote = false;
+    let blockquoteContent = [];
+
+    // Extract title from first h1
+    const titleMatch = content.match(/^#\s+(.+)$/m);
+    const title = titleMatch ? titleMatch[1].trim() : 'Minecraft 源码教程';
+
+    // Extract subtitle from first blockquote
+    const subtitleMatch = content.match(/^>\s*\*\*([^*]+)\*\*\s*(.+)$/m);
+    const subtitle = subtitleMatch ? subtitleMatch[2].trim() : '';
+
+    // Find the first title line index
+    let firstTitleIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim().startsWith('# ')) {
+            firstTitleIndex = i;
+            break;
+        }
+    }
+
+    // Process lines
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Skip the first title line (main h1)
+        if (i === firstTitleIndex && line.trim().startsWith('# ')) {
+            continue;
+        }
+
+        // Code block start/end
+        if (line.startsWith('```')) {
+            if (codeBlockType === null) {
+                // Start of code block
+                const lang = line.slice(3).trim();
+
+                // Check for code reference format: ```startLine:endLine:filepath
+                const refMatch = lang.match(/^(\d+):(\d+):(.+)/);
+                if (refMatch) {
+                    codeBlockType = 'ref';
+                    codeRefFile = refMatch[3];
+                    codeContent = [];
+                } else if (lang === 'mermaid') {
+                    codeBlockType = 'mermaid';
+                    codeContent = [];
+                } else {
+                    codeBlockType = 'code';
+                    codeContent = [];
+                }
+            } else {
+                // End of code block
+                if (codeBlockType === 'mermaid') {
+                    html += `<div class="mermaid">\n${codeContent.join('\n')}\n</div>\n`;
+                } else if (codeBlockType === 'ref') {
+                    html += `<div class="code-reference">
+                        <div class="code-reference-header">
+                            <span class="code-reference-filename">${codeRefFile}</span>
+                            <button class="code-reference-copy" onclick="copyCode(this)"><i class="fas fa-copy"></i> 复制</button>
+                        </div>
+                        <pre><code>${escapeHtml(codeContent.join('\n'))}</code></pre>
+                    </div>\n`;
+                } else {
+                    html += `<pre class="code-block"><code>${escapeHtml(codeContent.join('\n'))}</code></pre>\n`;
+                }
+                codeBlockType = null;
+                codeContent = [];
+            }
+            continue;
+        }
+
+        // Inside code block
+        if (codeBlockType !== null) {
+            codeContent.push(line);
+            continue;
+        }
+
+        // Blockquote handling
+        if (line.startsWith('>')) {
+            if (!inBlockquote) {
+                inBlockquote = true;
+                blockquoteContent = [];
+            }
+            blockquoteContent.push(line.substring(1).trim());
+            continue;
+        } else if (inBlockquote) {
+            const bqHtml = blockquoteContent.join(' ').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html += `<blockquote>${bqHtml}</blockquote>\n`;
+            inBlockquote = false;
+            blockquoteContent = [];
+        }
+
         // Headers
-        .replace(/^#### (.+)$/gm, '<h4>$1</h4>\n')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>\n')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>\n')
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>\n')
-        // Bold and italic
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // Strikethrough
-        .replace(/~~(.+?)~~/g, '<del>$1</del>')
-        // Inline code
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        // Images
-        .replace(/!\[(.+?)\]\((.+?)\)/g, '<img src="$2" alt="$1">')
-        // Links
-        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-        // Horizontal rules
-        .replace(/^---$/gm, '<hr>')
-        // Unordered lists
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // Ordered lists
-        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        // Line breaks
-        .replace(/\n/g, '<br>\n');
+        if (line.startsWith('#### ')) {
+            const text = line.substring(5);
+            const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
+            headings.push({ level: 4, text, id });
+            html += `<h4 id="${id}">${text}</h4>\n`;
+        } else if (line.startsWith('### ')) {
+            const text = line.substring(4);
+            const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
+            headings.push({ level: 3, text, id });
+            html += `<h3 id="${id}">${text}</h3>\n`;
+        } else if (line.startsWith('## ')) {
+            const text = line.substring(3);
+            const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-');
+            headings.push({ level: 2, text, id });
+            html += `<h2 id="${id}">${text}</h2>\n`;
+        } else if (line.startsWith('# ')) {
+            // Skip main title
+        }
+        // Horizontal rule
+        else if (line.match(/^---+$/)) {
+            html += '<hr>\n';
+        }
+        // Table handling
+        else if (line.startsWith('|')) {
+            if (!inTable) {
+                inTable = true;
+                tableBuffer = [];
+            }
+            // Skip separator line
+            if (line.match(/^\|[\s-:]+\|$/)) {
+                continue;
+            }
+            tableBuffer.push(line);
+        } else {
+            if (inTable) {
+                // Process table
+                html += '<table><thead><tr>';
+                const headers = tableBuffer[0].split('|').filter(c => c.trim()).map(c => c.trim());
+                headers.forEach(h => {
+                    html += `<th>${h}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                for (let j = 1; j < tableBuffer.length; j++) {
+                    html += '<tr>';
+                    const cells = tableBuffer[j].split('|').filter(c => c.trim()).map(c => c.trim());
+                    cells.forEach(c => {
+                        html += `<td>${c}</td>`;
+                    });
+                    html += '</tr>';
+                }
+                html += '</tbody></table>\n';
+                inTable = false;
+                tableBuffer = [];
+            }
 
-    // Wrap lists
-    html = html.replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>');
+            // Paragraph
+            if (line.trim()) {
+                // Inline formatting
+                let formatted = line
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/`(.+?)`/g, '<code>$1</code>')
+                    .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => markdownLinkToHtml(text, url));
 
-    return html;
-}
-
-// ============================================================================
-// HTML Generators
-// ============================================================================
-
-/**
- * Generate article card HTML
- */
-function generateArticleCard(article, index) {
-    const iconMap = {
-        'frontend': 'fa-brands fa-react',
-        'backend': 'fa-brands fa-node-js',
-        'devops': 'fa-brands fa-docker',
-        'tool': 'fa-solid fa-screwdriver-wrench',
-        'thoughts': 'fa-solid fa-lightbulb'
-    };
-
-    const tags = Array.isArray(article.tags) ? article.tags.join(',') : '';
-
-    return `
-                <article class="article-card" data-category="${article.category}" style="animation-delay: ${(index + 1) * 0.1}s">
-                    <div class="article-card-image">
-                        <i class="${iconMap[article.category] || 'fa-solid fa-file-lines'}"></i>
-                    </div>
-                    <div class="article-card-content">
-                        <div class="article-card-meta">
-                            <span><i class="far fa-clock"></i> ${article.readingTime} 分钟</span>
-                        </div>
-                        <span class="article-card-category">
-                            <i class="fas fa-folder"></i>
-                            ${article.categoryName}
-                        </span>
-                        <h2><a href="article.html?id=${article.id}">${article.title}</a></h2>
-                        <p class="article-card-excerpt">${article.excerpt}</p>
-                        <div class="article-card-footer">
-                            <span class="article-card-date">
-                                <i class="far fa-calendar"></i>
-                                ${article.date}
-                            </span>
-                            <a href="article.html?id=${article.id}" class="article-card-readmore">
-                                阅读全文 <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </article>`;
-}
-
-/**
- * Load and parse all articles
- */
-function loadArticles() {
-    // Create posts directory if it doesn't exist
-    if (!fs.existsSync(CONFIG.postsDir)) {
-        fs.mkdirSync(CONFIG.postsDir, { recursive: true });
-        Logger.info(`Created posts directory: ${CONFIG.postsDir}`);
-
-        // Create sample post
-        const samplePost = `---
-title: 第一篇博客文章
-date: 2026-03-19
-category: frontend
-categoryName: 前端
-tags: [JavaScript, React]
-readingTime: 5
-excerpt: 这是我的第一篇博客文章，欢迎阅读！
----
-
-## 欢迎阅读
-
-这是一篇示例博客文章。你可以在 posts/ 目录下创建更多 Markdown 文件。
-
-### 代码示例
-
-\`\`\`javascript
-function hello() {
-    console.log('Hello, World!');
-}
-\`\`\`
-
-### 功能特点
-
-- 简洁的界面设计
-- Markdown 支持
-- 响应式布局
-- 快速加载
-
-> 持续学习，共同进步！
-`;
-
-        writeFile(path.join(CONFIG.postsDir, 'first-post.md'), samplePost);
-        Logger.success('Created sample post: first-post.md');
+                html += `<p>${formatted}</p>\n`;
+            } else {
+                html += '\n';
+            }
+        }
     }
 
-    const files = fs.readdirSync(CONFIG.postsDir).filter(f => f.endsWith('.md'));
-    const articles = [];
+    // Close any open blocks
+    if (inBlockquote) {
+        const bqHtml = blockquoteContent.join(' ').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html += `<blockquote>${bqHtml}</blockquote>\n`;
+    }
 
-    files.forEach((file, index) => {
-        const filePath = path.join(CONFIG.postsDir, file);
-        const content = readFile(filePath);
+    return { title, subtitle, content: html, headings };
+}
 
-        if (!content) {
-            stats.errors++;
-            return;
-        }
+// ============================================================================
+// HTML Generator
+// ============================================================================
 
-        const { metadata, content: markdownContent } = parseFrontmatter(content);
+/**
+ * 从当前教程页所在目录回到根目录的相对路径前缀
+ * 实际路径：docs/{module}/[{version}/]{type}/[Part/]xxx.html
+ */
+function getRelPathToWebsiteRoot(module, version, type, part) {
+    const segments = ['docs', module];
+    if (version) segments.push(version);
+    segments.push(type);
+    if (part) segments.push(part);
+    return '../'.repeat(segments.length);
+}
 
-        const id = index + 1;
-        const slug = file.replace('.md', '');
-
-        articles.push({
-            id,
-            title: metadata.title || '无标题',
-            date: metadata.date || new Date().toISOString().split('T')[0],
-            category: metadata.category || 'thoughts',
-            categoryName: metadata.categoryName || '随想',
-            tags: metadata.tags || [],
-            readingTime: parseInt(metadata.readingTime) || 5,
-            excerpt: metadata.excerpt || markdownContent.substring(0, 100) + '...',
-            icon: metadata.icon || 'fa-solid fa-file-lines',
-            content: parseMarkdown(markdownContent)
-        });
-    });
-
-    // Sort by date
-    articles.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    // Reassign IDs
-    articles.forEach((article, index) => {
-        article.id = index + 1;
-    });
-
-    return articles;
+/** 指向该版本/模组文档首页 index.html（与 tutorials|analysis 同级目录） */
+function getModuleHubIndexHref(part) {
+    return (part ? '../../' : '../') + 'index.html';
 }
 
 /**
- * 仓库根 index.html：立即跳转到 Minecraft Learning 主页（GitHub Pages 根路径）
+ * Generate HTML page from markdown (new version for multi-module support)
+ * @param {string} module - Module name (mc, iris, sodium)
+ * @param {string|null} version - Version (for MC)
+ * @param {string} type - Type (tutorials, analysis)
+ * @param {string|null} part - Part folder name
+ * @param {string} filename - Markdown filename
+ * @param {string} markdownContent - Markdown content
+ * @returns {string} - Generated HTML
  */
-function generateRootRedirect() {
-    const html = `<!DOCTYPE html>
+function generateTutorialHTML(module, version, type, part, filename, markdownContent) {
+    const moduleConfig = MODULES[module];
+    const moduleColor = moduleConfig ? moduleConfig.color : '#5B8C5A';
+
+    const { title, subtitle, content, headings } = parseMarkdown(markdownContent);
+
+    // Generate TOC
+    let tocHtml = '';
+    headings.forEach(h => {
+        if (h.level <= 2) {
+            tocHtml += `<li><a href="#${h.id}">${h.text}</a></li>`;
+        } else {
+            tocHtml += `<li class="h3"><a href="#${h.id}">${h.text}</a></li>`;
+        }
+    });
+
+    const relPath = getRelPathToWebsiteRoot(module, version, type, part);
+    const moduleHubHref = getModuleHubIndexHref(part);
+
+    // Build breadcrumb（不再链到错误的 docs/.../docs/...；去掉无意义的「目录」）
+    let breadcrumbHtml = `
+        <a href="${relPath}index.html">文档中心</a>
+        <span>/</span>
+    `;
+
+    if (version) {
+        breadcrumbHtml += `
+            <a href="${moduleHubHref}">${moduleConfig.name} ${version}</a>
+        `;
+    } else {
+        breadcrumbHtml += `
+            <a href="${moduleHubHref}">${moduleConfig.name}</a>
+        `;
+    }
+
+    if (type) {
+        breadcrumbHtml += `
+            <span>/</span>
+            <span>${type === 'tutorials' ? '教程' : '源码分析'}</span>
+        `;
+    }
+
+    if (part) {
+        breadcrumbHtml += `
+            <span>/</span>
+            <span>${part}</span>
+        `;
+    }
+
+    breadcrumbHtml += `
+        <span>/</span>
+        <span>${escapeHtml(title)}</span>
+    `;
+
+    // Module badge class
+    const moduleBadgeClass = module;
+
+    // SEO: Determine page URL
+    let pageUrl = '/';
+    if (version) {
+        pageUrl = `/docs/${module}/${version}/${type}/${part ? part + '/' : ''}${filename.replace('.md', '.html')}`;
+    } else {
+        pageUrl = `/docs/${module}/${type}/${part ? part + '/' : ''}${filename.replace('.md', '.html')}`;
+    }
+
+    // SEO meta tags
+    const seoMetaTags = `
+    <!-- Primary Meta Tags -->
+    <title>${escapeHtml(title)} - ${moduleConfig.name} 教程</title>
+    <meta name="title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
+    <meta name="description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码，理解其内部工作原理')}">
+    <meta name="keywords" content="${moduleConfig.name}, Minecraft, 源码教程, ${type === 'tutorials' ? '教程' : '源码分析'}, Java">
+    <link rel="canonical" href="${PUBLISH_SITE_URL}${pageUrl}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="${PUBLISH_SITE_URL}${pageUrl}">
+    <meta property="og:title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
+    <meta property="og:description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码')}">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${escapeHtml(title)} - ${moduleConfig.name}">
+    <meta name="twitter:description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码')}">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "${escapeHtml(title)}",
+        "description": "${escapeHtml(subtitle || '')}",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "${new Date().toISOString()}",
+        "dateModified": "${new Date().toISOString()}"
+    }
+    </script>`.trim();
+
+    return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Learning</title>
-    <meta name="description" content="Minecraft 源码与模组开发文档站">
-    <script>
-        (function () {
-            var path = location.pathname;
-            if (!path.endsWith('/')) {
-                if (/\\.html?$/i.test(path)) {
-                    path = path.replace(/[^/]*$/, '');
-                } else {
-                    path += '/';
-                }
-            }
-            location.replace(path + 'website/index.html' + location.search + location.hash);
-        })();
-    </script>
-</head>
-<body>
-    <p style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;color:#334155">
-        正在前往 <a id="ml-landing" href="#">Minecraft Learning</a>…
-    </p>
-    <script>
-        (function () {
-            var path = location.pathname;
-            if (!path.endsWith('/')) {
-                if (/\\.html?$/i.test(path)) {
-                    path = path.replace(/[^/]*$/, '');
-                } else {
-                    path += '/';
-                }
-            }
-            var href = path + 'website/index.html' + location.search + location.hash;
-            var a = document.getElementById('ml-landing');
-            if (a) a.href = href;
-        })();
-    </script>
-</body>
-</html>`;
-
-    return writeFile(path.join(CONFIG.outputDir, 'index.html'), html);
-}
-
-/**
- * Generate tech-blog.html（技术随笔文章列表，非站点首页）
- */
-function generateIndex(articles) {
-    const articlesGrid = articles.map((article, index) => generateArticleCard(article, index)).join('\n');
-
-    // Statistics
-    const totalTags = new Set();
-    articles.forEach(a => {
-        if (Array.isArray(a.tags)) {
-            a.tags.forEach(t => totalTags.add(t));
-        }
-    });
-
-    let indexHtml = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的技术博客</title>
-    <link rel="stylesheet" href="styles.css">
+    ${seoMetaTags}
+    <link rel="stylesheet" href="${relPath}styles.css">
+    <link rel="stylesheet" href="${relPath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
 <body>
+    <div class="reading-progress" id="readingProgress"></div>
+
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="nav-logo">
-                <div class="nav-logo-icon">
-                    <i class="fas fa-pen-nib"></i>
-                </div>
-                <span>技术随笔</span>
+            <a href="${relPath}index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="${relPath}index.html">首页</a></li>
                 <li class="dropdown">
-                    <a href="#">MC 教程 <i class="fas fa-chevron-down" style="font-size: 0.75em; margin-left: 4px;"></i></a>
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-content">
-                        <a href="website/index.html">教程首页</a>
-                        <a href="website/catalog.html">全部目录</a>
-                        <a href="website/tutorials/Part-0-Prerequisites/00-course-overview.html">Part-0 前置知识</a>
-                        <a href="website/tutorials/Part-1-Foundation/04-registry-system.html">Part-1 核心基础</a>
-                        <a href="website/tutorials/Part-2-World/09-chunk-system.html">Part-2 世界系统</a>
-                        <a href="website/tutorials/Part-5-AI/27-ai-brain-intro.html">Part-5 AI系统</a>
+                        <a href="${relPath}docs/mc/index.html">Minecraft 原版</a>
+                        <a href="${relPath}docs/iris/index.html">Iris 光影</a>
+                        <a href="${relPath}docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="#articles">文章</a></li>
-                <li><a href="#about">关于</a></li>
-                <li><a href="#contact">联系</a></li>
+                <li><a href="${relPath}about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <header class="hero">
-        <div class="hero-bg">
-            <div class="hero-grid"></div>
-            <div class="hero-gradient hero-gradient-1"></div>
-            <div class="hero-gradient hero-gradient-2"></div>
-        </div>
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-code"></i>
-                技术分享与个人成长
-            </div>
-            <h1>探索技术的边界</h1>
-            <p class="hero-subtitle">
-                记录学习历程，分享技术心得。<br>
-                从源码解析到工程实践，这里有我对技术的思考。
-            </p>
-            <div class="hero-meta">
-                <span class="hero-stat">
-                    <i class="fas fa-newspaper"></i>
-                    <span id="article-count">${articles.length}</span> 篇文章
-                </span>
-                <span class="hero-stat">
-                    <i class="fas fa-tag"></i>
-                    <span id="tag-count">${totalTags.size}</span> 个标签
-                </span>
-            </div>
-        </div>
-    </header>
-
-    <section class="articles-section" id="articles">
-        <div class="container">
-            <div class="search-box">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" placeholder="搜索文章..." oninput="searchArticles(this.value)">
-            </div>
-
-            <div class="category-filter">
-                <button class="category-btn active" onclick="filterArticles('all')">全部</button>
-                <button class="category-btn" onclick="filterArticles('frontend')">前端</button>
-                <button class="category-btn" onclick="filterArticles('backend')">后端</button>
-                <button class="category-btn" onclick="filterArticles('devops')">DevOps</button>
-                <button class="category-btn" onclick="filterArticles('tool')">工具</button>
-                <button class="category-btn" onclick="filterArticles('thoughts')">随想</button>
-            </div>
-
-            <div class="articles-grid" id="articles-grid">
-${articlesGrid}
-            </div>
-            ${articles.length === 0 ? `
-            <div class="empty-state">
-                <i class="fas fa-feather"></i>
-                <h3>还没有文章</h3>
-                <p>快去 posts/ 目录下创建你的第一篇文章吧！</p>
-            </div>
-            ` : ''}
-        </div>
-    </section>
-
-    <footer class="footer" id="contact">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>
-                        <i class="fas fa-pen-nib"></i>
-                        技术随笔
-                    </h3>
-                    <p>记录技术成长的每一步，分享解决问题的思考方式。欢迎交流探讨！</p>
-                </div>
-                <div class="footer-links">
-                    <h4>导航</h4>
-                    <ul>
-                        <li><a href="index.html">首页</a></li>
-                        <li><a href="#articles">文章</a></li>
-                        <li><a href="#about">关于</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>MC 源码教程</h4>
-                    <ul>
-                        <li><a href="website/index.html">教程首页</a></li>
-                        <li><a href="website/catalog.html">全部目录</a></li>
-                        <li><a href="website/tutorials/Part-1-Foundation/04-registry-system.html">注册表系统</a></li>
-                        <li><a href="website/tutorials/Part-5-AI/27-ai-brain-intro.html">AI大脑</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>社交</h4>
-                    <ul>
-                        <li><a href="#" target="_blank"><i class="fab fa-github"></i> GitHub</a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-twitter"></i> Twitter</a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-weibo"></i> 微博</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 技术随笔 | 用心写好每一篇文章</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
-</body>
-</html>`;
-
-    indexHtml = indexHtml.replace(/href="index\.html/g, 'href="tech-blog.html');
-    return writeFile(path.join(CONFIG.outputDir, 'tech-blog.html'), indexHtml);
-}
-
-/**
- * Generate article.html
- */
-function generateArticlePage(articles) {
-    const articlesJson = JSON.stringify(articles);
-
-    let articleHtml = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文章 - 技术博客</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        .article-page { padding-top: 64px; }
-        .article-header-simple {
-            padding: 40px 0;
-            text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--gray-light);
-        }
-        .article-header-simple .container-narrow { max-width: 800px; }
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            transition: var(--transition);
-        }
-        .back-link:hover { color: var(--primary-color); }
-        .article-header-simple h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            line-height: 1.3;
-        }
-        .article-header-simple .article-meta { justify-content: center; margin-bottom: 16px; }
-        .article-header-simple .tags { justify-content: center; }
-        .loading { text-align: center; padding: 80px 24px; color: var(--text-secondary); }
-        .loading i { font-size: 2rem; margin-bottom: 16px; animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .not-found { text-align: center; padding: 120px 24px; }
-        .not-found i { font-size: 4rem; color: var(--text-muted); margin-bottom: 24px; }
-        .not-found h2 { font-size: 1.5rem; margin-bottom: 12px; }
-        .not-found p { color: var(--text-secondary); margin-bottom: 24px; }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="nav-logo">
-                <div class="nav-logo-icon"><i class="fas fa-pen-nib"></i></div>
-                <span>技术随笔</span>
-            </a>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <ul class="nav-links">
-                <li><a href="index.html">首页</a></li>
-                <li class="dropdown">
-                    <a href="#">MC 教程 <i class="fas fa-chevron-down" style="font-size: 0.75em; margin-left: 4px;"></i></a>
-                    <div class="dropdown-content">
-                        <a href="website/index.html">教程首页</a>
-                        <a href="website/catalog.html">全部目录</a>
-                        <a href="website/tutorials/Part-0-Prerequisites/00-course-overview.html">Part-0 前置知识</a>
-                        <a href="website/tutorials/Part-1-Foundation/04-registry-system.html">Part-1 核心基础</a>
-                        <a href="website/tutorials/Part-2-World/09-chunk-system.html">Part-2 世界系统</a>
-                        <a href="website/tutorials/Part-5-AI/27-ai-brain-intro.html">Part-5 AI系统</a>
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, ${moduleColor} 0%, ${moduleColor}88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        ${breadcrumbHtml}
                     </div>
-                </li>
-                <li><a href="index.html#articles">文章</a></li>
-                <li><a href="index.html#about">关于</a></li>
-                <li><a href="index.html#contact">联系</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <main class="article-page">
-        <div id="article-container">
-            <div class="loading">
-                <i class="fas fa-spinner"></i>
-                <p>正在加载文章...</p>
+                </div>
+                <h1 class="tutorial-title">${escapeHtml(title)}</h1>
+                ${subtitle ? `<p class="tutorial-subtitle">${escapeHtml(subtitle)}</p>` : ''}
+                <div class="tutorial-meta">
+                    <span class="module-badge ${moduleBadgeClass}">${moduleConfig.name}</span>
+                    ${version ? `<span><i class="fas fa-code-branch"></i> ${version}</span>` : ''}
+                    <span><i class="fas fa-file"></i> ${type === 'tutorials' ? '教程' : '源码分析'}</span>
+                    <span><i class="fas fa-file"></i> ${escapeHtml(filename.replace('.md', ''))}</span>
+                </div>
             </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        ${tocHtml || '<li><span style="color: var(--text-secondary);">暂无目录</span></li>'}
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>${moduleConfig.name}</p>
+                            ${version ? `<p style="margin-bottom: 8px;"><strong>版本：</strong>${version}</p>` : ''}
+                            <p><strong>类型：</strong>${type === 'tutorials' ? '教程' : '源码分析'}</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                ${content}
+            </article>
         </div>
-    </main>
+    </div>
 
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; 2026 技术随笔 | 用心写好每一篇文章</p>
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
             </div>
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="${relPath}script.js"></script>
+    <script src="${relPath}tutorial.js"></script>
     <script>
-        const articles = ${articlesJson};
-
-        function getArticleId() {
-            const params = new URLSearchParams(window.location.search);
-            return parseInt(params.get('id')) || null;
-        }
-
-        function renderArticle(article) {
-            const container = document.getElementById('article-container');
-            document.title = article.title + ' - 技术博客';
-
-            const tagsHtml = Array.isArray(article.tags)
-                ? article.tags.map(tag => '<span class="tag">' + tag + '</span>').join('')
-                : '';
-
-            container.innerHTML = '<div class="article-header-simple"><div class="container-narrow">' +
-                '<a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> 返回文章列表</a>' +
-                '<h1>' + article.title + '</h1>' +
-                '<div class="article-meta">' +
-                '<span><i class="far fa-calendar"></i> ' + article.date + '</span>' +
-                '<span><i class="far fa-clock"></i> ' + article.readingTime + ' 分钟阅读</span>' +
-                '<span><i class="far fa-folder"></i> ' + article.categoryName + '</span>' +
-                '</div>' +
-                '<div class="tags" style="margin-top: 16px;">' + tagsHtml + '</div>' +
-                '</div></div>' +
-                '<div class="article-cover"><div class="article-cover-image" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">' +
-                '<i class="' + (article.icon || 'fa-solid fa-file-lines') + '"></i></div></div>' +
-                '<article class="article-content">' + article.content + '</article>' +
-                '<div class="container-narrow"><div class="article-footer">' +
-                '<div class="article-tags"><div class="article-tags-title"><i class="fas fa-tags"></i> 标签</div>' +
-                '<div class="tags">' + tagsHtml + '</div></div></div></div>';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const articleId = getArticleId();
-            const article = articles.find(a => a.id === articleId);
-            const container = document.getElementById('article-container');
-
-            if (article) {
-                renderArticle(article);
-            } else {
-                container.innerHTML = '<div class="not-found">' +
-                    '<i class="fas fa-file-circle-xmark"></i>' +
-                    '<h2>文章未找到</h2>' +
-                    '<p>您访问的文章不存在或已被删除</p>' +
-                    '<a href="index.html" class="btn btn-primary"><i class="fas fa-home"></i> 返回首页</a>' +
-                    '</div>';
-            }
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
         });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
     </script>
 </body>
 </html>`;
-
-    articleHtml = articleHtml.replace(/href="index\.html/g, 'href="tech-blog.html');
-    return writeFile(path.join(CONFIG.outputDir, 'article.html'), articleHtml);
 }
 
 // ============================================================================
-// Main Function
+// Statistics
 // ============================================================================
 
-function main() {
-    Logger.header('博客文章转换器');
+const stats = {
+    converted: 0,
+    errors: 0,
+    warnings: 0,
+    startTime: Date.now(),
+
+    get duration() {
+        return Date.now() - this.startTime;
+    }
+};
+
+// ============================================================================
+// Main Conversion Function
+// ============================================================================
+
+/**
+ * Scan for all markdown files in the content directory
+ * Supports: content/mc/1.21/tutorials/, content/iris/tutorials/, etc.
+ * @returns {Array} Array of { module, version, part, file } objects
+ */
+function scanMarkdownFiles() {
+    const files = [];
+    const baseDir = CONFIG.tutorialsDir;
+
+    // Scan each module (mc, iris, sodium)
+    for (const [module, config] of Object.entries(MODULES)) {
+        const moduleDir = path.join(baseDir, module);
+
+        if (!fs.existsSync(moduleDir)) {
+            Logger.warning(`Module directory not found: ${moduleDir}`);
+            continue;
+        }
+
+        // For MC, scan each version
+        if (module === 'mc' && config.versions) {
+            for (const version of config.versions) {
+                const versionDir = path.join(moduleDir, version);
+
+                // Scan tutorials
+                const tutorialsDir = path.join(versionDir, 'tutorials');
+                if (fs.existsSync(tutorialsDir)) {
+                    scanDirectory(tutorialsDir, files, { module, version, type: 'tutorials' });
+                }
+
+                // Scan analysis
+                const analysisDir = path.join(versionDir, 'analysis');
+                if (fs.existsSync(analysisDir)) {
+                    scanDirectory(analysisDir, files, { module, version, type: 'analysis' });
+                }
+            }
+        } else {
+            // For Iris/Sodium, scan tutorials and analysis directly
+            const tutorialsDir = path.join(moduleDir, 'tutorials');
+            if (fs.existsSync(tutorialsDir)) {
+                scanDirectory(tutorialsDir, files, { module, version: null, type: 'tutorials' });
+            }
+
+            const analysisDir = path.join(moduleDir, 'analysis');
+            if (fs.existsSync(analysisDir)) {
+                scanDirectory(analysisDir, files, { module, version: null, type: 'analysis' });
+            }
+        }
+    }
+
+    return files;
+}
+
+/**
+ * Scan a directory for markdown files
+ * @param {string} dir - Directory path
+ * @param {Array} files - Array to push found files to
+ * @param {Object} context - Context object with module, version, type
+ */
+function scanDirectory(dir, files, context) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+        if (entry.isDirectory()) {
+            // Scan subdirectory (e.g., Part-0-Prerequisites)
+            const subDir = path.join(dir, entry.name);
+            scanDirectory(subDir, files, { ...context, part: entry.name });
+        } else if (entry.name.endsWith('.md')) {
+            files.push({
+                ...context,
+                file: entry.name,
+                fullPath: path.join(dir, entry.name)
+            });
+        }
+    }
+}
+
+/**
+ * Main conversion function
+ */
+function convertAll() {
+    const startTime = Date.now();
+
+    Logger.header('Markdown to HTML Converter');
 
     if (CONFIG.dryRun) {
         Logger.warning('Running in dry-run mode - no files will be written');
     }
 
-    Logger.info(`Posts directory: ${CONFIG.postsDir}`);
+    Logger.info(`Source directory: ${CONFIG.tutorialsDir}`);
     Logger.info(`Output directory: ${CONFIG.outputDir}`);
 
-    // Load articles
-    Logger.subheader('加载文章...');
-    const articles = loadArticles();
+    // Ensure output directory
+    ensureDir(CONFIG.outputDir);
 
-    if (articles.length === 0) {
-        Logger.warning('No articles found');
-    } else {
-        Logger.info(`Found ${articles.length} articles`);
+    // Scan for all markdown files
+    const markdownFiles = scanMarkdownFiles();
 
-        // List all articles
-        articles.forEach(article => {
-            Logger.success(`  [${article.categoryName}] ${article.title}`);
-        });
+    if (markdownFiles.length === 0) {
+        Logger.error('No markdown files found to convert');
+        Logger.info(`Please ensure your content is in:`);
+        Logger.info(`  - content/mc/{version}/tutorials/`);
+        Logger.info(`  - content/mc/{version}/analysis/`);
+        Logger.info(`  - content/iris/tutorials/`);
+        Logger.info(`  - content/iris/analysis/`);
+        Logger.info(`  - content/sodium/tutorials/`);
+        Logger.info(`  - content/sodium/analysis/`);
+        return;
+    }
+
+    Logger.info(`Found ${markdownFiles.length} markdown files\n`);
+
+    // Group by module
+    const byModule = {};
+    markdownFiles.forEach(f => {
+        if (!byModule[f.module]) byModule[f.module] = [];
+        byModule[f.module].push(f);
+    });
+
+    // Log file distribution
+    for (const [module, files] of Object.entries(byModule)) {
+        Logger.subheader(`${MODULES[module].name} - ${files.length} files`);
     }
 
     console.log('');
 
-    if (CONFIG.dryRun) {
-        Logger.warning('Dry-run mode: skipping file generation');
-        Logger.stats(stats);
-        return;
+    // Create progress bar
+    const progress = new ProgressBar(markdownFiles.length, 'Converting');
+
+    // Process each file
+    for (const fileInfo of markdownFiles) {
+        const { module, version, type, part, file, fullPath } = fileInfo;
+
+        const content = readFile(fullPath);
+        if (!content) {
+            stats.errors++;
+            progress.increment(`Error: ${file}`);
+            continue;
+        }
+
+        if (CONFIG.dryRun) {
+            stats.converted++;
+            progress.increment(`[DRY] ${module}/${file}`);
+            continue;
+        }
+
+        // Generate output path
+        const outputDir = path.join(CONFIG.outputDir, module);
+        ensureDir(outputDir);
+
+        if (version) {
+            const versionDir = path.join(outputDir, version);
+            ensureDir(versionDir);
+
+            const typeDir = path.join(versionDir, type);
+            ensureDir(typeDir);
+
+            if (part) {
+                const partDir = path.join(typeDir, part);
+                ensureDir(partDir);
+                const outputPath = path.join(partDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, version, type, part, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            } else {
+                const outputPath = path.join(typeDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, version, type, null, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            }
+        } else {
+            const typeDir = path.join(outputDir, type);
+            ensureDir(typeDir);
+
+            if (part) {
+                const partDir = path.join(typeDir, part);
+                ensureDir(partDir);
+                const outputPath = path.join(partDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, null, type, part, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            } else {
+                const outputPath = path.join(typeDir, file.replace('.md', '.html'));
+                const html = generateTutorialHTML(module, null, type, null, file, content);
+                if (writeFile(outputPath, html)) {
+                    stats.converted++;
+                } else {
+                    stats.errors++;
+                }
+            }
+        }
+
+        progress.increment(`${module}/${file}`);
     }
 
-    // Generate tech-blog.html + 根目录跳转 index.html
-    Logger.subheader('生成 tech-blog.html / 根目录跳转...');
-    if (generateIndex(articles)) {
-        stats.articles++;
-        Logger.success('Generated tech-blog.html');
-    } else {
-        stats.errors++;
-    }
-
-    if (generateRootRedirect()) {
-        Logger.success('Generated index.html → website/');
-    } else {
-        stats.errors++;
-    }
-
-    // Generate article.html
-    Logger.subheader('生成 article.html...');
-    if (generateArticlePage(articles)) {
-        Logger.success('Generated article.html');
-    } else {
-        stats.errors++;
-    }
+    progress.complete();
 
     // Print statistics
     Logger.stats(stats);
 
+    // Generate sitemap
+    if (!CONFIG.dryRun && stats.errors === 0) {
+        try {
+            const { generateSitemapFromContent, generateRobotsTxt } = require('./scripts/seo.js');
+            const sitemap = generateSitemapFromContent({
+                baseDir: CONFIG.tutorialsDir,
+                outputPath: path.join(__dirname, '..', 'sitemap.xml'),
+                verbose: CONFIG.verbose
+            });
+            Logger.success('Generated sitemap.xml');
+
+            // Generate robots.txt
+            const robotsTxt = generateRobotsTxt();
+            fs.writeFileSync(path.join(__dirname, '..', 'robots.txt'), robotsTxt, 'utf8');
+            Logger.success('Generated robots.txt');
+        } catch (e) {
+            Logger.warning('Failed to generate SEO files: ' + e.message);
+        }
+    }
+
+    // Print completion message
     if (stats.errors === 0) {
         Logger.success('Conversion completed successfully!');
     } else {
         Logger.error(`Conversion completed with ${stats.errors} error(s)`);
     }
+
+    Logger.info(`Output directory: ${CONFIG.outputDir}`);
 }
 
 // ============================================================================
 // Error Handlers
 // ============================================================================
 
+// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
     Logger.error('Uncaught exception: ' + err.message);
     if (CONFIG.verbose) {
@@ -846,6 +950,7 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 });
 
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
     Logger.error('Unhandled promise rejection');
     if (CONFIG.verbose) {
@@ -857,4 +962,4 @@ process.on('unhandledRejection', (reason, promise) => {
 // Run
 // ============================================================================
 
-main();
+convertAll();

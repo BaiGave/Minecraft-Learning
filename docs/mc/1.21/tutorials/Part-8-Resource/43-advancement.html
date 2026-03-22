@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>43 - 进度系统：成就与任务 - Minecraft 原版 教程</title>
+    <meta name="title" content="43 - 进度系统：成就与任务 - Minecraft 原版 教程">
+    <meta name="description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-8-Resource/43-advancement.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-8-Resource/43-advancement.html">
+    <meta property="og:title" content="43 - 进度系统：成就与任务 - Minecraft 原版 教程">
+    <meta property="og:description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="43 - 进度系统：成就与任务 - Minecraft 原版">
+    <meta name="twitter:description" content="：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "43 - 进度系统：成就与任务",
+        "description": "：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.889Z",
+        "dateModified": "2026-03-22T07:07:48.889Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-8-Resource</span>
+        
+        <span>/</span>
+        <span>43 - 进度系统：成就与任务</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">43 - 进度系统：成就与任务</h1>
+                <p class="tutorial-subtitle">：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</p>
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 43-advancement</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念-用生活比喻-">核心概念（用生活比喻）</a></li><li class="h3"><a href="#什么是进度系统-">什么是进度系统？</a></li><li class="h3"><a href="#进度树结构">进度树结构</a></li><li><a href="#进度-json-结构">进度 JSON 结构</a></li><li class="h3"><a href="#完整格式">完整格式</a></li><li class="h3"><a href="#核心字段说明">核心字段说明</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#进度触发流程">进度触发流程</a></li><li class="h3"><a href="#进度数据模型">进度数据模型</a></li><li class="h3"><a href="#框架类型对比">框架类型对比</a></li><li><a href="#常用触发器-trigger-">常用触发器（Trigger）</a></li><li class="h3"><a href="#1-inventory_changed-物品变化">1. inventory_changed - 物品变化</a></li><li class="h3"><a href="#2-player_killed_entity-击杀实体">2. player_killed_entity - 击杀实体</a></li><li class="h3"><a href="#3-enter_block-进入方块">3. enter_block - 进入方块</a></li><li class="h3"><a href="#4-effects_changed-药水效果变化">4. effects_changed - 药水效果变化</a></li><li class="h3"><a href="#5-recipe_unlocked-配方解锁">5. recipe_unlocked - 配方解锁</a></li><li class="h3"><a href="#6-killed_by_crossbow-用弩击杀">6. killed_by_crossbow - 用弩击杀</a></li><li class="h3"><a href="#7-location-位置检查">7. location - 位置检查</a></li><li><a href="#奖励详解">奖励详解</a></li><li class="h3"><a href="#rewards-字段">rewards 字段</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#示例-1-制作附魔金苹果">示例 1：制作附魔金苹果</a></li><li class="h3"><a href="#示例-2-自定义进度树">示例 2：自定义进度树</a></li><li class="h3"><a href="#示例-3-带奖励的进度">示例 3：带奖励的进度</a></li><li><a href="#源代码解析">源代码解析</a></li><li class="h3"><a href="#advancement-类核心结构">Advancement 类核心结构</a></li><li class="h3"><a href="#advancemententry-记录">AdvancementEntry 记录</a></li><li class="h3"><a href="#触发器注册">触发器注册</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#下一步">下一步</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- 什么是进度（Advancement）</p>
+<p>- 进度系统的结构（父进度、条件、奖励）</p>
+<p>- 如何创建自定义进度</p>
+<p>- Advancement 相关类的核心方法</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- 已完成 <a href="./41-datapack-intro.html">第41章 数据包</a> 章节</p>
+<p>- 了解 JSON 基本格式</p>
+<p>- 理解 Identifier 的概念</p>
+
+<h2 id="核心概念-用生活比喻-">核心概念（用生活比喻）</h2>
+
+<h3 id="什么是进度系统-">什么是进度系统？</h3>
+
+<p>想象你在玩一款 RPG 游戏：</p>
+
+<pre class="code-block"><code>┌─────────────────────────────────────────┐
+│  成就系统 = 游戏的任务清单                 │
+│                                         │
+│  ┌─────────────────────────────────┐   │
+│  │ 📋 成就列表                       │   │
+│  │                                 │   │
+│  │ 🌟 主线任务                       │   │
+│  │   ├── [已完成] 获得第一把剑       │   │
+│  │   ├── [进行中] 击败末影龙         │   │
+│  │   │     ↑ 前提: 收集黑曜石 x10   │   │
+│  │   └── [未解锁] 探索下界要塞       │   │
+│  │                                 │   │
+│  │ 🏆 支线成就                       │   │
+│  │   ├── [已完成] 驯服一只狼        │   │
+│  │   └── [进行中] 钓鱼100次         │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  进度 = 完成任务后获得的东西               │
+│  ├── 📜 成就提示（弹窗/聊天消息）          │
+│  ├── 🎁 奖励（物品/经验/配方）            │
+│  └── 🔓 解锁（解锁新配方/打开新区域）      │
+└─────────────────────────────────────────┘</code></pre>
+
+<p><strong>Minecraft 进度 = 原版"成就系统"</strong>：</p>
+<p>- 当玩家完成某个条件时触发</p>
+<p>- 显示在进度菜单中</p>
+<p>- 可以给予奖励</p>
+
+<h3 id="进度树结构">进度树结构</h3>
+
+<pre class="code-block"><code>                    [根进度]
+                        │
+                        ├── [取得钻石！]
+                        │       │
+                        │       ├── [钻石装备]
+                        │       │       │
+                        │       │       ├── [钻石剑]
+                        │       │       └── [钻石镐]
+                        │       │
+                        │       └── [钻石工具]
+                        │               │
+                        │               └── [无法挖掘...]
+                        │
+                        ├── [畜牧业]
+                        │       │
+                        │       ├── [羊羊得意]
+                        │       └── [狼心狗肺]
+                        │
+                        └── [探索]
+                                │
+                                ├── [下界]
+                                └── [末地]</code></pre>
+
+<p><strong>每个进度可以有</strong>：</p>
+<p>1. <strong>父进度</strong>（前置任务）</p>
+<p>2. <strong>图标和标题</strong>（显示在 UI）</p>
+<p>3. <strong>触发条件</strong>（如何完成）</p>
+<p>4. <strong>奖励</strong>（完成后获得什么）</p>
+
+<h2 id="进度-json-结构">进度 JSON 结构</h2>
+
+<h3 id="完整格式">完整格式</h3>
+
+<pre class="code-block"><code>{
+    &quot;display&quot;: {
+        &quot;icon&quot;: &quot;minecraft:diamond&quot;,
+        &quot;title&quot;: &quot;取得钻石！&quot;,
+        &quot;description&quot;: &quot;获得你的第一颗钻石&quot;,
+        &quot;frame&quot;: &quot;task&quot;,
+        &quot;background&quot;: &quot;minecraft:textures/gui/advancements/backgrounds/stone.png&quot;,
+        &quot;show_toast&quot;: true,
+        &quot;announce_to_chat&quot;: true,
+        &quot;hidden&quot;: false
+    },
+    &quot;parent&quot;: &quot;minecraft:story/mine_stone&quot;,
+    &quot;criteria&quot;: {
+        &quot;diamond&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+            &quot;conditions&quot;: {
+                &quot;items&quot;: [
+                    {&quot;items&quot;: [&quot;minecraft:diamond&quot;]}
+                ]
+            }
+        }
+    },
+    &quot;requirements&quot;: [[&quot;diamond&quot;]],
+    &quot;rewards&quot;: {
+        &quot;experience&quot;: 100,
+        &quot;loot&quot;: [&quot;minecraft:gameplay/happy_hero_of_the_village&quot;],
+        &quot;recipes&quot;: [&quot;minecraft:diamond_pickaxe&quot;],
+        &quot;function&quot;: &quot;mymod:grant_reward&quot;
+    },
+    &quot;sends_telemetry_event&quot;: true
+}</code></pre>
+
+<h3 id="核心字段说明">核心字段说明</h3>
+
+<table><thead><tr><th>字段</th><th>说明</th><th>是否必需</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>`display`</td><td>显示信息（图标、标题、描述）</td><td>否（无显示 = 隐藏进度）</td></tr><tr><td>`parent`</td><td>父进度 ID</td><td>否（根进度）</td></tr><tr><td>`criteria`</td><td>触发条件</td><td>**是**</td></tr><tr><td>`requirements`</td><td>条件组合方式</td><td>否（默认 AND）</td></tr><tr><td>`rewards`</td><td>完成后奖励</td><td>否</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="进度触发流程">进度触发流程</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[玩家行为] --> B{条件是否满足?}
+    
+    B -->|是| C{进度是否已完成?}
+    B -->|否| E[无变化]
+    
+    C -->|否| D{父进度是否完成?}
+    C -->|是| E
+    
+    D -->|是| F[触发进度完成]
+    D -->|否| E
+    
+    F --> G[发送进度提示]
+    G --> H[显示成就弹窗]
+    H --> I[发送到聊天]
+    
+    F --> J[给予奖励]
+    J --> K[给予经验]
+    J --> L[给予物品]
+    J --> M[解锁配方]
+    J --> N[执行函数]
+    
+    style F fill:#90EE90
+    style H fill:#87CEEB
+    style J fill:#FFD700
+</div>
+
+<h3 id="进度数据模型">进度数据模型</h3>
+
+<div class="mermaid">
+classDiagram
+    class Advancement {
+        +Optional~Identifier~ parent
+        +Optional~AdvancementDisplay~ display
+        +AdvancementRewards rewards
+        +Map~String~ criteria
+        +AdvancementRequirements requirements
+        +boolean sendsTelemetryEvent
+    }
+    
+    class AdvancementDisplay {
+        +ItemStack icon
+        +Text title
+        +Text description
+        +Optional~Identifier~ background
+        +AdvancementFrame frame
+        +boolean showToast
+        +boolean announceToChat
+        +boolean hidden
+    }
+    
+    class AdvancementRewards {
+        +int experience
+        +List~LootTable~ loot
+        +List~Identifier~ recipes
+        +Optional~LazyContainer~ function
+    }
+    
+    class AdvancementCriterion {
+        +Criterion trigger
+        +T conditions
+    }
+    
+    class AdvancementFrame {
+        <<enumeration>>
+        TASK
+        GOAL
+        CHALLENGE
+    }
+    
+    Advancement "1" --> "0..1" AdvancementDisplay
+    Advancement "1" --> "0..1" AdvancementRewards
+    Advancement "1" --> "n" AdvancementCriterion
+    AdvancementDisplay --> AdvancementFrame
+</div>
+
+<h3 id="框架类型对比">框架类型对比</h3>
+
+<div class="mermaid">
+mindmap
+    root((进度框架))
+        TASK 任务
+            绿色对勾
+            普通难度
+            最基础的成就
+        GOAL 目标
+            绿色旗帜
+            中等难度
+            通常是阶段性目标
+        CHALLENGE 挑战
+            红色感叹号
+            高难度
+            需要更多努力完成
+            奖励更多经验
+</div>
+
+<h2 id="常用触发器-trigger-">常用触发器（Trigger）</h2>
+
+<p>触发器定义了什么行为会检查进度。</p>
+
+<h3 id="1-inventory_changed-物品变化">1. inventory_changed - 物品变化</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+    &quot;conditions&quot;: {
+        &quot;items&quot;: [
+            {&quot;items&quot;: [&quot;minecraft:diamond&quot;], &quot;count&quot;: {&quot;min&quot;: 10}}
+        ]
+    }
+}</code></pre>
+<p><strong>用途</strong>：获得物品、持有物品、携带物品</p>
+
+<h3 id="2-player_killed_entity-击杀实体">2. player_killed_entity - 击杀实体</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:player_killed_entity&quot;,
+    &quot;conditions&quot;: {
+        &quot;entity&quot;: {
+            &quot;type&quot;: &quot;minecraft:creeper&quot;
+        }
+    }
+}</code></pre>
+<p><strong>用途</strong>：击杀特定生物</p>
+
+<h3 id="3-enter_block-进入方块">3. enter_block - 进入方块</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:enter_block&quot;,
+    &quot;conditions&quot;: {
+        &quot;block&quot;: &quot;minecraft:diamond_block&quot;
+    }
+}</code></pre>
+<p><strong>用途</strong>：站在特定方块上</p>
+
+<h3 id="4-effects_changed-药水效果变化">4. effects_changed - 药水效果变化</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:effects_changed&quot;,
+    &quot;conditions&quot;: {
+        &quot;effects&quot;: {
+            &quot;minecraft:speed&quot;: {&quot;amplifier&quot;: {&quot;min&quot;: 2}}
+        }
+    }
+}</code></pre>
+<p><strong>用途</strong>：获得药水效果</p>
+
+<h3 id="5-recipe_unlocked-配方解锁">5. recipe_unlocked - 配方解锁</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:recipe_unlocked&quot;,
+    &quot;conditions&quot;: {
+        &quot;recipe&quot;: &quot;minecraft:diamond_pickaxe&quot;
+    }
+}</code></pre>
+<p><strong>用途</strong>：学会某个配方</p>
+
+<h3 id="6-killed_by_crossbow-用弩击杀">6. killed_by_crossbow - 用弩击杀</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:killed_by_crossbow&quot;,
+    &quot;conditions&quot;: {
+        &quot;victims&quot;: [
+            {&quot;type&quot;: &quot;minecraft:skeleton&quot;, &quot;unique_entity&quot;: true}
+        ]
+    }
+}</code></pre>
+<p><strong>用途</strong>：用弩击杀特定生物</p>
+
+<h3 id="7-location-位置检查">7. location - 位置检查</h3>
+
+<pre class="code-block"><code>{
+    &quot;trigger&quot;: &quot;minecraft:location&quot;,
+    &quot;conditions&quot;: {
+        &quot;location&quot;: {
+            &quot;biome&quot;: &quot;minecraft:desert&quot;
+        }
+    }
+}</code></pre>
+<p><strong>用途</strong>：进入特定生物群系</p>
+
+<h2 id="奖励详解">奖励详解</h2>
+
+<h3 id="rewards-字段">rewards 字段</h3>
+
+<pre class="code-block"><code>{
+    &quot;rewards&quot;: {
+        &quot;experience&quot;: 100,                 // 给予的经验值
+        &quot;loot&quot;: [&quot;minecraft:...&quot;],        // 战利品表
+        &quot;recipes&quot;: [&quot;minecraft:...&quot;],     // 解锁配方
+        &quot;function&quot;: &quot;namespace:function&quot;  // 执行的函数
+    }
+}</code></pre>
+
+<p><strong>代码解析</strong>：</p>
+
+<pre class="code-block"><code>29:58:net/minecraft/advancement/AdvancementRewards.java
+public record AdvancementRewards(
+    int experience,                           // 经验值
+    List&lt;RegistryKey&lt;LootTable&gt;&gt; loot,        // 战利品表列表
+    List&lt;Identifier&gt; recipes,                 // 配方列表
+    Optional&lt;LazyContainer&gt; function          // 函数容器
+) {
+    
+    // 应用奖励到玩家
+    public void apply(ServerPlayerEntity player) {
+        // 给予经验
+        player.addExperience(this.experience);
+        
+        // 生成战利品
+        for (RegistryKey&lt;LootTable&gt; lootTable : this.loot) {
+            // ... 生成并给予物品
+        }
+        
+        // 解锁配方
+        player.unlockRecipes(this.recipes);
+        
+        // 执行函数
+        this.function.ifPresent(...);
+    }
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="示例-1-制作附魔金苹果">示例 1：制作附魔金苹果</h3>
+
+<p>创建 <code>data/mymod/advancement/have_enchanted_golden_apple.json</code>：</p>
+
+<pre class="code-block"><code>{
+    &quot;display&quot;: {
+        &quot;icon&quot;: {
+            &quot;item&quot;: &quot;minecraft:enchanted_golden_apple&quot;,
+            &quot;nbt&quot;: &quot;{Damage:0}&quot;
+        },
+        &quot;title&quot;: {
+            &quot;translate&quot;: &quot;成就.获得附魔金苹果&quot;
+        },
+        &quot;description&quot;: {
+            &quot;translate&quot;: &quot;成就.获得附魔金苹果.desc&quot;,
+            &quot;with&quot;: [{&quot;text&quot;: &quot;附魔金苹果&quot;}]
+        },
+        &quot;frame&quot;: &quot;goal&quot;,
+        &quot;show_toast&quot;: true,
+        &quot;announce_to_chat&quot;: true,
+        &quot;hidden&quot;: false
+    },
+    &quot;parent&quot;: &quot;mymod:have_golden_apple&quot;,
+    &quot;criteria&quot;: {
+        &quot;have_apple&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+            &quot;conditions&quot;: {
+                &quot;items&quot;: [
+                    {
+                        &quot;items&quot;: [&quot;minecraft:enchanted_golden_apple&quot;]
+                    }
+                ]
+            }
+        }
+    },
+    &quot;requirements&quot;: [[&quot;have_apple&quot;]]
+}</code></pre>
+
+<h3 id="示例-2-自定义进度树">示例 2：自定义进度树</h3>
+
+<pre class="code-block"><code>data/mymod/advancement/
+├── root.json                    # 根进度（显示在进度界面背景）
+├── have_stick.json             # 获得木棍
+│       └── parent: root
+├── have_diamond.json           # 获得钻石
+│       └── parent: root
+├── have_nether_star.json       # 获得下界之星
+│       └── parent: have_diamond
+└── ultimate_weapon.json        # 终极武器
+        └── parent: have_nether_star</code></pre>
+
+<p><code>data/mymod/advancement/root.json</code>：</p>
+
+<pre class="code-block"><code>{
+    &quot;display&quot;: {
+        &quot;icon&quot;: &quot;minecraft:nether_star&quot;,
+        &quot;title&quot;: &quot;模组进度&quot;,
+        &quot;description&quot;: &quot;开始你的冒险&quot;,
+        &quot;background&quot;: &quot;minecraft:textures/gui/advancements/backgrounds/adventure.png&quot;,
+        &quot;show_toast&quot;: false,
+        &quot;announce_to_chat&quot;: false,
+        &quot;hidden&quot;: false
+    },
+    &quot;criteria&quot;: {
+        &quot;tick&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:tick&quot;
+        }
+    }
+}</code></pre>
+
+<h3 id="示例-3-带奖励的进度">示例 3：带奖励的进度</h3>
+
+<pre class="code-block"><code>{
+    &quot;display&quot;: {
+        &quot;icon&quot;: &quot;minecraft:emerald&quot;,
+        &quot;title&quot;: &quot;成为村民英雄&quot;,
+        &quot;description&quot;: &quot;帮助村民击退袭击&quot;,
+        &quot;frame&quot;: &quot;challenge&quot;
+    },
+    &quot;parent&quot;: &quot;minecraft:adventure/hero_of_the_village&quot;,
+    &quot;criteria&quot;: {
+        &quot;hero&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:hero_of_the_village&quot;
+        }
+    },
+    &quot;rewards&quot;: {
+        &quot;experience&quot;: 500,
+        &quot;loot&quot;: [&quot;mymod:gameplay/villager_hero_gift&quot;],
+        &quot;recipes&quot;: [&quot;mymod:magic_diamond_armor&quot;],
+        &quot;function&quot;: &quot;mymod:celebrate_hero&quot;
+    }
+}</code></pre>
+
+<h2 id="源代码解析">源代码解析</h2>
+
+<h3 id="advancement-类核心结构">Advancement 类核心结构</h3>
+
+<pre class="code-block"><code>39:44:net/minecraft/advancement/Advancement.java
+public record Advancement(
+    Optional&lt;Identifier&gt; parent,                    // 父进度
+    Optional&lt;AdvancementDisplay&gt; display,           // 显示信息
+    AdvancementRewards rewards,                      // 奖励
+    Map&lt;String, AdvancementCriterion&lt;?&gt;&gt; criteria,  // 条件列表
+    AdvancementRequirements requirements,            // 条件要求
+    boolean sendsTelemetryEvent                      // 是否发送遥测
+) {
+    // 检查是否是根进度
+    public boolean isRoot() {
+        return this.parent.isEmpty();
+    }
+}</code></pre>
+
+<h3 id="advancemententry-记录">AdvancementEntry 记录</h3>
+
+<pre class="code-block"><code>13:15:net/minecraft/advancement/AdvancementEntry.java
+public record AdvancementEntry(
+    Identifier id,      // 进度的完整 ID
+    Advancement value   // 进度数据
+) {}</code></pre>
+
+<h3 id="触发器注册">触发器注册</h3>
+
+<pre class="code-block"><code>// Criteria 类中定义了所有触发器
+// 位于 net.minecraft.advancement.criterion.Criteria
+public static final Criteria INVENTORY_CHANGED = 
+    new Criteria(&quot;inventory_changed&quot;);
+    
+public static final Criteria PLAYER_KILLED_ENTITY = 
+    new Criteria(&quot;player_killed_entity&quot;);
+    
+public static final Criteria RECIPE_UNLOCKED = 
+    new Criteria(&quot;recipe_unlocked&quot;);</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<table><thead><tr><th>组件</th><th>说明</th><th>关键字段</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>**Advancement**</td><td>进度主体</td><td>criteria, parent, rewards</td></tr><tr><td>**AdvancementDisplay**</td><td>显示信息</td><td>icon, title, frame</td></tr><tr><td>**AdvancementRewards**</td><td>奖励</td><td>experience, loot, recipes</td></tr><tr><td>**Criterion**</td><td>单个条件</td><td>trigger, conditions</td></tr><tr><td>**Trigger**</td><td>触发器</td><td>inventory_changed, location...</td></tr></tbody></table>
+
+<p><strong>框架类型</strong>：</p>
+<p>- <code>task</code> - 普通任务（绿色对勾）</p>
+<p>- <code>goal</code> - 目标（绿色旗帜）</p>
+<p>- <code>challenge</code> - 挑战（红色感叹号）</p>
+
+<h2 id="练习">练习</h2>
+
+<p>1. <strong>基础练习</strong></p>
+<p>   创建一个进度，当玩家背包中有 64 个钻石时触发，显示"钻石大亨"成就。</p>
+
+<p>2. <strong>进度树练习</strong></p>
+<p>   创建以下进度树：</p>
+<p>   - 根进度：开始冒险</p>
+<p>   - 子进度 1：获得铁锭</p>
+<p>   - 子进度 2：获得金锭（需要先完成"获得铁锭"）</p>
+
+<p>3. <strong>奖励练习</strong></p>
+<p>   创建一个进度，完成后给予 100 经验、1 个附魔金苹果、解锁一个自定义配方。</p>
+
+<p>4. <strong>思考题</strong></p>
+<p>   - 如何让一个进度有多个完成条件（OR 逻辑）？</p>
+<p>   - 隐藏进度的用途是什么？</p>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="https://minecraft.fandom.com/wiki/Advancement" target="_blank" rel="noopener noreferrer">Minecraft Wiki - Advancement</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Advancement_trigger" target="_blank" rel="noopener noreferrer">Minecraft Wiki - Advancement trigger</a></p>
+<p>- <a href="https://minecraft.fandom.com/wiki/Advancement#Rewards" target="_blank" rel="noopener noreferrer">Minecraft Wiki - Advancement reward</a></p>
+<p>- 相关源码：</p>
+<p>  - <code>net.minecraft.advancement.Advancement</code></p>
+<p>  - <code>net.minecraft.advancement.AdvancementEntry</code></p>
+<p>  - <code>net.minecraft.advancement.AdvancementDisplay</code></p>
+<p>  - <code>net.minecraft.advancement.AdvancementRewards</code></p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Advancement.java</td><td>`net/minecraft/advancement/Advancement.java`</td><td>进度类</td></tr><tr><td>AdvancementRewards.java</td><td>`net/minecraft/advancement/AdvancementRewards.java`</td><td>进度奖励</td></tr><tr><td>Criterion.java</td><td>`net/minecraft/advancement/criterion/Criterion.java`</td><td>进度条件触发器</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+<p>学习完进度系统后，下一个重要系统是<strong>配方系统（Recipe）</strong>，它定义了游戏中物品的合成规则。</p>
+
+<blockquote>[第44章 - 配方系统：物品合成](./44-recipe-system.md)</blockquote>
+
+<hr>
+
+<blockquote><strong>注意</strong>：本文中的部分源码示例基于 CFR 反编译结果，实际源码可能略有差异。</blockquote>
+
+<hr>
+
+<p><strong>关键词</strong>：进度系统、Advancement、AdvancementDisplay、AdvancementRewards、Criterion、Trigger</p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

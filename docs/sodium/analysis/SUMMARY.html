@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>Sodium 分析总结 - Sodium 优化 教程</title>
+    <meta name="title" content="Sodium 分析总结 - Sodium 优化 教程">
+    <meta name="description" content="深入学习 Sodium 优化 源码，理解其内部工作原理">
+    <meta name="keywords" content="Sodium 优化, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/sodium/analysis/SUMMARY.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/sodium/analysis/SUMMARY.html">
+    <meta property="og:title" content="Sodium 分析总结 - Sodium 优化 教程">
+    <meta property="og:description" content="深入学习 Sodium 优化 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Sodium 分析总结 - Sodium 优化">
+    <meta name="twitter:description" content="深入学习 Sodium 优化 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Sodium 分析总结",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.934Z",
+        "dateModified": "2026-03-22T07:07:48.934Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #F2CC8F 0%, #F2CC8F88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Sodium 优化</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Sodium 分析总结</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Sodium 分析总结</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge sodium">Sodium 优化</span>
+                    
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> SUMMARY</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#1-核心优化技术">1. 核心优化技术</a></li><li class="h3"><a href="#1-1-多线程异步构建">1.1 多线程异步构建</a></li><li class="h3"><a href="#1-2-遮挡剔除算法">1.2 遮挡剔除算法</a></li><li class="h3"><a href="#1-3-multidraw-批处理">1.3 MultiDraw 批处理</a></li><li><a href="#2-架构设计模式">2. 架构设计模式</a></li><li class="h3"><a href="#2-1-服务加载模式">2.1 服务加载模式</a></li><li class="h3"><a href="#2-2-mixin-注入">2.2 Mixin 注入</a></li><li><a href="#3-核心组件关系">3. 核心组件关系</a></li><li><a href="#4-性能对比">4. 性能对比</a></li><li><a href="#5-设计亮点">5. 设计亮点</a></li><li class="h3"><a href="#5-1-帧预算控制">5.1 帧预算控制</a></li><li class="h3"><a href="#5-2-直方图排序">5.2 直方图排序</a></li><li class="h3"><a href="#5-3-无分支代码">5.3 无分支代码</a></li><li><a href="#6-平台支持">6. 平台支持</a></li><li class="h3"><a href="#6-1-fabric-vs-neoforge">6.1 Fabric vs NeoForge</a></li><li class="h3"><a href="#6-2-frapi">6.2 FRAPI</a></li><li><a href="#7-关键文件速查">7. 关键文件速查</a></li><li><a href="#8-学习价值">8. 学习价值</a></li><li><a href="#9-相关文档">9. 相关文档</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Sodium 优化</p>
+                            
+                            <p><strong>类型：</strong>源码分析</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<blockquote>核心要点速览</blockquote>
+
+<hr>
+
+<h2 id="1-核心优化技术">1. 核心优化技术</h2>
+
+<h3 id="1-1-多线程异步构建">1.1 多线程异步构建</h3>
+
+<p>Sodium 将原版 Minecraft 中在主线程执行的<strong>区块网格构建</strong>移到了专用工作线程池：</p>
+
+<pre class="code-block"><code>public class ChunkBuilder {
+    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+        int count = Math.max(1, Math.min(Runtime.getRuntime().availableProcessors() - 2, 10));
+        for (int i = 0; i &lt; count; i++) {
+            Thread thread = new Thread(worker, &quot;Chunk Render Task Executor #&quot; + i);
+        }
+    }
+}</code></pre>
+
+<p><strong>效果</strong>：大型区块变更时不再卡顿，帧率更稳定。</p>
+
+<h3 id="1-2-遮挡剔除算法">1.2 遮挡剔除算法</h3>
+
+<p>通过<strong>图遍历</strong>算法判断区块可见性，避免渲染被遮挡的区块：</p>
+
+<pre class="code-block"><code>public void findVisible(RenderSectionVisitor visitor,
+                        Viewport viewport,
+                        float searchDistance,
+                        boolean useOcclusionCulling,
+                        int frame) {
+    // 从相机所在区块开始 BFS
+    // 使用 36 位掩码编码方向可见性
+    // 应用角度优化减少遍历
+}</code></pre>
+
+<p><strong>效果</strong>：减少不必要的渲染调用。</p>
+
+<h3 id="1-3-multidraw-批处理">1.3 MultiDraw 批处理</h3>
+
+<p>合并同一区域内多个区块的绘制为<strong>一次 Draw Call</strong>：</p>
+
+<pre class="code-block"><code>public void render(ChunkRenderMatrices matrices,
+                   CommandList commandList,
+                   ChunkRenderListIterable renderLists,
+                   TerrainRenderPass renderPass) {
+    while (iterator.hasNext()) {
+        ChunkRenderList renderList = iterator.next();
+        CachedBatch batch = region.getCachedBatch(renderPass);
+        batch.multiDraw(commandList, tessellation, indexBuffer);  // 一次调用绘制多个区块
+    }
+}</code></pre>
+
+<p><strong>效果</strong>：显著减少 Draw Calls。</p>
+
+<hr>
+
+<h2 id="2-架构设计模式">2. 架构设计模式</h2>
+
+<h3 id="2-1-服务加载模式">2.1 服务加载模式</h3>
+
+<pre class="code-block"><code>┌─────────────────┐     SPI     ┌─────────────────┐
+│ Common 模块     │ ──────────► │ Fabric 模块     │
+│                 │             │                 │
+│ PlatformBlock   │             │ FabricBlock     │
+│ Access          │             │ Access          │
+└─────────────────┘             └─────────────────┘
+
+┌─────────────────┐     SPI     ┌─────────────────┐
+│ Common 模块     │ ──────────► │ NeoForge 模块   │
+│                 │             │                 │
+│ PlatformBlock   │             │ NeoForgeBlock   │
+│ Access          │             │ Access          │
+└─────────────────┘             └─────────────────┘</code></pre>
+
+<h3 id="2-2-mixin-注入">2.2 Mixin 注入</h3>
+
+<p>通过 Mixin 在 Minecraft 类中注入 Sodium 的渲染逻辑：</p>
+
+<pre class="code-block"><code>@Mixin(LevelRenderer.class)
+public abstract class LevelRendererMixin {
+    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;renderLevel&quot;)
+    private void onRenderLevel(..., CallbackInfo ci) {
+        SodiumWorldRenderer.getInstance().render(...);
+    }
+}</code></pre>
+
+<hr>
+
+<h2 id="3-核心组件关系">3. 核心组件关系</h2>
+
+<pre class="code-block"><code>SodiumWorldRenderer
+    │
+    ├──► RenderSectionManager
+    │        │
+    │        ├──► ChunkBuilder (多线程)
+    │        │        │
+    │        │        └──► Worker Threads (1-10 个)
+    │        │
+    │        ├──► OcclusionCuller
+    │        │        │
+    │        │        └──► 可见性判断
+    │        │
+    │        └──► ChunkRenderList[]
+    │                 │
+    │                 └──► TerrainRenderPass[]
+    │
+    └──► DefaultChunkRenderer
+             │
+             └──► MultiDrawBatch
+                      │
+                      └──► glMultiDrawElementsBaseVertex()</code></pre>
+
+<hr>
+
+<h2 id="4-性能对比">4. 性能对比</h2>
+
+<table><thead><tr><th>指标</th><th>原版 Minecraft</th><th>Sodium</th><th>提升</th></tr></thead><tbody><tr><td>------</td><td>---------------</td><td>--------</td><td>------</td></tr><tr><td>区块变更帧率</td><td>骤降</td><td>稳定</td><td>~100%</td></tr><tr><td>Draw Calls</td><td>~500/帧</td><td>~50/帧</td><td>~90%</td></tr><tr><td>CPU 利用率</td><td>单核</td><td>多核</td><td>~300%</td></tr><tr><td>显存占用</td><td>100%</td><td>~67% (IMMIX)</td><td>~33%</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="5-设计亮点">5. 设计亮点</h2>
+
+<h3 id="5-1-帧预算控制">5.1 帧预算控制</h3>
+
+<pre class="code-block"><code>var uploadBudget = new LimitedResourceBudget(
+    Math.max((long)(averageFrameDuration * 0.1f), MIN_UPLOAD_DURATION_BUDGET),
+    regions.getStagingBuffer().getUploadSizeLimit(averageFrameDuration)
+);
+
+while (!queue.isEmpty() &amp;&amp; workBudget.hasRemaining()) {
+    ChunkJob job = queue.dequeue();
+    processJob(job);
+    workBudget.decrement(job.getEstimatedCost());
+}</code></pre>
+
+<p><strong>设计意图</strong>：即使在低配置硬件上也能保持流畅，避免一次处理过多任务导致卡顿。</p>
+
+<h3 id="5-2-直方图排序">5.2 直方图排序</h3>
+
+<pre class="code-block"><code>// O(n) 排序代替 O(n log n)
+int[] histogram = new int[64];  // 直方图
+
+// 第一遍：计算直方图
+for (...) { histogram[distance]++; }
+
+// 第二遍：前缀和
+for (int i = 1; i &lt; 64; i++) { histogram[i] += histogram[i-1]; }
+
+// 第三遍：收集结果</code></pre>
+
+<p><strong>设计意图</strong>：用空间换时间，提高排序效率。</p>
+
+<h3 id="5-3-无分支代码">5.3 无分支代码</h3>
+
+<pre class="code-block"><code>private static long getAngleVisibilityMask(...) {
+    // 使用位运算代替条件分支
+    long mask = 0L;
+    if (dx &gt; dy || dz &gt; dy) {
+        mask |= UP_DOWN_OCCLUDED;  // 位运算
+    }
+    // ...
+    return mask;
+}</code></pre>
+
+<p><strong>设计意图</strong>：避免 CPU 分支预测失败，提高流水线效率。</p>
+
+<hr>
+
+<h2 id="6-平台支持">6. 平台支持</h2>
+
+<h3 id="6-1-fabric-vs-neoforge">6.1 Fabric vs NeoForge</h3>
+
+<table><thead><tr><th>方面</th><th>Fabric</th><th>NeoForge</th></tr></thead><tbody><tr><td>------</td><td>--------</td><td>----------</td></tr><tr><td>服务注册</td><td>`ClientModInitializer`</td><td>`@Mod + IEventBus`</td></tr><tr><td>Mixin</td><td>`fabric.mixins.json`</td><td>`neoforge.mixins.json`</td></tr><tr><td>配置屏幕</td><td>`OptionPage`</td><td>`IConfigScreenFactory`</td></tr><tr><td>事件系统</td><td>直接调用</td><td>NeoForge 事件总线</td></tr></tbody></table>
+
+<h3 id="6-2-frapi">6.2 FRAPI</h3>
+
+<p>Sodium 通过 <strong>FRAPI (Fabric Renderer API)</strong> 为第三方 mod 提供渲染访问接口，实现模块化扩展。</p>
+
+<hr>
+
+<h2 id="7-关键文件速查">7. 关键文件速查</h2>
+
+<table><thead><tr><th>功能</th><th>文件</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>主渲染器</td><td>`SodiumWorldRenderer.java`</td></tr><tr><td>区块管理</td><td>`RenderSectionManager.java`</td></tr><tr><td>异步构建</td><td>`ChunkBuilder.java`</td></tr><tr><td>遮挡剔除</td><td>`OcclusionCuller.java`</td></tr><tr><td>区块渲染</td><td>`DefaultChunkRenderer.java`</td></tr><tr><td>着色器管理</td><td>`ChunkShader.java`</td></tr><tr><td>顶点编码</td><td>`ChunkVertexEncoder.java`</td></tr><tr><td>平台抽象</td><td>`PlatformBlockAccess.java`</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="8-学习价值">8. 学习价值</h2>
+
+<p>Sodium 是一个优秀的开源项目，适合学习：</p>
+
+<p>1. <strong>性能优化</strong>：多线程、批处理、缓存优化</p>
+<p>2. <strong>架构设计</strong>：服务加载、Mixin 注入、平台抽象</p>
+<p>3. <strong>图形编程</strong>：OpenGL、着色器、缓冲区管理</p>
+<p>4. <strong>游戏 Mod 开发</strong>：与 Minecraft 交互的机制</p>
+
+<hr>
+
+<h2 id="9-相关文档">9. 相关文档</h2>
+
+<p>- <a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</p>
+<p>- <a href="02-chunk-render-system.html">02-chunk-render-system</a> - 区块渲染系统</p>
+<p>- <a href="03-occlusion-culling.html">03-occlusion-culling</a> - 遮挡剔除系统</p>
+<p>- <a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线</p>
+<p>- <a href="05-shader-system.html">05-shader-system</a> - 着色器系统</p>
+<p>- <a href="06-platform-integration.html">06-platform-integration</a> - 平台集成</p>
+
+<hr>
+
+<p><em>生成时间: 2026-03-19</em></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

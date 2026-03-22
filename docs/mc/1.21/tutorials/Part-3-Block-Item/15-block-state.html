@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Primary Meta Tags -->
+    <title>15 - BlockState：方块的不同状态 - Minecraft 原版 教程</title>
+    <meta name="title" content="15 - BlockState：方块的不同状态 - Minecraft 原版 教程">
+    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
+    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-3-Block-Item/15-block-state.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/MincraftLearning/docs/mc/1.21/tutorials/Part-3-Block-Item/15-block-state.html">
+    <meta property="og:title" content="15 - BlockState：方块的不同状态 - Minecraft 原版 教程">
+    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="15 - BlockState：方块的不同状态 - Minecraft 原版">
+    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "15 - BlockState：方块的不同状态",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T07:07:48.852Z",
+        "dateModified": "2026-03-22T07:07:48.852Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header" style="background: linear-gradient(135deg, #5B8C5A 0%, #5B8C5A88 100%);">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../../index.html">Minecraft 原版 1.21</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+            <span>/</span>
+            <span>Part-3-Block-Item</span>
+        
+        <span>/</span>
+        <span>15 - BlockState：方块的不同状态</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">15 - BlockState：方块的不同状态</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge mc">Minecraft 原版</span>
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 15-block-state</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="sidebar-toc">
+                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#blockstate-是什么-">BlockState 是什么？</a></li><li class="h3"><a href="#property-接口-状态的-开关-">Property 接口：状态的"开关"</a></li><li class="h3"><a href="#常见-property-类型">常见 Property 类型</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#blockstate-状态映射图">BlockState 状态映射图</a></li><li class="h3"><a href="#楼梯状态示意图">楼梯状态示意图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#预定义的常用-property">预定义的常用 Property</a></li><li class="h3"><a href="#为自定义方块添加状态">为自定义方块添加状态</a></li><li class="h3"><a href="#读取和设置状态">读取和设置状态</a></li><li class="h3"><a href="#状态更新和邻居方块">状态更新和邻居方块</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#案例-创建一个可以切换开关状态的方块">案例：创建一个可以切换开关状态的方块</a></li><li class="h3"><a href="#案例-台阶方块的双层状态">案例：台阶方块的双层状态</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#思考题">思考题</a></li><li class="h3"><a href="#动手题">动手题</a></li><li class="h3"><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-book"></i> 教程信息</h3>
+                    <div class="part-nav">
+                        <div style="padding: 12px; background: var(--gray-light); border-radius: var(--radius-md); font-size: 0.9rem;">
+                            <p style="margin-bottom: 8px;"><strong>模组：</strong>Minecraft 原版</p>
+                            <p style="margin-bottom: 8px;"><strong>版本：</strong>1.21</p>
+                            <p><strong>类型：</strong>教程</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content">
+                
+<h2 id="目标">目标</h2>
+
+<p>学完本章节后，你将理解：</p>
+<p>- BlockState 是什么（同一个方块的不同"样子"）</p>
+<p>- Property 接口及其作用</p>
+<p>- 常见的状态属性类型</p>
+<p>- 如何为自定义方块添加状态</p>
+
+<h2 id="前置知识">前置知识</h2>
+
+<p>- <a href="./14-block-basics.html">14-Block基础</a> - 了解 Block 类</p>
+
+<h2 id="核心概念">核心概念</h2>
+
+<h3 id="blockstate-是什么-">BlockState 是什么？</h3>
+
+<p>想象你有<strong>一套积木</strong>，虽然都是"楼梯"这个种类，但它们有4种不同的朝向：</p>
+<p>- 楼梯朝北</p>
+<p>- 楼梯朝南</p>
+<p>- 楼梯朝东</p>
+<p>- 楼梯朝西</p>
+
+<p>在 Minecraft 中：</p>
+<p>- <strong>Block（石头）</strong> = 一种积木模板，全世界只有一份</p>
+<p>- <strong>BlockState（石头被放置的状态）</strong> = 这块积木的具体样子</p>
+
+<pre class="code-block"><code>┌─────────────────┐
+│                 │
+│  石头方块 (Block)  │
+│  └── 东向 (BlockState)
+│  └── 西向 (BlockState)
+│  └── 南向 (BlockState)
+│  └── 北向 (BlockState)
+│                 │
+└─────────────────┘</code></pre>
+
+<p><strong>关键点</strong>：</p>
+<p>- 一个 Block 类 → 多个 BlockState 实例</p>
+<p>- BlockState 定义了方块的具体状态</p>
+<p>- 状态改变 = 生成新的 BlockState 对象</p>
+
+<h3 id="property-接口-状态的-开关-">Property 接口：状态的"开关"</h3>
+
+<p><strong>Property（属性）</strong> = 描述 BlockState 的某个维度</p>
+
+<pre class="code-block"><code>楼梯的 Property:
+├── facing (朝向): north, south, east, west, up, down
+├── half (半高): top, bottom
+└── waterlogged (有水): true, false
+
+木门的 Property:
+├── facing (朝向): north, south, east, west
+├── half (半高): upper, lower
+├── hinge (铰链): left, right
+├── powered (充能): true, false
+└── open (打开): true, false</code></pre>
+
+<h3 id="常见-property-类型">常见 Property 类型</h3>
+
+<table><thead><tr><th>Property 类型</th><th>可选值</th><th>例子</th></tr></thead><tbody><tr><td>---------------</td><td>--------</td><td>------</td></tr><tr><td>`BooleanProperty`</td><td>true/false</td><td>铁门是否打开</td></tr><tr><td>`IntProperty`</td><td>0-15</td><td>红石信号的强度</td></tr><tr><td>`EnumProperty`</td><td>自定义枚举</td><td>楼梯朝向、旗帜图案</td></tr></tbody></table>
+
+<h2 id="图解-mermaid-">图解（Mermaid）</h2>
+
+<h3 id="blockstate-状态映射图">BlockState 状态映射图</h3>
+
+<div class="mermaid">
+flowchart TD
+    subgraph Block["Stone Block (石头方块)"]
+        B1[Block实例]
+    end
+
+    subgraph States["所有可能的状态"]
+        S1["facing=north"]
+        S2["facing=south"]
+        S3["facing=east"]
+        S4["facing=west"]
+        S5["facing=north, waterlogged=true"]
+        S6["facing=south, waterlogged=true"]
+    end
+
+    B1 --> S1
+    B1 --> S2
+    B1 --> S3
+    B1 --> S4
+    B1 --> S5
+    B1 --> S6
+
+    S1 -.->|相同方块| S2
+    S2 -.->|相同方块| S3
+    S3 -.->|相同方块| S4
+</div>
+
+<h3 id="楼梯状态示意图">楼梯状态示意图</h3>
+
+<pre class="code-block"><code>         俯视图（顶层视角）
+
+    ┌───────────────┐
+    │               │
+    │   楼梯方块      │
+    │    facing     │
+    │      ↑        │
+    │     north     │
+    │               │
+    └───────────────┘
+
+facing 可选值:
+- north (北)
+- south (南)
+- east  (东)
+- west  (西)
+- up    (上)
+- down  (下)</code></pre>
+
+<h2 id="核心代码">核心代码</h2>
+
+<blockquote>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</blockquote>
+
+<h3 id="预定义的常用-property">预定义的常用 Property</h3>
+
+<pre class="code-block"><code>// 位置: net.minecraft.state.property.Properties
+
+// 布尔属性
+BooleanProperty.create(&quot;waterlogged&quot;);    // 有水
+BooleanProperty.create(&quot;powered&quot;);        // 充能
+BooleanProperty.create(&quot;open&quot;);          // 打开
+
+// 整数属性
+IntProperty.create(&quot;power&quot;, 0, 15);      // 红石强度 0-15
+IntProperty.create(&quot;layer&quot;, 1, 8);       // 雪层高度
+
+// 枚举属性
+DirectionProperty.create(&quot;facing&quot;);      // 朝向（自动包含6个方向）
+DirectionProperty.create(&quot;facing&quot;,
+    Direction.Plane.HORIZONTAL);         // 只包含4个水平方向</code></pre>
+
+<h3 id="为自定义方块添加状态">为自定义方块添加状态</h3>
+
+<pre class="code-block"><code>// 1. 定义属性
+public class MyStairsBlock extends Block {
+
+    // 创建属性
+    public static final DirectionProperty FACING = DirectionProperty.create(
+        &quot;facing&quot;,
+        Direction.Plane.HORIZONTAL    // 水平四个方向
+    );
+
+    public static final EnumProperty&lt;Half&gt; HALF = EnumProperty.create(
+        &quot;half&quot;,
+        Half.class                    // Half.TOP, Half.BOTTOM
+    );
+
+    public MyStairsBlock(Settings settings) {
+        super(settings);
+        // 设置默认状态
+        setDefaultState(getDefaultState()
+            .with(FACING, Direction.NORTH)  // 默认朝北
+            .with(HALF, Half.BOTTOM)         // 默认下半部分
+        );
+    }
+
+    // 2. 注册属性
+    @Override
+    protected void appendProperties(StateManager.Builder&lt;Block, BlockState&gt; builder) {
+        builder.add(FACING, HALF);
+    }
+}</code></pre>
+
+<h3 id="读取和设置状态">读取和设置状态</h3>
+
+<pre class="code-block"><code>// 获取当前状态
+BlockState state = world.getBlockState(pos);
+
+// 读取属性值
+Direction facing = state.get(FACING);      // 获取朝向
+Half half = state.get(HALF);              // 获取半高
+
+// 检查属性值
+if (state.get(HALF) == Half.TOP) {
+    // 这是上半部分
+}
+
+// 设置新状态（返回新的 BlockState）
+BlockState newState = state.with(FACING, Direction.SOUTH);
+world.setBlockState(pos, newState);
+
+// 检查是否有某属性
+if (state.contains(FACING)) {
+    // 这个状态有 facing 属性
+}</code></pre>
+
+<h3 id="状态更新和邻居方块">状态更新和邻居方块</h3>
+
+<pre class="code-block"><code>@Override
+protected BlockState getStateForNeighborUpdate(
+    BlockState state,           // 当前方块状态
+    Direction direction,        // 变化的邻居方向
+    BlockState neighborState,   // 邻居的新状态
+    WorldAccess world,         // 世界
+    BlockPos pos,              // 当前方块位置
+    BlockPos neighborPos       // 邻居位置
+) {
+    // 当邻居改变时，更新自己的状态
+
+    // 例如：铁轨根据相邻铁轨方向更新
+    if (state.get(FACING) == direction.getOpposite()) {
+        // 连接到邻居
+        return state.with(FACING, direction);
+    }
+
+    return state;  // 状态不变
+}</code></pre>
+
+<h2 id="实战演示">实战演示</h2>
+
+<h3 id="案例-创建一个可以切换开关状态的方块">案例：创建一个可以切换开关状态的方块</h3>
+
+<pre class="code-block"><code>public class ToggleBlock extends Block {
+
+    public static final BooleanProperty POWERED = BooleanProperty.of(&quot;powered&quot;);
+
+    public ToggleBlock(Settings settings) {
+        super(settings);
+        setDefaultState(getDefaultState().with(POWERED, false));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder&lt;Block, BlockState&gt; builder) {
+        builder.add(POWERED);
+    }
+
+    // 右键切换状态
+    @Override
+    protected ActionResult onUse(BlockState state, World world,
+                                BlockPos pos, PlayerEntity player,
+                                BlockHitResult hit) {
+        if (!world.isClient) {
+            // 切换状态
+            boolean newPowered = !state.get(POWERED);
+            world.setBlockState(pos, state.with(POWERED, newPowered));
+        }
+        return ActionResult.SUCCESS;
+    }
+}</code></pre>
+
+<h3 id="案例-台阶方块的双层状态">案例：台阶方块的双层状态</h3>
+
+<pre class="code-block"><code>// 台阶有上半部分和下半部分
+public class SlabBlock extends Block {
+
+    public static final EnumProperty&lt;SlabType&gt; TYPE = EnumProperty.create(
+        &quot;type&quot;,
+        SlabType.class  // SlabType.TOP, SlabType.BOTTOM, SlabType.DOUBLE
+    );
+
+    public SlabBlock(Settings settings) {
+        super(settings);
+        setDefaultState(getDefaultState().with(TYPE, SlabType.BOTTOM));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder&lt;Block, BlockState&gt; builder) {
+        builder.add(TYPE);
+    }
+}</code></pre>
+
+<h2 id="小结">小结</h2>
+
+<p>1. <strong>BlockState</strong> = 方块在世界的具体状态</p>
+<p>2. <strong>Property</strong> = 状态的"维度"（朝向、半高、是否开启等）</p>
+<p>3. 每个 Block 可以有多个 Property，每个 Property 有多个可能的值</p>
+<p>4. 状态总数 = 所有 Property 可选值数量的<strong>乘积</strong></p>
+<p>5. 状态改变使用 <code>.with()</code> 方法，返回新的 BlockState</p>
+
+<h2 id="练习">练习</h2>
+
+<h3 id="思考题">思考题</h3>
+
+<p>1. 一个楼梯方块有 <code>facing</code>(4个值) 和 <code>half</code>(2个值)，总共有多少种状态？</p>
+<p>2. 为什么状态改变要返回新的 BlockState 而不是修改现有对象？</p>
+
+<h3 id="动手题">动手题</h3>
+
+<p>1. 创建一个有"开启/关闭"两种状态的方块</p>
+<p>2. 创建一个有3种颜色状态的方块</p>
+<p>3. 进阶：创建一个双开门方块，需要同时考虑左右两扇门</p>
+
+<h3 id="源码文件位置">源码文件位置</h3>
+
+<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>BlockState.java</td><td>`net/minecraft/block/BlockState.java`</td><td>方块状态</td></tr><tr><td>StateManager.java</td><td>`net/minecraft/block/StateManager.java`</td><td>状态管理器</td></tr><tr><td>Property.java</td><td>`net/minecraft/block/properties/Property.java`</td><td>属性基类</td></tr></tbody></table>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p>- <a href="./14-block-basics.html">14-Block基础</a> - 了解 Block 类</p>
+<p>- <a href="./16-block-entity.html">16-BlockEntity</a> - 了解需要存储额外数据的方块</p>
+<p>- Minecraft Wiki: <a href="https://minecraft.fandom.com/wiki/Block_state" target="_blank" rel="noopener noreferrer">Block_state</a></p>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
