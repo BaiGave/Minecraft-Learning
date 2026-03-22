@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{TITLE}} - Minecraft Learning</title>
+    <meta name="description" content="{{DESCRIPTION}}">
+    <meta name="keywords" content="{{KEYWORDS}}">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="{{TITLE}}">
+    <meta property="og:description" content="{{DESCRIPTION}}">
+    <meta property="og:site_name" content="Minecraft Learning">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{TITLE}}">
+    <meta name="twitter:description" content="{{DESCRIPTION}}">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <!-- 顶部进度条 -->
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-inner">
+            <a href="../../../index.html" class="header-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            
+            <nav class="header-nav" id="headerNav">
+                <!-- 由 JS 动态生成 -->
+            </nav>
+            
+            <div class="header-actions">
+                <button class="search-toggle" id="searchToggle" aria-label="搜索">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 搜索模态框 -->
+    <div class="modal-backdrop" id="searchModal">
+        <div class="modal" style="width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title"><i class="fas fa-search"></i> 搜索文档</span>
+                <button class="modal-close" id="searchModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div class="search-box" style="max-width: 100%; padding: var(--space-4);">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="输入关键词搜索..." autocomplete="off">
+                </div>
+                <div id="searchResults" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 class="sidebar-title">{{MODULE_NAME}}</h3>
+            <p class="sidebar-subtitle">{{VERSION}} · {{DOC_TYPE}}</p>
+        </div>
+        
+        <!-- 版本选择器 -->
+        <div class="version-selector" id="versionSelector" style="display: none;">
+            <select id="versionSelect">
+                <!-- 由 JS 动态生成 -->
+            </select>
+        </div>
+        
+        <!-- 导航 -->
+        <nav class="sidebar-nav" id="sidebarNav">
+            <!-- 由 JS 动态生成 -->
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content-wrapper">
+        <div class="content-main">
+            <!-- 面包屑 -->
+            <nav class="breadcrumbs" id="breadcrumbs">
+                {{BREADCRUMBS}}
+            </nav>
+
+            <!-- 文档内容卡片 -->
+            <div class="content-card">
+                <div class="content-card-header">
+                    <!-- 页面标题 -->
+                    <h1 id="pageTitle">{{TITLE}}</h1>
+                    
+                    <!-- 元信息 -->
+                    <div class="docs-meta" style="display: flex; gap: var(--space-4); margin-top: var(--space-4); font-size: var(--text-sm); color: var(--text-secondary);">
+                        <span class="module-badge {{MODULE_CLASS}}">{{MODULE_NAME}}</span>
+                        {{#VERSION}}<span><i class="fas fa-code-branch"></i> {{VERSION}}</span>{{/VERSION}}
+                        <span><i class="fas fa-file"></i> {{DOC_TYPE}}</span>
+                        {{#READING_TIME}}<span><i class="fas fa-clock"></i> {{READING_TIME}}</span>{{/READING_TIME}}
+                    </div>
+                </div>
+                
+                <div class="content-card-body">
+                    <!-- 文档正文 -->
+                    <div class="docs-body" id="docsBody">
+                        {{CONTENT}}
+                    </div>
+                    
+                    <!-- 上一篇/下一篇导航 -->
+                    <div class="docs-footer" id="prevNextNav">
+                        {{PREV_NEXT}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../../../scripts/site-config.js"></script>
+    <script src="../../../scripts/app.js"></script>
+    <script>
+        // ============================================
+        // 文档页脚本
+        // ============================================
+        
+        // 当前页面信息
+        const PAGE_INFO = {
+            module: '{{MODULE}}',
+            version: '{{VERSION}}',
+            type: '{{DOC_TYPE}}',
+            slug: '{{SLUG}}'
+        };
+        
+        // ── 初始化 ────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initNavigation();
+            initProgress();
+            initSearch();
+            initKeyboardNav();
+            initSidebar();
+            initMermaid();
+            highlightCurrentPage();
+        });
+        
+        // ── 主题 ────────────────────────────────────────────────
+        function initTheme() {
+            const savedTheme = localStorage.getItem('mc-docs-theme') || 'auto';
+            if (savedTheme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+            
+            document.getElementById('themeToggle')?.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('mc-docs-theme', next);
+            });
+        }
+        
+        // ── 导航 ────────────────────────────────────────────────
+        function initNavigation() {
+            const nav = document.getElementById('headerNav');
+            if (!nav) return;
+            
+            const navItems = [
+                { name: 'Minecraft 原版', href: '../../../docs/mc/1.21/index.html' },
+                { name: 'Iris 光影', href: '../../../docs/iris/index.html' },
+                { name: 'Sodium 优化', href: '../../../docs/sodium/index.html' }
+            ];
+            
+            nav.innerHTML = navItems.map(item => 
+                `<a href="${item.href}">${item.name}</a>`
+            ).join('');
+        }
+        
+        // ── 侧边栏 ────────────────────────────────────────────────
+        function initSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            if (!nav) return;
+            
+            // 渲染侧边栏导航
+            const navigation = getNavigation(PAGE_INFO.module);
+            if (navigation) {
+                nav.innerHTML = navigation;
+                
+                // 绑定折叠事件
+                nav.querySelectorAll('.nav-group-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        header.closest('.nav-group').classList.toggle('collapsed');
+                    });
+                });
+            }
+            
+            // 移动端菜单
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            menuToggle?.addEventListener('click', () => {
+                sidebar?.classList.toggle('open');
+                overlay?.classList.toggle('visible');
+            });
+            
+            overlay?.addEventListener('click', () => {
+                sidebar?.classList.remove('open');
+                overlay?.classList.remove('visible');
+            });
+        }
+        
+        function getNavigation(module) {
+            const navs = SITE_CONFIG.navigation;
+            if (module === 'mc') {
+                return renderMCNavigation(navs.mcTutorials, navs.mcAnalysis);
+            } else if (module === 'iris') {
+                return renderSimpleNavigation(navs.iris);
+            } else if (module === 'sodium') {
+                return renderSimpleNavigation(navs.sodium);
+            }
+            return '';
+        }
+        
+        function renderMCNavigation(tutorials, analysis) {
+            let html = '';
+            
+            // 分析文档
+            html += `<div class="nav-group">
+                <div class="nav-group-header"><span><i class="fas fa-microscope"></i> 源码分析</span><i class="fas fa-chevron-down"></i></div>
+                <div class="nav-group-items">`;
+            analysis.forEach(item => {
+                html += `<a href="${item.file}.html" class="nav-link"><i class="fas ${item.icon}"></i><span class="nav-text">${item.title}</span></a>`;
+            });
+            html += '</div></div>';
+            
+            // 教程分组
+            tutorials.forEach(part => {
+                html += `<div class="nav-group">
+                    <div class="nav-group-header"><span><i class="fas ${part.icon}"></i> ${part.name}</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="nav-group-items">`;
+                part.items.forEach(item => {
+                    const star = item.star ? '<span class="star">⭐</span>' : '';
+                    html += `<a href="${item.file}.html" class="nav-link"><i class="fas fa-file-alt"></i><span class="nav-text">${item.title}</span>${star}</a>`;
+                });
+                html += '</div></div>';
+            });
+            
+            return html;
+        }
+        
+        function renderSimpleNavigation(nav) {
+            let html = '';
+            
+            if (nav.tutorials) {
+                html += `<div class="nav-group">
+                    <div class="nav-group-header"><span><i class="fas fa-graduation-cap"></i> 教程</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="nav-group-items">`;
+                nav.tutorials.forEach(item => {
+                    html += `<a href="${item.file}.html" class="nav-link"><i class="fas ${item.icon}"></i><span class="nav-text">${item.title}</span></a>`;
+                });
+                html += '</div></div>';
+            }
+            
+            if (nav.analysis) {
+                html += `<div class="nav-group">
+                    <div class="nav-group-header"><span><i class="fas fa-microscope"></i> 源码分析</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="nav-group-items">`;
+                nav.analysis.forEach(item => {
+                    html += `<a href="${item.file}.html" class="nav-link"><i class="fas ${item.icon}"></i><span class="nav-text">${item.title}</span></a>`;
+                });
+                html += '</div></div>';
+            }
+            
+            return html;
+        }
+        
+        // ── 进度 ────────────────────────────────────────────────
+        function initProgress() {
+            const progress = document.getElementById('readingProgress');
+            if (!progress) return;
+            
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                progress.style.width = `${Math.min(percent, 100)}%`;
+            });
+        }
+        
+        // ── 搜索 ────────────────────────────────────────────────
+        function initSearch() {
+            const searchToggle = document.getElementById('searchToggle');
+            const searchModal = document.getElementById('searchModal');
+            const searchModalClose = document.getElementById('searchModalClose');
+            const globalSearchInput = document.getElementById('globalSearchInput');
+            
+            searchToggle?.addEventListener('click', () => {
+                searchModal?.classList.add('visible');
+                searchModal?.querySelector('.modal')?.classList.add('visible');
+                globalSearchInput?.focus();
+            });
+            
+            searchModalClose?.addEventListener('click', () => {
+                searchModal?.classList.remove('visible');
+                searchModal?.querySelector('.modal')?.classList.remove('visible');
+            });
+            
+            searchModal?.addEventListener('click', (e) => {
+                if (e.target === searchModal) {
+                    searchModal.classList.remove('visible');
+                    searchModal.querySelector('.modal')?.classList.remove('visible');
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    searchModal?.classList.add('visible');
+                    searchModal?.querySelector('.modal')?.classList.add('visible');
+                    globalSearchInput?.focus();
+                }
+                if (e.key === 'Escape') {
+                    searchModal?.classList.remove('visible');
+                    searchModal?.querySelector('.modal')?.classList.remove('visible');
+                }
+            });
+        }
+        
+        // ── 键盘导航 ────────────────────────────────────────────────
+        function initKeyboardNav() {
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement.tagName === 'INPUT') return;
+                
+                switch (e.key) {
+                    case 'd':
+                        document.getElementById('themeToggle')?.click();
+                        break;
+                    case '[':
+                        document.getElementById('sidebar')?.classList.toggle('collapsed');
+                        break;
+                }
+            });
+        }
+        
+        // ── 高亮当前页面 ────────────────────────────────────────────────
+        function highlightCurrentPage() {
+            const currentPath = window.location.pathname;
+            const nav = document.getElementById('sidebarNav');
+            if (!nav) return;
+            
+            nav.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && currentPath.endsWith(href)) {
+                    link.classList.add('active');
+                    const group = link.closest('.nav-group');
+                    if (group) group.classList.remove('collapsed');
+                }
+            });
+        }
+        
+        // ── Mermaid 初始化 ────────────────────────────────────────────────
+        function initMermaid() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: true,
+                    theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+                    themeVariables: {
+                        primaryColor: '#5B8C5A',
+                        primaryTextColor: '#2c3e50',
+                        lineColor: '#6c757d'
+                    }
+                });
+            }
+        }
+        
+        // ── Header 滚动效果 ────────────────────────────────────────────────
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header?.classList.add('scrolled');
+            } else {
+                header?.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>26 spawn system - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>26 spawn system</span>
                 </nav>
@@ -456,56 +466,44 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>第26章 生成系统——生物是如何出现在世界上的</h1>
-<blockquote><p><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p></blockquote>
+                <h1>�?6�?生成系统——生物是如何出现在世界上�?</h1>
+<blockquote><p><strong>注意</strong>：以下代码示例基�?CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准�?</p></blockquote>
 <h2 id="目标">目标</h2>
 <p><ul><li>理解实体是如何生成的</li>
 <li>掌握 SpawnRestriction（生成限制）</li>
 <li>了解 SpawnReason（生成原因）</li>
-<li>学会自定义生成条件</li></ul></p>
-<h2 id="前置知识">前置知识</h2>
+<li>学会自定义生成条�?</li>
+</ul><h2 id="前置知识">前置知识</h2>
 <p><ul><li>了解 MobEntity（第23章）</li>
 <li>了解世界和区块的概念</li></ul></p>
 <h2 id="核心概念">核心概念</h2>
-<h3>什么是生成系统？</h3>
-<p><strong>生成系统（Spawn System）</strong> 是 Minecraft 决定"在哪里、什么时候、如何生成实体"的机制。无论是自然生成的僵尸，还是玩家用命令召唤的实体，都需要经过这个系统的检查。</p>
-<pre class="code-block"><code class="language-text">生成流程：
+<h3>什么是生成系统�?</h3>
+<p><em>*生成系统（Spawn System�?</em> �?Minecraft 决定"在哪里、什么时候、如何生成实�?的机制。无论是自然生成的僵尸，还是玩家用命令召唤的实体，都需要经过这个系统的检查�?</p>
+<pre class="code-block"><code class="language-text">生成流程�?
+1. 位置检�?   - 是否有有效的生成位置�?   - 地面是否可以站立�?
+2. 环境检�?   - 光照等级是否足够�?   - 是否在水�?空气中？
 
-1. 位置检查
-   - 是否有有效的生成位置？
-   - 地面是否可以站立？
+3. 条件检�?   - 难度是否允许�?   - 玩家距离是否合适？
 
-2. 环境检查
-   - 光照等级是否足够？
-   - 是否在水中/空气中？
-
-3. 条件检查
-   - 难度是否允许？
-   - 玩家距离是否合适？
-
-4. 数量检查
-   - 当前区域实体数量是否过多？
-
+4. 数量检�?   - 当前区域实体数量是否过多�?
 5. 生成
    - 创建实体
-   - 初始化属性
-   - 播放生成特效</code></pre>
+   - 初始化属�?   - 播放生成特效</code></pre>
 <h3>生活中的比喻</h3>
 <pre class="code-block"><code class="language-text">生成系统就像开一家餐厅：
 
-1. 位置检查 = 餐厅地址是否有效
-2. 环境检查 = 周围环境是否适合开餐厅
-3. 条件检查 = 营业执照是否齐全
-4. 数量检查 = 同一条街已经有太多餐厅了
-5. 正式开业 = 餐厅开门迎客
-
+1. 位置检�?= 餐厅地址是否有效
+2. 环境检�?= 周围环境是否适合开餐厅
+3. 条件检�?= 营业执照是否齐全
+4. 数量检�?= 同一条街已经有太多餐厅了
+5. 正式开�?= 餐厅开门迎�?
 只有所有检查都通过了，餐厅才能开业！</code></pre>
-<h3>生成原因（SpawnReason）</h3>
-<table class="data-table"><thead><tr><th>SpawnReason</th><th>中文名</th><th>说明</th></tr></thead><tbody><tr><td>NATURAL</td><td>自然生成</td><td>怪物自然刷出</td></tr><tr><td>JOCKEY</td><td>骑乘生成</td><td>蜘蛛骑士等</td></tr><tr><td>SPAWNER</td><td>生成器生成</td><td>刷怪笼生成</td></tr><tr><td>EVENT</td><td>事件生成</td><td>生物群系事件</td></tr><tr><td>REINFORCEMENT</td><td>增援生成</td><td>僵尸呼叫同伴</td></tr><tr><td>BREEDING</td><td>繁殖生成</td><td>动物繁殖</td></tr><tr><td>MOB_SUMMONED</td><td>指令生成</td><td>/summon 命令</td></tr><tr><td>CONVERSION</td><td>转化生成</td><td>僵尸变村民</td></tr><tr><td>CUSTOM</td><td>自定义生成</td><td>模组自定义</td></tr></tbody></table>
-<h3>生成位置类型（SpawnLocation）</h3>
-<table class="data-table"><thead><tr><th>类型</th><th>说明</th><th>示例</th></tr></thead><tbody><tr><td>ON<em>GROUND</td><td>地面上</td><td>僵尸、骷髅</td></tr><tr><td>IN</em>WATER</td><td>水中</td><td>鱼、鱿鱼</td></tr><tr><td>IN_LAVA</td><td>岩浆中</td><td>岩浆怪</td></tr><tr><td>UNRESTRICTED</td><td>无限制</td><td>唤魔者</td></tr></tbody></table>
+<h3>生成原因（SpawnReason�?</h3>
+<table class="data-table"><thead><tr><th>SpawnReason</th><th>中文�?</th><th>说明</th></tr></thead><tbody><tr><td>NATURAL</td><td>自然生成</td><td>怪物自然刷出</td></tr><tr><td>JOCKEY</td><td>骑乘生成</td><td>蜘蛛骑士�?</td></tr><tr><td>SPAWNER</td><td>生成器生�?</td><td>刷怪笼生成</td></tr><tr><td>EVENT</td><td>事件生成</td><td>生物群系事件</td></tr><tr><td>REINFORCEMENT</td><td>增援生成</td><td>僵尸呼叫同伴</td></tr><tr><td>BREEDING</td><td>繁殖生成</td><td>动物繁殖</td></tr><tr><td>MOB_SUMMONED</td><td>指令生成</td><td>/summon 命令</td></tr><tr><td>CONVERSION</td><td>转化生成</td><td>僵尸变村�?</td></tr><tr><td>CUSTOM</td><td>自定义生�?</td><td>模组自定�?</td></tr></tbody></table>
+<h3>生成位置类型（SpawnLocation�?</h3>
+<table class="data-table"><thead><tr><th>类型</th><th>说明</th><th>示例</th></tr></thead><tbody><tr><td>ON<em>GROUND</td><td>地面�?</td><td>僵尸、骷�?</td></tr><tr><td>IN</em>WATER</td><td>水中</td><td>鱼、鱿�?</td></tr><tr><td>IN_LAVA</td><td>岩浆�?</td><td>岩浆�?</td></tr><tr><td>UNRESTRICTED</td><td>无限�?</td><td>唤魔�?</td></tr></tbody></table>
 <h2 id="图解">图解</h2>
-<h3>生成检查流程</h3>
+<h3>生成检查流�?</h3>
 <div class="mermaid">flowchart TD
     A[尝试生成实体] --> B{实体类型有效?}
     B -->|否| Z[生成失败]
@@ -532,59 +530,43 @@
 <h3>自然生成流程</h3>
 <div class="mermaid">sequenceDiagram
     participant World as 世界
-    participant Spawner as 区块生成器
-    participant Mob as MobEntity
+    participant Spawner as 区块生成�?    participant Mob as MobEntity
     participant Restriction as SpawnRestriction
 
-    World->>Spawner: 每刻检查生成
+    World->>Spawner: 每刻检查生�?
+    Spawner->>Restriction: 检查生成位�?    Restriction-->>Spawner: 位置有效
 
-    Spawner->>Restriction: 检查生成位置
-    Restriction-->>Spawner: 位置有效
-
-    Spawner->>Spawner: 检查光照等级
-    Spawner->>Spawner: 检查实体数量
-
+    Spawner->>Spawner: 检查光照等�?    Spawner->>Spawner: 检查实体数�?
     alt 所有检查通过
         Spawner->>Mob: create()
         Note over Mob: 创建实例<br/>不添加到世界
         Mob->>Mob: initialize()
-        Note over Mob: 初始化属性<br/>设置装备
+        Note over Mob: 初始化属�?br/>设置装备
         Spawner->>Mob: spawnEntity()
-        Note over Mob: 添加到世界<br/>播放特效
-    else 检查失败
-        Spawner-->>World: 跳过本次生成
+        Note over Mob: 添加到世�?br/>播放特效
+    else 检查失�?        Spawner-->>World: 跳过本次生成
     end</div>
-<h3>生物群系与生成群体</h3>
+<h3>生物群系与生成群�?</h3>
 <pre class="code-block"><code class="language-text">生成群体（SpawnGroup）：
 
 CREATURE（动物）
 ├── 猪、牛、鸡、羊
 ├── 兔子、狐狸、狼
-└── 熊猫、猫、鹦鹉
-
+└── 熊猫、猫、鹦�?
 AMBIENT（环境生物）
 └── 蝙蝠
 
-MONSTER（怪物）
-├── 僵尸、骷髅、蜘蛛
-├── 苦力怕、女巫
-└── 岩浆怪、史莱姆
+MONSTER（怪物�?├── 僵尸、骷髅、蜘�?├── 苦力怕、女�?└── 岩浆怪、史莱姆
 
 WATER_CREATURE（水生生物）
-├── 海豚、鱿鱼
-└── 守卫者
+├── 海豚、鱿�?└── 守卫�?
+WATER_AMBIENT（水环境生物�?├── �?└── 河豚
 
-WATER_AMBIENT（水环境生物）
-├── 鱼
-└── 河豚
-
-AXOLOTLS（美西螈）
-└── 美西螈
-
+AXOLOTLS（美西螈�?└── 美西�?
 UNDERGROUND_WATER_CREATURE（地下水生生物）
 └── 发光鱿鱼</code></pre>
 <h2 id="核心代码">核心代码</h2>
-<blockquote><p><strong>注意</strong>：以下代码基于 CFR 反编译结果，可能与实际源码略有差异。</p></blockquote>
+<blockquote><p><strong>注意</strong>：以下代码基�?CFR 反编译结果，可能与实际源码略有差异�?</p></blockquote>
 <h3>SpawnRestriction（生成限制）</h3>
 <pre class="code-block"><code class="language-java">public class SpawnRestriction {
 
@@ -596,18 +578,15 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         EntityType&lt;T&gt; type,
         SpawnLocation location,           // 生成位置类型
         Heightmap.Type heightmapType,    // 使用的高度图
-        SpawnPredicate&lt;T&gt; predicate      // 自定义检查条件
-    ) {
+        SpawnPredicate&lt;T&gt; predicate      // 自定义检查条�?    ) {
         Entry entry = RESTRICTIONS.put(type, new Entry(heightmapType, location, predicate));
     }
 
-    // 检查生成位置是否有效
-    public static boolean isSpawnPosAllowed(EntityType&lt;?&gt; type, WorldView world, BlockPos pos) {
+    // 检查生成位置是否有�?    public static boolean isSpawnPosAllowed(EntityType&lt;?&gt; type, WorldView world, BlockPos pos) {
         return SpawnRestriction.getLocation(type).isSpawnPositionOk(world, pos, type);
     }
 
-    // 执行完整的生成检查
-    public static &lt;T extends Entity&gt; boolean canSpawn(
+    // 执行完整的生成检�?    public static &lt;T extends Entity&gt; boolean canSpawn(
         EntityType&lt;T&gt; type,
         ServerWorldAccess world,
         SpawnReason spawnReason,
@@ -615,20 +594,17 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         Random random
     ) {
         Entry entry = RESTRICTIONS.get(type);
-        // 调用自定义的检查条件
-        return entry == null || entry.predicate.test(type, world, spawnReason, pos, random);
+        // 调用自定义的检查条�?        return entry == null || entry.predicate.test(type, world, spawnReason, pos, random);
     }
 
-    // 获取高度图类型
-    public static Heightmap.Type getHeightmapType(@Nullable EntityType&lt;?&gt; type) {
+    // 获取高度图类�?    public static Heightmap.Type getHeightmapType(@Nullable EntityType&lt;?&gt; type) {
         Entry entry = RESTRICTIONS.get(type);
         return entry == null ? Heightmap.Type.MOTION_BLOCKING_NO_LEAVES : entry.heightmapType;
     }
 }</code></pre>
 <h3>注册默认生成限制</h3>
 <pre class="code-block"><code class="language-java">static {
-    // 动物 - 地面上生成，需要足够光照
-    SpawnRestriction.register(
+    // 动物 - 地面上生成，需要足够光�?    SpawnRestriction.register(
         EntityType.COW,
         SpawnLocationTypes.ON_GROUND,
         Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
@@ -643,7 +619,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         HostileEntity::canSpawnInDark
     );
 
-    // 鱼 - 水中生成
+    // �?- 水中生成
     SpawnRestriction.register(
         EntityType.COD,
         SpawnLocationTypes.IN_WATER,
@@ -651,7 +627,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         WaterCreatureEntity::canSpawn
     );
 
-    // 烈焰人 - 地面上生成，忽略光照
+    // 烈焰�?- 地面上生成，忽略光照
     SpawnRestriction.register(
         EntityType.BLAZE,
         SpawnLocationTypes.ON_GROUND,
@@ -659,24 +635,20 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         HostileEntity::canSpawnIgnoreLightLevel
     );
 }</code></pre>
-<h3>自定义生成检查条件</h3>
-<pre class="code-block"><code class="language-java">public class AnimalEntity extends PassiveEntity {
-
-    // 动物可以自然生成的条件
-    public static boolean isValidNaturalSpawn(
+<h3>自定义生成检查条�?</h3>
+<pre class="code-block"><code class="language-java">
+    // 动物可以自然生成的条�?    public static boolean isValidNaturalSpawn(
         EntityType&lt;AnimalEntity&gt; type,
         ServerWorldAccess world,
         SpawnReason reason,
         BlockPos pos,
         Random random
     ) {
-        // 1. 检查生成位置
-        if (!SpawnRestriction.isSpawnPosAllowed(type, world, pos)) {
+        // 1. 检查生成位�?        if (!SpawnRestriction.isSpawnPosAllowed(type, world, pos)) {
             return false;
         }
 
-        // 2. 检查是否有足够的空间
-        if (!world.isSpaceEmpty(pos, type.getWidth(), type.getHeight())) {
+        // 2. 检查是否有足够的空�?        if (!world.isSpaceEmpty(pos, type.getWidth(), type.getHeight())) {
             return false;
         }
 
@@ -686,8 +658,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             return false;
         }
 
-        // 4. 检查光照等级（动物需要足够的光照）
-        int lightLevel = world.getLightLevel(pos);
+        // 4. 检查光照等级（动物需要足够的光照�?        int lightLevel = world.getLightLevel(pos);
         if (lightLevel &lt; 8) {
             return false;
         }
@@ -695,8 +666,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         return true;
     }
 }</code></pre>
-<pre class="code-block"><code class="language-java">public class HostileEntity {
-
+<pre class="code-block"><code class="language-java">
     // 在黑暗中生成
     public static boolean canSpawnInDark(
         EntityType&lt;? extends HostileEntity&gt; type,
@@ -710,8 +680,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             return false;
         }
 
-        // 2. 检查光照等级（敌对生物需要在暗处）
-        int lightLevel = world.getLightLevel(pos);
+        // 2. 检查光照等级（敌对生物需要在暗处�?        int lightLevel = world.getLightLevel(pos);
         if (lightLevel &gt; 7) {
             return false;
         }
@@ -730,8 +699,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         return MobEntity.canMobSpawn(type, world, reason, pos, random);
     }
 }</code></pre>
-<pre class="code-block"><code class="language-java">public class WaterCreatureEntity extends MobEntity {
-
+<pre class="code-block"><code class="language-java">
     public static boolean canSpawn(
         EntityType&lt;WaterCreatureEntity&gt; type,
         ServerWorldAccess world,
@@ -744,8 +712,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             return false;
         }
 
-        // 检查水深
-        int waterDepth = world.getWaterHeight(pos);
+        // 检查水�?        int waterDepth = world.getWaterHeight(pos);
         if (waterDepth &lt; 0) {
             return false;
         }
@@ -756,13 +723,11 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
 <h3>生成实体</h3>
 <pre class="code-block"><code class="language-java">public class EntityType&lt;T extends Entity&gt; {
 
-    // 创建并生成实体
-    public T spawn(ServerWorld world, BlockPos pos, SpawnReason reason) {
+    // 创建并生成实�?    public T spawn(ServerWorld world, BlockPos pos, SpawnReason reason) {
         return this.spawn(world, null, pos, reason, false, false);
     }
 
-    // 完整的生成方法
-    public T spawn(ServerWorld world, @Nullable Consumer&lt;T&gt; afterConsumer,
+    // 完整的生成方�?    public T spawn(ServerWorld world, @Nullable Consumer&lt;T&gt; afterConsumer,
                    BlockPos pos, SpawnReason reason,
                    boolean alignPosition, boolean invertY) {
 
@@ -770,15 +735,13 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         T entity = this.create(world, afterConsumer, pos, reason, alignPosition, invertY);
 
         if (entity != null) {
-            // 2. 添加到世界
-            world.spawnEntityAndPassengers((Entity)entity);
+            // 2. 添加到世�?            world.spawnEntityAndPassengers((Entity)entity);
         }
 
         return entity;
     }
 
-    // 创建实体的详细过程
-    public T create(ServerWorld world, @Nullable Consumer&lt;T&gt; afterConsumer,
+    // 创建实体的详细过�?    public T create(ServerWorld world, @Nullable Consumer&lt;T&gt; afterConsumer,
                    BlockPos pos, SpawnReason reason,
                    boolean alignPosition, boolean invertY) {
 
@@ -799,8 +762,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             );
         }
 
-        // 如果是生物，初始化
-        if (entity instanceof MobEntity mobEntity) {
+        // 如果是生物，初始�?        if (entity instanceof MobEntity mobEntity) {
             mobEntity.headYaw = mobEntity.getYaw();
             mobEntity.bodyYaw = mobEntity.getYaw();
             mobEntity.initialize(world, world.getLocalDifficulty(mobEntity.getBlockPos()), reason, null);
@@ -810,19 +772,16 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         return entity;
     }
 }</code></pre>
-<h3>MobEntity 的生成检查</h3>
-<pre class="code-block"><code class="language-java">public abstract class MobEntity extends LivingEntity {
-
-    // 通用的生物生成检查
-    public static boolean canMobSpawn(
+<h3>MobEntity 的生成检�?</h3>
+<pre class="code-block"><code class="language-java">
+    // 通用的生物生成检�?    public static boolean canMobSpawn(
         EntityType&lt;? extends MobEntity&gt; type,
         WorldAccess world,
         SpawnReason spawnReason,
         BlockPos pos,
         Random random
     ) {
-        // 1. 检查生成原因
-        // 刷怪笼生成可以直接生成
+        // 1. 检查生成原�?        // 刷怪笼生成可以直接生成
         if (spawnReason == SpawnReason.SPAWNER) {
             return true;
         }
@@ -833,15 +792,14 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         return belowState.allowsSpawning(world, belowPos, type);
     }
 
-    // 实体级别的生成检查
-    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
+    // 实体级别的生成检�?    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
         // 检查位置和碰撞
         return !world.containsFluid(this.getBoundingBox()) &amp;&amp;
                world.doesNotIntersectEntities(this);
     }
 }</code></pre>
 <h2 id="实战演示">实战演示</h2>
-<h3>场景：注册自定义生物的生成限制</h3>
+<h3>场景：注册自定义生物的生成限�?</h3>
 <pre class="code-block"><code class="language-java">public class MyMod implements Initializable {
 
     @Override
@@ -852,10 +810,8 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             SpawnLocationTypes.ON_GROUND,
             Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
             (type, world, reason, pos, random) -&gt; {
-                // 自定义生成条件
-
-                // 1. 基础检查
-                if (!MobEntity.canMobSpawn(type, world, reason, pos, random)) {
+                // 自定义生成条�?
+                // 1. 基础检�?                if (!MobEntity.canMobSpawn(type, world, reason, pos, random)) {
                     return false;
                 }
 
@@ -869,8 +825,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
                     return false;
                 }
 
-                // 4. 50% 的概率跳过
-                if (random.nextFloat() &lt; 0.5f) {
+                // 4. 50% 的概率跳�?                if (random.nextFloat() &lt; 0.5f) {
                     return false;
                 }
 
@@ -879,40 +834,36 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         );
     }
 }</code></pre>
-<h3>场景：使用命令生成实体</h3>
+<h3>场景：使用命令生成实�?</h3>
 <pre class="code-block"><code class="language-java">public class SpawnCommand {
 
     public static int execute(ServerCommandSource source, EntityType&lt;?&gt; entityType,
                              BlockPos pos, SpawnReason reason) {
         ServerWorld world = source.getWorld();
 
-        // 创建并生成实体
-        Entity entity = entityType.spawn(
+        // 创建并生成实�?        Entity entity = entityType.spawn(
             world,
             pos,                    // 生成位置
             reason                  // 生成原因
         );
 
         if (entity != null) {
-            // 可以对实体进行额外设置
-            if (entity instanceof LivingEntity living) {
-                // 设置生命值
-                living.setHealth(living.getMaxHealth());
+            // 可以对实体进行额外设�?            if (entity instanceof LivingEntity living) {
+                // 设置生命�?                living.setHealth(living.getMaxHealth());
 
                 // 设置名称
                 living.setCustomName(Text.literal(&quot;Custom Mob&quot;));
                 living.setCustomNameVisible(true);
             }
 
-            source.sendFeedback(() -&gt; Text.literal(&quot;已生成 &quot; + entityType.getName()), true);
+            source.sendFeedback(() -&gt; Text.literal(&quot;已生�?&quot; + entityType.getName()), true);
         }
 
         return 1;
     }
 }</code></pre>
 <h3>场景：程序化生成实体</h3>
-<pre class="code-block"><code class="language-java">public class MobSpawner {
-
+<pre class="code-block"><code class="language-java">
     // 生成一群猪
     public static void spawnPigGroup(ServerWorld world, BlockPos center, int count) {
         Random random = world.getRandom();
@@ -923,8 +874,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
             int offsetZ = random.nextInt(10) - 5;
             BlockPos spawnPos = center.add(offsetX, 0, offsetZ);
 
-            // 获取高度图位置
-            spawnPos = world.getTopPosition(
+            // 获取高度图位�?            spawnPos = world.getTopPosition(
                 Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
                 spawnPos
             );
@@ -941,25 +891,21 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
     public static void spawnHorse(ServerWorld world, BlockPos pos) {
         EntityType&lt;HorseEntity&gt; horseType = EntityType.HORSE;
 
-        // 创建马
-        HorseEntity horse = horseType.create(world);
+        // 创建�?        HorseEntity horse = horseType.create(world);
         if (horse != null) {
             // 设置位置
             horse.setPosition(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
 
-            // 初始化属性
-            horse.initialize(world, world.getLocalDifficulty(pos),
+            // 初始化属�?            horse.initialize(world, world.getLocalDifficulty(pos),
                            SpawnReason.NATURAL, null);
 
             // 设置颜色
             horse.setColor(HorseColor.CHESTNUT);
             horse.setStyle(HorseStyle.NONE);
 
-            // 设置驯服状态
-            horse.setTamed(true);
+            // 设置驯服状�?            horse.setTamed(true);
 
-            // 添加到世界
-            world.spawnEntity(horse);
+            // 添加到世�?            world.spawnEntity(horse);
         }
     }
 }</code></pre>
@@ -968,8 +914,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
 
     @Override
     public void onScheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        // 获取刷怪笼的实体
-        Entity entity = world.getBlockEntity(pos);
+        // 获取刷怪笼的实�?        Entity entity = world.getBlockEntity(pos);
         if (!(entity instanceof SpongeBlockEntity spawner)) {
             return;
         }
@@ -977,14 +922,12 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
         // 获取要生成的实体类型
         EntityType&lt;?&gt; entityType = spawner.getEntityType();
 
-        // 检查延迟
-        if (spawner.getDelay() &gt; 0) {
+        // 检查延�?        if (spawner.getDelay() &gt; 0) {
             spawner.setDelay(spawner.getDelay() - 1);
             return;
         }
 
-        // 检查附近实体数量
-        int currentCount = world.getEntitiesByType(
+        // 检查附近实体数�?        int currentCount = world.getEntitiesByType(
             entityType,
             Box.from(pos.toCenterPos()).expand(16)
         ).size();
@@ -1005,8 +948,7 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
     private BlockPos findValidSpawnPos(ServerWorld world, BlockPos center, EntityType&lt;?&gt; type) {
         Random random = world.getRandom();
 
-        // 尝试多次找位置
-        for (int i = 0; i &lt; 10; i++) {
+        // 尝试多次找位�?        for (int i = 0; i &lt; 10; i++) {
             int x = center.getX() + random.nextInt(5) - 2;
             int y = center.getY() + random.nextInt(3) - 1;
             int z = center.getZ() + random.nextInt(5) - 2;
@@ -1023,43 +965,34 @@ UNDERGROUND_WATER_CREATURE（地下水生生物）
 }</code></pre>
 <h2 id="小结">小结</h2>
 <p><ul><li><strong>生成系统决定实体如何出现</strong></li>
-</ul>   - 位置检查 → 环境检查 → 条件检查 → 数量检查</p>
-<p><ul><li><strong>SpawnRestriction 控制生成条件</strong></li>
-</ul>   - <code>SpawnLocation</code> - 生成位置类型（地上/水中）
-   - <code>Heightmap.Type</code> - 使用的高度图
-   - <code>SpawnPredicate</code> - 自定义检查条件</p>
-<p><ul><li><strong>SpawnReason 说明生成原因</strong></li>
-</ul>   - <code>NATURAL</code> - 自然刷怪
-   - <code>SPAWNER</code> - 刷怪笼
+</ul>   - 位置检�?�?环境检�?�?条件检�?�?数量检�?
+<ul><li><strong>SpawnRestriction 控制生成条件</strong></li>
+</ul>   - <code>SpawnLocation</code> - 生成位置类型（地�?水中�?   - <code>Heightmap.Type</code> - 使用的高度图
+   - <code>SpawnPredicate</code> - 自定义检查条�?
+<ul><li><strong>SpawnReason 说明生成原因</strong></li>
+</ul>   - <code>NATURAL</code> - 自然刷�?   - <code>SPAWNER</code> - 刷怪笼
    - <code>JOCKEY</code> - 骑乘生成
    - <code>MOB_SUMMONED</code> - /summon 命令</p>
-<p><ul><li><strong>生成检查流程</strong></li>
-</ul>   - <code>SpawnRestriction.isSpawnPosAllowed()</code> - 位置检查
-   - <code>MobEntity.canMobSpawn()</code> - 基础检查
-   - 实体自身的 <code>canSpawn()</code> - 额外检查</p>
-<p><ul><li><strong>生成实体</strong></li>
-</ul>   - <code>EntityType.spawn()</code> - 创建并添加
-   - <code>EntityType.create()</code> - 仅创建
-   - <code>initialize()</code> - 初始化属性</p>
+<p><ul><li><em>*生成检查流�?</em></li>
+</ul>   - <code>SpawnRestriction.isSpawnPosAllowed()</code> - 位置检�?   - <code>MobEntity.canMobSpawn()</code> - 基础检�?   - 实体自身�?<code>canSpawn()</code> - 额外检�?
+<ul><li><strong>生成实体</strong></li>
+</ul>   - <code>EntityType.spawn()</code> - 创建并添�?   - <code>EntityType.create()</code> - 仅创�?   - <code>initialize()</code> - 初始化属�?
 <h2 id="练习">练习</h2>
-<h3>练习 1：创建一个只在天黑时生成的生物</h3>
-<pre class="code-block"><code class="language-java">// 提示：检查 world.getWorld().isDay()</code></pre>
-<h3>练习 2：限制生物生成数量</h3>
-<pre class="code-block"><code class="language-java">// 提示：在 SpawnPredicate 中检查附近实体数量</code></pre>
+<h3>练习 1：创建一个只在天黑时生成的生�?</h3>
+<pre class="code-block"><code class="language-java">// 提示：检�?world.getWorld().isDay()</code></pre>
+<h3>练习 2：限制生物生成数�?</h3>
+<pre class="code-block"><code class="language-java">// 让一个生物最多生�?5 �?// 提示：在 SpawnPredicate 中检查附近实体数�?</code></pre>
 <h3>练习 3：创建一个自定义刷怪区</h3>
-<pre class="code-block"><code class="language-java">// 提示：使用 onPlaced 和 scheduledTick</code></pre>
+<pre class="code-block"><code class="language-java">// 创建一个方块，放置后会在周围生成特定生�?// 提示：使�?onPlaced �?scheduledTick</code></pre>
 <h2 id="相关链接">相关链接</h2>
 <h3>源码文件位置</h3>
 <table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>SpawnHelper.java</td><td><code>net/minecraft/world/SpawnHelper.java</code></td><td>生成辅助</td></tr><tr><td>SpawnRestriction.java</td><td><code>net/minecraft/world/SpawnRestriction.java</code></td><td>生成限制</td></tr><tr><td>MobSpawner.java</td><td><code>net/minecraft/world/MobSpawner.java</code></td><td>刷怪笼</td></tr></tbody></table>
-<ul><li><strong>上一章</strong>：<a href="./25-damage-system.html">第25章 伤害系统</a></li>
-<li><strong>下一章</strong>：<a href="../Part-5-AI/27-ai-brain-intro.html">第27章 AI大脑介绍</a></li>
-<li><strong>相关源码</strong>：</li>
-</ul>  - <code>net/minecraft/entity/SpawnRestriction.java</code> - 生成限制
-  - <code>net/minecraft/entity/SpawnReason.java</code> - 生成原因
+<ul><li><em>*上一�?</em>：<a href="./25-damage-system.md">�?5�?伤害系统</a></li>
+<li><em>*下一�?</em>：<a href="/mc/1.21/tutorials/Part-5-AI/27-ai-brain-intro/">�?7�?AI大脑介绍</a></li>
+<li><strong>相关源码</strong>�?  - <code>net/minecraft/entity/SpawnRestriction.java</code> - 生成限制</li>
+</ul>  - <code>net/minecraft/entity/SpawnReason.java</code> - 生成原因
   - <code>net/minecraft/entity/SpawnLocation.java</code> - 生成位置
-  - <code>net/minecraft/entity/EntityType.java</code> - 实体创建和生成
-  - <code>net/minecraft/entity/mob/MobEntity.java</code> - 生物生成检查
-</p>
+  - <code>net/minecraft/entity/EntityType.java</code> - 实体创建和生�?  - <code>net/minecraft/entity/mob/MobEntity.java</code> - 生物生成检�?</p>
             </div>
 
             <div class="docs-footer">

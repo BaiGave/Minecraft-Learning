@@ -19,13 +19,13 @@
 ### 步骤 1：创建 GitHub 仓库
 
 1. 登录 GitHub，点击右上角 **+** → **New repository**
-2. 填写仓库名称（例如 `my-blog`）
+2. 填写仓库名称（当前为 `MincraftLearning`，与 GitHub Pages 路径一致）
 3. 选择 **Public**（公开仓库）
 4. 点击 **Create repository**
 
 ### 步骤 2：初始化本地 Git 仓库
 
-在 **D:\Blog** 目录下打开终端，执行：
+在项目根目录（例如 **D:\MinecraftLearning** 或你本地的克隆路径）打开终端，执行：
 
 ```bash
 # 初始化 Git 仓库
@@ -43,7 +43,7 @@ git commit -m "Initial commit - 我的技术博客"
 把本地仓库连接到 GitHub（把下面的 `你的用户名` 和 `仓库名` 换成你的）：
 
 ```bash
-git remote add origin https://github.com/BaiGave/Blog.git
+git remote add origin https://github.com/BaiGave/MincraftLearning.git
 ```
 
 ### 步骤 4：推送到 GitHub

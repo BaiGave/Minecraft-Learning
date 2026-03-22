@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>100 project3 entity - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>100 project3 entity</span>
                 </nav>
@@ -457,16 +467,13 @@
 
             <div class="docs-body doc-content">
                 <h1>项目3：添加新生物</h1>
-<blockquote><p>创建一个会攻击玩家的"火焰精灵"！</p></blockquote>
-<p><hr></p>
+<blockquote><p>创建一个会攻击玩家�?火焰精灵"�?</p></blockquote>
+<hr></p>
 <h2 id="项目目标">项目目标</h2>
-<p>学完这个项目后，你将掌握：
-<ul><li>如何注册一个自定义实体类型</li>
-<li>如何创建实体类</li>
-<li>如何添加属性（生命值、攻击力等）</li>
+<p>学完这个项目后，你将掌握�?- 如何注册一个自定义实体类型
+<ul><li>如何创建实体�?- 如何添加属性（生命值、攻击力等）</li>
 <li>如何添加 AI 行为</li>
-<li>如何添加掉落物（战利品表）</li>
-<li>如何添加材质</li>
+<li>如何添加掉落物（战利品表�?- 如何添加材质</li>
 <li>如何测试</li></ul></p>
 <p><hr></p>
 <h2 id="项目概览">项目概览</h2>
@@ -483,88 +490,56 @@
     style H fill:#87CEEB</div>
 <p><hr></p>
 <h2 id="所需知识">所需知识</h2>
-<p><ul><li>注册表基础（Part-1 第4章）</li>
-<li>实体生命周期（Part-4 第21章）</li>
-<li>LivingEntity（Part-4 第22章）</li>
-<li>MobEntity（Part-4 第23章）</li>
-<li>AI系统（Part-5）</li>
-<li>战利品表（Part-8 第42章）</li></ul></p>
+<p><ul><li>注册表基础（Part-1 �?章）</li>
+<li>实体生命周期（Part-4 �?1章）</li>
+<li>LivingEntity（Part-4 �?2章）</li>
+<li>MobEntity（Part-4 �?3章）</li>
+<li>AI系统（Part-5�?- 战利品表（Part-8 �?2章）</li></ul></p>
 <p><hr></p>
 <h2 id="步骤详解">步骤详解</h2>
-<h3>步骤 1：什么是实体？</h3>
-<h4>实体的层次结构</h4>
+<h3>步骤 1：什么是实体�?</h3>
+<h4>实体的层次结�?</h4>
 <pre class="code-block"><code class="language-text">Entity（实体）
-    │
-    ├── 不需要 tick 的实体
-    │   ├── 物品掉落物 (ItemEntity)
-    │   ├── 经验球 (ExperienceOrbEntity)
-    │   └── 展示实体 (DisplayEntity)
-    │
-    └── 需要 tick 的实体
-        │
-        └── LivingEntity（活着的实体）
-                │
-                ├── 玩家 (PlayerEntity)
-                │
-                └── MobEntity（会思考的生物）
-                        │
-                        ├── 被动生物（猪、牛、羊...）
-                        ├── 中立生物（狼、蜜蜂...）
-                        └── 敌对生物（僵尸、骷髅...）</code></pre>
+    �?    ├── 不需�?tick 的实�?    �?  ├── 物品掉落�?(ItemEntity)
+    �?  ├── 经验�?(ExperienceOrbEntity)
+    �?  └── 展示实体 (DisplayEntity)
+    �?    └── 需�?tick 的实�?        �?        └── LivingEntity（活着的实体）
+                �?                ├── 玩家 (PlayerEntity)
+                �?                └── MobEntity（会思考的生物�?                        �?                        ├── 被动生物（猪、牛、羊...�?                        ├── 中立生物（狼、蜜�?..�?                        └── 敌对生物（僵尸、骷�?..�?</code></pre>
 <h4>生活中的比喻</h4>
-<pre class="code-block"><code class="language-text">实体就像游戏中的&quot;角色&quot;：
-
-┌─────────────────────────────────────────┐
-│  实体类型        │  现实类比            │
-├─────────────────┼─────────────────────  │
-│  物品掉落物     │  地上掉的钱包        │
-│  经验球         │  收集的能量球         │
-│  被动生物       │  小羊、牛等家畜      │
-│  敌对生物       │  野狼、狮子等捕食者  │
-└─────────────────────────────────────────┘</code></pre>
+<pre class="code-block"><code class="language-text">实体就像游戏中的&quot;角色&quot;�?
+┌─────────────────────────────────────────�?�? 实体类型        �? 现实类比            �?├─────────────────┼─────────────────────  �?�? 物品掉落�?    �? 地上掉的钱包        �?�? 经验�?        �? 收集的能量球         �?�? 被动生物       �? 小羊、牛等家�?     �?�? 敌对生物       �? 野狼、狮子等捕食�? �?└─────────────────────────────────────────�?</code></pre>
 <p><hr></p>
-<h3>步骤 2：注册实体类型</h3>
+<h3>步骤 2：注册实体类�?</h3>
 <h4>核心概念</h4>
-<p>注册实体类型就像给生物"登记户口"：</p>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────┐
-│           Minecraft 注册表               │
-│                                       │
-│  namespace:path = 唯一的&quot;身份证号&quot;     │
-│                                       │
-│  &quot;minecraft:pig&quot;        ← 猪           │
-│  &quot;minecraft:zombie&quot;     ← 僵尸         │
-│  &quot;mymod:flame_spirit&quot;   ← 你的火焰精灵 │
-│                                       │
-└─────────────────────────────────────────┘</code></pre>
+<p>注册实体类型就像给生�?登记户口"�?</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────�?�?          Minecraft 注册�?              �?�?                                      �?�? namespace:path = 唯一�?身份证号&quot;     �?�?                                      �?�? &quot;minecraft:pig&quot;        �?�?          �?�? &quot;minecraft:zombie&quot;     �?僵尸         �?�? &quot;mymod:flame_spirit&quot;   �?你的火焰精灵 �?�?                                      �?└─────────────────────────────────────────�?</code></pre>
 <h4>代码实现</h4>
-<p>在 Mod 主类中添加：</p>
+<p>�?Mod 主类中添加：</p>
 <pre class="code-block"><code class="language-java">public class MyMod implements ModInitializer {
     
     // 定义火焰精灵实体类型
     public static final EntityType&lt;FlameSpiritEntity&gt; FLAME_SPIRIT = 
         EntityType.Builder.create(FlameSpiritEntity::new, SpawnGroup.MONSTER)
-            .dimensions(0.6f, 1.8f)           // 宽0.6，高1.8（类似僵尸）
+            .dimensions(0.6f, 1.8f)           // �?.6，高1.8（类似僵尸）
             .eyeHeight(1.62f)                  // 眼睛高度
-            .maxTrackingRange(8)               // 最大追踪距离
-            .trackingTickInterval(2)           // 追踪更新间隔
+            .maxTrackingRange(8)               // 最大追踪距�?            .trackingTickInterval(2)           // 追踪更新间隔
             .build(&quot;flame_spirit&quot;);           // 注册 ID
 }</code></pre>
 <h4>EntityType.Builder 参数说明</h4>
-<table class="data-table"><thead><tr><th>参数</th><th>说明</th><th>僵尸参考值</th></tr></thead><tbody><tr><td>dimensions</td><td>碰撞箱尺寸</td><td>0.6f, 1.8f</td></tr><tr><td>eyeHeight</td><td>眼睛高度</td><td>1.62f</td></tr><tr><td>maxTrackingRange</td><td>最大追踪范围</td><td>8</td></tr><tr><td>trackingTickInterval</td><td>追踪更新间隔</td><td>2</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>参数</th><th>说明</th><th>僵尸参考�?</th></tr></thead><tbody><tr><td>dimensions</td><td>碰撞箱尺�?</td><td>0.6f, 1.8f</td></tr><tr><td>eyeHeight</td><td>眼睛高度</td><td>1.62f</td></tr><tr><td>maxTrackingRange</td><td>最大追踪范�?</td><td>8</td></tr><tr><td>trackingTickInterval</td><td>追踪更新间隔</td><td>2</td></tr></tbody></table>
 <hr></p>
 <h3>步骤 3：创建实体类</h3>
 <h4>为什么需要自定义实体类？</h4>
 <p>普通实体只能设置属性，但如果你想：
-<ul><li>自定义生命值和攻击力</li>
-<li>添加特殊 AI 行为</li>
-<li>自定义死亡掉落</li></ul></p>
-<p>就需要创建自定义实体类。</p>
+<ul><li>自定义生命值和攻击�?- 添加特殊 AI 行为</li>
+<li>自定义死亡掉�?</li>
+</ul>就需要创建自定义实体类�?
 <h4>代码实现</h4>
 <pre class="code-block"><code class="language-java">
 public class FlameSpiritEntity extends MobEntity {
     
-    // 构造函数
-    public FlameSpiritEntity(EntityType&lt;? extends FlameSpiritEntity&gt; entityType, World world) {
+    // 构造函�?    public FlameSpiritEntity(EntityType&lt;? extends FlameSpiritEntity&gt; entityType, World world) {
         super(entityType, world);
     }
     
@@ -576,37 +551,31 @@ public class FlameSpiritEntity extends MobEntity {
         // 攻击玩家
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false));
         
-        // 巡逻
-        this.goalSelector.addGoal(3, new WanderAroundGoal(this, 0.8));
+        // 巡�?        this.goalSelector.addGoal(3, new WanderAroundGoal(this, 0.8));
         
-        // 看玩家
-        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
+        // 看玩�?        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
         
         // 随机环顾
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         
-        // 目标：玩家
-        this.targetSelector.addGoal(1, new ActiveTargetGoal&lt;&gt;(this, PlayerEntity.class, true));
+        // 目标：玩�?        this.targetSelector.addGoal(1, new ActiveTargetGoal&lt;&gt;(this, PlayerEntity.class, true));
     }
     
-    // 实体死亡时掉落
-    @Override
+    // 实体死亡时掉�?    @Override
     protected void dropLoot(DamageSource source, boolean causedByPlayer) {
         super.dropLoot(source, causedByPlayer);
         
-        // 额外掉落：火焰精华
-        if (causedByPlayer) {
+        // 额外掉落：火焰精�?        if (causedByPlayer) {
             this.dropStack(new ItemStack(Items.BLAZE_POWDER, this.random.nextInt(2) + 1));
         }
     }
 }</code></pre>
 <p><hr></p>
-<h3>步骤 4：设置实体属性</h3>
-<h4>常见属性一览</h4>
+<h3>步骤 4：设置实体属�?</h3>
+<h4>常见属性一�?</h4>
 <pre class="code-block"><code class="language-java">@Override
 public void initializeData() {
-    // 设置最大生命值
-    this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(20.0);
+    // 设置最大生命�?    this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(20.0);
     
     // 设置移动速度
     this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED).setBaseValue(0.3);
@@ -617,31 +586,16 @@ public void initializeData() {
     // 设置护甲
     this.getAttributeInstance(EntityAttributes.GENERIC_ARMOR).setBaseValue(2.0);
     
-    // 设置击退抗性
-    this.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(0.5);
+    // 设置击退抗�?    this.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(0.5);
 }</code></pre>
 <h4>属性对应表</h4>
-<table class="data-table"><thead><tr><th>属性</th><th>说明</th><th>僵尸参考</th><th>玩家参考</th></tr></thead><tbody><tr><td>GENERIC<em>MAX</em>HEALTH</td><td>最大生命</td><td>20</td><td>20</td></tr><tr><td>GENERIC<em>MOVEMENT</em>SPEED</td><td>移动速度</td><td>0.23</td><td>0.1</td></tr><tr><td>GENERIC<em>ATTACK</em>DAMAGE</td><td>攻击伤害</td><td>3.0</td><td>1.0</td></tr><tr><td>GENERIC<em>ARMOR</td><td>护甲值</td><td>2.0</td><td>0.0</td></tr><tr><td>ZOMBIE</em>SPAWN_REINFORCEMENT</td><td>召唤援军</td><td>0.1</td><td>-</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>属�?</th><th>说明</th><th>僵尸参�?</th><th>玩家参�?</th></tr></thead><tbody><tr><td>GENERIC<em>MAX</em>HEALTH</td><td>最大生�?</td><td>20</td><td>20</td></tr><tr><td>GENERIC<em>MOVEMENT</em>SPEED</td><td>移动速度</td><td>0.23</td><td>0.1</td></tr><tr><td>GENERIC<em>ATTACK</em>DAMAGE</td><td>攻击伤害</td><td>3.0</td><td>1.0</td></tr><tr><td>GENERIC<em>ARMOR</td><td>护甲�?</td><td>2.0</td><td>0.0</td></tr><tr><td>ZOMBIE</em>SPAWN_REINFORCEMENT</td><td>召唤援军</td><td>0.1</td><td>-</td></tr></tbody></table>
 <hr></p>
-<h3>步骤 5：添加 AI 行为</h3>
+<h3>步骤 5：添�?AI 行为</h3>
 <h4>核心概念</h4>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────┐
-│           MobEntity 的 AI 系统           │
-│                                       │
-│  GoalSelector（行为目标）                │
-│    └── 决定&quot;做什么&quot;                    │
-│        ├── 巡逻 (WanderAroundGoal)      │
-│        ├── 攻击 (MeleeAttackGoal)       │
-│        └── 看向玩家 (LookAtPlayerGoal) │
-│                                       │
-│  TargetSelector（目标选择）              │
-│    └── 决定&quot;打谁&quot;                      │
-│        └── ActiveTargetGoal            │
-│                                       │
-└─────────────────────────────────────────┘</code></pre>
-<h4>常用 Goal 类</h4>
-<pre class="code-block"><code class="language-java">this.goalSelector.addGoal(3, new WanderAroundGoal(this, speed));
-
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────�?�?          MobEntity �?AI 系统           �?�?                                      �?�? GoalSelector（行为目标）                �?�?   └── 决定&quot;做什�?                    �?�?       ├── 巡�?(WanderAroundGoal)      �?�?       ├── 攻击 (MeleeAttackGoal)       �?�?       └── 看向玩家 (LookAtPlayerGoal) �?�?                                      �?�? TargetSelector（目标选择�?             �?�?   └── 决定&quot;打谁&quot;                      �?�?       └── ActiveTargetGoal            �?�?                                      �?└─────────────────────────────────────────�?</code></pre>
+<h4>常用 Goal �?</h4>
+<pre class="code-block"><code class="language-java">
 // 2. 近战攻击目标
 this.goalSelector.addGoal(1, new MeleeAttackGoal(this, speed, followWhenNotAgressive));
 
@@ -654,9 +608,8 @@ this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 // 5. 游泳
 this.goalSelector.addGoal(1, new SwimAroundGoal(this, speed, chance));
 
-// 6. 逃跑（低血量时）
-this.goalSelector.addGoal(1, new EscapeDangerGoal(this, speed));</code></pre>
-<h4>常用 Target 类</h4>
+// 6. 逃跑（低血量时�?this.goalSelector.addGoal(1, new EscapeDangerGoal(this, speed));</code></pre>
+<h4>常用 Target �?</h4>
 <pre class="code-block"><code class="language-java">this.targetSelector.addGoal(1, new ActiveTargetGoal&lt;&gt;(
     this, 
     PlayerEntity.class, 
@@ -669,31 +622,26 @@ this.targetSelector.addGoal(1, new NearestAttackableTargetGoal&lt;&gt;(
     FlameSpiritEntity.class,
     true
 ));</code></pre>
-<h4>完整示例：火焰精灵 AI</h4>
+<h4>完整示例：火焰精�?AI</h4>
 <pre class="code-block"><code class="language-java">@Override
 protected void initGoals() {
     super.initGoals();
     
-    // 优先级 0：逃跑（当生命值低时）
+    // 优先�?0：逃跑（当生命值低时）
     this.goalSelector.addGoal(0, new EscapeDangerGoal(this, 1.5));
     
-    // 优先级 1：近战攻击
-    this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false));
+    // 优先�?1：近战攻�?    this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false));
     
-    // 优先级 2：火焰冲刺（自定义目标）
+    // 优先�?2：火焰冲刺（自定义目标）
     this.goalSelector.addGoal(2, new FlameChargeGoal(this, 2.0));
     
-    // 优先级 3：巡逻
-    this.goalSelector.addGoal(4, new WanderAroundGoal(this, 0.8));
+    // 优先�?3：巡�?    this.goalSelector.addGoal(4, new WanderAroundGoal(this, 0.8));
     
-    // 优先级 5：看向玩家
-    this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
+    // 优先�?5：看向玩�?    this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
     
-    // 优先级 6：随机环顾
-    this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+    // 优先�?6：随机环�?    this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
     
-    // 目标：攻击玩家
-    this.targetSelector.addGoal(0, new ActiveTargetGoal&lt;&gt;(
+    // 目标：攻击玩�?    this.targetSelector.addGoal(0, new ActiveTargetGoal&lt;&gt;(
         this, PlayerEntity.class, 0, true, false, Predicate.not(Entity::isInvisible)));
     
     // 目标：攻击最近的火焰精灵
@@ -701,7 +649,7 @@ protected void initGoals() {
         this, FlameSpiritEntity.class, true
     ));
 }</code></pre>
-<h4>自定义 Goal 示例</h4>
+<h4>自定�?Goal 示例</h4>
 <pre class="code-block"><code class="language-java">public class FlameChargeGoal extends Goal {
     
     private final FlameSpiritEntity entity;
@@ -716,21 +664,17 @@ protected void initGoals() {
     
     @Override
     public boolean canStart() {
-        // 查找附近的玩家
-        LivingEntity target = entity.getTarget();
+        // 查找附近的玩�?        LivingEntity target = entity.getTarget();
         return target != null 
-            &amp;&amp; entity.squaredDistanceTo(target) &lt; 100 // 10格以内
-            &amp;&amp; cooldown &lt;= 0;
+            &amp;&amp; entity.squaredDistanceTo(target) &lt; 100 // 10格以�?            &amp;&amp; cooldown &lt;= 0;
     }
     
     @Override
     public void start() {
         LivingEntity target = entity.getTarget();
         if (target != null) {
-            // 快速冲向目标
-            entity.getNavigation().startMovingTo(target, speed);
-            cooldown = 200; // 10秒冷却
-        }
+            // 快速冲向目�?            entity.getNavigation().startMovingTo(target, speed);
+            cooldown = 200; // 10秒冷�?        }
     }
     
     @Override
@@ -788,9 +732,9 @@ protected void initGoals() {
     ]
 }</code></pre>
 <h4>相关条件说明</h4>
-<table class="data-table"><thead><tr><th>条件</th><th>说明</th><th>用法</th></tr></thead><tbody><tr><td>killed<em>by</em>player</td><td>被玩家击杀</td><td>只有玩家击杀才掉落</td></tr><tr><td>random<em>chance</td><td>随机概率</td><td>chance: 0.1 表示10%概率</td></tr><tr><td>entity</em>properties</td><td>实体属性</td><td>检查实体是否着火等</td></tr><tr><td>enchantment_check</td><td>附魔检查</td><td>检查抢夺附魔等级</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>条件</th><th>说明</th><th>用法</th></tr></thead><tbody><tr><td>killed<em>by</em>player</td><td>被玩家击杀</td><td>只有玩家击杀才掉�?</td></tr><tr><td>random<em>chance</td><td>随机概率</td><td>chance: 0.1 表示10%概率</td></tr><tr><td>entity</em>properties</td><td>实体属�?</td><td>检查实体是否着火等</td></tr><tr><td>enchantment_check</td><td>附魔检�?</td><td>检查抢夺附魔等�?</td></tr></tbody></table>
 <hr></p>
-<h3>步骤 7：添加材质</h3>
+<h3>步骤 7：添加材�?</h3>
 <h4>材质文件结构</h4>
 <pre class="code-block"><code class="language-text">resources/
 └── assets/
@@ -798,9 +742,8 @@ protected void initGoals() {
         └── textures/
             └── entity/
                 └── flame_spirit/
-                    ├── flame_spirit.png         # 实体主材质
-                    └── flame_spirit_layer_1.png # 叠加层（如有）</code></pre>
-<h4>实体渲染模型（需要资源包）</h4>
+                    ├── flame_spirit.png         # 实体主材�?                    └── flame_spirit_layer_1.png # 叠加层（如有�?</code></pre>
+<h4>实体渲染模型（需要资源包�?</h4>
 <pre class="code-block"><code class="language-text">resources/
 └── assets/
     └── mymod/
@@ -866,8 +809,7 @@ public class FlameSpiritEntity extends MobEntity {
     @Override
     public void initializeData() {
         super.initializeData();
-        // 设置火焰精灵的属性
-        this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(30.0);
+        // 设置火焰精灵的属�?        this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(30.0);
         this.getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(6.0);
     }
     
@@ -875,14 +817,12 @@ public class FlameSpiritEntity extends MobEntity {
     protected void initGoals() {
         super.initGoals();
         
-        // 逃跑目标（低血量时）
-        this.goalSelector.addGoal(0, new EscapeDangerGoal(this, 1.5));
+        // 逃跑目标（低血量时�?        this.goalSelector.addGoal(0, new EscapeDangerGoal(this, 1.5));
         
         // 攻击目标
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false));
         
-        // 巡逻
-        this.goalSelector.addGoal(3, new WanderAroundGoal(this, 0.8));
+        // 巡�?        this.goalSelector.addGoal(3, new WanderAroundGoal(this, 0.8));
         
         // 看向玩家
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, PlayerEntity.class, 8.0f));
@@ -890,8 +830,7 @@ public class FlameSpiritEntity extends MobEntity {
         // 随机环顾
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         
-        // 目标选择：玩家
-        this.targetSelector.addGoal(0, new ActiveTargetGoal&lt;&gt;(
+        // 目标选择：玩�?        this.targetSelector.addGoal(0, new ActiveTargetGoal&lt;&gt;(
             this, PlayerEntity.class, true
         ));
     }
@@ -902,8 +841,7 @@ public class FlameSpiritEntity extends MobEntity {
         
         // 额外掉落
         if (causedByPlayer) {
-            // 必定掉落烈焰棒
-            this.dropStack(new ItemStack(Items.BLAZE_ROD, this.random.nextInt(2) + 1));
+            // 必定掉落烈焰�?            this.dropStack(new ItemStack(Items.BLAZE_ROD, this.random.nextInt(2) + 1));
         }
     }
 }</code></pre>
@@ -911,49 +849,49 @@ public class FlameSpiritEntity extends MobEntity {
 <h2 id="测试步骤">测试步骤</h2>
 <p><ul><li><strong>启动游戏</strong></li>
 </ul>   
-<pre class="code-block"><code class="language-text">   运行你的 Mod 开发环境</code></pre></p>
+<pre class="code-block"><code class="language-text">   运行你的 Mod 开发环�?</code></pre></p>
 <p><ul><li><strong>生成实体</strong></li>
 </ul>   
 <pre class="code-block"><code class="language-text">   /summon mymod:flame_spirit</code></pre></p>
 <p><ul><li><strong>测试功能</strong></li>
 </ul>   - 观察火焰精灵是否生成
    - 尝试攻击它，观察是否反击
-   - 击杀后检查掉落物品</p>
-<p><hr></p>
+   - 击杀后检查掉落物�?
+<hr></p>
 <h2 id="常见问题排查">常见问题排查</h2>
-<table class="data-table"><thead><tr><th>问题</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td>实体不生成</td><td>材质或 AI 配置错误</td><td>检查日志</td></tr><tr><td>AI 不工作</td><td>未正确初始化目标</td><td>在 initGoals 中添加目标</td></tr><tr><td>掉落物品不对</td><td>战利品表路径错误</td><td>检查 JSON 位置</td></tr><tr><td>实体穿墙</td><td>未设置碰撞检测</td><td>检查 dimensions</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>问题</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td>实体不生�?</td><td>材质�?AI 配置错误</td><td>检查日�?</td></tr><tr><td>AI 不工�?</td><td>未正确初始化目标</td><td>�?initGoals 中添加目�?</td></tr><tr><td>掉落物品不对</td><td>战利品表路径错误</td><td>检�?JSON 位置</td></tr><tr><td>实体穿墙</td><td>未设置碰撞检�?</td><td>检�?dimensions</td></tr></tbody></table>
 <hr></p>
 <h2 id="遇到问题怎么办？">遇到问题怎么办？</h2>
-<h3>调试技巧</h3>
+<h3>调试技�?</h3>
 <p><ul><li><strong>查看日志</strong></li>
 </ul>   
-<pre class="code-block"><code class="language-text">   游戏崩溃时查看终端输出</code></pre></p>
+<pre class="code-block"><code class="language-text">   游戏崩溃时查看终端输�?</code></pre></p>
 <p><ul><li><strong>逐步测试</strong></li>
 </ul>   
 <pre class="code-block"><code class="language-text">   先创建一个最简单的实体
-   → 添加一个 AI 目标
-   → 再添加一个</code></pre></p>
+   �?添加一�?AI 目标
+   �?再添加一�?</code></pre></p>
 <p><ul><li><strong>使用命令测试</strong></li>
 </ul>   
 <pre class="code-block"><code class="language-text">   /summon mymod:flame_spirit ~ ~ ~ {Attributes:[{Name:generic.maxHealth,Base:50}]}</code></pre></p>
 <h3>常见错误</h3>
-<table class="data-table"><thead><tr><th>错误信息</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td><code>Entity Type not found</code></td><td>实体类型未注册</td><td>确保在 onInitialize 中注册</td></tr><tr><td><code>NullPointerException</code></td><td>AI 目标引用空对象</td><td>检查目标是否存在</td></tr><tr><td><code>ConcurrentModificationException</code></td><td>AI 列表并发修改</td><td>在服务端单线程中操作</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>错误信息</th><th>原因</th><th>解决方法</th></tr></thead><tbody><tr><td><code>Entity Type not found</code></td><td>实体类型未注�?</td><td>确保�?onInitialize 中注�?</td></tr><tr><td><code>NullPointerException</code></td><td>AI 目标引用空对�?</td><td>检查目标是否存�?</td></tr><tr><td><code>ConcurrentModificationException</code></td><td>AI 列表并发修改</td><td>在服务端单线程中操作</td></tr></tbody></table>
 <hr></p>
 <h2 id="扩展挑战">扩展挑战</h2>
 <p>完成了基础项目？试试这些挑战：</p>
-<h3>挑战 1：创建飞行生物</h3>
+<h3>挑战 1：创建飞行生�?</h3>
 <pre class="code-block"><code class="language-java">public class FlameBatEntity extends MobEntity implements FlyingEntity {
     
     @Override
     protected void initGoals() {
         super.initGoals();
         
-        // 飞行相关的 AI
+        // 飞行相关�?AI
         this.goalSelector.addGoal(0, new FlyGoal(this, 1.0));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, true));
     }
 }</code></pre>
-<h3>挑战 2：创建骑乘生物</h3>
+<h3>挑战 2：创建骑乘生�?</h3>
 <pre class="code-block"><code class="language-java">public class FlameHorseEntity extends HorseEntity {
     
     @Override
@@ -982,24 +920,23 @@ protected void dropLoot(DamageSource source, boolean causedByPlayer) {
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="参考资料">参考资料</h2>
+<h2 id="参考资�?">参考资�?</h2>
 <h3>相关章节</h3>
-<p><ul><li><a href="../Part-1-Foundation/04-registry-system.html">注册表基础</a></li>
-<li><a href="../Part-4-Entity/21-entity-lifecycle.html">实体生命周期</a></li>
-<li><a href="../Part-4-Entity/23-mob-entity.html">MobEntity</a></li>
-<li><a href="../Part-5-AI/27-ai-brain-intro.html">AI系统</a></li>
-<li><a href="../Part-8-Resource/42-loot-table.html">战利品表</a></li></ul></p>
-<h3>源码参考</h3>
+<p><ul><li><a href="/mc/1.21/tutorials/Part-1-Foundation/04-registry-system/">注册表基础</a></li>
+<li><a href="/mc/1.21/tutorials/Part-4-Entity/21-entity-lifecycle/">实体生命周期</a></li>
+<li><a href="/mc/1.21/tutorials/Part-4-Entity/23-mob-entity/">MobEntity</a></li>
+<li><a href="/mc/1.21/tutorials/Part-5-AI/27-ai-brain-intro/">AI系统</a></li>
+<li><a href="/mc/1.21/tutorials/Part-8-Resource/42-loot-table/">战利品表</a></li></ul></p>
+<h3>源码参�?</h3>
 <pre class="code-block"><code class="language-text">source/net/minecraft/entity/EntityType.java     - 实体类型定义
 source/net/minecraft/entity/mob/MobEntity.java  - MobEntity 主类
-source/net/minecraft/entity/mob/ZombieEntity.java - 僵尸实体参考
-source/net/minecraft/entity/ai/goal/*.java     - AI 目标类</code></pre>
+source/net/minecraft/entity/mob/ZombieEntity.java - 僵尸实体参�?source/net/minecraft/entity/ai/goal/*.java     - AI 目标�?</code></pre>
 <p><hr></p>
-<h2 id="下一步">下一步</h2>
-<p>学会了创建生物？接下来我们学习创建数据包！</p>
-<blockquote><p><a href="./101-project4-datapack.html">项目4：创建数据包</a></p></blockquote>
+<h2 id="下一�?">下一�?</h2>
+<p>学会了创建生物？接下来我们学习创建数据包�?
+<blockquote><p><a href="./101-project4-datapack.md">项目4：创建数据包</a></p></blockquote>
 <p><hr></p>
-<p><em>本教程基于 Minecraft 1.21 源码编写</em>
+<p><em>本教程基�?Minecraft 1.21 源码编写</em>
 </p>
             </div>
 

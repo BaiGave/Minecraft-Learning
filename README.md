@@ -1,11 +1,11 @@
-# 技术博客 + Minecraft 源码教程站
+# Minecraft Learning
 
-个人技术博客与 Minecraft 1.21 源码教程网站，基于纯静态架构，无需构建工具即可运行。
+Minecraft 原版 / Iris / Sodium 源码教程与技术分析站点，纯静态页面，可本地直接打开或通过任意静态服务器托管。
 
 ## 目录结构
 
 ```
-Blog/
+MinecraftLearning/   （本地文件夹可仍命名为 Blog，仅作说明）
 ├── index.html              # 博客首页
 ├── article.html            # 博客文章页
 ├── styles.css              # 博客主样式
@@ -164,6 +164,7 @@ node convert.js
 | `npm run build:blog` | 构建博客 |
 | `npm run build:website` | 构建教程站 |
 | `npm run build:all` | 构建全部 |
+| `npm run seo` | 仅刷新根目录 `sitemap.xml` / `robots.txt` |
 | `npm run dev` | 启动开发服务器 |
 | `npm run clean` | 清理生成的文档 |
 
@@ -173,7 +174,7 @@ node convert.js
 
 1. 推送代码到 GitHub `main` 分支
 2. GitHub Actions 自动构建
-3. 访问 `https://username.github.io/Blog/`
+3. 访问 `https://你的用户名.github.io/MincraftLearning/`（与 GitHub 仓库名一致）
 
 详细部署指南请查看 [DEPLOY.md](DEPLOY.md)。
 

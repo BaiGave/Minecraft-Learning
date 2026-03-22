@@ -11,6 +11,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { markdownLinkToHtml } = require('./scripts/safe-markdown-link');
+const { PUBLISH_SITE_URL } = require('./scripts/publish-config');
 
 // ============================================================================
 // Configuration
@@ -402,13 +404,7 @@ function parseMarkdown(content) {
                     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.+?)\*/g, '<em>$1</em>')
                     .replace(/`(.+?)`/g, '<code>$1</code>')
-                    .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => {
-                        // 站内 .md 链接改为 .html，点击才不会打开不存在的 .md 文件
-                        const isMd = /\.md(#.*)?$/i.test(url);
-                        const href = isMd ? url.replace(/\.md(#.*)?$/i, (_, h) => '.html' + (h || '')) : url;
-                        const displayText = text.replace(/\.md$/i, '');
-                        return `<a href="${href}">${displayText}</a>`;
-                    });
+                    .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => markdownLinkToHtml(text, url));
 
                 html += `<p>${formatted}</p>\n`;
             } else {
@@ -429,6 +425,23 @@ function parseMarkdown(content) {
 // ============================================================================
 // HTML Generator
 // ============================================================================
+
+/**
+ * 从当前教程页所在目录回到 website/ 根目录的相对路径前缀
+ * 实际路径：docs/{module}/[{version}/]{type}/[Part/]xxx.html
+ */
+function getRelPathToWebsiteRoot(module, version, type, part) {
+    const segments = ['docs', module];
+    if (version) segments.push(version);
+    segments.push(type);
+    if (part) segments.push(part);
+    return '../'.repeat(segments.length);
+}
+
+/** 指向该版本/模组文档首页 index.html（与 tutorials|analysis 同级目录） */
+function getModuleHubIndexHref(part) {
+    return (part ? '../../' : '../') + 'index.html';
+}
 
 /**
  * Generate HTML page from markdown (new version for multi-module support)
@@ -456,28 +469,22 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
         }
     });
 
-    // Determine relative path depth
-    let relPath = '../../';
-    if (version) {
-        relPath = '../../../';
-    }
+    const relPath = getRelPathToWebsiteRoot(module, version, type, part);
+    const moduleHubHref = getModuleHubIndexHref(part);
 
-    // Build breadcrumb
+    // Build breadcrumb（不再链到错误的 docs/.../docs/...；去掉无意义的「目录」）
     let breadcrumbHtml = `
-        <a href="${relPath}index.html">首页</a>
+        <a href="${relPath}index.html">文档中心</a>
         <span>/</span>
-        <a href="${relPath}catalog.html">目录</a>
     `;
 
     if (version) {
         breadcrumbHtml += `
-            <span>/</span>
-            <a href="${relPath}docs/${module}/${version}/index.html">${moduleConfig.name} ${version}</a>
+            <a href="${moduleHubHref}">${moduleConfig.name} ${version}</a>
         `;
     } else {
         breadcrumbHtml += `
-            <span>/</span>
-            <a href="${relPath}docs/${module}/index.html">${moduleConfig.name}</a>
+            <a href="${moduleHubHref}">${moduleConfig.name}</a>
         `;
     }
 
@@ -518,14 +525,14 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
     <meta name="title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
     <meta name="description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码，理解其内部工作原理')}">
     <meta name="keywords" content="${moduleConfig.name}, Minecraft, 源码教程, ${type === 'tutorials' ? '教程' : '源码分析'}, Java">
-    <link rel="canonical" href="https://baigave.github.io/Blog${pageUrl}">
+    <link rel="canonical" href="${PUBLISH_SITE_URL}${pageUrl}">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="article">
-    <meta property="og:url" content="https://baigave.github.io/Blog${pageUrl}">
+    <meta property="og:url" content="${PUBLISH_SITE_URL}${pageUrl}">
     <meta property="og:title" content="${escapeHtml(title)} - ${moduleConfig.name} 教程">
     <meta property="og:description" content="${escapeHtml(subtitle || '深入学习 ' + moduleConfig.name + ' 源码')}">
-    <meta property="og:site_name" content="技术博客 & MC 源码教程">
+    <meta property="og:site_name" content="Minecraft Learning">
     <meta property="og:locale" content="zh_CN">
 
     <!-- Twitter -->
@@ -546,7 +553,7 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
         },
         "publisher": {
             "@type": "Organization",
-            "name": "技术博客 & MC 源码教程"
+            "name": "Minecraft Learning"
         },
         "datePublished": "${new Date().toISOString()}",
         "dateModified": "${new Date().toISOString()}"
@@ -560,7 +567,7 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${seoMetaTags}
     <link rel="stylesheet" href="${relPath}styles.css">
-    <link rel="stylesheet" href="${relPath}tutorial.css">
+    <link rel="stylesheet" href="${relPath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -574,15 +581,21 @@ function generateTutorialHTML(module, version, type, part, filename, markdownCon
         <div class="nav-container">
             <a href="${relPath}index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 源码教程</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
                 <li><a href="${relPath}index.html">首页</a></li>
-                <li><a href="${relPath}catalog.html">目录</a></li>
-                <li><a href="${relPath}roadmap.html">路线图</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="${relPath}docs/mc/index.html">Minecraft 原版</a>
+                        <a href="${relPath}docs/iris/index.html">Iris 光影</a>
+                        <a href="${relPath}docs/sodium/index.html">Sodium 优化</a>
+                    </div>
+                </li>
                 <li><a href="${relPath}about.html">关于</a></li>
             </ul>
         </div>
@@ -906,9 +919,7 @@ function convertAll() {
             Logger.success('Generated sitemap.xml');
 
             // Generate robots.txt
-            const robotsTxt = generateRobotsTxt({
-                sitemapUrl: 'https://baigave.github.io/Blog/sitemap.xml'
-            });
+            const robotsTxt = generateRobotsTxt();
             fs.writeFileSync(path.join(__dirname, '..', 'robots.txt'), robotsTxt, 'utf8');
             Logger.success('Generated robots.txt');
         } catch (e) {

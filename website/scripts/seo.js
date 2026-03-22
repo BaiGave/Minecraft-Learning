@@ -12,22 +12,23 @@
 
 const fs = require('fs');
 const path = require('path');
+const { PUBLISH_SITE_URL } = require('./publish-config');
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
 const SEO_CONFIG = {
-    siteUrl: 'https://baigave.github.io/Blog',
-    siteName: '技术博客 & MC 源码教程',
+    siteUrl: PUBLISH_SITE_URL,
+    siteName: 'Minecraft Learning',
     siteDescription: '个人技术博客与 Minecraft 1.21 源码教程网站，包含 MC/Iris/Sodium 源码分析',
     siteLocale: 'zh_CN',
     author: 'baigave',
     twitter: '@baigave',
 
-    // Output paths
-    sitemapPath: path.join(__dirname, '..', 'sitemap.xml'),
-    robotsPath: path.join(__dirname, '..', 'robots.txt')
+    // 与 website/convert.js 一致：站点地图在仓库根目录
+    sitemapPath: path.join(__dirname, '..', '..', 'sitemap.xml'),
+    robotsPath: path.join(__dirname, '..', '..', 'robots.txt')
 };
 
 // ============================================================================

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>potion effect system - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>potion effect system</span>
                 </nav>
@@ -459,46 +469,22 @@
                 <h1>Minecraft 药水效果系统详解</h1>
 <h2 id="目标">目标</h2>
 <p>学完本教程后，你将能够：
-<ul><li>理解 Minecraft 药水效果系统的核心概念</li>
-<li>掌握 StatusEffect、StatusEffectInstance 的使用</li>
-<li>学会创建自定义药水效果</li>
-<li>了解效果叠加规则和实现原理</li></ul></p>
-<h2 id="前置知识">前置知识</h2>
+<ul><li>理解 Minecraft 药水效果系统的核心概�?- 掌握 StatusEffect、StatusEffectInstance 的使�?- 学会创建自定义药水效�?- 了解效果叠加规则和实现原�?</li>
+</ul><h2 id="前置知识">前置知识</h2>
 <p><ul><li>Java 基础（类、抽象类、枚举）</li>
-<li><a href="../Part-4-Entity/20-entity-intro.html">实体系统</a> - 药水效果作用于实体</li>
-<li><a href="../Part-4-Entity/24-entity-attributes.html">属性系统</a> - 效果可以修改属性</li>
-<li><a href="./particle-system.html">粒子系统</a> - 效果会显示粒子</li></ul></p>
-<h2 id="核心概念">核心概念</h2>
-<h3>什么是药水效果系统？</h3>
-<p>想象你在玩 RPG 游戏：
-<ul><li><strong>Buff</strong> = 正面效果（如攻击增强、移动加速）</li>
-<li><strong>Debuff</strong> = 负面效果（如中毒、减速）</li></ul></p>
-<p>Minecraft 的药水效果系统就像一个 <strong>状态监控系统</strong>。当你喝下药水或被女巫扔药水时，游戏中会添加一个效果（StatusEffect）到你的身上。这个效果会持续一段时间（Duration），期间可能改变你的属性、移动速度或生成粒子。</p>
-<h3>生活比喻：药水效果 = 生病时吃的药</h3>
-<p>想象你感冒了去看医生，医生给你开的药就像 Minecraft 中的药水效果：</p>
-<table class="data-table"><thead><tr><th>现实中的药</th><th>Minecraft 中的对应</th></tr></thead><tbody><tr><td>药品种类（感冒药、止痛药）</td><td>StatusEffect（速度、力量）</td></tr><tr><td>药效等级（普通、加强）</td><td>amplifier（0=一级，1=二级）</td></tr><tr><td>药效持续时间</td><td>duration（600 tick = 30秒）</td></tr><tr><td>吃药后身体变化（退烧、止痛）</td><td>属性修改、伤害、粒子效果</td></tr><tr><td>药效退去</td><td>效果消失</td></tr></tbody></table>
-<h3>效果系统的组成</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
-│                    药水效果系统组成                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│   StatusEffect (效果定义)                                │
-│      ├── 颜色、分类、图标                                │
-│      ├── 属性修改器                                      │
-│      └── 持续效果更新逻辑                                │
-│                                                         │
-│   StatusEffectInstance (效果实例)                        │
-│      ├── 持续时间、等级                                  │
-│      ├── 粒子显示、叠加规则                              │
-│      └── 隐藏的上一个效果                                │
-│                                                         │
-│   LivingEntity (应用主体)                                │
-│      ├── activeStatusEffects (效果列表)                  │
-│      └── addStatusEffect() / removeStatusEffect()      │
-│                                                         │
-└─────────────────────────────────────────────────────────┘</code></pre>
-<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
-<h3>效果系统结构图</h3>
+<li><a href="/mc/1.21/tutorials/Part-4-Entity/20-entity-intro/">实体系统</a> - 药水效果作用于实�?- <a href="/mc/1.21/tutorials/Part-4-Entity/24-entity-attributes/">属性系统</a> - 效果可以修改属�?- <a href="./particle-system.md">粒子系统</a> - 效果会显示粒�?</li>
+</ul><h2 id="核心概念">核心概念</h2>
+<h3>什么是药水效果系统�?</h3>
+<p>想象你在�?RPG 游戏�?- <strong>Buff</strong> = 正面效果（如攻击增强、移动加速）
+<ul><li><strong>Debuff</strong> = 负面效果（如中毒、减速）</li></ul></p>
+<p>Minecraft 的药水效果系统就像一�?<em>*状态监控系�?</em>。当你喝下药水或被女巫扔药水时，游戏中会添加一个效果（StatusEffect）到你的身上。这个效果会持续一段时间（Duration），期间可能改变你的属性、移动速度或生成粒子�?
+<h3>生活比喻：药水效�?= 生病时吃的药</h3>
+<p>想象你感冒了去看医生，医生给你开的药就像 Minecraft 中的药水效果�?
+<table class="data-table"><thead><tr><th>现实中的�?</th><th>Minecraft 中的对应</th></tr></thead><tbody><tr><td>药品种类（感冒药、止痛药�?</td><td>StatusEffect（速度、力量）</td></tr><tr><td>药效等级（普通、加强）</td><td>amplifier�?=一级，1=二级�?</td></tr><tr><td>药效持续时间</td><td>duration�?00 tick = 30秒）</td></tr><tr><td>吃药后身体变化（退烧、止痛）</td><td>属性修改、伤害、粒子效�?</td></tr><tr><td>药效退�?</td><td>效果消失</td></tr></tbody></table>
+<h3>效果系统的组�?</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────�?�?                   药水效果系统组成                         �?├─────────────────────────────────────────────────────────�?�?                                                        �?�?  StatusEffect (效果定义)                                �?�?     ├── 颜色、分类、图�?                               �?�?     ├── 属性修改器                                      �?�?     └── 持续效果更新逻辑                                �?�?                                                        �?�?  StatusEffectInstance (效果实例)                        �?�?     ├── 持续时间、等�?                                 �?�?     ├── 粒子显示、叠加规�?                             �?�?     └── 隐藏的上一个效�?                               �?�?                                                        �?�?  LivingEntity (应用主体)                                �?�?     ├── activeStatusEffects (效果列表)                  �?�?     └── addStatusEffect() / removeStatusEffect()      �?�?                                                        �?└─────────────────────────────────────────────────────────�?</code></pre>
+<h2 id="图解（Mermaid�?">图解（Mermaid�?</h2>
+<h3>效果系统结构�?</h3>
 <div class="mermaid">flowchart TD
     A[玩家喝下药水] --> B[创建 StatusEffectInstance]
     B --> C[调用 LivingEntity#addStatusEffect]
@@ -510,8 +496,8 @@
     F -->|同等级| I[刷新持续时间]
     E --> J[启动效果更新循环]
     G --> J
-    J --> K[每 tick 更新效果]
-    K --> L[修改属性/造成伤害]
+    J --> K[�?tick 更新效果]
+    K --> L[修改属�?造成伤害]
     L --> M[显示粒子效果]
     M --> N{时间耗尽?}
     N -->|否| K
@@ -571,9 +557,9 @@
     StatusEffects --> StatusEffect : 注册
     LivingEntity "1" --> "*" StatusEffectInstance : 拥有
     
-    note for StatusEffect "相当于'药品种类'"
-    note for StatusEffectInstance "相当于'实际吃的药'"</div>
-<h3>效果应用时序图</h3>
+    note for StatusEffect "相当�?药品种类'"
+    note for StatusEffectInstance "相当�?实际吃的�?"</div>
+<h3>效果应用时序�?</h3>
 <div class="mermaid">sequenceDiagram
     participant Player as 玩家
     participant LE as LivingEntity
@@ -581,25 +567,24 @@
     participant SEI as StatusEffectInstance
     
     Player->>LE: 喝下力量药水
-    LE->>SEI: 创建效果实例 (60秒, I级)
+    LE->>SEI: 创建效果实例 (60�? I�?
     LE->>LE: 检查是否有同类效果
     LE->>SEI: 尝试升级 (upgrade)
     Note over SEI: 如果新效果更强则替换
     
-    loop 每tick (0.05秒)
+    loop 每tick (0.05�?
         SEI->>SEI: update() - 减少时间
         SEI->>SE: canApplyUpdateEffect()
-        SE->>SE: 检查是否可以更新
-        SE->>LE: applyUpdateEffect()
-        LE->>LE: 修改属性/造成伤害
+        SE->>SE: 检查是否可以更�?        SE->>LE: applyUpdateEffect()
+        LE->>LE: 修改属�?造成伤害
     end
     
     SEI-->>LE: 时间归零
     LE->>LE: 移除效果
     Note over LE: 播放效果结束动画</div>
 <h2 id="核心代码">核心代码</h2>
-<h3>1. StatusEffect - 状态效果定义</h3>
-<p><code>StatusEffect</code> 代表一种效果类型，定义了效果的基本属性和行为。</p>
+<h3>1. StatusEffect - 状态效果定�?</h3>
+<p><code>StatusEffect</code> 代表一种效果类型，定义了效果的基本属性和行为�?</p>
 <pre class="code-block"><code class="language-java">public class StatusEffect implements ToggleableFeature {
     private final StatusEffectCategory category;  // 效果分类
     private final int color;                     // 效果颜色（用于粒子）
@@ -610,10 +595,8 @@
         this.color = color;
     }
     
-    // 每tick更新时调用，返回false会移除效果
-    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {
-        return true;  // 默认不做任何事
-    }
+    // 每tick更新时调用，返回false会移除效�?    public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {
+        return true;  // 默认不做任何�?    }
     
     // 判断是否可以继续更新
     public boolean canApplyUpdateEffect(int duration, int amplifier) {
@@ -632,23 +615,20 @@
 <pre class="code-block"><code class="language-java">public enum StatusEffectCategory {
     BENEFICIAL(Formatting.BLUE),   // 正面效果（蓝色）
     HARMFUL(Formatting.RED),       // 负面效果（红色）
-    NEUTRAL(Formatting.BLUE);      // 中性效果（蓝色）
-}</code></pre>
+    NEUTRAL(Formatting.BLUE);      // 中性效果（蓝色�?}</code></pre>
 <h3>3. StatusEffectInstance - 效果实例</h3>
-<p><code>StatusEffectInstance</code> 代表应用到实体上的具体效果实例。</p>
+<p><code>StatusEffectInstance</code> 代表应用到实体上的具体效果实例�?</p>
 <pre class="code-block"><code class="language-java">public class StatusEffectInstance implements Comparable&lt;StatusEffectInstance&gt; {
     public static final int INFINITE = -1;  // 无限持续
     
     private final RegistryEntry&lt;StatusEffect&gt; type;  // 效果类型
-    private int duration;                   // 持续时间（tick）
-    private int amplifier;                 // 等级（0 = I级）
+    private int duration;                   // 持续时间（tick�?    private int amplifier;                 // 等级�? = I级）
     private boolean ambient;                // 是否是环境效果（如信标）
     private boolean showParticles;         // 是否显示粒子
     private boolean showIcon;               // 是否显示图标
     
     @Nullable
-    private StatusEffectInstance hiddenEffect;  // 隐藏的旧效果（升级时保留）
-    
+    private StatusEffectInstance hiddenEffect;  // 隐藏的旧效果（升级时保留�?    
     public StatusEffectInstance(
         RegistryEntry&lt;StatusEffect&gt; effect,
         int duration,
@@ -723,7 +703,7 @@
             )
         );
 }</code></pre>
-<h3>5. 特殊效果类</h3>
+<h3>5. 特殊效果�?</h3>
 <h4>PoisonStatusEffect - 中毒效果</h4>
 <pre class="code-block"><code class="language-java">public class PoisonStatusEffect extends StatusEffect {
     public PoisonStatusEffect(StatusEffectCategory category, int color) {
@@ -732,16 +712,14 @@
     
     @Override
     public boolean canApplyUpdateEffect(int duration, int amplifier) {
-        // 每 25 tick（约 1.25 秒）造成一次伤害
-        int tickInterval = 25 &gt;&gt; amplifier;  // 等级越高间隔越短
+        // �?25 tick（约 1.25 秒）造成一次伤�?        int tickInterval = 25 &gt;&gt; amplifier;  // 等级越高间隔越短
         return duration % tickInterval == 0;
     }
     
     @Override
     public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {
         if (entity.canTakeDamage()) {
-            // 造成 1 点伤害（等级越高伤害越高）
-            entity.damage(
+            // 造成 1 点伤害（等级越高伤害越高�?            entity.damage(
                 DamageSource.MAGIC, 
                 1.0f &lt;&lt; amplifier
             );
@@ -757,8 +735,7 @@
     
     @Override
     public boolean canApplyUpdateEffect(int duration, int amplifier) {
-        // 每 50 tick（约 2.5 秒）治疗一次
-        int tickInterval = 50 &gt;&gt; amplifier;
+        // �?50 tick（约 2.5 秒）治疗一�?        int tickInterval = 50 &gt;&gt; amplifier;
         return duration % tickInterval == 0;
     }
     
@@ -772,21 +749,18 @@
 }</code></pre>
 <h2 id="实战演示">实战演示</h2>
 <h3>场景 1：给玩家添加效果</h3>
-<pre class="code-block"><code class="language-java">public void giveSpeedEffect(PlayerEntity player) {
-    StatusEffectInstance effect = new StatusEffectInstance(
+<pre class="code-block"><code class="language-java">    StatusEffectInstance effect = new StatusEffectInstance(
         StatusEffects.SPEED,    // 速度效果
-        600,                     // 持续 600 tick (30秒)
-        0                        // 等级 0 (I级)
+        600,                     // 持续 600 tick (30�?
+        0                        // 等级 0 (I�?
     );
     player.addStatusEffect(effect);
 }
 
-// 方法2：快捷方法（省略实例创建）
-public void giveStrengthEffect(PlayerEntity player) {
+// 方法2：快捷方法（省略实例创建�?public void giveStrengthEffect(PlayerEntity player) {
     player.addStatusEffect(
         StatusEffects.STRENGTH,
-        1200,  // 持续 60秒
-        1      // 等级 1 (II级)
+        1200,  // 持续 60�?        1      // 等级 1 (II�?
     );
 }</code></pre>
 <h3>场景 2：检查和管理效果</h3>
@@ -805,8 +779,7 @@ public void removeSpeedEffect(PlayerEntity player) {
     player.removeStatusEffect(StatusEffects.SPEED);
 }
 
-// 清除所有负面效果
-public void curePlayer(PlayerEntity player) {
+// 清除所有负面效�?public void curePlayer(PlayerEntity player) {
     for (StatusEffectInstance effect : player.getStatusEffects()) {
         if (effect.getEffectType().value().getCategory() == StatusEffectCategory.HARMFUL) {
             player.removeStatusEffect(effect.getEffectType());
@@ -821,8 +794,7 @@ public void curePlayer(PlayerEntity player) {
     
     @Override
     public boolean canApplyUpdateEffect(int duration, int amplifier) {
-        return true;  // 每tick都应用
-    }
+        return true;  // 每tick都应�?    }
     
     @Override
     public boolean applyUpdateEffect(LivingEntity entity, int amplifier) {
@@ -849,13 +821,10 @@ public static final RegistryEntry&lt;StatusEffect&gt; FIRE_AURA =
 public void activateFireAura(PlayerEntity player) {
     player.addStatusEffect(
         FireAuraEffects.FIRE_AURA,
-        600,  // 30秒
-        0     // I级
-    );
+        600,  // 30�?        0     // I�?    );
 }</code></pre>
-<h3>场景 4：药水物品</h3>
-<pre class="code-block"><code class="language-java">public class FireAuraPotion extends PotionItem {
-    public FireAuraPotion(Settings settings) {
+<h3>场景 4：药水物�?</h3>
+<pre class="code-block"><code class="language-java">    public FireAuraPotion(Settings settings) {
         super(settings);
     }
     
@@ -864,28 +833,21 @@ public void activateFireAura(PlayerEntity player) {
         // 添加效果
         user.addStatusEffect(new StatusEffectInstance(
             ModEffects.FIRE_AURA,
-            1200,  // 60秒
-            0      // I级
-        ));
+            1200,  // 60�?            0      // I�?        ));
         
-        // 播放喝药水音效
-        world.playSound(null, user.getX(), user.getY(), user.getZ(),
+        // 播放喝药水音�?        world.playSound(null, user.getX(), user.getY(), user.getZ(),
             SoundEvents.ENTITY_GENERIC_DRINK, 
             SoundCategory.PLAYERS, 1.0f, 1.0f
         );
         
-        // 消耗药水
-        return PotionItem.useChargedItem(stack, world, user);
+        // 消耗药�?        return PotionItem.useChargedItem(stack, world, user);
     }
 }</code></pre>
-<h3>场景 5：信标效果（环境效果）</h3>
+<h3>场景 5：信标效果（环境效果�?</h3>
 <pre class="code-block"><code class="language-java">public void giveBeaconEffect(PlayerEntity player) {
     StatusEffectInstance effect = new StatusEffectInstance(
         StatusEffects.SPEED,
-        1800,   // 90秒
-        1,      // II级
-        true,   // ambient = true（环境效果，粒子更透明）
-        true,   // showParticles
+        1800,   // 90�?        1,      // II�?        true,   // ambient = true（环境效果，粒子更透明�?        true,   // showParticles
         true    // showIcon
     );
     player.addStatusEffect(effect);
@@ -894,48 +856,38 @@ public void activateFireAura(PlayerEntity player) {
 <h3>等级叠加规则</h3>
 <pre class="code-block"><code class="language-text">规则 1: 高等级效果替换低等级效果
   如果喝下 II 级速度时已经有 I 级：
-    → II 级速度替换 I 级
-    → 当 II 级结束时，自动恢复 I 级（如果有残留时间）
+    �?II 级速度替换 I �?    �?�?II 级结束时，自动恢�?I 级（如果有残留时间）
 
-规则 2: 同等级刷新时间
-  如果喝下 II 级速度时已经有 II 级：
-    → 时间刷新为新的持续时间
-
+规则 2: 同等级刷新时�?  如果喝下 II 级速度时已经有 II 级：
+    �?时间刷新为新的持续时�?
 规则 3: 不同效果互不影响
   速度 + 跳跃提升 = 可以同时存在</code></pre>
-<h3>效果冲突检测</h3>
-<pre class="code-block"><code class="language-java">public boolean willEffectBeReplaced(LivingEntity entity, StatusEffect effect, int amplifier) {
-    StatusEffectInstance current = entity.getStatusEffect(effect);
+<h3>效果冲突检�?</h3>
+<pre class="code-block"><code class="language-java">    StatusEffectInstance current = entity.getStatusEffect(effect);
     if (current == null) {
         return false;  // 没有当前效果，不会被替换
     }
     return current.getAmplifier() &gt; amplifier;
 }</code></pre>
-<h2 id="常见原版效果一览">常见原版效果一览</h2>
-<table class="data-table"><thead><tr><th>效果名称</th><th>分类</th><th>效果描述</th></tr></thead><tbody><tr><td>SPEED</td><td>正面</td><td>移动速度 +20% 每级</td></tr><tr><td>SLOWNESS</td><td>负面</td><td>移动速度 -15% 每级</td></tr><tr><td>HASTE</td><td>正面</td><td>挖掘速度 +10% 每级</td></tr><tr><td>MINING<em>FATIGUE</td><td>负面</td><td>挖掘速度 -10% 每级</td></tr><tr><td>STRENGTH</td><td>正面</td><td>攻击伤害 +3 每级</td></tr><tr><td>INSTANT</em>HEALTH</td><td>正面</td><td>瞬间恢复 4 心每级</td></tr><tr><td>INSTANT<em>DAMAGE</td><td>负面</td><td>瞬间伤害 6 心每级</td></tr><tr><td>JUMP</em>BOOST</td><td>正面</td><td>跳跃高度 +0.5 格每级</td></tr><tr><td>NAUSEA</td><td>负面</td><td>屏幕扭曲</td></tr><tr><td>REGENERATION</td><td>正面</td><td>每 2.5 秒恢复 0.5 心</td></tr><tr><td>POISON</td><td>负面</td><td>每 1.25 秒伤害 0.5 心</td></tr><tr><td>WITHER</td><td>负面</td><td>类似中毒但致死</td></tr><tr><td>RESISTANCE</td><td>正面</td><td>伤害减少 20% 每级</td></tr><tr><td>FIRE<em>RESISTANCE</td><td>正面</td><td>免疫火焰伤害</td></tr><tr><td>WATER</em>BREATHING</td><td>正面</td><td>无限水下呼吸</td></tr><tr><td>INVISIBILITY</td><td>正面</td><td>隐形（但攻击会显形）</td></tr><tr><td>BLINDNESS</td><td>负面</td><td>视野受限</td></tr><tr><td>NIGHT<em>VISION</td><td>正面</td><td>黑暗中看清</td></tr><tr><td>HUNGER</td><td>负面</td><td>加速饥饿消耗</td></tr><tr><td>WEAKNESS</td><td>负面</td><td>攻击伤害 -4</td></tr><tr><td>ABSORPTION</td><td>正面</td><td>额外护盾生命</td></tr><tr><td>SATURATION</td><td>正面</td><td>瞬间饱食</td></tr><tr><td>GLOWING</td><td>中性</td><td>灵魂之光</td></tr><tr><td>LEVITATION</td><td>负面</td><td>向上飘浮</td></tr><tr><td>LUCK</td><td>正面</td><td>幸运 +1 每级</td></tr><tr><td>UNLUCK</td><td>负面</td><td>倒霉 -1 每级</td></tr><tr><td>SLOW</em>FALLING</td><td>正面</td><td>缓慢降落</td></tr><tr><td>CONDUIT<em>POWER</td><td>正面</td><td>水下能力增强</td></tr><tr><td>DOLPHINS</em>GRACE</td><td>正面</td><td>游泳加速</td></tr><tr><td>DARKNESS</td><td>负面</td><td>低光照下失明</td></tr></tbody></table>
+<h2 id="常见原版效果一�?">常见原版效果一�?</h2>
+<table class="data-table"><thead><tr><th>效果名称</th><th>分类</th><th>效果描述</th></tr></thead><tbody><tr><td>SPEED</td><td>正面</td><td>移动速度 +20% 每级</td></tr><tr><td>SLOWNESS</td><td>负面</td><td>移动速度 -15% 每级</td></tr><tr><td>HASTE</td><td>正面</td><td>挖掘速度 +10% 每级</td></tr><tr><td>MINING<em>FATIGUE</td><td>负面</td><td>挖掘速度 -10% 每级</td></tr><tr><td>STRENGTH</td><td>正面</td><td>攻击伤害 +3 每级</td></tr><tr><td>INSTANT</em>HEALTH</td><td>正面</td><td>瞬间恢复 4 心每�?</td></tr><tr><td>INSTANT<em>DAMAGE</td><td>负面</td><td>瞬间伤害 6 心每�?</td></tr><tr><td>JUMP</em>BOOST</td><td>正面</td><td>跳跃高度 +0.5 格每�?</td></tr><tr><td>NAUSEA</td><td>负面</td><td>屏幕扭曲</td></tr><tr><td>REGENERATION</td><td>正面</td><td>�?2.5 秒恢�?0.5 �?</td></tr><tr><td>POISON</td><td>负面</td><td>�?1.25 秒伤�?0.5 �?</td></tr><tr><td>WITHER</td><td>负面</td><td>类似中毒但致�?</td></tr><tr><td>RESISTANCE</td><td>正面</td><td>伤害减少 20% 每级</td></tr><tr><td>FIRE<em>RESISTANCE</td><td>正面</td><td>免疫火焰伤害</td></tr><tr><td>WATER</em>BREATHING</td><td>正面</td><td>无限水下呼吸</td></tr><tr><td>INVISIBILITY</td><td>正面</td><td>隐形（但攻击会显形）</td></tr><tr><td>BLINDNESS</td><td>负面</td><td>视野受限</td></tr><tr><td>NIGHT<em>VISION</td><td>正面</td><td>黑暗中看�?</td></tr><tr><td>HUNGER</td><td>负面</td><td>加速饥饿消�?</td></tr><tr><td>WEAKNESS</td><td>负面</td><td>攻击伤害 -4</td></tr><tr><td>ABSORPTION</td><td>正面</td><td>额外护盾生命</td></tr><tr><td>SATURATION</td><td>正面</td><td>瞬间饱食</td></tr><tr><td>GLOWING</td><td>中�?</td><td>灵魂之光</td></tr><tr><td>LEVITATION</td><td>负面</td><td>向上飘浮</td></tr><tr><td>LUCK</td><td>正面</td><td>幸运 +1 每级</td></tr><tr><td>UNLUCK</td><td>负面</td><td>倒霉 -1 每级</td></tr><tr><td>SLOW</em>FALLING</td><td>正面</td><td>缓慢降落</td></tr><tr><td>CONDUIT<em>POWER</td><td>正面</td><td>水下能力增强</td></tr><tr><td>DOLPHINS</em>GRACE</td><td>正面</td><td>游泳加�?</td></tr><tr><td>DARKNESS</td><td>负面</td><td>低光照下失明</td></tr></tbody></table>
 <h2 id="小结">小结</h2>
-<table class="data-table"><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td>StatusEffect</td><td>定义效果类型和行为</td><td>药品说明书</td></tr><tr><td>StatusEffectInstance</td><td>效果的具体实例</td><td>实际吃掉的药</td></tr><tr><td>StatusEffectCategory</td><td>效果分类（正面/负面/中性）</td><td>药品颜色标签</td></tr><tr><td>amplifier</td><td>效果等级（0=一级）</td><td>药量加倍</td></tr><tr><td>duration</td><td>持续时间</td><td>药效持续多久</td></tr></tbody></table>
-<strong>核心要点：</strong>
-<ul><li>StatusEffect 定义"什么效果"，StatusEffectInstance 是"应用的效果"</li>
-<li>效果等级从 0 开始（0 = I级，1 = II级，以此类推）</li>
-<li>高等级效果会替换低等级，低等级会被隐藏但不消失</li>
-<li>效果通过 <code>LivingEntity.addStatusEffect()</code> 添加</li>
-<li>即时效果重写 <code>applyInstantEffect()</code>，持续效果重写 <code>applyUpdateEffect()</code></li></ul></p>
+<table class="data-table"><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td>StatusEffect</td><td>定义效果类型和行�?</td><td>药品说明�?</td></tr><tr><td>StatusEffectInstance</td><td>效果的具体实�?</td><td>实际吃掉的药</td></tr><tr><td>StatusEffectCategory</td><td>效果分类（正�?负面/中性）</td><td>药品颜色标签</td></tr><tr><td>amplifier</td><td>效果等级�?=一级）</td><td>药量加�?</td></tr><tr><td>duration</td><td>持续时间</td><td>药效持续多久</td></tr></tbody></table>
+<em>*核心要点�?</em>
+<ul><li>StatusEffect 定义"什么效�?，StatusEffectInstance �?应用的效�?</li>
+<li>效果等级�?0 开始（0 = I级，1 = II级，以此类推�?3. 高等级效果会替换低等级，低等级会被隐藏但不消�?4. 效果通过 <code>LivingEntity.addStatusEffect()</code> 添加</li>
+<li>即时效果重写 <code>applyInstantEffect()</code>，持续效果重�?<code>applyUpdateEffect()</code></li></ul></p>
 <h2 id="练习">练习</h2>
 <h3>练习 1：基础药水效果</h3>
-<p>创建一个药水物品，喝下后给玩家 30 秒的跳跃提升效果。</p>
+<p>创建一个药水物品，喝下后给玩家 30 秒的跳跃提升效果�?
 <h3>练习 2：自定义负面效果</h3>
-<p>创建一个"饥饿"效果，使玩家的饥饿值快速下降。</p>
-<h3>练习 3：火焰光环效果</h3>
-<p>创建一个光环效果，附近有敌人时自动对敌人造成火焰伤害。</p>
-<h3>练习 4：效果检测</h3>
-<p>创建一个命令，可以显示玩家当前所有药水效果的详细信息。</p>
+<p>创建一�?饥饿"效果，使玩家的饥饿值快速下降�?
+<h3>练习 3：火焰光环效�?创建一个光环效果，附近有敌人时自动对敌人造成火焰伤害�?</h3>
+<h3>练习 4：效果检�?创建一个命令，可以显示玩家当前所有药水效果的详细信息�?</h3>
 <h2 id="相关链接">相关链接</h2>
 <h3>内部链接</h3>
-<p><ul><li><a href="../Part-4-Entity/20-entity-intro.html">实体系统</a> - 药水效果应用于实体</li>
-<li><a href="../Part-4-Entity/24-entity-attributes.html">属性系统</a> - 效果修改实体属性</li>
-<li><a href="./particle-system.html">粒子系统</a> - 效果显示彩色粒子</li>
-<li><a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a> - 药水是特殊的物品</li></ul></p>
+<p><ul><li><a href="/mc/1.21/tutorials/Part-4-Entity/20-entity-intro/">实体系统</a> - 药水效果应用于实�?- <a href="/mc/1.21/tutorials/Part-4-Entity/24-entity-attributes/">属性系统</a> - 效果修改实体属�?- <a href="./particle-system.md">粒子系统</a> - 效果显示彩色粒子</li>
+<li><a href="/mc/1.21/tutorials/Part-3-Block-Item/17-item-basics/">物品系统</a> - 药水是特殊的物品</li></ul></p>
 <h3>外部资源</h3>
 <p><ul><li><a href="https://minecraft.fandom.com/wiki/Effect">Minecraft Wiki: Effects</a></li>
 <li><a href="https://minecraft.fandom.com/wiki/Effect#List<em>of</em>effects">药水效果ID列表</a></li>

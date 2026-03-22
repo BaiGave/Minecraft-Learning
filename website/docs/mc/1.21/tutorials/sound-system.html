@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sound system - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>sound system</span>
                 </nav>
@@ -459,32 +469,26 @@
                 <h1>Minecraft 声音系统详解</h1>
 <h2 id="目标">目标</h2>
 <p>学完本教程后，你将能够：
-<ul><li>理解 Minecraft 声音系统的核心概念</li>
-<li>掌握 SoundEvent、SoundCategory 等关键类的作用</li>
-<li>学会在 mod 中注册和播放自定义声音</li>
-<li>了解声音如何与游戏世界交互</li></ul></p>
-<h2 id="前置知识">前置知识</h2>
+<ul><li>理解 Minecraft 声音系统的核心概�?- 掌握 SoundEvent、SoundCategory 等关键类的作�?- 学会�?mod 中注册和播放自定义声�?- 了解声音如何与游戏世界交�?</li>
+</ul><h2 id="前置知识">前置知识</h2>
 <p><ul><li>Java 基础（类、接口、枚举）</li>
-<li>Minecraft 资源包概念（resources/assets）</li>
-<li>游戏刻（tick）基础</li>
-<li><a href="../Part-4-Entity/20-entity-intro.html">实体系统</a></li>
-<li><a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a></li></ul></p>
+<li>Minecraft 资源包概念（resources/assets�?- 游戏刻（tick）基础</li>
+<li><a href="/mc/1.21/tutorials/Part-4-Entity/20-entity-intro/">实体系统</a></li>
+<li><a href="/mc/1.21/tutorials/Part-3-Block-Item/17-item-basics/">物品系统</a></li></ul></p>
 <h2 id="核心概念">核心概念</h2>
-<h3>什么是声音系统？</h3>
+<h3>什么是声音系统�?</h3>
 <p>想象一下你在看一部电影：
 <ul><li><strong>画面</strong> = 游戏的视觉效果（方块、生物、粒子）</li>
-<li><strong>声音</strong> = 游戏的听觉反馈（脚步声、爆炸声、BGM）</li></ul></p>
-<p>Minecraft 的声音系统就像一个 <strong>音响调音台</strong>，负责管理和播放游戏中各种声音。每一个"音效"（比如挖掘石头、僵尸的呻吟）都对应一个 <code>SoundEvent</code> 对象。</p>
-<h3>生活比喻：声音系统 = 餐厅的背景音乐系统</h3>
+<li><strong>声音</strong> = 游戏的听觉反馈（脚步声、爆炸声、BGM�?</li>
+</ul>Minecraft 的声音系统就像一�?<em>*音响调音�?</em>，负责管理和播放游戏中各种声音。每一�?音效"（比如挖掘石头、僵尸的呻吟）都对应一�?<code>SoundEvent</code> 对象�?
+<h3>生活比喻：声音系�?= 餐厅的背景音乐系�?</h3>
 <p>想象你在餐厅里：
-<ul><li><strong>SoundEvent</strong> = 歌曲列表中的某一首歌（如"生日快乐"）</li>
-<li><strong>SoundCategory</strong> = 不同的音量通道（背景音乐、顾客谈话、厨房噪音）</li>
-<li><strong>SoundManager</strong> = 音响调音台，决定每首歌从哪个喇叭播放、音量多大</li>
-<li><strong>播放器</strong> = 服务员按按钮点歌</li></ul></p>
-<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
-<h3>声音播放流程图</h3>
+<ul><li><strong>SoundEvent</strong> = 歌曲列表中的某一首歌（如"生日快乐"�?- <strong>SoundCategory</strong> = 不同的音量通道（背景音乐、顾客谈话、厨房噪音）</li>
+<li><strong>SoundManager</strong> = 音响调音台，决定每首歌从哪个喇叭播放、音量多�?- <em>*播放�?</em> = 服务员按按钮点歌</li></ul></p>
+<h2 id="图解（Mermaid�?">图解（Mermaid�?</h2>
+<h3>声音播放流程�?</h3>
 <div class="mermaid">flowchart TD
-    A[玩家触发事件<br/>如: 挖掘方块] --> B[获取 SoundEvent]
+    A[玩家触发事件<br/>�? 挖掘方块] --> B[获取 SoundEvent]
     B --> C[确定 SoundCategory]
     C --> D[调用 World#playSound]
     D --> E[SoundManager 接收请求]
@@ -548,28 +552,25 @@
     SoundEvent --> SoundCategory : 属于某个类别
     BlockSoundGroup --> SoundEvent : 包含多个声音事件
     
-    note for SoundEvent "相当于'歌曲名'"
-    note for SoundCategory "相当于'音量通道'"
-    note for BlockSoundGroup "相当于'一套地板音效'"</div>
-<h3>声音播放时序图</h3>
+    note for SoundEvent "相当�?歌曲�?"
+    note for SoundCategory "相当�?音量通道'"
+    note for BlockSoundGroup "相当�?一套地板音�?"</div>
+<h3>声音播放时序�?</h3>
 <div class="mermaid">sequenceDiagram
     participant Player as 玩家
-    participant World as World/服务端
-    participant SM as SoundManager
-    participant Mixer as 音频混音器
-    
+    participant World as World/服务�?    participant SM as SoundManager
+    participant Mixer as 音频混音�?    
     Player->>World: 挖掘钻石矿石
     World->>World: 生成方块破坏粒子
     World->>SM: playSound(BLOCK_DIAMOND_ORE_BREAK, BLOCKS)
     SM->>SM: 获取 BLOCKS 音量设置
     SM->>SM: 计算实际音量 = 基础音量 × BLOCKS音量
-    SM->>Mixer: 发送音频数据
-    Mixer->>Player: 播放 .ogg 文件
+    SM->>Mixer: 发送音频数�?    Mixer->>Player: 播放 .ogg 文件
     
-    Note over Player,Mixer: 整个过程在几个 tick 内完成</div>
+    Note over Player,Mixer: 整个过程在几�?tick 内完�?</div>
 <h2 id="核心代码">核心代码</h2>
 <h3>1. SoundEvent - 声音事件</h3>
-<p><code>SoundEvent</code> 是声音系统的核心类，代表一个具体的声音。</p>
+<p><code>SoundEvent</code> 是声音系统的核心类，代表一个具体的声音�?</p>
 <pre class="code-block"><code class="language-java">public class SoundEvent {
     private final Identifier id;              // 声音的唯一标识
     private final float distanceToTravel;    // 声音能传播的距离
@@ -580,37 +581,33 @@
         return new SoundEvent(id, 16.0f, false);
     }
     
-    // 创建一个自定义传播距离的声音事件
-    public static SoundEvent of(Identifier id, float distanceToTravel) {
+    // 创建一个自定义传播距离的声音事�?    public static SoundEvent of(Identifier id, float distanceToTravel) {
         return new SoundEvent(id, distanceToTravel, true);
     }
     
     public Identifier getId() { return this.id; }
 }</code></pre>
-<p><strong>萌新理解</strong>：SoundEvent 就像歌曲的"歌名"，告诉游戏"我要播放哪首歌"。</p>
+<p><strong>萌新理解</strong>：SoundEvent 就像歌曲�?歌名"，告诉游�?我要播放哪首�?�?
 <h3>2. SoundCategory - 声音类别</h3>
-<p><code>SoundCategory</code> 是一个枚举，定义了游戏中所有的音量通道。</p>
+<p><code>SoundCategory</code> 是一个枚举，定义了游戏中所有的音量通道�?</p>
 <pre class="code-block"><code class="language-java">public enum SoundCategory {
     MASTER(&quot;master&quot;),      // 总音量（所有声音的总开关）
     MUSIC(&quot;music&quot;),        // 背景音乐
-    RECORDS(&quot;record&quot;),     // 唱片机音乐
-    WEATHER(&quot;weather&quot;),    // 天气声音（雨声、雷声）
+    RECORDS(&quot;record&quot;),     // 唱片机音�?    WEATHER(&quot;weather&quot;),    // 天气声音（雨声、雷声）
     BLOCKS(&quot;block&quot;),        // 方块声音（挖掘、放置）
     HOSTILE(&quot;hostile&quot;),    // 敌对生物声音
     NEUTRAL(&quot;neutral&quot;),    // 中立生物声音
     PLAYERS(&quot;player&quot;),     // 玩家声音
-    AMBIENT(&quot;ambient&quot;),    // 环境声音（洞穴背景音）
-    VOICE(&quot;voice&quot;);        // 语音/生物叫声
+    AMBIENT(&quot;ambient&quot;),    // 环境声音（洞穴背景音�?    VOICE(&quot;voice&quot;);        // 语音/生物叫声
     
     private final String name;
 }</code></pre>
-<p><strong>生活比喻</strong>：
-<ul><li>想象你的电脑音量设置面板</li>
-<li>"主音量"滑块 = MASTER</li>
+<p><strong>生活比喻</strong>�?- 想象你的电脑音量设置面板
+<ul><li>"主音�?滑块 = MASTER</li>
 <li>"音乐"滑块 = MUSIC</li>
 <li>"系统音效"滑块 = BLOCKS</li></ul></p>
-<h3>3. BlockSoundGroup - 方块音效组</h3>
-<p>每个方块都关联一个 <code>BlockSoundGroup</code>，定义方块相关的所有声音。</p>
+<h3>3. BlockSoundGroup - 方块音效�?</h3>
+<p>每个方块都关联一�?<code>BlockSoundGroup</code>，定义方块相关的所有声音�?</p>
 <pre class="code-block"><code class="language-java">public class BlockSoundGroup {
     public static final BlockSoundGroup STONE = new BlockSoundGroup(
         1.0f, 1.0f,                    // volume, pitch
@@ -630,9 +627,8 @@
         SoundEvents.BLOCK_WOOD_FALL
     );
     
-    // 金属方块：音调更高
-    public static final BlockSoundGroup METAL = new BlockSoundGroup(
-        1.0f, 1.5f,                    // 注意 pitch 是 1.5f
+    // 金属方块：音调更�?    public static final BlockSoundGroup METAL = new BlockSoundGroup(
+        1.0f, 1.5f,                    // 注意 pitch �?1.5f
         SoundEvents.BLOCK_METAL_BREAK,
         SoundEvents.BLOCK_METAL_STEP,
         SoundEvents.BLOCK_METAL_PLACE,
@@ -640,21 +636,17 @@
         SoundEvents.BLOCK_METAL_FALL
     );
 }</code></pre>
-<h3>4. 播放声音的常用方法</h3>
-<h4>在服务端/World 中播放</h4>
+<h3>4. 播放声音的常用方�?</h3>
+<h4>在服务端/World 中播�?</h4>
 <pre class="code-block"><code class="language-java">world.playSound(
-    player,                              // 可以为 null 表示对所有玩家播放
-    x, y, z,                             // 声音播放的位置
-    SoundEvents.ENTITY_ZOMBIE_AMBIENT,   // 要播放的声音
+    player,                              // 可以�?null 表示对所有玩家播�?    x, y, z,                             // 声音播放的位�?    SoundEvents.ENTITY_ZOMBIE_AMBIENT,   // 要播放的声音
     SoundCategory.HOSTILE,               // 声音类别
     1.0f,                                // 音量 (0.0 - 无限)
     1.0f                                 // 音调 (0.5 - 2.0)
 );
 
-// 或者使用实体作为位置来源
-world.playSound(
-    null,                                // 对所有玩家播放
-    entity.getX(), entity.getY(), entity.getZ(),
+// 或者使用实体作为位置来�?world.playSound(
+    null,                                // 对所有玩家播�?    entity.getX(), entity.getY(), entity.getZ(),
     SoundEvents.ENTITY_EXPLODE,
     SoundCategory.HOSTILE,
     1.0f, 1.0f
@@ -663,18 +655,16 @@ world.playSound(
 <pre class="code-block"><code class="language-java">MinecraftClient.getInstance().getSoundManager()
     .play(BackgroundMusicSelector);  // 播放背景音乐
 
-// 或者使用粒子/特效同时播放
+// 或者使用粒�?特效同时播放
 world.addParticle(ParticleTypes.EXPLOSION, x, y, z, 0, 0, 0);
 world.playSound(x, y, z, SoundEvents.ENTITY_GENERIC_EXPLODE, 
-    SoundCategory.HOSTILE, 1.0f, 1.0f, true);  // 最后 true 表示随机偏移</code></pre>
+    SoundCategory.HOSTILE, 1.0f, 1.0f, true);  // 最�?true 表示随机偏移</code></pre>
 <h2 id="实战演示">实战演示</h2>
 <h3>场景：创建一个自定义爆炸声音</h3>
-<h4>第一步：定义声音事件（服务端注册）</h4>
-<pre class="code-block"><code class="language-java">public static final SoundEvent MY_CUSTOM_EXPLOSION = 
-    SoundEvents.register(&quot;my_mod.custom_explosion&quot;);
+<h4>第一步：定义声音事件（服务端注册�?</h4>
+<pre class="code-block"><code class="language-java">    SoundEvents.register(&quot;my_mod.custom_explosion&quot;);
 
-// 或者使用辅助方法
-private static SoundEvent register(String id) {
+// 或者使用辅助方�?private static SoundEvent register(String id) {
     return Registry.register(
         Registries.SOUND_EVENT,
         new Identifier(&quot;my_mod&quot;, id),
@@ -682,7 +672,7 @@ private static SoundEvent register(String id) {
     );
 }</code></pre>
 <h4>第二步：创建资源文件</h4>
-<p>在资源包中创建声音 JSON 文件：</p>
+<p>在资源包中创建声�?JSON 文件�?</p>
 <pre class="code-block"><code class="language-json">{
     &quot;my_mod.custom_explosion&quot;: {
         &quot;sounds&quot;: [
@@ -691,22 +681,20 @@ private static SoundEvent register(String id) {
         &quot;subtitle&quot;: &quot;my_mod.subtitle.custom_explosion&quot;
     }
 }</code></pre>
-<h4>第三步：放置实际的音频文件</h4>
+<h4>第三步：放置实际的音频文�?</h4>
 <pre class="code-block"><code class="language-text">resources/assets/my_mod/sounds/explosion/
-    └── custom_boom.ogg  ← 必须是 OGG Vorbis 格式！</code></pre>
+    └── custom_boom.ogg  �?必须�?OGG Vorbis 格式�?</code></pre>
 <h4>第四步：在代码中播放</h4>
 <pre class="code-block"><code class="language-java">public boolean use(ItemStack stack, World world, 
                    PlayerEntity player) {
     if (!world.isClient) {
         // 播放爆炸声音
         world.playSound(
-            null,  // 对所有玩家播放
-            player.getX(), player.getY(), player.getZ(),
+            null,  // 对所有玩家播�?            player.getX(), player.getY(), player.getZ(),
             ModSounds.MY_CUSTOM_EXPLOSION,
             SoundCategory.HOSTILE,  // 作为敌对生物类别
             2.0f,   // 大音量（爆炸声应该大声）
-            0.8f    // 低音调（沉闷的爆炸声）
-        );
+            0.8f    // 低音调（沉闷的爆炸声�?        );
         
         // 创建爆炸效果
         world.createExplosion(...);
@@ -714,13 +702,10 @@ private static SoundEvent register(String id) {
     return true;
 }</code></pre>
 <h3>场景：播放音符盒音乐</h3>
-<pre class="code-block"><code class="language-java">public void playNote(BlockPos pos) {
-    world.playSound(
+<pre class="code-block"><code class="language-java">    world.playSound(
         null,
         pos.getX(), pos.getY(), pos.getZ(),
-        SoundEvents.BLOCK_NOTE_BLOCK_HARP,  // 音符盒声音
-        SoundCategory.RECORDS,               // 唱片机类别
-        3.0f,                                // 大声
+        SoundEvents.BLOCK_NOTE_BLOCK_HARP,  // 音符盒声�?        SoundCategory.RECORDS,               // 唱片机类�?        3.0f,                                // 大声
         1.0f                                 // 正常音调
     );
 }
@@ -730,52 +715,49 @@ float[] notePitches = {0.5f, 0.53f, 0.56f, 0.59f, ...};
 float pitch = notePitches[noteIndex];
 world.playSound(null, x, y, z, SoundEvents.BLOCK_NOTE_BLOCK_HARP, 
     SoundCategory.RECORDS, 1.0f, pitch);</code></pre>
-<h2 id="常见问题与解决方案">常见问题与解决方案</h2>
-<h3>Q1: 为什么我的声音播放不出来？</h3>
-<p><strong>可能原因：</strong>
-<ul><li>声音文件格式不对 → 必须是 <code>.ogg</code> 格式</li>
-<li>sounds.json 配置错误 → 检查 JSON 语法</li>
-<li>资源包没有正确加载 → 确认资源包在正确位置</li></ul></p>
-<p><strong>排查步骤：</strong></p>
-<pre class="code-block"><code class="language-java">// 在启动参数添加: --debug的声音会显示在控制台</code></pre>
-<h3>Q2: 如何让声音只在特定条件下播放？</h3>
-<pre class="code-block"><code class="language-java">if (world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
-    world.playSound(...);
+<h2 id="常见问题与解决方�?">常见问题与解决方�?</h2>
+<h3>Q1: 为什么我的声音播放不出来�?</h3>
+<p><em>*可能原因�?</em>
+<ul><li>声音文件格式不对 �?必须�?<code>.ogg</code> 格式</li>
+<li>sounds.json 配置错误 �?检�?JSON 语法</li>
+<li>资源包没有正确加�?�?确认资源包在正确位置</li></ul></p>
+<p><em>*排查步骤�?</em></p>
+<pre class="code-block"><code class="language-java">// 开启调试模式查看声音加载日�?// 在启动参数添�? --debug的声音会显示在控制台</code></pre>
+<h3>Q2: 如何让声音只在特定条件下播放�?</h3>
+<pre class="code-block"><code class="language-java">    world.playSound(...);
 }
 
-// 检查距离
-double distance = player.squaredDistanceTo(sourcePos);
+// 检查距�?double distance = player.squaredDistanceTo(sourcePos);
 if (distance &lt; 256) {  // 16格的平方
     world.playSound(...);
 }</code></pre>
-<h3>Q3: 声音音量是如何计算的？</h3>
+<h3>Q3: 声音音量是如何计算的�?</h3>
 <pre class="code-block"><code class="language-java">float actualVolume = baseVolume * categoryVolume * globalVolume;
-actualVolume = Math.min(actualVolume, 1.0f);  // 最大1.0f</code></pre>
+actualVolume = Math.min(actualVolume, 1.0f);  // 最�?.0f</code></pre>
 <h2 id="小结">小结</h2>
-<table class="data-table"><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td><code>SoundEvent</code></td><td>代表一个具体声音</td><td>歌曲名称</td></tr><tr><td><code>SoundCategory</code></td><td>控制不同类别的音量</td><td>音量调节旋钮</td></tr><tr><td><code>BlockSoundGroup</code></td><td>一组方块相关的音效</td><td>地板材质音效套装</td></tr><tr><td><code>SoundEvents</code></td><td>所有原版声音的注册表</td><td>歌曲库</td></tr><tr><td><code>World#playSound</code></td><td>播放声音的方法</td><td>按下播放键</td></tr></tbody></table>
-<strong>核心要点：</strong>
-<ul><li>SoundEvent 是声音的"身份证"</li>
+<table class="data-table"><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td><code>SoundEvent</code></td><td>代表一个具体声�?</td><td>歌曲名称</td></tr><tr><td><code>SoundCategory</code></td><td>控制不同类别的音�?</td><td>音量调节旋钮</td></tr><tr><td><code>BlockSoundGroup</code></td><td>一组方块相关的音效</td><td>地板材质音效套装</td></tr><tr><td><code>SoundEvents</code></td><td>所有原版声音的注册�?</td><td>歌曲�?</td></tr><tr><td><code>World#playSound</code></td><td>播放声音的方�?</td><td>按下播放�?</td></tr></tbody></table>
+<em>*核心要点�?</em>
+<ul><li>SoundEvent 是声音的"身份�?</li>
 <li>SoundCategory 控制声音属于哪个音量通道</li>
 <li>播放声音需要：位置 + 声音事件 + 类别 + 音量 + 音调</li>
-<li>声音文件必须是 <code>.ogg</code> 格式</li></ul></p>
+<li>声音文件必须�?<code>.ogg</code> 格式</li></ul></p>
 <h2 id="练习">练习</h2>
 <h3>练习 1：基础声音播放</h3>
-<p>创建一个 mod，在玩家右键点击你的方块时播放一个自定义声音。</p>
-<p><strong>提示：</strong>
+<p>创建一�?mod，在玩家右键点击你的方块时播放一个自定义声音�?
+<em>*提示�?</em>
 <ul><li>注册 SoundEvent</li>
 <li>创建 sounds.json</li>
 <li>放置 .ogg 文件</li>
-<li>在 onUse 方法中调用 world.playSound()</li></ul></p>
+<li>�?onUse 方法中调�?world.playSound()</li></ul></p>
 <h3>练习 2：不同类别的音量</h3>
-<p>尝试使用不同的 SoundCategory 播放同一个 SoundEvent，体验音量控制的效果。</p>
+<p>尝试使用不同�?SoundCategory 播放同一�?SoundEvent，体验音量控制的效果�?
 <h3>练习 3：音符盒</h3>
-<p>创建一个可以发出不同音符的方块，模拟 Minecraft 原版的音符盒功能。</p>
+<p>创建一个可以发出不同音符的方块，模�?Minecraft 原版的音符盒功能�?
 <h2 id="相关链接">相关链接</h2>
 <h3>内部链接</h3>
-<p><ul><li><a href="../Part-4-Entity/20-entity-intro.html">实体系统基础</a> - 声音常与实体交互</li>
-<li><a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a> - 物品触发声音</li>
-<li><a href="./particle-system.html">粒子系统</a> - 声音与粒子配合使用</li>
-<li><a href="../Part-8-Resource/40-resource-pack.html">资源系统</a> - 声音文件配置</li></ul></p>
+<p><ul><li><a href="/mc/1.21/tutorials/Part-4-Entity/20-entity-intro/">实体系统基础</a> - 声音常与实体交互</li>
+<li><a href="/mc/1.21/tutorials/Part-3-Block-Item/17-item-basics/">物品系统</a> - 物品触发声音</li>
+<li><a href="./particle-system.md">粒子系统</a> - 声音与粒子配合使�?- <a href="/mc/1.21/tutorials/Part-8-Resource/40-resource-pack/">资源系统</a> - 声音文件配置</li></ul></p>
 <h3>外部资源</h3>
 <p><ul><li><a href="https://minecraft.fandom.com/wiki/Sounds.json">Minecraft Wiki: sounds.json</a></li>
 <li><a href="https://audio.online-convert.com/convert-to-ogg">OGG Vorbis 格式转换工具</a></li>

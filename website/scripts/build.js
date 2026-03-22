@@ -181,13 +181,13 @@ function fullBuild() {
 
     const startTime = Date.now();
 
-    // Build blog
-    Logger.info('Building blog...');
-    const blogResult = runConverter(CONFIG.blogDir, 'Blog');
+    // 仓库根目录文章（Hugo/legacy）
+    Logger.info('Building root posts site...');
+    const blogResult = runConverter(CONFIG.blogDir, 'RootSite');
     if (blogResult.success) {
-        Logger.success('Blog built successfully');
+        Logger.success('Root posts site built successfully');
     } else {
-        Logger.error('Blog build failed');
+        Logger.error('Root posts site build failed');
         console.log(blogResult.output);
     }
 
@@ -217,17 +217,17 @@ function incrementalBuild() {
     let totalChanged = 0;
     let totalProcessed = 0;
 
-    // Check blog posts
+    // Check root posts
     const blogChanged = findChangedFiles(CONFIG.blogPostsDir, CONFIG.blogDir);
     if (blogChanged.length > 0) {
-        Logger.info(`Blog: ${blogChanged.length} changed file(s)`);
-        const result = runConverter(CONFIG.blogDir, 'Blog');
+        Logger.info(`Root posts: ${blogChanged.length} changed file(s)`);
+        const result = runConverter(CONFIG.blogDir, 'RootSite');
         if (result.success) {
-            Logger.success(`Blog: ${blogChanged.length} file(s) processed`);
+            Logger.success(`Root posts: ${blogChanged.length} file(s) processed`);
             totalProcessed += blogChanged.length;
         }
     } else {
-        Logger.info('Blog: No changes');
+        Logger.info('Root posts: No changes');
     }
 
     // Check website content
@@ -307,7 +307,7 @@ function watchMode() {
     // Watch blog posts
     const blogWatcher = fs.watch(CONFIG.blogPostsDir, { recursive: true }, (eventType, filename) => {
         if (filename && filename.endsWith('.md')) {
-            scheduleBuild('Blog');
+            scheduleBuild('RootSite');
         }
     });
 
@@ -339,12 +339,12 @@ function watchMode() {
             lastBuild = Date.now();
             Logger.info(`\n[${new Date().toLocaleTimeString()}] ${source} changed - rebuilding...`);
 
-            if (source === 'Blog') {
-                const result = runConverter(CONFIG.blogDir, 'Blog');
+            if (source === 'RootSite') {
+                const result = runConverter(CONFIG.blogDir, 'RootSite');
                 if (result.success) {
-                    Logger.success('Blog rebuilt');
+                    Logger.success('Root posts site rebuilt');
                 } else {
-                    Logger.error('Blog rebuild failed');
+                    Logger.error('Root posts site rebuild failed');
                 }
             } else {
                 const result = runConverter(CONFIG.websiteDir, 'Website');

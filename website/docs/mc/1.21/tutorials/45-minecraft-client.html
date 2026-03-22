@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>45 minecraft client - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>45 minecraft client</span>
                 </nav>
@@ -456,88 +466,36 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>第45章 Minecraft 客户端核心</h1>
+                <h1>�?5�?Minecraft 客户端核�?</h1>
 <h2 id="目标">目标</h2>
-<p><ul><li>理解 <code>MinecraftClient</code> 是什么</li>
-<li>了解客户端的游戏主循环</li>
-<li>掌握客户端的线程模型</li>
+<p><ul><li>理解 <code>MinecraftClient</code> 是什�?- 了解客户端的游戏主循�?- 掌握客户端的线程模型</li>
 <li>区分客户端和服务端的不同职责</li></ul></p>
 <h2 id="前置知识">前置知识</h2>
 <p><ul><li>了解 Java 基础（线程、对象）</li>
-<li>知道什么是游戏循环（Game Loop）</li>
-<li>了解 Part-6 网络部分的基本概念</li></ul></p>
-<h2 id="核心概念">核心概念</h2>
-<h3>什么是 MinecraftClient？</h3>
-<p>想象一下你家门口的<strong>快递柜</strong>：</p>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
-│                    MinecraftClient                    │
-│                                                      │
-│   它是客户端的&quot;大脑&quot;，负责：                            │
-│   - 显示画面给玩家看                                   │
-│   - 接收玩家的键盘鼠标操作                              │
-│   - 播放声音效果                                       │
-│   - 管理网络连接（和服务器通信）                         │
-└─────────────────────────────────────────────────────┘</code></pre>
-<p><code>MinecraftClient</code> 是 Minecraft 客户端的主类，就像厨房里的<strong>总厨师长</strong>：</p>
-<p><ul><li><strong>服务端（MinecraftServer）</strong>：负责"做菜"（游戏逻辑、生成世界）</li>
-<li><strong>客户端（MinecraftClient）</strong>：负责"摆盘"（把游戏画面展示给玩家）</li></ul></p>
-<h3>客户端 vs 服务端</h3>
-<table class="data-table"><thead><tr><th>职责</th><th>客户端 (Client)</th><th>服务端 (Server)</th></tr></thead><tbody><tr><td><strong>显示画面</strong></td><td>✅ 必须！</td><td>❌ 不需要</td></tr><tr><td><strong>处理输入</strong></td><td>✅ 必须！</td><td>❌ 不需要</td></tr><tr><td><strong>生成世界</strong></td><td>❌ 不负责</td><td>✅ 必须</td></tr><tr><td><strong>物理模拟</strong></td><td>预测性模拟</td><td>权威模拟</td></tr><tr><td><strong>多人通信</strong></td><td>发送操作，接收结果</td><td>接收操作，广播结果</td></tr></tbody></table>
-<h3>游戏主循环</h3>
-<p>就像动画片的制作原理——每秒播放多张图片，让你感觉画面在"动"。</p>
+<li>知道什么是游戏循环（Game Loop�?- 了解 Part-6 网络部分的基本概�?</li>
+</ul><h2 id="核心概念">核心概念</h2>
+<h3>什么是 MinecraftClient�?</h3>
+<p>想象一下你家门口的<strong>快递柜</strong>�?</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────�?�?                   MinecraftClient                    �?�?                                                     �?�?  它是客户端的&quot;大脑&quot;，负责：                            �?�?  - 显示画面给玩家看                                   �?�?  - 接收玩家的键盘鼠标操�?                             �?�?  - 播放声音效果                                       �?�?  - 管理网络连接（和服务器通信�?                        �?└─────────────────────────────────────────────────────�?</code></pre>
+<p><code>MinecraftClient</code> �?Minecraft 客户端的主类，就像厨房里�?<em>总厨师长</em>*�?
+<ul><li><em>*服务端（MinecraftServer�?</em>：负�?做菜"（游戏逻辑、生成世界）</li>
+<li><em>*客户端（MinecraftClient�?</em>：负�?摆盘"（把游戏画面展示给玩家）</li></ul></p>
+<h3>客户�?vs 服务�?</h3>
+<table class="data-table"><thead><tr><th>职责</th><th>客户�?(Client)</th><th>服务�?(Server)</th></tr></thead><tbody><tr><td><strong>显示画面</strong></td><td>�?必须�?</td><td>�?不需�?</td></tr><tr><td><strong>处理输入</strong></td><td>�?必须�?</td><td>�?不需�?</td></tr><tr><td><strong>生成世界</strong></td><td>�?不负�?</td><td>�?必须</td></tr><tr><td><strong>物理模拟</strong></td><td>预测性模�?</td><td>权威模拟</td></tr><tr><td><strong>多人通信</strong></td><td>发送操作，接收结果</td><td>接收操作，广播结�?</td></tr></tbody></table>
+<h3>游戏主循�?</h3>
+<p>就像动画片的制作原理——每秒播放多张图片，让你感觉画面�?�?�?</p>
 <pre class="code-block"><code class="language-text">Minecraft 的主循环 = 无限循环 + 两大任务
 
-┌──────────────────────────────────────────────────────────┐
-│                    游戏主循环 (run方法)                    │
-│                                                          │
-│   while (游戏在运行) {                                    │
-│       ┌─────────────────────────────────┐                │
-│       │ 1. 处理输入                     │                │
-│       │    - 键盘有没有按？               │                │
-│       │    - 鼠标有没有动？               │                │
-│       └─────────────────────────────────┘                │
-│                    ↓                                      │
-│       ┌─────────────────────────────────┐                │
-│       │ 2. 更新游戏逻辑（Tick）           │                │
-│       │    - 移动玩家                    │                │
-│       │    - 更新实体                    │                │
-│       └─────────────────────────────────┘                │
-│                    ↓                                      │
-│       ┌─────────────────────────────────┐                │
-│       │ 3. 渲染画面（Render）            │                │
-│       │    - 画天空                      │                │
-│       │    - 画方块                      │                │
-│       │    - 画玩家                      │                │
-│       │    - 画HUD                       │                │
-│       └─────────────────────────────────┘                │
-│   }                                                      │
-└──────────────────────────────────────────────────────────┘</code></pre>
+┌──────────────────────────────────────────────────────────�?�?                   游戏主循�?(run方法)                    �?�?                                                         �?�?  while (游戏在运�? {                                    �?�?      ┌─────────────────────────────────�?               �?�?      �?1. 处理输入                     �?               �?�?      �?   - 键盘有没有按�?              �?               �?�?      �?   - 鼠标有没有动�?              �?               �?�?      └─────────────────────────────────�?               �?�?                   �?                                     �?�?      ┌─────────────────────────────────�?               �?�?      �?2. 更新游戏逻辑（Tick�?          �?               �?�?      �?   - 移动玩家                    �?               �?�?      �?   - 更新实体                    �?               �?�?      └─────────────────────────────────�?               �?�?                   �?                                     �?�?      ┌─────────────────────────────────�?               �?�?      �?3. 渲染画面（Render�?           �?               �?�?      �?   - 画天�?                     �?               �?�?      �?   - 画方�?                     �?               �?�?      �?   - 画玩�?                     �?               �?�?      �?   - 画HUD                       �?               �?�?      └─────────────────────────────────�?               �?�?  }                                                      �?└──────────────────────────────────────────────────────────�?</code></pre>
 <h3>线程模型</h3>
-<p>Minecraft 客户端像一个<strong>餐厅厨房</strong>，有多个厨师同时工作：</p>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
-│                      客户端线程模型                                │
-│                                                                  │
-│  ┌──────────────────┐                                             │
-│  │   主线程          │  ← 运行游戏主循环 (run方法)                    │
-│  │   (Client Thread) │  ← 处理输入、更新逻辑、渲染                    │
-│  └────────┬─────────┘                                             │
-│           │                                                        │
-│           ├──────────────────┬──────────────────┐                  │
-│           ↓                  ↓                  ↓                  │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐           │
-│  │  渲染线程    │    │  资源加载线程 │    │  网络线程    │           │
-│  │  (Render)   │    │  (Resource) │    │  (Network) │           │
-│  └─────────────┘    └─────────────┘    └─────────────┘           │
-│       ↑                  ↑                  ↑                       │
-│       │                  │                  │                       │
-│  画到屏幕上        加载材质/模型        接收/发送数据包               │
-└─────────────────────────────────────────────────────────────────┘</code></pre>
-<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
-<h3>MinecraftClient 组件关系图</h3>
+<p>Minecraft 客户端像一�?<em>餐厅厨房</em>*，有多个厨师同时工作�?</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────�?�?                     客户端线程模�?                               �?�?                                                                 �?�? ┌──────────────────�?                                            �?�? �?  主线�?         �? �?运行游戏主循�?(run方法)                    �?�? �?  (Client Thread) �? �?处理输入、更新逻辑、渲�?                   �?�? └────────┬─────────�?                                            �?�?          �?                                                       �?�?          ├──────────────────┬──────────────────�?                 �?�?          �?                 �?                 �?                 �?�? ┌─────────────�?   ┌─────────────�?   ┌─────────────�?          �?�? �? 渲染线程    �?   �? 资源加载线程 �?   �? 网络线程    �?          �?�? �? (Render)   �?   �? (Resource) �?   �? (Network) �?          �?�? └─────────────�?   └─────────────�?   └─────────────�?          �?�?      �?                 �?                 �?                      �?�?      �?                 �?                 �?                      �?�? 画到屏幕�?       加载材质/模型        接收/发送数据包               �?└─────────────────────────────────────────────────────────────────�?</code></pre>
+<h2 id="图解（Mermaid�?">图解（Mermaid�?</h2>
+<h3>MinecraftClient 组件关系�?</h3>
 <div class="mermaid">flowchart TB
-    subgraph MC["MinecraftClient (客户端大脑)"]
+    subgraph MC["MinecraftClient (客户端大�?"]
         direction TB
-        main["run() 主循环"]
+        main["run() 主循�?]
         tick["tick() 游戏更新"]
         render["render() 画面渲染"]
     end
@@ -548,8 +506,8 @@
     end
 
     subgraph Render["渲染系统"]
-        gameRenderer["GameRenderer 游戏渲染器"]
-        worldRenderer["WorldRenderer 世界渲染器"]
+        gameRenderer["GameRenderer 游戏渲染�?]
+        worldRenderer["WorldRenderer 世界渲染�?]
         inGameHud["InGameHud 屏幕HUD"]
     end
 
@@ -559,7 +517,7 @@
     end
 
     subgraph World["世界"]
-        clientWorld["ClientWorld 客户端世界"]
+        clientWorld["ClientWorld 客户端世�?]
     end
 
     main --> tick
@@ -584,34 +542,27 @@
 <div class="mermaid">sequenceDiagram
     participant Player as 玩家
     participant Client as MinecraftClient
-    participant Network as 网络层
-    participant Server as 服务端
-    participant World as 游戏世界
+    participant Network as 网络�?    participant Server as 服务�?    participant World as 游戏世界
 
     Note over Player,Server: 单人模式 vs 多人模式
 
     rect rgb(200, 230, 200)
-        Note over Player,World: 单人模式 (集成服务器)
-        Player->>Client: 按 W 键移动
-        Client->>Client: 本地预测移动
+        Note over Player,World: 单人模式 (集成服务�?
+        Player->>Client: �?W 键移�?        Client->>Client: 本地预测移动
         Client->>Client: 渲染画面
         Client->>World: 更新玩家位置
     end
 
     rect rgb(200, 200, 230)
-        Note over Player,Server: 多人模式 (远程服务器)
-        Player->>Client: 按 W 键移动
-        Client->>Client: 本地预测移动
-        Client->>Network: 发送 PlayerMoveC2SPacket
+        Note over Player,Server: 多人模式 (远程服务�?
+        Player->>Client: �?W 键移�?        Client->>Client: 本地预测移动
+        Client->>Network: 发�?PlayerMoveC2SPacket
         Network->>Server: 网络传输
-        Server->>Server: 验证并更新位置
-        Server->>World: 广播玩家移动
-        World->>Network: 世界状态更新
-        Network->>Client: 同步状态
-        Client->>Client: 渲染画面
+        Server->>Server: 验证并更新位�?        Server->>World: 广播玩家移动
+        World->>Network: 世界状态更�?        Network->>Client: 同步状�?        Client->>Client: 渲染画面
     end</div>
 <h2 id="核心代码">核心代码</h2>
-<h3>MinecraftClient 的关键组件</h3>
+<h3>MinecraftClient 的关键组�?</h3>
 <pre class="code-block"><code class="language-java">
 public class MinecraftClient {
     // ====== 输入设备 ======
@@ -619,29 +570,24 @@ public class MinecraftClient {
     public final Keyboard keyboard;     // 键盘
 
     // ====== 渲染系统 ======
-    public final GameRenderer gameRenderer;   // 游戏渲染器
-    public final WorldRenderer worldRenderer; // 世界渲染器
-    public final InGameHud inGameHud;        // 屏幕HUD
+    public final GameRenderer gameRenderer;   // 游戏渲染�?    public final WorldRenderer worldRenderer; // 世界渲染�?    public final InGameHud inGameHud;        // 屏幕HUD
 
-    // ====== 世界与玩家 ======
-    @Nullable public ClientWorld world;      // 客户端世界
-    @Nullable public ClientPlayerEntity player; // 玩家实体
+    // ====== 世界与玩�?======
+    @Nullable public ClientWorld world;      // 客户端世�?    @Nullable public ClientPlayerEntity player; // 玩家实体
 
     // ====== 网络 ======
     @Nullable public ClientPlayNetworkHandler networkHandler;
-    @Nullable public IntegratedServer server; // 集成服务器(单人)
+    @Nullable public IntegratedServer server; // 集成服务�?单人)
 }</code></pre>
-<h3>游戏主循环核心代码</h3>
+<h3>游戏主循环核心代�?</h3>
 <pre class="code-block"><code class="language-java">
 public void run() {
-    // 主循环
-    while (this.running) {
+    // 主循�?    while (this.running) {
         try {
             // 开始性能分析
             profiler.startTick();
             
-            // 渲染一帧
-            this.render(!bl);  // bl = 是否是崩溃后恢复
+            // 渲染一�?            this.render(!bl);  // bl = 是否是崩溃后恢复
             
             profiler.endTick();
         } catch (OutOfMemoryError e) {
@@ -675,44 +621,31 @@ public void tick(boolean paused) {
 }</code></pre>
 <h2 id="实战演示">实战演示</h2>
 <h3>场景：玩家按下跳跃键</h3>
-<p><ul><li><strong>玩家操作</strong>：按空格键跳跃</li>
-<li><strong>输入检测</strong>：</li>
-</ul>   
-<pre class="code-block"><code class="language-java">   // KeyboardInput.tick() 检测按键
-   this.jumping = this.settings.jumpKey.isPressed();</code></pre></p>
-<p><ul><li><strong>本地预测</strong>：</li>
-</ul>   - 客户端先在本地模拟跳跃动作
-   - 让玩家感觉操作是"即时响应"的
-<ul><li><strong>发送数据包</strong>：</li>
-</ul>   
-<pre class="code-block"><code class="language-java">   // 发送跳跃数据包给服务器
+<p><ul><li><strong>玩家操作</strong>：按空格键跳�?2. <em>*输入检�?</em>�?   </li>
+</ul><pre class="code-block"><code class="language-java">   // KeyboardInput.tick() 检测按�?   this.jumping = this.settings.jumpKey.isPressed();</code></pre></p>
+<p><ul><li><strong>本地预测</strong>�?   - 客户端先在本地模拟跳跃动�?   - 让玩家感觉操作是"即时响应"�?4. <strong>发送数据包</strong>�?   </li>
+</ul><pre class="code-block"><code class="language-java">   // 发送跳跃数据包给服务器
    PlayerActionC2SPacket packet = new PlayerActionC2SPacket(...);
    connection.send(packet);</code></pre></p>
-<p><ul><li><strong>服务器验证</strong>：</li>
-</ul>   - 服务器验证跳跃是否合法
-   - 广播给其他玩家
-<ul><li><strong>状态同步</strong>：</li>
-</ul>   - 客户端接收服务器确认
-   - 如果预测错误，进行"回滚"</p>
+<p><ul><li><strong>服务器验�?<em>�?   - 服务器验证跳跃是否合�?   - 广播给其他玩�?6. </strong>状态同�?</em>�?   - 客户端接收服务器确认</li>
+</ul>   - 如果预测错误，进�?回滚"</p>
 <h2 id="小结">小结</h2>
-<p><ul><li><strong>MinecraftClient</strong> = 客户端的主控制类，掌管渲染、输入、网络</li>
-<li><strong>游戏主循环</strong> = 处理输入 → 更新逻辑 → 渲染画面（无限循环）</li>
-<li><strong>客户端线程模型</strong> = 主线程 + 渲染线程 + 网络线程 + 资源加载线程</li>
-<li><strong>客户端预测</strong> = 在收到服务器确认前，本地模拟操作以减少延迟感</li>
-<li><strong>客户端 ≠ 服务端</strong> = 客户端负责显示，服务端负责逻辑</li></ul></p>
+<p><ul><li><strong>MinecraftClient</strong> = 客户端的主控制类，掌管渲染、输入、网�?2. <em>*游戏主循�?</em> = 处理输入 �?更新逻辑 �?渲染画面（无限循环）</li>
+<li><em>*客户端线程模�?</em> = 主线�?+ 渲染线程 + 网络线程 + 资源加载线程</li>
+<li><em>*客户端预�?</em> = 在收到服务器确认前，本地模拟操作以减少延迟感</li>
+<li><em>*客户�?�?服务�?</em> = 客户端负责显示，服务端负责逻辑</li></ul></p>
 <h2 id="练习">练习</h2>
-<p><ul><li>在源码中找到 <code>MinecraftClient.java</code>，阅读 <code>run()</code> 方法</li>
-<li>找出 <code>tick()</code> 方法，了解每个 tick 都做什么</li>
-<li>思考：为什么客户端需要"预测"玩家移动？</li></ul></p>
-<h2 id="相关链接">相关链接</h2>
-<p><ul><li>下一章：<a href="./46-render-system.html">第46章 渲染系统</a> - 深入了解渲染</li>
-<li>Part-6 网络：<a href="../Part-6-Network/33-network-intro.html">网络基础</a></li>
-<li>服务端对比：<a href="../Part-6-Network/33-network-intro.html">MinecraftServer 核心</a></li></ul></p>
+<p><ul><li>在源码中找到 <code>MinecraftClient.java</code>，阅�?<code>run()</code> 方法</li>
+<li>找出 <code>tick()</code> 方法，了解每�?tick 都做什�?3. 思考：为什么客户端需�?预测"玩家移动�?</li>
+</ul><h2 id="相关链接">相关链接</h2>
+<p><ul><li>下一章：<a href="./46-render-system.md">�?6�?渲染系统</a> - 深入了解渲染</li>
+<li>Part-6 网络：<a href="/mc/1.21/tutorials/Part-6-Network/33-network-intro/">网络基础</a></li>
+<li>服务端对比：<a href="/mc/1.21/tutorials/Part-6-Network/33-network-intro/">MinecraftServer 核心</a></li></ul></p>
 <p><hr></p>
 <h3>源码文件位置</h3>
-<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>MinecraftClient.java</td><td><code>net/minecraft/client/MinecraftClient.java</code></td><td>客户端主类，管理渲染、输入、网络</td></tr><tr><td>TickRecorder.java</td><td><code>net/minecraft/util/TickRecorder.java</code></td><td>Tick 录制器</td></tr><tr><td>Window.java</td><td><code>net/minecraft/client/Window.java</code></td><td>窗口管理类</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>MinecraftClient.java</td><td><code>net/minecraft/client/MinecraftClient.java</code></td><td>客户端主类，管理渲染、输入、网�?</td></tr><tr><td>TickRecorder.java</td><td><code>net/minecraft/util/TickRecorder.java</code></td><td>Tick 录制�?</td></tr><tr><td>Window.java</td><td><code>net/minecraft/client/Window.java</code></td><td>窗口管理�?</td></tr></tbody></table>
 <hr></p>
-<p><strong>关键词</strong>：MinecraftClient、Game Loop、Tick、Thread、Render、Input、Client Prediction
+<p><em>*关键�?</em>：MinecraftClient、Game Loop、Tick、Thread、Render、Input、Client Prediction
 </p>
             </div>
 

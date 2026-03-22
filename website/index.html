@@ -3,28 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Learning - Minecraft 开发学习站</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Minecraft Learning - MC 源码与模组开发文档站</title>
+    <meta name="description" content="Minecraft Learning: 探索 Minecraft 源码与模组开发的深度学习资源，支持 MC 各版本、Sodium、Iris 等热门模组">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/site-shell.css">
 </head>
 <body>
     <!-- 顶部进度条 -->
     <div class="progress-bar" id="progressBar"></div>
 
-    <!-- 导航栏 -->
-    <nav class="navbar">
+    <!-- 顶栏 - 与 docs/mc/index.html 完全一致的品牌顶栏 -->
+    <nav class="navbar" id="siteNavbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
                 <span>Minecraft Learning</span>
             </a>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <ul class="nav-links">
+            <ul class="nav-links" id="navLinks">
                 <li><a href="index.html" class="active">首页</a></li>
                 <li class="dropdown">
                     <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
@@ -32,123 +43,86 @@
                         <!-- 由 JS 动态生成 -->
                     </div>
                 </li>
-                <li><a href="catalog.html">文档目录</a></li>
                 <li><a href="about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <!-- 英雄区 -->
-    <header class="hero">
-        <div class="hero-content">
+    <!-- Hero Section - 绿色渐变，与 page-hero 视觉一致 -->
+    <header class="page-hero" id="heroSection">
+        <div class="hero-content" style="max-width: 800px;">
+            <!-- 徽章 -->
             <div class="hero-badge">
-                <i class="fas fa-book"></i>
-                开放文档
+                <i class="fas fa-book-open"></i>
+                开放文档 · 持续更新
             </div>
+            
+            <!-- 标题 -->
             <h1>Minecraft Learning</h1>
-            <p class="hero-subtitle">探索 Minecraft 源码与模组开发的深度学习资源</p>
-            <div class="hero-stats">
-                <div class="stat">
-                    <span class="stat-number" id="docCount">0</span>
-                    <span class="stat-label">文档</span>
+            
+            <!-- 副标题 -->
+            <p class="hero-subtitle">
+                探索 Minecraft 源码与模组开发的深度学习资源
+            </p>
+            
+            <!-- 搜索框 -->
+            <div style="max-width: 520px; margin: 0 auto var(--space-8);">
+                <div class="search-box" style="position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6);"></i>
+                    <input type="text" id="heroSearchInput" placeholder="搜索文档标题..." 
+                        style="width: 100%; padding: 14px 48px 14px 48px; border: none; border-radius: 12px; font-size: 1rem; outline: none; background: rgba(255,255,255,0.15); color: #fff; backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">/</span>
                 </div>
-                <div class="stat">
-                    <span class="stat-number" id="moduleCount">0</span>
-                    <span class="stat-label">模组</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">5+</span>
-                    <span class="stat-label">版本</span>
-                </div>
+                <div id="heroSearchResults" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #fff; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); z-index: 100; max-height: 380px; overflow-y: auto; text-align: left;"></div>
             </div>
-        </div>
-        <div class="hero-background">
-            <div class="floating-blocks">
-                <div class="block block-1"></div>
-                <div class="block block-2"></div>
-                <div class="block block-3"></div>
-                <div class="block block-4"></div>
+            
+            <!-- 快速入口标签 -->
+            <div id="moduleQuickLinks" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 32px;">
+                <!-- 由 JS 动态生成 -->
+            </div>
+            
+            <!-- 统计数字 -->
+            <div style="display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;">
+                <div class="stat-pill">
+                    <strong id="docCount">–</strong>
+                    <span>文档</span>
+                </div>
+                <div class="stat-pill">
+                    <strong id="moduleCount">–</strong>
+                    <span>模组</span>
+                </div>
+                <div class="stat-pill">
+                    <strong id="versionCount">–</strong>
+                    <span>MC 版本</span>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- 模组选择区 -->
-    <section class="section modules-section">
+    <section class="section main-content" style="padding: 80px 0; background: var(--bg-light, #f8f9fa);">
         <div class="container">
             <h2 class="section-title">
                 <i class="fas fa-puzzle-piece"></i>
                 选择文档
             </h2>
             <p class="section-subtitle">选择一个模组或原版开始探索</p>
-
+            
             <div class="modules-grid" id="modulesGrid">
                 <!-- 由 JS 动态生成 -->
             </div>
         </div>
     </section>
 
-    <!-- 版本切换区 (MC 原版专用) -->
-    <section class="section version-section" id="versionSection" style="display: none;">
-        <div class="container">
-            <div class="version-header">
-                <h2>
-                    <i class="fas fa-code-branch"></i>
-                    选择 Minecraft 版本
-                </h2>
-                <button class="btn-back" onclick="backToModules()">
-                    <i class="fas fa-arrow-left"></i> 返回
-                </button>
-            </div>
-
-            <div class="versions-grid" id="versionsGrid">
-                <!-- 版本卡片将通过 JavaScript 动态生成 -->
-            </div>
-        </div>
-    </section>
-
-    <!-- 文档概览区 -->
-    <section class="section docs-section" id="docsSection" style="display: none;">
-        <div class="container">
-            <div class="docs-header">
-                <button class="btn-back" onclick="backToVersions()">
-                    <i class="fas fa-arrow-left"></i> 返回版本选择
-                </button>
-                <h2 id="docsTitle">
-                    <span class="module-badge" id="currentModuleBadge"></span>
-                    <span id="docsTitleText">文档列表</span>
-                </h2>
-            </div>
-
-            <!-- 教程/分析切换标签 -->
-            <div class="doc-type-tabs" id="docTypeTabs" style="display: none;">
-                <button class="tab-btn active" onclick="switchDocType('tutorials')">
-                    <i class="fas fa-graduation-cap"></i> 教程
-                </button>
-                <button class="tab-btn" onclick="switchDocType('analysis')">
-                    <i class="fas fa-microscope"></i> 分析
-                </button>
-            </div>
-
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="搜索文档标题或内容...">
-            </div>
-
-            <div class="docs-grid" id="docsGrid">
-                <!-- 文档卡片将通过 JavaScript 动态生成 -->
-            </div>
-        </div>
-    </section>
-
-    <!-- 特色文档卡片 -->
-    <section class="section featured-docs">
+    <!-- 精选文档 -->
+    <section class="section" style="padding: 80px 0;">
         <div class="container">
             <h2 class="section-title">
                 <i class="fas fa-star"></i>
                 精选文档
             </h2>
             <p class="section-subtitle">最受欢迎的深度解析文章</p>
-
+            
             <div class="featured-grid" id="featuredGrid">
                 <!-- 由 JS 动态生成 -->
             </div>
@@ -156,44 +130,44 @@
     </section>
 
     <!-- 快速开始 -->
-    <section class="section quickstart-section">
+    <section class="section" style="padding: 80px 0; background: linear-gradient(135deg, #3d6340 0%, #4A7349 50%, #5B8C5A 100%); color: #fff;">
         <div class="container">
-            <h2 class="section-title">
+            <h2 class="section-title" style="color: #fff;">
                 <i class="fas fa-rocket"></i>
                 快速开始
             </h2>
-            <p class="section-subtitle">选择一个方向，立刻开始学习</p>
-
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">选择一个方向，立刻开始学习</p>
+            
             <div class="quickstart-grid">
-                <div class="quickstart-card">
-                    <div class="quickstart-icon">
+                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #5B8C5A, #6FA070);">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <h3>新手入门</h3>
-                    <p>从零开始学习 Minecraft 开发</p>
-                    <a href="docs/mc/index.html" class="btn btn-outline">
+                    <h3 style="color: #fff;">新手入门</h3>
+                    <p style="color: rgba(255,255,255,0.75);">从零开始学习 Minecraft 开发</p>
+                    <a href="docs/mc/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
                         开始学习 <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
-
-                <div class="quickstart-card">
-                    <div class="quickstart-icon">
+                
+                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #3D5A80, #5c7aa3);">
                         <i class="fas fa-layer-group"></i>
                     </div>
-                    <h3>深度阅读</h3>
-                    <p>深入理解核心架构与系统设计</p>
-                    <a href="catalog.html" class="btn btn-outline">
-                        浏览目录 <i class="fas fa-arrow-right"></i>
+                    <h3 style="color: #fff;">深度阅读</h3>
+                    <p style="color: rgba(255,255,255,0.75);">深入理解核心架构与系统设计</p>
+                    <a href="docs/mc/1.21/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
+                        浏览 MC 1.21 <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
-
-                <div class="quickstart-card">
-                    <div class="quickstart-icon">
+                
+                <div class="quickstart-card" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="quickstart-icon" style="background: linear-gradient(135deg, #E07A5F, #F2CC8F);">
                         <i class="fas fa-palette"></i>
                     </div>
-                    <h3>光影开发</h3>
-                    <p>学习 Iris 与 shader 渲染管线</p>
-                    <a href="docs/iris/index.html" class="btn btn-outline">
+                    <h3 style="color: #fff;">光影开发</h3>
+                    <p style="color: rgba(255,255,255,0.75);">学习 Iris 与 shader 渲染管线</p>
+                    <a href="docs/iris/index.html" class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: #fff;">
                         探索光影 <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -201,7 +175,7 @@
         </div>
     </section>
 
-    <!-- 页脚 -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -218,8 +192,8 @@
                 <div class="footer-links">
                     <h4>资源</h4>
                     <ul>
-                        <li><a href="catalog.html">文档目录</a></li>
                         <li><a href="about.html">关于</a></li>
+                        <li><a href="roadmap.html">学习路线</a></li>
                     </ul>
                 </div>
             </div>
@@ -229,320 +203,197 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Scripts -->
+    <script src="scripts/site-config.js"></script>
+    <script src="site-stats.js"></script>
     <script>
         // ============================================
-        // 模块数据配置 (由 config.js 同步)
+        // 首页脚本
         // ============================================
+        
+        // ── 站点配置 ────────────────────────────────────────────────
+        const MODULE_META = {};
+        Object.entries(SITE_CONFIG.modules).forEach(([key, mod]) => {
+            MODULE_META[key] = {
+                name: mod.name,
+                slug: mod.slug,
+                icon: mod.icon,
+                color: mod.color,
+                colorGradient: mod.colorGradient,
+                description: mod.description,
+                versions: mod.versions ? Object.keys(mod.versions) : null,
+                docsDir: mod.docsDir,
+                featured: mod.featured || []
+            };
+        });
 
-        const moduleData = {
-            mc: {
-                name: 'Minecraft 原版',
-                slug: 'mc',
-                icon: 'cube',
-                color: '#5B8C5A',
-                colorGradient: 'linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)',
-                description: '深入理解 Minecraft 的分层架构与核心设计模式',
-                versions: {
-                    '1.21': {
-                        name: '1.21',
-                        tutorials: [
-                            { id: '00-course-overview', title: '课程概述', desc: '学习路线图、课程目标', time: '30分钟' },
-                            { id: '01-java-basics', title: 'Java基础', desc: '面向源码阅读的Java速查', time: '45分钟' },
-                            { id: '02-development-env', title: '开发环境', desc: 'IDEA配置、调试方法', time: '40分钟' },
-                            { id: '03-project-intro', title: '项目结构', desc: '5364个文件分类', time: '35分钟' },
-                            { id: '04-registry-system', title: '注册表系统 ⭐', desc: '最重要！三层结构', time: '50分钟' },
-                            { id: '05-client-server-arch', title: '客户端-服务端', desc: '分离架构', time: '45分钟' },
-                            { id: '08-world-core', title: 'World核心', desc: '世界基类', time: '50分钟' },
-                            { id: '09-chunk-system', title: 'Chunk系统', desc: '区块管理', time: '55分钟' },
-                            { id: '14-block-basics', title: 'Block基础', desc: '方块类', time: '45分钟' },
-                            { id: '20-entity-intro', title: 'Entity入门', desc: '实体基类', time: '50分钟' },
-                            { id: '27-ai-brain-intro', title: 'AI大脑 ⭐', desc: '最重要！三层架构', time: '60分钟' },
-                            { id: '33-network-intro', title: '网络入门', desc: '网络基础', time: '45分钟' },
-                            { id: '45-minecraft-client', title: 'MinecraftClient', desc: '客户端核心', time: '50分钟' },
-                            { id: '49-server-intro', title: '服务端入门', desc: '服务器核心', time: '55分钟' }
-                        ],
-                        analysis: [
-                            { id: '01-architecture-overview', title: '架构总览', desc: 'Minecraft 整体架构与设计模式', time: '45分钟' },
-                            { id: '02-client-module', title: '客户端模块', desc: '客户端渲染、输入与窗口管理', time: '50分钟' },
-                            { id: '03-server-module', title: '服务端模块', desc: '服务端Tick循环与世界管理', time: '55分钟' },
-                            { id: '04-world-system', title: '世界系统', desc: 'World、Chunk与地形生成机制', time: '60分钟' },
-                            { id: '05-entity-system', title: '实体系统', desc: 'Entity、LivingEntity与属性系统', time: '50分钟' },
-                            { id: '06-block-item-system', title: '方块物品系统', desc: '方块、物品与注册机制', time: '55分钟' },
-                            { id: '07-network-protocol', title: '网络协议', desc: '数据包编码与协议状态', time: '60分钟' },
-                            { id: '08-datafixer-system', title: '数据修复系统', desc: 'DataFixerUpper 与版本兼容', time: '45分钟' },
-                            { id: '09-registry-system', title: '注册表系统', desc: 'Registry、MinecraftKey 与 ID 映射', time: '50分钟' },
-                            { id: '10-package-structure', title: '包结构', desc: 'mojang、Minecraft 服务器结构', time: '40分钟' }
-                        ]
-                    },
-                    '1.20': {
-                        name: '1.20',
-                        tutorials: [
-                            { id: '01-architecture-overview', title: '架构总览', desc: 'Minecraft 整体架构与设计模式', time: '45分钟' },
-                            { id: '02-client-module', title: '客户端模块', desc: '客户端渲染、输入与窗口管理', time: '50分钟' }
-                        ],
-                        analysis: []
-                    },
-                    '1.19': {
-                        name: '1.19',
-                        tutorials: [
-                            { id: '01-architecture-overview', title: '架构总览', desc: 'Minecraft 整体架构与设计模式', time: '45分钟' }
-                        ],
-                        analysis: []
-                    },
-                    '1.18': {
-                        name: '1.18',
-                        tutorials: [
-                            { id: '01-architecture-overview', title: '架构总览', desc: 'Minecraft 整体架构与设计模式', time: '45分钟' }
-                        ],
-                        analysis: []
-                    }
-                },
-                docsDir: 'docs/mc',
-                tutorialsDir: 'docs/mc/1.21/tutorials',
-                analysisDir: 'docs/mc/1.21/analysis',
-                featured: [
-                    { id: '01-architecture-overview', title: '架构总览', desc: 'Minecraft 整体架构与设计模式', time: '45分钟' },
-                    { id: '02-client-module', title: '客户端模块', desc: '客户端渲染、输入与窗口管理', time: '50分钟' }
-                ]
-            },
-            iris: {
-                name: 'Iris 光影',
-                slug: 'iris',
-                icon: 'sun',
-                color: '#E07A5F',
-                colorGradient: 'linear-gradient(135deg, #E07A5F 0%, #F2CC8F 100%)',
-                description: '全面解析 Iris 的 shader 加载与渲染管线设计',
-                versions: null,
-                // 分析文档（默认显示在分析标签）
-                docs: [
-                    { id: '01-architecture-overview', title: '架构总览', desc: 'Iris 分层架构与核心组件', time: '40分钟', type: 'analysis' },
-                    { id: '02-rendering-pipeline', title: '渲染管线', desc: 'IrisRenderingPipeline 详解', time: '55分钟', type: 'analysis' },
-                    { id: '03-shaderpack-system', title: 'ShaderPack 系统', desc: '光影包加载与 GLSL 预处理', time: '50分钟', type: 'analysis' },
-                    { id: '04-shadow-system', title: '阴影系统', desc: 'ShadowRenderer 与视锥剔除', time: '45分钟', type: 'analysis' },
-                    { id: '05-framebuffer-texture', title: '帧缓冲与纹理', desc: 'RenderTargets 与深度纹理管理', time: '50分钟', type: 'analysis' },
-                    { id: '06-uniforms', title: 'Uniform 管理', desc: '常用 Uniform 与自定义 Uniform', time: '40分钟', type: 'analysis' }
-                ],
-                // 教程文档（显示在教程标签）
-                tutorials: [
-                    { id: '01-shader-basics', title: 'Shader 基础入门', desc: '学习 GLSL 语法与 Shader 基本概念', time: '60分钟' },
-                    { id: '02-iris-setup', title: 'Iris 开发环境搭建', desc: '配置 Iris 开发环境与调试工具', time: '45分钟' },
-                    { id: '03-create-simple-shader', title: '创建第一个 Shader', desc: '编写简单的 GLSL 着色器代码', time: '90分钟' },
-                    { id: '04-shaderpack-structure', title: 'ShaderPack 结构', desc: '理解光影包的文件结构与配置', time: '60分钟' },
-                    { id: '05-uniforms-practice', title: 'Uniform 实践', desc: '在 Shader 中使用内置 Uniform', time: '75分钟' },
-                    { id: '06-post-processing', title: '后处理效果', desc: '实现模糊、泛光等后处理效果', time: '120分钟' }
-                ],
-                docsDir: 'docs/iris',
-                tutorialsDir: 'docs/iris/tutorials',
-                analysisDir: 'docs/iris/analysis',
-                featured: [
-                    { id: '01-shader-basics', title: 'Shader 基础入门', desc: '学习 GLSL 语法与 Shader 基本概念', time: '60分钟' },
-                    { id: '03-create-simple-shader', title: '创建第一个 Shader', desc: '编写简单的 GLSL 着色器代码', time: '90分钟' }
-                ],
-                hasAnalysis: true
-            },
-            sodium: {
-                name: 'Sodium 优化',
-                slug: 'sodium',
-                icon: 'bolt',
-                color: '#F2CC8F',
-                colorGradient: 'linear-gradient(135deg, #F2CC8F 0%, #FFE066 100%)',
-                description: '探索现代渲染优化与 Sodium 的架构设计',
-                versions: null,
-                // 分析文档
-                docs: [
-                    { id: '01-architecture-overview', title: '架构总览', desc: 'Sodium 分层架构与核心组件', time: '40分钟', type: 'analysis' },
-                    { id: '02-chunk-render-system', title: 'Chunk 渲染系统', desc: 'Chunk渲染优化与网格构建', time: '55分钟', type: 'analysis' },
-                    { id: '03-occlusion-culling', title: '遮挡剔除', desc: '可见性判断与遮挡剔除算法', time: '50分钟', type: 'analysis' },
-                    { id: '04-render-pipeline', title: '渲染管线', desc: '渲染管线与绘制调度', time: '45分钟', type: 'analysis' },
-                    { id: '05-shader-system', title: '着色器系统', desc: 'GLSL 着色器与uniform管理', time: '50分钟', type: 'analysis' },
-                    { id: '06-platform-integration', title: '平台集成', desc: 'OpenGL/Vulkan 平台抽象', time: '40分钟', type: 'analysis' }
-                ],
-                // 教程文档
-                tutorials: [
-                    { id: '01-mod-dev-intro', title: 'Mod 开发入门', desc: '了解 Fabric Mod 开发基础知识', time: '60分钟' },
-                    { id: '02-rendering-optimization', title: '渲染优化基础', desc: '学习现代游戏渲染优化技术', time: '90分钟' },
-                    { id: '03-multithreading-basics', title: '多线程编程', desc: '理解多线程与异步处理概念', time: '75分钟' },
-                    { id: '04-chunk-system-deep', title: '深入区块系统', desc: '理解 Minecraft 区块管理与优化', time: '80分钟' },
-                    { id: '05-gl-basics', title: 'OpenGL 基础', desc: '学习 OpenGL 渲染管线与 VAO/VBO', time: '100分钟' },
-                    { id: '06-performance-profiling', title: '性能分析与调优', desc: '使用工具分析并优化性能', time: '90分钟' }
-                ],
-                docsDir: 'docs/sodium',
-                tutorialsDir: 'docs/sodium/tutorials',
-                analysisDir: 'docs/sodium/analysis',
-                featured: [
-                    { id: '01-mod-dev-intro', title: 'Mod 开发入门', desc: '了解 Fabric Mod 开发基础知识', time: '60分钟' },
-                    { id: '03-multithreading-basics', title: '多线程编程', desc: '理解多线程与异步处理概念', time: '75分钟' }
-                ],
-                hasAnalysis: true
-            }
-        };
+        // ── 站点统计 ────────────────────────────────────────────────
+        let siteStats = null;
 
-        let currentModule = null;
-        let currentVersion = null;
-        let currentDocType = 'tutorials'; // 当前显示的文档类型：tutorials 或 analysis
-
-        // ============================================
-        // 初始化
-        // ============================================
-
-        function init() {
-            renderNavigation();
-            renderModules();
-            renderFeatured();
-            renderFooter();
-            updateStats();
-
-            // 数字动画
-            const docCount = getTotalDocCount();
-            const moduleCount = Object.keys(moduleData).length;
-            
-            console.log('文档总数:', docCount);
-            console.log('模组总数:', moduleCount);
-            console.log('模块数据:', moduleData);
-            
-            const docCountEl = document.getElementById('docCount');
-            const moduleCountEl = document.getElementById('moduleCount');
-            
-            if (docCountEl) {
-                animateCounter(docCountEl, docCount);
-            } else {
-                console.error('docCount element not found');
-            }
-            
-            if (moduleCountEl) {
-                animateCounter(moduleCountEl, moduleCount);
-            } else {
-                console.error('moduleCount element not found');
-            }
-        }
-
-        function updateStats() {
-            // 动态更新统计
-        }
-
-        function getTotalDocCount() {
-            let count = 0;
-            Object.values(moduleData).forEach(mod => {
-                if (mod.versions && typeof mod.versions === 'object') {
-                    Object.values(mod.versions).forEach(v => {
-                        if (v) {
-                            if (v.tutorials) count += v.tutorials.length;
-                            if (v.analysis) count += v.analysis.length;
-                            if (v.docs && Array.isArray(v.docs)) count += v.docs.length;
-                        }
-                    });
-                } else if (mod.docs && Array.isArray(mod.docs)) {
-                    count += mod.docs.length;
-                }
-            });
-            return count;
-        }
-
-        // ============================================
-        // 渲染函数
-        // ============================================
-
-        function renderNavigation() {
-            const dropdown = document.getElementById('navDropdown');
-            if (!dropdown) {
-                console.warn('navDropdown element not found');
+        async function loadSiteStats() {
+            if (typeof window.__SITE_STATS__ !== 'undefined' && window.__SITE_STATS__ !== null) {
+                siteStats = window.__SITE_STATS__;
                 return;
             }
-            
-            const links = Object.entries(moduleData).map(([key, mod]) => {
-                let href;
-                if (mod.versions) {
-                    // 对于有版本的模组，使用第一个版本或默认版本
-                    const defaultVersion = mod.defaultVersion || Object.keys(mod.versions)[0] || '1.21';
-                    href = `${mod.docsDir}/${defaultVersion}/index.html`;
-                } else {
-                    href = `${mod.docsDir}/index.html`;
-                }
-                return `<a href="${href}">${mod.name}</a>`;
+            if (location.protocol === 'file:') {
+                siteStats = null;
+                return;
+            }
+            try {
+                const res = await fetch('site-stats.json');
+                if (res.ok) siteStats = await res.json();
+            } catch (_) {
+                siteStats = null;
+            }
+        }
+
+        function getModuleStats(slug) {
+            if (!siteStats || !siteStats.modules) return null;
+            const s = siteStats.modules[slug];
+            if (!s) return null;
+            if (s.isVersioned) {
+                const vers = Object.keys(s.versions || {});
+                const total = vers.reduce((sum, v) => {
+                    const vd = s.versions[v] || {};
+                    return sum + (vd.tutorials || 0) + (vd.analysis || 0);
+                }, 0);
+                return { total, isVersioned: true, versions: vers, defaultVersion: s.defaultVersion };
+            }
+            return {
+                total: (s.tutorials || 0) + (s.analysis || 0),
+                isVersioned: false,
+                tutorials: s.tutorials || 0,
+                analysis: s.analysis || 0
+            };
+        }
+
+        function getDefaultVersionHref(slug) {
+            const m = MODULE_META[slug];
+            const s = getModuleStats(slug);
+            if (!m) return '#';
+            if (s && s.isVersioned && s.defaultVersion)
+                return `${m.docsDir}/${s.defaultVersion}/index.html`;
+            return `${m.docsDir}/index.html`;
+        }
+
+        // ── 初始化 ────────────────────────────────────────────────
+        async function init() {
+            await loadSiteStats();
+            renderStats();
+            renderNavigation();
+            renderModules();
+            renderModuleQuickLinks();
+            renderFeatured();
+            renderFooter();
+            bindSearchEvents();
+            bindUIEvents();
+        }
+
+        // ── 统计 ────────────────────────────────────────────────
+        function renderStats() {
+            if (!siteStats) {
+                document.getElementById('docCount').textContent = '0';
+                document.getElementById('moduleCount').textContent = Object.keys(MODULE_META).length;
+                document.getElementById('versionCount').textContent = '0';
+                return;
+            }
+            animateCounter(document.getElementById('docCount'), siteStats.totalDocs);
+            animateCounter(document.getElementById('moduleCount'), siteStats.totalModules);
+            animateCounter(document.getElementById('versionCount'), siteStats.mcVersions.length);
+        }
+
+        function animateCounter(el, target) {
+            if (!el || target === undefined || target === null) return;
+            const n = parseInt(target, 10);
+            if (isNaN(n) || n === 0) { el.textContent = '0'; return; }
+            let cur = 0;
+            const step = Math.max(1, Math.ceil(n / 40));
+            const timer = setInterval(() => {
+                cur = Math.min(cur + step, n);
+                el.textContent = cur;
+                if (cur >= n) clearInterval(timer);
+            }, 25);
+        }
+
+        // ── 导航下拉 ────────────────────────────────────────────────
+        function renderNavigation() {
+            const container = document.getElementById('navDropdown');
+            if (!container) return;
+            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
+                const href = getDefaultVersionHref(key);
+                return `<a href="${href}"><i class="fas ${m.icon}"></i> ${m.name}</a>`;
             }).join('');
-            
-            dropdown.innerHTML = links || '<a href="#">暂无文档</a>';
         }
 
         function renderFooter() {
-            const footerLinks = document.getElementById('footerDocsLinks');
-            footerLinks.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                const href = mod.versions
-                    ? `${mod.docsDir}/index.html`
-                    : `${mod.docsDir}/index.html`;
-                return `<li><a href="${href}">${mod.name}</a></li>`;
+            const container = document.getElementById('footerDocsLinks');
+            if (!container) return;
+            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
+                const href = getDefaultVersionHref(key);
+                return `<li><a href="${href}">${m.name}</a></li>`;
             }).join('');
         }
 
+        // ── 模块卡片 ────────────────────────────────────────────────
         function renderModules() {
             const container = document.getElementById('modulesGrid');
-            container.innerHTML = Object.entries(moduleData).map(([key, mod]) => {
-                const versionText = mod.versions
-                    ? Object.keys(mod.versions).join(' / ')
-                    : '通用';
-                const docCount = mod.versions
-                    ? (() => {
-                        let total = 0;
-                        Object.values(mod.versions).forEach(v => {
-                            if (v) {
-                                if (v.tutorials) total += v.tutorials.length;
-                                if (v.analysis) total += v.analysis.length;
-                            }
-                        });
-                        return total > 0 ? total + '+' : '0';
-                    })()
-                    : (mod.docs ? mod.docs.length : 0) + '篇';
-
+            if (!container) return;
+            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
+                const s = getModuleStats(key);
+                const versionText = s && s.isVersioned ? s.versions.join(' / ') : '通用';
+                const docCount = s ? s.total : 0;
                 return `
-                    <div class="module-card" onclick="selectModule('${key}')" style="--module-color: ${mod.color}">
-                        <div class="module-icon" style="background: ${mod.colorGradient}">
-                            <i class="fas fa-${mod.icon}"></i>
+                    <div class="module-card" style="--module-color: ${m.color};" onclick="location.href='${getDefaultVersionHref(key)}'">
+                        <div class="module-icon" style="background: ${m.colorGradient};">
+                            <i class="fas ${m.icon}"></i>
                         </div>
                         <div class="module-info">
-                            <h3>${mod.name}</h3>
-                            <p>${mod.description}</p>
+                            <h3>${m.name}</h3>
+                            <p>${m.description}</p>
                             <div class="module-meta">
-                                <span class="version-badge">
-                                    <i class="fas fa-code-branch"></i> ${versionText}
-                                </span>
-                                <span class="doc-count">
-                                    <i class="fas fa-file-alt"></i> ${docCount}文档
-                                </span>
+                                <span class="version-badge"><i class="fas fa-code-branch"></i> ${versionText}</span>
+                                <span class="doc-count"><i class="fas fa-file-alt"></i> ${docCount}篇文档</span>
                             </div>
                         </div>
-                        <div class="module-arrow">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                        <div class="module-hover-effect"></div>
+                        <div class="module-arrow"><i class="fas fa-arrow-right"></i></div>
                     </div>
                 `;
             }).join('');
         }
 
+        function renderModuleQuickLinks() {
+            const container = document.getElementById('moduleQuickLinks');
+            if (!container) return;
+            container.innerHTML = Object.entries(MODULE_META).map(([key, m]) => {
+                const href = getDefaultVersionHref(key);
+                const s = getModuleStats(key);
+                const label = s && s.isVersioned ? `${m.name}（${s.versions[0]}）` : m.name;
+                return `<a href="${href}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:999px;color:#fff;font-size:0.85rem;font-weight:500;text-decoration:none;backdrop-filter:blur(4px);transition:background .2s;">${label}</a>`;
+            }).join('');
+        }
+
+        // ── 精选文档 ────────────────────────────────────────────────
         function renderFeatured() {
             const container = document.getElementById('featuredGrid');
+            if (!container) return;
             const featured = [];
-
-            Object.entries(moduleData).forEach(([key, mod]) => {
-                if (mod.featured) {
-                    mod.featured.forEach(doc => {
-                        featured.push({ module: key, moduleName: mod.name, ...doc });
+            Object.entries(MODULE_META).forEach(([key, m]) => {
+                if (m.featured) {
+                    m.featured.forEach(doc => {
+                        featured.push({ module: key, moduleColor: m.color, ...doc });
                     });
                 }
             });
-
-            // 取前4个
             container.innerHTML = featured.slice(0, 4).map(item => {
-                const mod = moduleData[item.module];
+                const m = MODULE_META[item.module];
                 return `
-                    <div class="featured-card" onclick="navigateToDoc('${item.module}', '${item.id}')">
-                        <div class="featured-badge ${mod.slug}">${mod.name.split(' ')[0]}</div>
-                        <div class="featured-content">
-                            <h3>${item.title}</h3>
-                            <p>${item.desc}</p>
-                            <div class="featured-meta">
-                                <span><i class="fas fa-graduation-cap"></i> 教程</span>
+                    <div class="card" style="position:relative;overflow:hidden;cursor:pointer;" onclick="location.href='${m.docsDir}/${item.id}.html'">
+                        <div style="position:absolute;top:12px;left:12px;padding:3px 10px;border-radius:999px;font-size:0.7rem;font-weight:700;color:#fff;background:${m.color};z-index:1;">${m.name}</div>
+                        <div style="padding:24px;">
+                            <h3 style="font-size:1.1rem;margin-bottom:8px;margin-top:36px;">${item.title}</h3>
+                            <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">${item.desc}</p>
+                            <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--text-muted);padding-top:12px;border-top:1px solid var(--gray-light, #e9ecef);">
+                                <span><i class="fas fa-graduation-cap"></i> ${item.type === 'tutorial' ? '教程' : '分析'}</span>
                                 <span><i class="fas fa-clock"></i> ${item.time}</span>
                             </div>
                         </div>
@@ -551,376 +402,223 @@
             }).join('');
         }
 
-        // ============================================
-        // 交互函数
-        // ============================================
-
-        function selectModule(module) {
-            currentModule = module;
-            currentDocType = 'tutorials'; // 重置为教程
-            const data = moduleData[module];
-
-            if (data.versions) {
-                // 有版本选择
-                document.getElementById('versionSection').style.display = 'block';
-                document.getElementById('docsSection').style.display = 'none';
-                document.querySelector('.modules-section').style.display = 'none';
-                document.querySelector('.featured-docs').style.display = 'none';
-                document.querySelector('.quickstart-section').style.display = 'none';
-                document.getElementById('docTypeTabs').style.display = 'none'; // MC 版本没有教程/分析切换
-
-                renderVersions(data.versions);
-            } else {
-                // 无版本选择，直接显示文档（Iris、Sodium 等）
-                document.getElementById('docsSection').style.display = 'block';
-                document.getElementById('currentModuleBadge').textContent = data.name;
-                document.getElementById('currentModuleBadge').style.background = data.color;
-                document.querySelector('.modules-section').style.display = 'none';
-                document.querySelector('.featured-docs').style.display = 'none';
-                document.querySelector('.quickstart-section').style.display = 'none';
-
-                // 显示教程/分析切换标签（如果有分析文档）
-                const docTypeTabs = document.getElementById('docTypeTabs');
-                if (data.hasAnalysis) {
-                    docTypeTabs.style.display = 'flex';
-                    // 重置标签状态
-                    docTypeTabs.querySelectorAll('.tab-btn').forEach(btn => {
-                        btn.classList.remove('active');
+        // ── 搜索 ────────────────────────────────────────────────
+        window._searchIdx = (() => {
+            const idx = [];
+            Object.entries(MODULE_META).forEach(([key, m]) => {
+                if (m.featured) {
+                    m.featured.forEach(doc => {
+                        idx.push({ module: key, moduleName: m.name, docsDir: m.docsDir, ...doc });
                     });
-                    docTypeTabs.querySelector('.tab-btn:first-child').classList.add('active');
-                } else {
-                    docTypeTabs.style.display = 'none';
                 }
-
-                // 默认显示教程
-                renderDocsByType(data, 'tutorials');
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // 切换教程/分析类型
-        function switchDocType(type) {
-            if (!currentModule) return;
-
-            const data = moduleData[currentModule];
-            currentDocType = type;
-
-            // 更新标签状态
-            const docTypeTabs = document.getElementById('docTypeTabs');
-            docTypeTabs.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
             });
-            docTypeTabs.querySelector(`[onclick="switchDocType('${type}')"]`).classList.add('active');
+            return idx;
+        })();
 
-            // 渲染对应类型的文档
-            renderDocsByType(data, type);
+        function doSearch(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) return [];
+            return window._searchIdx.filter(item =>
+                item.title.toLowerCase().includes(q) ||
+                (item.desc || '').toLowerCase().includes(q) ||
+                item.moduleName.toLowerCase().includes(q)
+            ).slice(0, 8);
         }
 
-        // 根据类型渲染文档
-        function renderDocsByType(data, type) {
-            const container = document.getElementById('docsGrid');
-            container.innerHTML = '';
-
-            let docs = [];
-            let baseDir = '';
-
-            if (type === 'tutorials') {
-                docs = data.tutorials || [];
-                baseDir = data.tutorialsDir || data.docsDir;
-                document.getElementById('docsTitleText').textContent = '教程';
-            } else {
-                docs = data.docs || [];
-                baseDir = data.analysisDir || data.docsDir;
-                document.getElementById('docsTitleText').textContent = '源码分析';
-            }
-
-            // 更新模块徽章文字
-            const badgeText = type === 'tutorials' ? '教程' : '分析';
-            document.getElementById('currentModuleBadge').textContent = `${data.name} · ${badgeText}`;
-
-            if (docs.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open"></i>
-                        <p>暂无${type === 'tutorials' ? '教程' : '分析'}文档</p>
-                    </div>
-                `;
+        function renderSearchResults(results, query, container) {
+            if (!results.length) {
+                container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.9rem;">
+                    <i class="fas fa-search" style="font-size:1.5rem;margin-bottom:8px;opacity:0.4;"></i>
+                    <p>未找到 "${query}" 相关文档</p>
+                </div>`;
                 return;
             }
-
-            docs.forEach((doc, index) => {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                card.style.animationDelay = `${index * 0.1}s`;
-
-                // 文档类型标签
-                const typeBadge = type === 'tutorials'
-                    ? '<span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>'
-                    : '<span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>';
-
-                card.onclick = () => {
-                    window.location.href = `${baseDir}/${doc.id}.html`;
-                };
-                card.innerHTML = `
-                    <div class="doc-icon">
-                        <i class="fas fa-${type === 'tutorials' ? 'graduation-cap' : 'microscope'}"></i>
+            container.innerHTML = results.map(item => {
+                const m = MODULE_META[item.module];
+                const href = `${item.docsDir}/${item.id}.html`;
+                return `<a href="${href}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gray-light,#e9ecef);text-decoration:none;color:inherit;transition:background .15s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <i class="fas fa-file-alt" style="color:${m.color};width:1.5rem;text-align:center;flex-shrink:0;"></i>
+                    <div>
+                        <div style="font-size:0.9rem;font-weight:600;">${item.title}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${m.name} · ${item.time}</div>
                     </div>
-                    <div class="doc-content">
-                        ${typeBadge}
-                        <h3>${doc.title}</h3>
-                        <p>${doc.desc}</p>
-                        <div class="doc-meta">
-                            <span><i class="fas fa-clock"></i> ${doc.time}</span>
-                        </div>
-                    </div>
-                    <div class="doc-arrow">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                `;
-                container.appendChild(card);
+                </a>`;
+            }).join('');
+        }
+
+        function bindSearchEvents() {
+            const heroInput = document.getElementById('heroSearchInput');
+            const heroResults = document.getElementById('heroSearchResults');
+            if (!heroInput || !heroResults) return;
+
+            let debounceTimer = null;
+            heroInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const query = e.target.value.trim();
+                    if (!query) {
+                        heroResults.style.display = 'none';
+                        return;
+                    }
+                    const results = doSearch(query);
+                    renderSearchResults(results, query, heroResults);
+                    heroResults.style.display = 'block';
+                }, 150);
             });
-        }
 
-        function renderVersions(versions) {
-            const container = document.getElementById('versionsGrid');
-            container.innerHTML = '';
-
-            Object.entries(versions).forEach(([versionId, version]) => {
-                const tutorialCount = version.tutorials ? version.tutorials.length : 0;
-                const analysisCount = version.analysis ? version.analysis.length : 0;
-                const totalDocs = tutorialCount + analysisCount;
-                
-                const card = document.createElement('div');
-                card.className = 'version-card';
-                card.onclick = () => selectVersion(versionId, version);
-                card.innerHTML = `
-                    <div class="version-icon">
-                        <i class="fas fa-code-branch"></i>
-                    </div>
-                    <div class="version-info">
-                        <h3>${version.name}</h3>
-                        <p>${totalDocs} 篇文档 (${tutorialCount} 教程 / ${analysisCount} 分析)</p>
-                    </div>
-                    <div class="version-arrow">
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function selectVersion(versionId, version) {
-            // 直接跳转到版本的 index.html，而不是在首页显示
-            const data = moduleData[currentModule];
-            window.location.href = `${data.docsDir}/${versionId}/index.html`;
-        }
-
-        // 切换 MC 版本的教程/分析类型
-        function switchVersionDocType(type) {
-            if (!currentModule || !currentVersion) return;
-
-            const data = moduleData[currentModule];
-            const version = data.versions[currentVersion];
-            currentDocType = type;
-
-            // 更新标签状态
-            const docTypeTabs = document.getElementById('docTypeTabs');
-            docTypeTabs.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            docTypeTabs.querySelector(`[onclick="switchVersionDocType('${type}')"]`).classList.add('active');
-
-            // 渲染对应类型的文档
-            renderVersionDocsByType(data, currentVersion, version, type);
-        }
-
-        // 渲染 MC 版本的文档
-        function renderVersionDocsByType(data, versionId, version, type) {
-            const container = document.getElementById('docsGrid');
-            container.innerHTML = '';
-
-            let docs = [];
-            let baseDir = '';
-
-            if (type === 'tutorials') {
-                docs = version.tutorials || [];
-                baseDir = `${data.docsDir}/${versionId}/tutorials`;
-                document.getElementById('docsTitleText').textContent = '教程';
-            } else {
-                docs = version.analysis || [];
-                baseDir = `${data.docsDir}/${versionId}/analysis`;
-                document.getElementById('docsTitleText').textContent = '源码分析';
-            }
-
-            // 更新模块徽章文字
-            const badgeText = type === 'tutorials' ? '教程' : '分析';
-            document.getElementById('currentModuleBadge').textContent = `${data.name} ${version.name} · ${badgeText}`;
-
-            if (docs.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open"></i>
-                        <p>暂无${type === 'tutorials' ? '教程' : '分析'}文档</p>
-                    </div>
-                `;
-                return;
-            }
-
-            docs.forEach((doc, index) => {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                card.style.animationDelay = `${index * 0.1}s`;
-
-                // 文档类型标签
-                const typeBadge = type === 'tutorials'
-                    ? '<span class="doc-type-badge tutorial"><i class="fas fa-graduation-cap"></i> 教程</span>'
-                    : '<span class="doc-type-badge analysis"><i class="fas fa-microscope"></i> 源码分析</span>';
-
-                card.onclick = () => {
-                    window.location.href = `${baseDir}/${doc.id}.html`;
-                };
-                card.innerHTML = `
-                    <div class="doc-icon">
-                        <i class="fas fa-${type === 'tutorials' ? 'graduation-cap' : 'microscope'}"></i>
-                    </div>
-                    <div class="doc-content">
-                        ${typeBadge}
-                        <h3>${doc.title}</h3>
-                        <p>${doc.desc}</p>
-                        <div class="doc-meta">
-                            <span><i class="fas fa-clock"></i> ${doc.time}</span>
-                        </div>
-                    </div>
-                    <div class="doc-arrow">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // 保留旧的 renderDocs 函数用于兼容性
-        function renderDocs(docs, baseDir) {
-            const container = document.getElementById('docsGrid');
-            container.innerHTML = '';
-
-            docs.forEach((doc, index) => {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.onclick = () => {
-                    window.location.href = `${baseDir}/${doc.id}.html`;
-                };
-                card.innerHTML = `
-                    <div class="doc-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="doc-content">
-                        <h3>${doc.title}</h3>
-                        <p>${doc.desc}</p>
-                        <div class="doc-meta">
-                            <span><i class="fas fa-clock"></i> ${doc.time}</span>
-                        </div>
-                    </div>
-                    <div class="doc-arrow">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function backToModules() {
-            currentModule = null;
-            document.querySelector('.modules-section').style.display = 'block';
-            document.querySelector('.featured-docs').style.display = 'block';
-            document.querySelector('.quickstart-section').style.display = 'block';
-            document.getElementById('versionSection').style.display = 'none';
-            document.getElementById('docsSection').style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function backToVersions() {
-            currentVersion = null;
-            currentDocType = 'tutorials';
-            document.querySelector('.modules-section').style.display = 'block';
-            document.querySelector('.featured-docs').style.display = 'block';
-            document.querySelector('.quickstart-section').style.display = 'block';
-            document.getElementById('versionSection').style.display = 'none';
-            document.getElementById('docsSection').style.display = 'none';
-            document.getElementById('docsTitleText').textContent = '文档列表';
-            document.getElementById('docTypeTabs').style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function navigateToDoc(module, docId) {
-            const data = moduleData[module];
-            if (data.versions) {
-                const defaultVersion = Object.keys(data.versions)[0];
-                window.location.href = `${data.docsDir}/${defaultVersion}/${docId}.html`;
-            } else {
-                window.location.href = `${data.docsDir}/${docId}.html`;
-            }
-        }
-
-        // 搜索功能
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            document.querySelectorAll('.doc-card').forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(query) ? 'flex' : 'none';
-            });
-        });
-
-        // 数字动画
-        function animateCounter(element, target) {
-            if (!element) {
-                console.warn('animateCounter: element not found');
-                return;
-            }
-            
-            if (target === 0) {
-                element.textContent = '0';
-                return;
-            }
-            
-            let current = 0;
-            const increment = Math.max(1, target / 50);
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
+            document.addEventListener('click', (e) => {
+                if (!heroInput.contains(e.target) && !heroResults.contains(e.target)) {
+                    heroResults.style.display = 'none';
                 }
-                element.textContent = Math.floor(current);
-            }, 30);
+            });
+
+            // 快捷键 /
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    heroInput.focus();
+                }
+            });
         }
 
-        // 页面加载完成后执行
+        // ── UI 事件 ────────────────────────────────────────────────
+        function toggleMobileMenu() {
+            document.getElementById('navLinks')?.classList.toggle('active');
+        }
+
+        function bindUIEvents() {
+            // 阅读进度
+            const progress = document.getElementById('progressBar');
+            if (progress) {
+                window.addEventListener('scroll', () => {
+                    const scrollTop = window.scrollY;
+                    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                    progress.style.width = `${Math.min(percent, 100)}%`;
+                });
+            }
+
+            // 移动端菜单点击外部关闭
+            document.addEventListener('click', (e) => {
+                const navLinks = document.getElementById('navLinks');
+                const mobileBtn = document.getElementById('mobileMenuBtn');
+                if (navLinks && mobileBtn &&
+                    !navLinks.contains(e.target) && !mobileBtn.contains(e.target)) {
+                    navLinks.classList.remove('active');
+                }
+            });
+        }
+
+        // ── 启动 ────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', init);
     </script>
 
     <style>
-        .module-card {
-            --module-color: #5B8C5A;
+        /* 精选网格 */
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
         }
-        .module-card:hover {
-            border-color: var(--module-color);
+
+        /* 快速开始网格 */
+        .quickstart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
         }
-        .module-card .module-arrow {
-            color: var(--module-color);
+
+        .quickstart-card {
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            transition: transform 0.3s ease, background 0.3s ease;
         }
-        .module-card .module-hover-effect {
-            background: linear-gradient(135deg, var(--module-color), transparent);
+
+        .quickstart-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.15) !important;
         }
-        .module-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
+
+        .quickstart-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.8rem;
             color: white;
+        }
+
+        .quickstart-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .quickstart-card p {
             font-size: 0.9rem;
-            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .quickstart-card .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* 统计数字胶囊 */
+        .stat-pill {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            padding: 8px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-pill strong {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stat-pill span {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 搜索框 placeholder 白色 */
+        #heroSearchInput::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 动画 */
+        .hero-content {
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .page-hero {
+                padding: 100px 20px 60px !important;
+                min-height: auto !important;
+            }
+            .page-hero h1 {
+                font-size: 1.8rem !important;
+            }
+            .stat-pill {
+                padding: 6px 14px;
+            }
+            .stat-pill strong {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </body>

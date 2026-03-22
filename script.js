@@ -1,5 +1,5 @@
 /**
- * Blog JavaScript - 博客交互脚本
+ * 根目录静态页脚本（Legacy 文章列表等）
  *
  * Features:
  * - Mobile menu toggle
@@ -670,10 +670,10 @@ function init() {
 
         // Log success (only in verbose mode)
         if (window.location.search.includes('debug')) {
-            console.log('Blog JS initialized successfully');
+            console.log('Blog root script initialized');
         }
     } catch (error) {
-        console.error('Blog JS initialization failed:', error);
+        console.error('Root script initialization failed:', error);
     }
 }
 

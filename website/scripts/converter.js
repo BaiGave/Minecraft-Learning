@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config, partLearningAdvice } = require('./config');
+const { markdownLinkToHtml, markdownImageToHtml } = require('./safe-markdown-link');
 
 // ============================================
 // Markdown 解析器
@@ -150,11 +151,11 @@ function parseMarkdown(text) {
     // 删除线
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-    // 图片
-    html = html.replace(/!\[(.+?)\]\((.+?)\)/g, '<img src="$2" alt="$1" class="doc-image">');
+    // 图片（src 消毒 + lazy）
+    html = html.replace(/!\[(.+?)\]\((.+?)\)/g, (_, alt, src) => markdownImageToHtml(alt, src));
 
-    // 链接
-    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+    // 链接（危险协议过滤、外链 noopener）
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, (_, t, u) => markdownLinkToHtml(t, u));
 
     // 水平线
     html = html.replace(/^---$/gm, '<hr>');
@@ -218,16 +219,11 @@ function parseMarkdown(text) {
 // ============================================
 
 function generateDocHTML(doc, module, navItems, version = null, docType = 'analysis') {
-    // 根据类型调整相对路径
-    let relativePath;
-    let baseDir;
-    if (version) {
-        relativePath = docType === 'tutorials' ? '../../../..' : '../../..';
-        baseDir = docType === 'tutorials' ? `../../..` : `../..`;
-    } else {
-        relativePath = docType === 'tutorials' ? '../../..' : '../..';
-        baseDir = `../..`;
-    }
+    // 输出路径：docs/{docsDir...}/[{version}/]{tutorials|analysis}/xxx.html → 回到 website 根目录
+    const docsDirDepth = module.docsDir.split(/[/\\]/).filter(Boolean).length;
+    const pathDepthToWebsite = docsDirDepth + (version ? 1 : 0) + 1; // + tutorials|analysis
+    const relativePath = '../'.repeat(pathDepthToWebsite);
+    const baseDir = '..'; // 上一级：版本目录或模组 docs 根（与 tutorials|analysis 同级的 index.html）
 
     const sidebarLinks = navItems.map(item => {
         const isActive = doc.slug === item.file;
@@ -249,7 +245,8 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${doc.title} - ${module.name}</title>
-    <link rel="stylesheet" href="${relativePath}/styles.css">
+    <link rel="stylesheet" href="${relativePath}styles.css">
+    <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -270,8 +267,18 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: ${module.color}; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: ${module.color}; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid ${module.color}; background: ${module.color}15; }
         .info-box i { color: ${module.color}; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -349,25 +356,24 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="${relativePath}/index.html" class="nav-logo">
+            <a href="${relativePath}index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="${relativePath}/index.html">首页</a></li>
+                <li><a href="${relativePath}index.html">首页</a></li>
                 <li class="dropdown">
                     <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-content">
                         ${generateModuleDropdown(relativePath)}
                     </div>
                 </li>
-                <li><a href="${relativePath}/catalog.html">文档目录</a></li>
-                <li><a href="${relativePath}/about.html">关于</a></li>
+                <li><a href="${relativePath}about.html">关于</a></li>
             </ul>
         </div>
     </nav>
@@ -392,7 +398,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="${relativePath}/index.html">首页</a>
+                    <a href="${relativePath}index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
                     <a href="${baseDir}/index.html">${module.name}</a>
                     <i class="fas fa-chevron-right"></i>
@@ -421,7 +427,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         </main>
     </div>
 
-    <script src="${relativePath}/script.js"></script>
+    <script src="${relativePath}script.js"></script>
     ${config.features.syntaxHighlight ? `<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -451,8 +457,8 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
 function generateModuleDropdown(relativePath) {
     return Object.entries(modules).map(([key, module]) => {
         const href = module.versions
-            ? `${relativePath}/docs/${module.slug}/${module.defaultVersion}/index.html`
-            : `${relativePath}/docs/${module.slug}/index.html`;
+            ? `${relativePath}docs/${module.slug}/${module.defaultVersion}/index.html`
+            : `${relativePath}docs/${module.slug}/index.html`;
         return `<a href="${href}">${module.name}</a>`;
     }).join('\n                        ');
 }
@@ -532,7 +538,8 @@ const partNames = {
 };
 
 function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, version = null) {
-    const relativePath = version ? '../../../..' : '../../..';
+    // 索引页路径：website/docs/{slug}/[version/]index.html → 回到 website 根：2 或 3 层
+    const relativePath = '../'.repeat(version ? 3 : 2);
     const versionInfo = version ? ` - ${version}` : '';
 
     // 按 Part 分组教程
@@ -561,8 +568,10 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                     </ul>` : '';
                 return `
                     <div class="curriculum-card" onclick="window.location.href='tutorials/${item.file}.html'">
-                        <div class="curriculum-card-num">${num}</div>
-                        <h4 class="curriculum-card-title">${num}: ${item.title}</h4>
+                        <div class="curriculum-card-head">
+                            <span class="curriculum-card-num">${num}</span>
+                            <h4 class="curriculum-card-title">${item.title}</h4>
+                        </div>
                         ${topicsHtml}
                     </div>`;
             }).join('');
@@ -638,22 +647,44 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         </div>
     `).join('');
 
-    let versionSelector = '';
+    let versionToolbarSelect = '';
     if (module.versions && module.versions.length > 0) {
-        versionSelector = `
-            <div class="version-selector">
-                <select id="versionSelect" class="version-dropdown" onchange="switchVersion(this.value)">
-                    ${module.versions.map(v =>
-                        `<option value="${v}" ${v === version ? 'selected' : ''}>Minecraft ${v}</option>`
-                    ).join('')}
-                </select>
-            </div>
-            <script>
-                function switchVersion(v) {
-                    window.location.href = '../' + v + '/index.html';
-                }
-            </script>`;
+        versionToolbarSelect = `
+                <div class="module-toolbar-version">
+                    <label class="sr-only" for="versionSelect">Minecraft 版本</label>
+                    <select id="versionSelect" class="toolbar-field toolbar-select" onchange="switchVersion(this.value)">
+                        ${module.versions.map(v =>
+                            `<option value="${v}" ${v === version ? 'selected' : ''}>Minecraft ${v}</option>`
+                        ).join('')}
+                    </select>
+                </div>`;
     }
+
+    const partJumpOptions = sortedParts.map(partName => {
+        const pl = partNames[partName] || partName;
+        return `<option value="part-${partName}">${pl.replace(/</g, '')}</option>`;
+    }).join('');
+
+    const partJumpHtml = sortedParts.length > 1 ? `
+                <div class="module-toolbar-partjump">
+                    <label class="part-jump-wrap"><span class="part-jump-icon"><i class="fas fa-list-ul"></i></span>
+                    <select id="partJumpSelect" class="toolbar-field part-jump-select" aria-label="跳转到 Part">
+                        <option value="">跳转到 Part…</option>
+                        ${partJumpOptions}
+                    </select></label>
+                </div>` : '';
+
+    const analysisTabsHtml = analysisNavItems.length > 0 ? `
+                <div class="seg-tabs" role="tablist">
+                    <button type="button" class="seg-tab active" role="tab" aria-selected="true" onclick="switchDocType('tutorials')">
+                        <i class="fas fa-graduation-cap"></i> 教程
+                    </button>
+                    <button type="button" class="seg-tab" role="tab" aria-selected="false" onclick="switchDocType('analysis')">
+                        <i class="fas fa-microscope"></i> 分析
+                    </button>
+                </div>` : '';
+
+    const hasModuleToolbar = !!(versionToolbarSelect || analysisTabsHtml || partJumpHtml);
 
     const dropdownLinks = generateModuleDropdown(relativePath);
 
@@ -662,46 +693,180 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${module.name}${versionInfo} - MC 开发文档中心</title>
-    <link rel="stylesheet" href="${relativePath}/styles.css">
+    <title>${module.name}${versionInfo} - Minecraft Learning</title>
+    <link rel="stylesheet" href="${relativePath}styles.css">
+    <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        .page-hero { background: ${module.colorGradient}; }
-        .page-hero .hero-badge { background: rgba(255,255,255,0.2); }
-        .page-hero .stat-number { color: rgba(255,255,255,0.9); }
+        .module-index-page { --mi-accent: ${module.color}; --mi-grad: ${module.colorGradient}; }
         .doc-icon.tutorial-icon { background: ${module.colorGradient} !important; }
         .doc-icon.analysis-icon { background: linear-gradient(135deg, #E07A5F, #F2CC8F) !important; }
-        .section-header { text-align: center; margin-bottom: 40px; }
-        .version-selector { text-align: center; margin-bottom: 30px; }
-        .version-dropdown {
-            padding: 12px 24px;
-            font-size: 1rem;
-            border: 2px solid ${module.color};
-            border-radius: var(--radius-md);
-            background: white;
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+        }
+        /* Hero：适度留白，避免顶栏遮挡 */
+        .module-index-page .page-hero.module-index-hero {
+            min-height: 0 !important;
+            /* 顶栏 fixed 70px，避免标题被导航挡住 */
+            padding: calc(70px + 1.35rem) 1.5rem 1.85rem !important;
+            display: block !important;
+            text-align: left !important;
+            background: var(--mi-grad) !important;
+        }
+        .module-index-hero-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1.25rem 2rem;
+        }
+        .module-index-hero-text { flex: 1 1 280px; min-width: 0; }
+        .module-index-page .module-index-hero .hero-badge,
+        .module-index-page .module-index-hero .module-index-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.22) !important;
+            backdrop-filter: blur(6px);
+            color: #fff !important;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            animation: none;
+        }
+        .module-index-title {
+            margin: 0 0 0.5rem 0;
+            font-size: clamp(1.25rem, 2.8vw, 1.65rem);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.35;
+            letter-spacing: -0.02em;
+        }
+        .module-index-sub {
+            margin: 0;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.88);
+            line-height: 1.55;
+            max-width: 36rem;
+        }
+        .module-index-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .stat-chip {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.35rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            font-size: 0.8rem;
+        }
+        .stat-chip strong { font-size: 1rem; font-weight: 700; }
+        .stat-chip span { opacity: 0.9; font-weight: 500; }
+        .stat-chip.accent {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        /* 主内容区：浅底、全宽 */
+        .module-index-page .main-content.module-index-main {
+            margin-left: 0 !important;
+            padding: 0 0 4rem;
+            background: #f3f5f7;
+        }
+        .module-index-body { max-width: 1100px; padding-top: 0.5rem; }
+        /* 顶栏：版本 + 分段切换 + Part 跳转 */
+        .module-toolbar {
+            position: sticky;
+            top: 70px;
+            z-index: 40;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.85rem 1.15rem;
+            margin: 0 0 1.75rem;
+            padding: 0.85rem 1.15rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        .toolbar-field {
+            font-size: 0.875rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: #fff;
             color: var(--text-primary);
             cursor: pointer;
+            min-height: 38px;
         }
-        .section-divider {
+        .toolbar-select { min-width: 9.5rem; }
+        .part-jump-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0;
+        }
+        .part-jump-icon { color: var(--mi-accent); font-size: 0.9rem; }
+        .part-jump-select { min-width: 11rem; max-width: 100%; }
+        .seg-tabs {
+            display: inline-flex;
+            padding: 6px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.05);
+            gap: 8px;
+        }
+        .seg-tab {
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1.2rem;
+            border-radius: 9px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: background 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .seg-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.7); }
+        .seg-tab.active {
+            background: #fff;
+            color: var(--mi-accent);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .doc-section-head {
+            margin: 0 0 1.4rem 0;
+        }
+        .doc-section-head h2 {
+            margin: 0 0 0.4rem 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin: 40px 0;
+            gap: 0.5rem;
         }
-        .section-divider::before,
-        .section-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gray-light), transparent);
-        }
-        .section-divider span {
-            font-size: 0.9rem;
+        .doc-section-head h2 i { color: var(--mi-accent); }
+        .doc-section-hint {
+            margin: 0;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            font-weight: 500;
         }
         .doc-type-badge {
             display: inline-flex;
@@ -711,7 +876,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .doc-type-badge.tutorial {
             background: linear-gradient(135deg, ${module.color}, ${module.color}99);
@@ -721,361 +886,227 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             background: linear-gradient(135deg, #E07A5F, #F2CC8F);
             color: white;
         }
-        /* 固定侧边栏导航 */
-        .sidebar-nav {
-            position: fixed;
-            left: 0;
-            top: 70px;
-            width: 280px;
-            height: calc(100vh - 70px);
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            z-index: 100;
-            padding: 20px 0;
-            transition: transform 0.3s ease;
-        }
-        .sidebar-nav::-webkit-scrollbar {
-            width: 6px;
-        }
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 3px;
-        }
-        .sidebar-nav-item {
-            padding: 12px 24px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-        .sidebar-nav-item:hover {
-            background: ${module.color}0D;
-            color: var(--text-primary);
-        }
-        .sidebar-nav-item.active {
-            background: ${module.color}1A;
-            color: ${module.color};
-            border-left-color: ${module.color};
-            font-weight: 600;
-        }
-        .sidebar-toggle {
-            position: fixed;
-            left: 20px;
-            top: 80px;
-            width: 40px;
-            height: 40px;
-            background: ${module.color};
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 101;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-        .sidebar-toggle:hover {
-            background: ${module.color}dd;
-            transform: scale(1.05);
-        }
-        .sidebar-nav.hidden {
-            transform: translateX(-100%);
-        }
-        .main-content {
-            margin-left: 280px;
-            transition: margin-left 0.3s ease;
-        }
-        .main-content.expanded {
-            margin-left: 0;
-        }
-        /* 查看「分析」时收起教程侧栏与 Part 快捷条，主区域全宽 */
-        .main-content.doc-mode-analysis {
-            margin-left: 0 !important;
-        }
-        @media (max-width: 1024px) {
-            .sidebar-nav {
-                transform: translateX(-100%);
-            }
-            .sidebar-nav.show {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
-        
-        /* 顶部快速导航 */
-        .quick-nav {
-            position: sticky;
-            top: 70px;
-            background: white;
-            border-bottom: 2px solid #e9ecef;
-            padding: 15px 0;
-            z-index: 99;
-            margin-bottom: 30px;
-        }
-        .quick-nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            overflow-x: auto;
-            display: flex;
-            gap: 10px;
-        }
-        .quick-nav::-webkit-scrollbar {
-            height: 4px;
-        }
-        .quick-nav::-webkit-scrollbar-thumb {
-            background: #ddd;
-            border-radius: 2px;
-        }
-        .quick-nav-item {
-            padding: 8px 16px;
-            background: #f8f9fa;
-            border-radius: 20px;
-            white-space: nowrap;
-            cursor: pointer;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            border: 2px solid transparent;
-        }
-        .quick-nav-item:hover {
-            background: ${module.color}1A;
-            color: ${module.color};
-        }
-        .quick-nav-item.active {
-            background: ${module.color};
-            color: white;
-            border-color: ${module.color};
-        }
-        
-        /* 折叠式Part布局 */
+        /* Part 折叠块 */
         .part-section {
-            margin-bottom: 20px;
-            background: white;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-sm);
+            margin-bottom: 22px;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: box-shadow 0.25s ease, border-color 0.25s;
         }
         .part-section.expanded {
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.07);
+            border-color: rgba(0,0,0,0.08);
         }
         .part-header {
-            border-left: 4px solid ${module.color};
-            padding: 20px 24px;
+            border-left: none;
+            padding: 1rem 1.25rem;
             margin: 0;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(90deg, rgba(0,0,0,0.02), transparent);
             transition: background 0.2s;
         }
-        .part-header:hover {
-            background: ${module.color}0D;
-        }
+        .part-header:hover { background: rgba(0,0,0,0.035); }
         .part-header h3 {
-            font-size: 1.3rem;
+            font-size: 1.05rem;
+            font-weight: 600;
             color: var(--text-primary);
             margin: 0;
             flex: 1;
         }
         .part-toggle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: ${module.color}1A;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: ${module.color};
-            transition: transform 0.3s ease;
+            color: var(--mi-accent);
+            transition: transform 0.3s ease, background 0.2s;
+            flex-shrink: 0;
         }
-        .part-section.expanded .part-toggle {
-            transform: rotate(180deg);
-        }
+        .part-header:hover .part-toggle { background: ${module.color}18; }
+        .part-section.expanded .part-toggle { transform: rotate(180deg); }
         .part-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.4s ease;
-            padding: 0 24px;
+            transition: max-height 0.45s ease, padding 0.45s ease;
+            padding: 0 1.25rem;
+            border-top: 1px solid transparent;
         }
         .part-section.expanded .part-content {
             max-height: 5000px;
-            padding: 24px;
+            padding: 1.1rem 1.25rem 1.4rem;
+            border-top-color: rgba(0,0,0,0.05);
         }
-        /* 教程课程卡片式布局 */
+        /* 课程卡片网格 */
         .curriculum-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 1.25rem;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
+            .curriculum-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 800px) {
             .curriculum-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 560px) {
+        @media (max-width: 480px) {
             .curriculum-grid { grid-template-columns: 1fr; }
         }
         .curriculum-card {
-            background: white;
-            border-radius: var(--radius-md);
-            padding: 24px;
-            box-shadow: var(--shadow-md);
+            background: #fafbfc;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            border: 1px solid rgba(0,0,0,0.06);
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
         }
         .curriculum-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            border-color: ${module.color}55;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            transform: translateY(-1px);
+        }
+        .curriculum-card:focus-visible {
+            outline: 2px solid ${module.color};
+            outline-offset: 2px;
+        }
+        .curriculum-card-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
         }
         .curriculum-card-num {
-            width: 48px;
-            height: 48px;
-            background: #2c3e50;
-            color: white;
-            border-radius: 10px;
+            flex-shrink: 0;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.35rem;
+            background: linear-gradient(135deg, #2d3e50, #1a252f);
+            color: #fff;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 14px;
+            font-size: 0.75rem;
         }
         .curriculum-card-title {
-            font-size: 1.05rem;
+            font-size: 0.88rem;
+            font-weight: 600;
             color: var(--text-primary);
-            margin: 0 0 12px 0;
+            margin: 0;
             line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .curriculum-card-topics {
-            margin: 0;
-            padding-left: 18px;
+            margin: 0.4rem 0 0 0;
+            padding-left: 1rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.6;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .curriculum-card-topics li { list-style: disc; }
         .learning-advice {
-            background: rgba(0,0,0,0.04);
-            border-left: 4px solid ${module.color};
-            padding: 16px 20px;
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            margin-bottom: 24px;
+            background: linear-gradient(90deg, ${module.color}12, transparent);
+            border: 1px solid ${module.color}33;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.85rem;
         }
-        .learning-advice strong { color: var(--text-primary); }
-        .learning-advice p { margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+        .learning-advice strong { color: var(--text-primary); font-size: 0.9rem; }
+        .learning-advice p { margin: 0.35rem 0 0 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; }
         .part-prev-next {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
+            padding-top: 0.25rem;
         }
         .part-prev-next a {
-            color: ${module.color};
+            color: var(--mi-accent);
             font-weight: 600;
+            font-size: 0.88rem;
         }
         .part-prev-next a:hover { text-decoration: underline; }
+        @media (max-width: 768px) {
+            .module-toolbar { top: 70px; }
+        }
     </style>
 </head>
-<body>
+<body class="module-index-page">
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar" style="background: ${module.color};">
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="${relativePath}/index.html" class="nav-logo" style="color: white;">
+            <a href="${relativePath}index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()" style="color: white;">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="${relativePath}/index.html" style="color: rgba(255,255,255,0.9);">首页</a></li>
+                <li><a href="${relativePath}index.html">首页</a></li>
                 <li class="dropdown">
-                    <a href="#" class="active" style="color: white;">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-content">
                         ${dropdownLinks}
                     </div>
                 </li>
-                <li><a href="${relativePath}/catalog.html" style="color: rgba(255,255,255,0.9);">文档目录</a></li>
-                <li><a href="${relativePath}/about.html" style="color: rgba(255,255,255,0.9);">关于</a></li>
+                <li><a href="${relativePath}about.html">关于</a></li>
             </ul>
         </div>
     </nav>
 
-    <header class="page-hero">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <i class="fas fa-${module.icon}"></i>
-                ${module.name}
-            </div>
-            <h1>${module.description}</h1>
-            <p class="hero-subtitle">深入理解 ${module.name} 的核心架构与实现细节</p>
-            <div class="hero-stats">
-                <div class="stat">
-                    <span class="stat-number">${tutorialsNavItems.length + analysisNavItems.length}</span>
-                    <span class="stat-label">核心文档</span>
+    <header class="page-hero module-index-hero" id="pageHero">
+        <div class="module-index-hero-inner">
+            <div class="module-index-hero-text">
+                <div class="hero-badge module-index-badge">
+                    <i class="fas fa-${module.icon}"></i>
+                    ${module.name}
                 </div>
-                ${version ? `<div class="stat">
-                    <span class="stat-number">${version}</span>
-                    <span class="stat-label">Minecraft 版本</span>
-                </div>` : ''}
+                <h1 class="module-index-title">${module.description}</h1>
+                <p class="module-index-sub">深入理解 ${module.name} 的核心架构与实现细节</p>
+            </div>
+            <div class="module-index-stats">
+                <div class="stat-chip"><strong>${tutorialsNavItems.length + analysisNavItems.length}</strong><span>篇文档</span></div>
+                ${version ? `<div class="stat-chip accent"><span>版本</span><strong>${version}</strong></div>` : ''}
             </div>
         </div>
     </header>
 
-    <!-- 固定侧边栏导航 -->
-    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
-        <i class="fas fa-bars"></i>
-    </button>
-    <nav class="sidebar-nav" id="sidebarNav">
-        ${sortedParts.map(partName => {
-            const partLabel = partNames[partName] || partName;
-            return `<div class="sidebar-nav-item ${partName === sortedParts[0] ? 'active' : ''}" onclick="scrollToPart('part-${partName}')">${partLabel}</div>`;
-        }).join('')}
-    </nav>
-
-    <section class="section main-content" id="mainContent">
-        <div class="container">
-            
-            <!-- 顶部快速导航（仅教程模式显示） -->
-            <div class="quick-nav" id="tutorialQuickNav">
-                <div class="quick-nav-container">
-                    ${sortedParts.map((partName, idx) => {
-                        const shortLabel = partName.replace(/^[0-9]+-/, '').replace(/-/g, ' ').substring(0, 10);
-                        return `<div class="quick-nav-item ${idx === 0 ? 'active' : ''}" onclick="scrollToPart('part-${partName}')">${partName}</div>`;
-                    }).join('')}
+    <section class="section main-content module-index-main" id="mainContent">
+        <div class="container module-index-body">
+            ${hasModuleToolbar ? `
+            <div class="module-toolbar" style="--module-accent: ${module.color};">
+                <div class="module-toolbar-start" style="display:flex;flex-wrap:wrap;align-items:center;gap:1rem;">
+                    ${versionToolbarSelect}
+                    ${analysisTabsHtml}
                 </div>
-            </div>
-            
-            ${versionSelector}
-
-            <!-- 教程/分析切换标签 -->
-            ${analysisNavItems.length > 0 ? `
-            <div class="doc-type-tabs" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 30px;">
-                <button class="tab-btn active" onclick="switchDocType('tutorials')" style="padding: 10px 20px; border: 2px solid ${module.color}; background: ${module.color}; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                    <i class="fas fa-graduation-cap"></i> 教程
-                </button>
-                <button class="tab-btn" onclick="switchDocType('analysis')" style="padding: 10px 20px; border: 2px solid ${module.color}; background: white; color: ${module.color}; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                    <i class="fas fa-microscope"></i> 分析
-                </button>
-            </div>
-            ` : ''}
+                ${partJumpHtml}
+            </div>` : ''}
 
             <!-- 教程部分 -->
             <div id="tutorialsSection" class="doc-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-graduation-cap"></i>
-                        教程 ${version || ''}
-                    </h2>
+                <div class="doc-section-head">
+                    <h2><i class="fas fa-graduation-cap"></i> 教程目录 ${version || ''}</h2>
+                    <p class="doc-section-hint">按 Part 展开章节，点击卡片进入阅读</p>
                 </div>
                 <div class="tutorials-by-part">
                     ${tutorialsByPartHtml || '<div class="empty-state"><i class="fas fa-folder-open"></i><p>暂无教程文档</p></div>'}
@@ -1085,11 +1116,9 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             <!-- 分析部分 -->
             ${analysisNavItems.length > 0 ? `
             <div id="analysisSection" class="doc-section" style="display: none;">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-microscope"></i>
-                        源码分析 ${version || ''}
-                    </h2>
+                <div class="doc-section-head">
+                    <h2><i class="fas fa-microscope"></i> 源码分析 ${version || ''}</h2>
+                    <p class="doc-section-hint">系统级解读，适合配合源码阅读</p>
                 </div>
                 <div class="docs-grid">
                     ${analysisCards}
@@ -1100,156 +1129,65 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     </section>
 
     <script>
-        // 折叠/展开Part
+        ${module.versions && module.versions.length ? `
+        function switchVersion(v) {
+            window.location.href = '../' + v + '/index.html';
+        }` : ''}
+
         function togglePart(partId) {
             const part = document.getElementById(partId);
-            if (part) {
-                part.classList.toggle('expanded');
-                updateActiveNav(partId);
-            }
+            if (part) part.classList.toggle('expanded');
         }
-        
-        // 滚动到指定Part并展开
+
         function scrollToPart(partId) {
             const part = document.getElementById(partId);
-            if (part) {
-                // 展开Part
-                if (!part.classList.contains('expanded')) {
-                    part.classList.add('expanded');
-                }
-                // 滚动到Part
-                setTimeout(() => {
-                    const offset = 140; // 导航栏 + 快速导航的高度
-                    const elementPosition = part.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - offset;
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-                // 更新导航状态
-                updateActiveNav(partId);
-            }
+            if (!part) return;
+            if (!part.classList.contains('expanded')) part.classList.add('expanded');
+            setTimeout(() => {
+                const toolbar = document.querySelector('.module-toolbar');
+                const extra = toolbar ? toolbar.getBoundingClientRect().height + 24 : 120;
+                const y = part.getBoundingClientRect().top + window.pageYOffset - extra;
+                window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+            }, 80);
         }
-        
-        // 更新导航高亮
-        function updateActiveNav(partId) {
-            // 更新侧边栏导航
-            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
-                item.classList.remove('active');
+
+        function switchDocType(type) {
+            const tutorialsSection = document.getElementById('tutorialsSection');
+            const analysisSection = document.getElementById('analysisSection');
+            const tabs = document.querySelectorAll('.seg-tab');
+            const showTutorials = type === 'tutorials';
+            tabs.forEach((btn, i) => {
+                const isTutorialTab = i === 0;
+                const on = showTutorials ? isTutorialTab : !isTutorialTab;
+                btn.classList.toggle('active', on);
+                btn.setAttribute('aria-selected', on ? 'true' : 'false');
             });
-            const sidebarItem = Array.from(document.querySelectorAll('.sidebar-nav-item')).find(item => {
-                return item.getAttribute('onclick') && item.getAttribute('onclick').includes(partId);
-            });
-            if (sidebarItem) {
-                sidebarItem.classList.add('active');
-            }
-            
-            // 更新顶部快速导航
-            document.querySelectorAll('.quick-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const quickNavItem = Array.from(document.querySelectorAll('.quick-nav-item')).find(item => {
-                return item.getAttribute('onclick') && item.getAttribute('onclick').includes(partId);
-            });
-            if (quickNavItem) {
-                quickNavItem.classList.add('active');
-            }
+            if (tutorialsSection) tutorialsSection.style.display = showTutorials ? 'block' : 'none';
+            if (analysisSection) analysisSection.style.display = showTutorials ? 'none' : 'block';
         }
-        
-        // 切换侧边栏
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebarNav');
-            const mainContent = document.getElementById('mainContent');
-            if (sidebar && mainContent) {
-                sidebar.classList.toggle('hidden');
-                if (window.innerWidth > 1024) {
-                    mainContent.classList.toggle('expanded');
-                } else {
-                    sidebar.classList.toggle('show');
-                }
-            }
-        }
-        
-        // 监听滚动，自动更新导航高亮
-        let scrollTimeout;
-        window.addEventListener('scroll', () => {
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                const parts = document.querySelectorAll('.part-section');
-                const offset = 200;
-                let currentPart = null;
-                
-                parts.forEach(part => {
-                    const rect = part.getBoundingClientRect();
-                    if (rect.top <= offset && rect.bottom >= offset) {
-                        currentPart = part.id;
-                    }
-                });
-                
-                if (currentPart) {
-                    updateActiveNav(currentPart);
-                }
-            }, 100);
-        });
-        
-        // 默认展开第一个Part
+
         document.addEventListener('DOMContentLoaded', () => {
             const firstPart = document.querySelector('.part-section');
             if (firstPart && !firstPart.classList.contains('expanded')) {
                 firstPart.classList.add('expanded');
             }
-        });
-        
-        function switchDocType(type) {
-            const tutorialsSection = document.getElementById('tutorialsSection');
-            const analysisSection = document.getElementById('analysisSection');
-            const tabs = document.querySelectorAll('.tab-btn');
-            const tutorialQuickNav = document.getElementById('tutorialQuickNav');
-            const sidebar = document.getElementById('sidebarNav');
-            const sidebarBtn = document.getElementById('sidebarToggle');
-            const mainContent = document.getElementById('mainContent');
-            const showTutorials = type === 'tutorials';
-            
-            tabs.forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(showTutorials ? '教程' : '分析')) {
-                    btn.classList.add('active');
-                    if (showTutorials) {
-                        btn.style.background = '${module.color}';
-                        btn.style.color = 'white';
-                    } else {
-                        btn.style.background = 'white';
-                        btn.style.color = '${module.color}';
+            const pj = document.getElementById('partJumpSelect');
+            if (pj) {
+                pj.addEventListener('change', function() {
+                    if (this.value) {
+                        scrollToPart(this.value);
+                        this.value = '';
                     }
-                } else {
-                    if (showTutorials) {
-                        btn.style.background = 'white';
-                        btn.style.color = '${module.color}';
-                    } else {
-                        btn.style.background = '${module.color}';
-                        btn.style.color = 'white';
-                    }
-                }
-            });
-            
-            if (tutorialsSection) tutorialsSection.style.display = showTutorials ? 'block' : 'none';
-            if (analysisSection) analysisSection.style.display = showTutorials ? 'none' : 'block';
-            if (tutorialQuickNav) tutorialQuickNav.style.display = showTutorials ? '' : 'none';
-            if (sidebar) sidebar.style.display = showTutorials ? '' : 'none';
-            if (sidebarBtn) sidebarBtn.style.display = showTutorials ? '' : 'none';
-            if (mainContent) {
-                if (showTutorials) mainContent.classList.remove('doc-mode-analysis');
-                else mainContent.classList.add('doc-mode-analysis');
+                });
             }
-        }
+        });
     </script>
 
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">
-                    <h3><i class="fas fa-cube"></i> MC 开发文档</h3>
+                    <h3><i class="fas fa-cube"></i> Minecraft Learning</h3>
                     <p>开放、共享、探索 Minecraft 开发的无限可能</p>
                 </div>
                 <div class="footer-links">
@@ -1261,72 +1199,63 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                 <div class="footer-links">
                     <h4>资源</h4>
                     <ul>
-                        <li><a href="${relativePath}/catalog.html">文档目录</a></li>
-                        <li><a href="${relativePath}/about.html">关于</a></li>
+                        <li><a href="${relativePath}about.html">关于</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 MC 开发文档中心 | 基于开放源码研究</p>
+                <p>&copy; 2026 Minecraft Learning | 基于开放源码研究</p>
             </div>
         </div>
     </footer>
 
-    <script src="${relativePath}/script.js"></script>
+    <script src="${relativePath}script.js"></script>
     <style>
-        .docs-grid {
+        .module-index-page .docs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
         }
-        .tutorials-by-part {
+        .module-index-page .tutorials-by-part {
             display: flex;
             flex-direction: column;
-            gap: 40px;
+            gap: 26px;
         }
-        .doc-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 25px;
+        .module-index-page .doc-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1.25rem 1.35rem;
             display: flex;
             align-items: flex-start;
-            gap: 20px;
+            gap: 18px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
-            animation: fadeInUp 0.5s ease forwards;
-            opacity: 0;
-        }
-        /* 分析区默认隐藏，子元素动画不会在首屏完成，否则会一直保持 opacity:0 */
-        #analysisSection .doc-card {
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
             opacity: 1;
-            animation: none;
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .module-index-page .doc-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-color: ${module.color}44;
         }
-        .doc-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-        .doc-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: var(--radius-md);
+        .module-index-page .doc-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             flex-shrink: 0;
         }
-        .doc-content { flex: 1; }
-        .doc-content h3 { font-size: 1.15rem; color: var(--text-primary); margin-bottom: 8px; }
-        .doc-content p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; }
-        .doc-meta { font-size: 0.8rem; color: var(--text-secondary); }
-        .doc-arrow { color: var(--text-secondary); font-size: 1.2rem; transition: transform 0.3s ease; }
-        .doc-card:hover .doc-arrow { transform: translateX(5px); color: ${module.color}; }
+        .module-index-page .doc-content { flex: 1; min-width: 0; }
+        .module-index-page .doc-content h3 { font-size: 1.05rem; color: var(--text-primary); margin-bottom: 0.35rem; line-height: 1.4; }
+        .module-index-page .doc-content p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.55rem; line-height: 1.45; }
+        .module-index-page .doc-meta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem; }
+        .module-index-page .doc-arrow { color: var(--text-secondary); font-size: 1rem; transition: transform 0.2s ease; align-self: center; }
+        .module-index-page .doc-card:hover .doc-arrow { transform: translateX(4px); color: ${module.color}; }
     </style>
 </body>
 </html>`;
@@ -1334,9 +1263,9 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
 
 function generateModuleFooterLinks(relativePath) {
     return Object.entries(modules).map(([key, module]) => {
-        const href = module.versions
-            ? `${relativePath}/docs/${module.slug}/index.html`
-            : `${relativePath}/docs/${module.slug}/index.html`;
+        const href = module.versions && module.defaultVersion
+            ? `${relativePath}docs/${module.slug}/${module.defaultVersion}/index.html`
+            : `${relativePath}docs/${module.slug}/index.html`;
         return `<li><a href="${href}">${module.name}</a></li>`;
     }).join('\n                        ');
 }

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nbt data system - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>nbt data system</span>
                 </nav>
@@ -460,57 +470,46 @@
 <h2 id="目标">目标</h2>
 <p>学完本章节后，你将理解：
 <ul><li>NBT 是什么（命名二进制标签）</li>
-<li>NBT 的各种数据类型</li>
-<li><code>NbtCompound</code> 复合标签的用法</li>
-<li><code>NbtList</code> 列表标签的用法</li>
-<li>NBT 在 Minecraft 中的实际应用</li></ul></p>
+<li>NBT 的各种数据类�?- <code>NbtCompound</code> 复合标签的用�?- <code>NbtList</code> 列表标签的用�?- NBT �?Minecraft 中的实际应用</li></ul></p>
 <h2 id="前置知识">前置知识</h2>
-<p><ul><li>理解 <a href="../Part-0-Prerequisites/01-java-basics.html">Java 基础</a></li>
+<p><ul><li>理解 <a href="/mc/1.21/tutorials/Part-0-Prerequisites/01-java-basics/">Java 基础</a></li>
 <li>了解基本的类、接口和集合概念</li>
-<li>知道 Minecraft 的存档和物品系统是什么</li></ul></p>
-<h2 id="核心概念（用生活比喻）">核心概念（用生活比喻）</h2>
-<h3>什么是 NBT？</h3>
-<p><strong>NBT = Named Binary Tag（命名二进制标签）</strong></p>
-<p>简单来说，NBT 就是 Minecraft 用来存储数据的一种格式。就像你写日记需要纸和笔，Minecraft 存储数据就需要 NBT。</p>
+<li>知道 Minecraft 的存档和物品系统是什�?</li>
+</ul><h2 id="核心概念（用生活比喻�?">核心概念（用生活比喻�?</h2>
+<h3>什么是 NBT�?</h3>
+<p><em>*NBT = Named Binary Tag（命名二进制标签�?</em></p>
+<p>简单来说，NBT 就是 Minecraft 用来存储数据的一种格式。就像你写日记需要纸和笔，Minecraft 存储数据就需�?NBT�?
 <h3>生活中的比喻：NBT 就像...</h3>
-<p>想象你搬家时用的<strong>收纳箱系统</strong>：</p>
-<pre class="code-block"><code class="language-text">📦 收纳箱（Compound 复合标签）
-├── 📋 标签：物品信息
-│   ├── 名称：钻石剑
-│   ├── 耐久：100/1561
-│   └── 附魔：锋利 III
-├── 👕 标签：服装
-│   ├── 上衣：T恤
-│   └── 裤子：牛仔裤
-└── 📚 标签：书籍
-    ├── 第1本：《Java入门》
-    ├── 第2本：《Minecraft模组开发》
-    └── 第3本：《数据结构》</code></pre>
-<p>每个收纳箱里有很多<strong>标签</strong>（tag），每个标签都有自己的<strong>名字</strong>和<strong>内容</strong>。</p>
-<h3>NBT 数据类型一览</h3>
-<table class="data-table"><thead><tr><th>类型</th><th>ID</th><th>说明</th><th>生活中的例子</th></tr></thead><tbody><tr><td><strong>END</strong></td><td>0</td><td>结束标记（很少用）</td><td>-</td></tr><tr><td><strong>BYTE</strong></td><td>1</td><td>1字节整数（-128~127）</td><td>开关状态（开/关）</td></tr><tr><td><strong>SHORT</strong></td><td>2</td><td>2字节整数（-32768~32767）</td><td>物品数量</td></tr><tr><td><strong>INT</strong></td><td>3</td><td>4字节整数</td><td>坐标、计时器</td></tr><tr><td><strong>LONG</strong></td><td>4</td><td>8字节整数</td><td>大数字、UUID</td></tr><tr><td><strong>FLOAT</strong></td><td>5</td><td>单精度浮点数</td><td>坐标、百分比</td></tr><tr><td><strong>DOUBLE</strong></td><td>6</td><td>双精度浮点数</td><td>精确坐标</td></tr><tr><td><strong>STRING</strong></td><td>8</td><td>字符串</td><td>名称、描述</td></tr><tr><td><strong>LIST</strong></td><td>9</td><td>列表</td><td>物品栏、附魔列表</td></tr><tr><td><strong>COMPOUND</strong></td><td>10</td><td>复合标签（嵌套）</td><td>物品完整数据</td></tr><tr><td><strong>BYTE<em>ARRAY</strong></td><td>7</td><td>字节数组</td><td>图像数据</td></tr><tr><td><strong>INT</em>ARRAY</strong></td><td>11</td><td>整数数组</td><td>旧版存档坐标</td></tr><tr><td><strong>LONG_ARRAY</strong></td><td>12</td><td>长整数数组</td><td>UUID（1.16+）</td></tr></tbody></table>
+<p>想象你搬家时用的<em>*收纳箱系�?</em>�?</p>
+<pre class="code-block"><code class="language-text">📦 收纳箱（Compound 复合标签�?├── 📋 标签：物品信�?�?  ├── 名称：钻石剑
+�?  ├── 耐久�?00/1561
+�?  └── 附魔：锋�?III
+├── 👕 标签：服�?�?  ├── 上衣：T�?�?  └── 裤子：牛仔裤
+└── 📚 标签：书�?    ├── �?本：《Java入门�?    ├── �?本：《Minecraft模组开发�?    └── �?本：《数据结构�?</code></pre>
+<p>每个收纳箱里有很�?<em>标签<strong>（tag），每个标签都有自己�?</em>名字</strong>�?<em>内容</em>*�?
+<h3>NBT 数据类型一�?</h3>
+<table class="data-table"><thead><tr><th>类型</th><th>ID</th><th>说明</th><th>生活中的例子</th></tr></thead><tbody><tr><td><strong>END</strong></td><td>0</td><td>结束标记（很少用�?</td><td>-</td></tr><tr><td><strong>BYTE</strong></td><td>1</td><td>1字节整数�?128~127�?</td><td>开关状态（开/关）</td></tr><tr><td><strong>SHORT</strong></td><td>2</td><td>2字节整数�?32768~32767�?</td><td>物品数量</td></tr><tr><td><strong>INT</strong></td><td>3</td><td>4字节整数</td><td>坐标、计时器</td></tr><tr><td><strong>LONG</strong></td><td>4</td><td>8字节整数</td><td>大数字、UUID</td></tr><tr><td><strong>FLOAT</strong></td><td>5</td><td>单精度浮点数</td><td>坐标、百分比</td></tr><tr><td><strong>DOUBLE</strong></td><td>6</td><td>双精度浮点数</td><td>精确坐标</td></tr><tr><td><strong>STRING</strong></td><td>8</td><td>字符�?</td><td>名称、描�?</td></tr><tr><td><strong>LIST</strong></td><td>9</td><td>列表</td><td>物品栏、附魔列�?</td></tr><tr><td><strong>COMPOUND</strong></td><td>10</td><td>复合标签（嵌套）</td><td>物品完整数据</td></tr><tr><td><strong>BYTE<em>ARRAY</strong></td><td>7</td><td>字节数组</td><td>图像数据</td></tr><tr><td><strong>INT</em>ARRAY</strong></td><td>11</td><td>整数数组</td><td>旧版存档坐标</td></tr><tr><td><strong>LONG_ARRAY</strong></td><td>12</td><td>长整数数�?</td><td>UUID�?.16+�?</td></tr></tbody></table>
 <h3>NbtCompound 复合标签</h3>
-<p><strong>NbtCompound</strong> 就像一个<strong>字典</strong>或 <strong>JSON 对象</strong>：</p>
+<p><strong>NbtCompound</strong> 就像一�?<em>字典<strong>�?</strong>JSON 对象</em>*�?</p>
 <pre class="code-block"><code class="language-text">{
     &quot;display&quot;: {
-        &quot;Name&quot;: &quot;§6黄金剑&quot;,
-        &quot;Lore&quot;: [&quot;传说中...&quot;, &quot;增加生命&quot;]
+        &quot;Name&quot;: &quot;§6黄金�?,
+        &quot;Lore&quot;: [&quot;传说�?..&quot;, &quot;增加生命&quot;]
     },
     &quot;ench&quot;: [
         {&quot;id&quot;: 16, &quot;lvl&quot;: 5},   // 锋利 V
-        {&quot;id&quot;: 20, &quot;lvl&quot;: 2}    // 亡灵杀手 II
+        {&quot;id&quot;: 20, &quot;lvl&quot;: 2}    // 亡灵杀�?II
     ],
     &quot;Damage&quot;: 0,
     &quot;Unbreakable&quot;: 1
 }</code></pre>
 <h3>NbtList 列表标签</h3>
-<p><strong>NbtList</strong> 就像一个<strong>数组</strong>或 <strong>List 集合</strong>：</p>
+<p><strong>NbtList</strong> 就像一�?<em>数组<strong>�?</strong>List 集合</em>*�?</p>
 <pre class="code-block"><code class="language-text">[1, 2, 3, 4, 5]           // 数字列表
-[&quot;剑&quot;, &quot;盾&quot;, &quot;弓&quot;]         // 字符串列表
-[{id:1, lvl:1}, {id:2, lvl:2}]  // 复合标签列表</code></pre>
-<p><strong>重要规则</strong>：NbtList 里所有元素的类型必须相同！</p>
-<h2 id="图解（Mermaid）">图解（Mermaid）</h2>
-<h3>NBT 数据类型层次图</h3>
+[&quot;�?, &quot;�?, &quot;�?]         // 字符串列�?[{id:1, lvl:1}, {id:2, lvl:2}]  // 复合标签列表</code></pre>
+<p><strong>重要规则</strong>：NbtList 里所有元素的类型必须相同�?
+<h2 id="图解（Mermaid�?">图解（Mermaid�?</h2>
+<h3>NBT 数据类型层次�?</h3>
 <div class="mermaid">flowchart TD
     subgraph NBT["NBT 数据体系"]
         subgraph 基础类型
@@ -530,7 +529,7 @@
         end
         
         subgraph 容器类型
-            NBTC[NbtCompound<br/>复合标签<br/>🔑键-值对🔑]
+            NBTC[NbtCompound<br/>复合标签<br/>🔑�?值对🔑]
             NBTL[NbtList<br/>列表标签<br/>📋有序集合📋]
         end
     end
@@ -548,7 +547,7 @@
     style NBT fill:#e1f5fe
     style NBTC fill:#c8e6c9
     style NBTL fill:#fff3e0</div>
-<h3>NBT 在 Minecraft 中的使用场景</h3>
+<h3>NBT �?Minecraft 中的使用场景</h3>
 <div class="mermaid">flowchart LR
     subgraph 存档["📁 世界存档"]
         WC[World Data<br/>世界数据]
@@ -572,7 +571,7 @@
     style 存档 fill:#bbdefb
     style 物品 fill:#c8e6c9
     style 网络 fill:#fff3e0</div>
-<h3>NbtCompound 操作流程图</h3>
+<h3>NbtCompound 操作流程�?</h3>
 <div class="mermaid">flowchart TD
     subgraph 创建["1️⃣ 创建复合标签"]
         A1[NbtCompound nbt = new NbtCompound]
@@ -588,13 +587,13 @@
     
     subgraph 读取["3️⃣ 读取数据"]
         B1 --> C1[getString<br/>读取字符串]
-        B2 --> C2[getInt<br/>读取整数<br/>不存在返回0]
+        B2 --> C2[getInt<br/>读取整数<br/>不存在返�?]
         B3 --> C3[getCompound<br/>读取嵌套复合标签]
         B4 --> C4[getList<br/>读取列表]
         B5 --> C5[getBoolean<br/>读取布尔值]
     end
     
-    subgraph 检查["4️⃣ 安全检查"]
+    subgraph 检查["4️⃣ 安全检�?]
         C1 --> D1[contains<br/>检查键是否存在]
         C2 --> D1
         C3 --> D1
@@ -605,7 +604,7 @@
     style 创建 fill:#e1f5fe
     style 写入 fill:#c8e6c9
     style 读取 fill:#fff3e0
-    style 检查 fill:#fce4ec</div>
+    style 检�?fill:#fce4ec</div>
 <h3>物品 NBT 数据结构示例</h3>
 <div class="mermaid">flowchart TD
     subgraph ItemNBT["📦 物品 NBT 结构"]
@@ -622,8 +621,8 @@
         CH --> E2[附魔2: id + lvl]
         CH --> E3[...]
         
-        TG --> TG1[自定义属性1]
-        TG --> TG2[自定义属性2]
+        TG --> TG1[自定义属�?]
+        TG --> TG2[自定义属�?]
     end
     
     style ItemNBT fill:#e8eaf6
@@ -635,26 +634,20 @@
 <p><ul><li><code>net.minecraft.nbt.NbtElement</code> - NBT 元素接口</li>
 <li><code>net.minecraft.nbt.NbtCompound</code> - 复合标签</li>
 <li><code>net.minecraft.nbt.NbtList</code> - 列表标签</li></ul></p>
-<h3>创建和操作 NbtCompound</h3>
+<h3>创建和操�?NbtCompound</h3>
 <pre class="code-block"><code class="language-java">NbtCompound nbt = new NbtCompound();
 
-// 2. 写入各种类型的数据
-nbt.putString(&quot;name&quot;, &quot;钻石剑&quot;);        // 字符串
-nbt.putInt(&quot;damage&quot;, 100);              // 整数
+// 2. 写入各种类型的数�?nbt.putString(&quot;name&quot;, &quot;钻石�?);        // 字符�?nbt.putInt(&quot;damage&quot;, 100);              // 整数
 nbt.putInt(&quot;maxDamage&quot;, 1561);          // 整数
-nbt.putBoolean(&quot;unbreakable&quot;, true);   // 布尔值（存为BYTE）
-nbt.putFloat(&quot;speed&quot;, 3.5f);           // 浮点数
-nbt.putLong(&quot;uuidMost&quot;, 123456789L);    // 长整数
-nbt.putLong(&quot;uuidLeast&quot;, 987654321L);   // 长整数
-
+nbt.putBoolean(&quot;unbreakable&quot;, true);   // 布尔值（存为BYTE�?nbt.putFloat(&quot;speed&quot;, 3.5f);           // 浮点�?nbt.putLong(&quot;uuidMost&quot;, 123456789L);    // 长整�?nbt.putLong(&quot;uuidLeast&quot;, 987654321L);   // 长整�?
 // 3. 写入嵌套复合标签
 NbtCompound display = new NbtCompound();
-display.putString(&quot;Name&quot;, &quot;§6附魔钻石剑&quot;);
-display.putString(&quot;Lore&quot;, &quot;[\&quot;传说中...\&quot;,\&quot;增加生命\&quot;]&quot;);
+display.putString(&quot;Name&quot;, &quot;§6附魔钻石�?);
+display.putString(&quot;Lore&quot;, &quot;[\&quot;传说�?..\&quot;,\&quot;增加生命\&quot;]&quot;);
 nbt.put(&quot;display&quot;, display);
 
 // 4. 读取数据
-String name = nbt.getString(&quot;name&quot;);           // &quot;钻石剑&quot;
+String name = nbt.getString(&quot;name&quot;);           // &quot;钻石�?
 int damage = nbt.getInt(&quot;damage&quot;);             // 100
 boolean unbreakable = nbt.getBoolean(&quot;unbreakable&quot;);  // true
 
@@ -681,7 +674,7 @@ for (String key : nbt.getKeys()) {
     NbtElement element = nbt.get(key);
     System.out.println(key + &quot; = &quot; + element);
 }</code></pre>
-<h3>创建和操作 NbtList</h3>
+<h3>创建和操�?NbtList</h3>
 <pre class="code-block"><code class="language-java">NbtList list = new NbtList();
 
 // 2. 添加元素
@@ -689,27 +682,23 @@ list.add(NbtInt.of(1));           // 添加整数 1
 list.add(NbtInt.of(2));           // 添加整数 2
 list.add(NbtInt.of(3));           // 添加整数 3
 
-// 3. 添加字符串
-NbtList stringList = new NbtList();
-stringList.add(NbtString.of(&quot;剑&quot;));
-stringList.add(NbtString.of(&quot;盾&quot;));
-stringList.add(NbtString.of(&quot;弓&quot;));
+// 3. 添加字符�?NbtList stringList = new NbtList();
+stringList.add(NbtString.of(&quot;�?));
+stringList.add(NbtString.of(&quot;�?));
+stringList.add(NbtString.of(&quot;�?));
 
-// 4. 添加复合标签到列表（用于附魔列表）
-NbtList enchants = new NbtList();
+// 4. 添加复合标签到列表（用于附魔列表�?NbtList enchants = new NbtList();
 NbtCompound enchant1 = new NbtCompound();
 enchant1.putShort(&quot;id&quot;, (short)16);  // 锋利附魔ID
 enchant1.putShort(&quot;lvl&quot;, (short)5);  // 锋利V
 enchants.add(enchant1);
 
 NbtCompound enchant2 = new NbtCompound();
-enchant2.putShort(&quot;id&quot;, (short)20);  // 亡灵杀手
-enchant2.putShort(&quot;lvl&quot;, (short)2);  // 亡灵杀手II
+enchant2.putShort(&quot;id&quot;, (short)20);  // 亡灵杀�?enchant2.putShort(&quot;lvl&quot;, (short)2);  // 亡灵杀手II
 enchants.add(enchant2);
 
 // 5. 读取列表
-int first = list.getInt(0);        // 获取第一个元素
-int size = list.size();            // 列表大小
+int first = list.getInt(0);        // 获取第一个元�?int size = list.size();            // 列表大小
 
 // 6. 安全读取
 int value = (index &gt;= 0 &amp;&amp; index &lt; list.size()) ? list.getInt(index) : 0;
@@ -730,8 +719,7 @@ for (int i = 0; i &lt; enchantList.size(); i++) {
 }
 
 // 9. 移除元素
-list.remove(0);  // 移除第一个元素
-
+list.remove(0);  // 移除第一个元�?
 // 10. 清空列表
 list.clear();</code></pre>
 <h3>常用快捷方法</h3>
@@ -747,8 +735,7 @@ int[] coords = {100, 64, 200};
 nbt.putIntArray(&quot;coords&quot;, coords);
 int[] savedCoords = nbt.getIntArray(&quot;coords&quot;);
 
-// UUID 操作（Minecraft 1.16+）
-UUID uuid = UUID.randomUUID();
+// UUID 操作（Minecraft 1.16+�?UUID uuid = UUID.randomUUID();
 nbt.putUuid(&quot;OwnerUUID&quot;, uuid);
 UUID savedUuid = nbt.getUuid(&quot;OwnerUUID&quot;);
 
@@ -757,7 +744,7 @@ NbtCompound source = new NbtCompound();
 source.putString(&quot;key1&quot;, &quot;value1&quot;);
 NbtCompound target = new NbtCompound();
 target.putString(&quot;key2&quot;, &quot;value2&quot;);
-target.copyFrom(source);  // 合并到 target</code></pre>
+target.copyFrom(source);  // 合并�?target</code></pre>
 <h3>NbtElement 类型常量</h3>
 <pre class="code-block"><code class="language-java">NbtElement.BYTE_TYPE       // = 1
 NbtElement.SHORT_TYPE      // = 2
@@ -772,18 +759,15 @@ NbtElement.COMPOUND_TYPE   // = 10
 NbtElement.INT_ARRAY_TYPE  // = 11
 NbtElement.LONG_ARRAY_TYPE // = 12
 
-// 检查元素类型
-NbtElement element = nbt.get(&quot;key&quot;);
+// 检查元素类�?NbtElement element = nbt.get(&quot;key&quot;);
 if (element.getType() == NbtElement.INT_TYPE) {
-    // 是整数类型
-}</code></pre>
+    // 是整数类�?}</code></pre>
 <h2 id="实战演示">实战演示</h2>
 <h3>示例1：创建一个附魔书</h3>
 <pre class="code-block"><code class="language-java">public static NbtCompound createEnchantedBook() {
     NbtCompound tag = new NbtCompound();
     
-    // 附魔信息存储在 StoredEnchantments 里
-    NbtList enchants = new NbtList();
+    // 附魔信息存储�?StoredEnchantments �?    NbtList enchants = new NbtList();
     
     NbtCompound sharpness = new NbtCompound();
     sharpness.putShort(&quot;id&quot;, (short)16);  // 锋利
@@ -799,7 +783,7 @@ if (element.getType() == NbtElement.INT_TYPE) {
     
     return tag;
 }</code></pre>
-<h3>示例2：读取物品的自定义名称</h3>
+<h3>示例2：读取物品的自定义名�?</h3>
 <pre class="code-block"><code class="language-java">public static String getItemCustomName(ItemStack stack) {
     NbtCompound tag = stack.getNbt();
     if (tag == null) return null;
@@ -809,13 +793,13 @@ if (element.getType() == NbtElement.INT_TYPE) {
     
     return display.getString(&quot;Name&quot;);
 }</code></pre>
-<h3>示例3：创建一个带lore的物品</h3>
+<h3>示例3：创建一个带lore的物�?</h3>
 <pre class="code-block"><code class="language-java">public static NbtCompound createItemWithLore(String name, String... lore) {
     NbtCompound tag = new NbtCompound();
     
     // 显示信息
     NbtCompound display = new NbtCompound();
-    display.putString(&quot;Name&quot;, name);  // 可以使用彩色代码如 &quot;§6金苹果&quot;
+    display.putString(&quot;Name&quot;, name);  // 可以使用彩色代码�?&quot;§6金苹�?
     
     // Lore（描述文字）是一个字符串列表
     NbtList loreList = new NbtList();
@@ -855,30 +839,23 @@ if (element.getType() == NbtElement.INT_TYPE) {
     return nbt;
 }</code></pre>
 <h2 id="小结">小结</h2>
-<p><ul><li><strong>NBT</strong> = Minecraft 的数据存储格式，类似 JSON 但是二进制</li>
-<li><strong>NbtElement</strong> = 所有 NBT 类型的基类接口</li>
-<li><strong>NbtCompound</strong> = 键值对集合，类似 JSON 对象，用于存储复杂数据</li>
-<li><strong>NbtList</strong> = 有序列表，类似数组，用于存储列表数据</li>
-<li>NBT 用于：世界存档、物品数据、方块实体数据、网络传输</li>
-<li><strong>核心操作</strong>：<code>put</code> 写入，<code>get</code> 读取，<code>contains</code> 检查，<code>remove</code> 删除</li>
-<li><strong>安全访问</strong>：优先使用类型安全的方法如 <code>getInt()</code>、<code>getString()</code></li></ul></p>
+<p><ul><li><strong>NBT</strong> = Minecraft 的数据存储格式，类似 JSON 但是二进�?2. <strong>NbtElement</strong> = 所�?NBT 类型的基类接�?3. <strong>NbtCompound</strong> = 键值对集合，类�?JSON 对象，用于存储复杂数�?4. <strong>NbtList</strong> = 有序列表，类似数组，用于存储列表数据</li>
+<li>NBT 用于：世界存档、物品数据、方块实体数据、网络传�?6. <strong>核心操作</strong>：<code>put</code> 写入，<code>get</code> 读取，<code>contains</code> 检查，<code>remove</code> 删除</li>
+<li><strong>安全访问</strong>：优先使用类型安全的方法�?<code>getInt()</code>、<code>getString()</code></li></ul></p>
 <h2 id="练习">练习</h2>
-<p><ul><li><strong>基础练习</strong>：创建一个 NbtCompound，包含玩家的基本信息（名字、等级、金币数量）</li>
+<p><ul><li><strong>基础练习</strong>：创建一�?NbtCompound，包含玩家的基本信息（名字、等级、金币数量）</li>
 <li><strong>进阶练习</strong>：创建一个附魔列表，包括 3 种不同的附魔</li>
 <li><strong>实战练习</strong>：编写一个函数，将物品的 NBT 数据打印成易读的格式</li>
-<li><strong>思考题</strong>：</li>
-</ul>   - NBT 和 JSON 有什么区别？
-   - 为什么 Minecraft 要用二进制格式而不是纯文本？
-<ul><li><strong>挑战练习</strong>：创建一个递归函数，遍历任意嵌套的 NBT 结构并打印所有键值对</li></ul></p>
+<li><strong>思考题</strong>�?   - NBT �?JSON 有什么区别？</li>
+</ul>   - 为什�?Minecraft 要用二进制格式而不是纯文本�?5. <strong>挑战练习</strong>：创建一个递归函数，遍历任意嵌套的 NBT 结构并打印所有键值对</p>
 <h2 id="相关链接">相关链接</h2>
-<p><ul><li><a href="./Part-3-Block-Item/18-item-stack.html">ItemStack 物品堆</a></li>
-<li><a href="./Part-3-Block-Item/19-item-component.html">ComponentMap 组件系统</a></li>
-<li><a href="./Part-3-Block-Item/16-block-entity.html">方块实体 BlockEntity</a></li>
-<li><a href="./Part-10-Server/51-save-system.html">存档系统 Save System</a></li>
-<li><a href="./Part-3-Block-Item/19-item-component.html">物品组件</a></li></ul></p>
+<p><ul><li><a href="./Part-3-Block-Item/18-item-stack.md">ItemStack 物品堆</a></li>
+<li><a href="./Part-3-Block-Item/19-item-component.md">ComponentMap 组件系统</a></li>
+<li><a href="./Part-3-Block-Item/16-block-entity.md">方块实体 BlockEntity</a></li>
+<li><a href="./Part-10-Server/51-save-system.md">存档系统 Save System</a></li>
+<li><a href="./Part-3-Block-Item/19-item-component.md">物品组件</a></li></ul></p>
 <p><hr></p>
-<p><strong>继续学习</strong>：下一章节将介绍 <a href="../Part-8-Resource/41-datapack-intro.html">数据包系统</a>，它使用 JSON 格式来定义游戏内容，与 NBT 密切相关。
-</p>
+<p><strong>继续学习</strong>：下一章节将介�?<a href="/mc/1.21/tutorials/Part-8-Resource/41-datapack-intro/">数据包系统</a>，它使用 JSON 格式来定义游戏内容，�?NBT 密切相关�?</p>
             </div>
 
             <div class="docs-footer">

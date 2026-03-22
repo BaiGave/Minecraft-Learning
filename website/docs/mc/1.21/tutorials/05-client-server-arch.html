@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>05 client server arch - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +26,18 @@
         .sidebar-nav a:hover,
         .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #5B8C5A; }
         .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
         .breadcrumb a { color: #5B8C5A; }
-        .breadcrumb i { color: #ccc; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
         .info-box { border-left: 4px solid #5B8C5A; background: #5B8C5A15; }
         .info-box i { color: #5B8C5A; }
         .info-table td:first-child { font-weight: 600; color: #666; }
@@ -104,11 +115,11 @@
 <body>
     <div class="progress-bar" id="progressBar"></div>
 
-    <nav class="navbar docs-nav">
+    <nav class="navbar">
         <div class="nav-container">
             <a href="../../../../index.html" class="nav-logo">
                 <i class="fas fa-cube"></i>
-                <span>MC 开发文档</span>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -123,7 +134,6 @@
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
                     </div>
                 </li>
-                <li><a href="../../../../catalog.html">文档目录</a></li>
                 <li><a href="../../../../about.html">关于</a></li>
             </ul>
         </div>
@@ -426,7 +436,7 @@
         </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="../../../index.html">
+                <a href="../index.html">
                     <i class="fas fa-arrow-left"></i>
                     返回概述
                 </a>
@@ -436,9 +446,9 @@
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
-                    <a href="../../../../index.html">首页</a>
+                    <a href="../../../../index.html">文档中心</a>
                     <i class="fas fa-chevron-right"></i>
-                    <a href="../../../index.html">Minecraft 原版</a>
+                    <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
                     <span>05 client server arch</span>
                 </nav>
@@ -456,61 +466,54 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>第五章：客户端-服务端架构（Client-Server Architecture）</h1>
-<blockquote><p>⭐ <strong>理解这章，你就能明白 Minecraft 如何实现多人联机！</strong></p></blockquote>
-<blockquote><p>⚠️ <strong>注意</strong>：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。部分代码经过简化以便于理解。</p></blockquote>
-<p><hr></p>
+                <h1>第五章：客户�?服务端架构（Client-Server Architecture�?</h1>
+<blockquote><p>�?<em>*理解这章，你就能明白 Minecraft 如何实现多人联机�?</em></p></blockquote>
+<blockquote><p>⚠️ <strong>注意</strong>：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。部分代码经过简化以便于理解�?</p></blockquote>
+<hr></p>
 <h2 id="目标">目标</h2>
-<p>学完本章后，你将理解：</p>
-<p><ul><li><strong>为什么需要客户端和服务端分离</strong></li>
-<li><strong>isClient 字段的作用</strong></li>
-<li><strong>ServerWorld 和 ClientWorld 的区别</strong></li>
-<li><strong>数据包如何在不同端之间传递</strong></li>
-<li><strong>为什么服务端是"权威"</strong></li></ul></p>
+<p>学完本章后，你将理解�?
+<ul><li><strong>为什么需要客户端和服务端分离</strong></li>
+<li><em>*isClient 字段的作�?</em></li>
+<li><em>*ServerWorld �?ClientWorld 的区�?</em></li>
+<li><em>*数据包如何在不同端之间传�?</em></li>
+<li><strong>为什么服务端�?权威"</strong></li></ul></p>
 <p><hr></p>
 <h2 id="前置知识">前置知识</h2>
-<p><ul><li>了解 Minecraft 的注册表系统（第四章）</li>
-<li>知道什么是 <code>World</code>（世界）</li>
-<li>了解多人游戏的基本概念</li></ul></p>
-<p><hr></p>
-<h2 id="核心概念：用比喻理解客户端-服务端架构">核心概念：用比喻理解客户端-服务端架构</h2>
+<p><ul><li>了解 Minecraft 的注册表系统（第四章�?- 知道什么是 <code>World</code>（世界）</li>
+<li>了解多人游戏的基本概�?</li>
+</ul><hr></p>
+<h2 id="核心概念：用比喻理解客户�?服务端架�?">核心概念：用比喻理解客户�?服务端架�?</h2>
 <h3>比喻：餐厅和外卖</h3>
-<p>想象 Minecraft 的多人游戏就像一个<strong>餐厅系统</strong>：</p>
-<table class="data-table"><thead><tr><th>现实场景</th><th>Minecraft 对应</th></tr></thead><tbody><tr><td>餐厅厨房</td><td><strong>服务端（Server）</strong> - 真正做菜的地方</td></tr><tr><td>顾客看到的菜单</td><td><strong>客户端（Client）</strong> - 只负责展示</td></tr><tr><td>服务员</td><td><strong>数据包（Packet）</strong> - 传递信息的人</td></tr><tr><td>顾客说"我要牛排"</td><td>客户端发送请求</td></tr><tr><td>厨房做好的牛排</td><td>服务端返回结果</td></tr></tbody></table>
+<p>想象 Minecraft 的多人游戏就像一�?<em>餐厅系统</em>*�?
+<table class="data-table"><thead><tr><th>现实场景</th><th>Minecraft 对应</th></tr></thead><tbody><tr><td>餐厅厨房</td><td><strong>服务端（Server�?<em> - 真正做菜的地�?</td></tr><tr><td>顾客看到的菜�?</td><td></strong>客户端（Client�?</em> - 只负责展�?</td></tr><tr><td>服务�?</td><td><em>*数据包（Packet�?</em> - 传递信息的�?</td></tr><tr><td>顾客�?我要牛排"</td><td>客户端发送请�?</td></tr><tr><td>厨房做好的牛�?</td><td>服务端返回结�?</td></tr></tbody></table>
 <h3>为什么不能客户端自己做？</h3>
-<pre class="code-block"><code class="language-text">❌ 如果客户端自己做：
-   - 玩家可以修改代码，让自己无限血量
-   - 玩家可以穿墙、飞行、瞬移
-   - 每个人看到的游戏世界可能不一样
-
-✅ 服务端作为&quot;权威&quot;：
-   - 所有规则由服务端制定
-   - 客户端只是&quot;听话的展示窗口&quot;
-   - 保证公平性和一致性</code></pre>
+<pre class="code-block"><code class="language-text">�?如果客户端自己做�?   - 玩家可以修改代码，让自己无限血�?   - 玩家可以穿墙、飞行、瞬�?   - 每个人看到的游戏世界可能不一�?
+�?服务端作�?权威&quot;�?   - 所有规则由服务端制�?   - 客户端只�?听话的展示窗�?
+   - 保证公平性和一致�?</code></pre>
 <p><hr></p>
-<h2 id="图解：客户端-服务端分离架构">图解：客户端-服务端分离架构</h2>
+<h2 id="图解：客户端-服务端分离架�?">图解：客户端-服务端分离架�?</h2>
 <div class="mermaid">flowchart TB
-    subgraph 服务端["服务端 Server（权威）"]
+    subgraph 服务端["服务�?Server（权威）"]
         direction TB
         SS["MinecraftServer.java"]
-        SW["ServerWorld<br/>真正的游戏世界"]
+        SW["ServerWorld<br/>真正的游戏世�?]
         SM["ServerPlayerEntity<br/>玩家数据"]
         SG["GameRules 游戏规则"]
     end
     
-    subgraph 客户端["客户端 Client（展示）"]
+    subgraph 客户端["客户�?Client（展示）"]
         direction TB
         CM["MinecraftClient.java"]
         CW["ClientWorld<br/>渲染用的世界"]
         CP["ClientPlayerEntity<br/>本地玩家"]
-        CR["渲染器 Renderer"]
+        CR["渲染�?Renderer"]
     end
     
-    subgraph 网络层["数据包 Packet"]
+    subgraph 网络层["数据�?Packet"]
         direction TB
-        P1["客户端→服务端<br/>移动、攻击、放置..."]
-        P2["服务端→客户端<br/>实体位置、方块变化..."]
-        P3["服务端→所有客户端<br/>聊天消息、游戏事件..."]
+        P1["客户端→服务�?br/>移动、攻击、放�?.."]
+        P2["服务端→客户�?br/>实体位置、方块变�?.."]
+        P3["服务端→所有客户端<br/>聊天消息、游戏事�?.."]
     end
     
     SS -->|"管理"| SW
@@ -528,16 +531,15 @@
 <h2 id="isClient 字段：区分两端的钥匙">isClient 字段：区分两端的钥匙</h2>
 <h3>源码解析</h3>
 <pre class="code-block"><code class="language-123">public abstract class World {
-    // 这个字段告诉我们现在运行在客户端还是服务端
-    public final boolean isClient;
+    // 这个字段告诉我们现在运行在客户端还是服务�?    public final boolean isClient;
     
     protected World(..., boolean isClient, ...) {
-        this.isClient = isClient;  // 客户端=true，服务端=false
+        this.isClient = isClient;  // 客户�?true，服务端=false
     }
 }</code></pre>
 <h3>如何使用 isClient</h3>
 <div class="mermaid">flowchart LR
-    subgraph 使用场景["isClient 的使用场景"]
+    subgraph 使用场景["isClient 的使用场�?]
         direction TB
         A["if (world.isClient) {<br/>..渲染图形..<br/>} else {<br/>..处理逻辑..<br/>}"]
     end
@@ -548,140 +550,122 @@
         L["处理伤害计算<br/>更新游戏规则<br/>保存世界数据"]
     end
     
-    A -->|"客户端"| R
-    A -->|"服务端"| L</div>
+    A -->|"客户�?| R
+    A -->|"服务�?| L</div>
 <h3>实际代码示例</h3>
 <pre class="code-block"><code class="language-java">public class Entity {
     public void tick() {
         if (this.world.isClient) {
-            // 客户端：播放动画、粒子效果
-            this.clientTick();
+            // 客户端：播放动画、粒子效�?            this.clientTick();
         } else {
-            // 服务端：更新位置、处理物理
-            this.serverTick();
+            // 服务端：更新位置、处理物�?            this.serverTick();
         }
     }
 }</code></pre>
 <p><hr></p>
 <h2 id="ServerWorld vs ClientWorld">ServerWorld vs ClientWorld</h2>
-<h3>两者对比</h3>
-<table class="data-table"><thead><tr><th>特性</th><th>ServerWorld</th><th>ClientWorld</th></tr></thead><tbody><tr><td>位置</td><td><code>net.minecraft.server.world</code></td><td><code>net.minecraft.client</code></td></tr><tr><td>用途</td><td>游戏逻辑权威</td><td>渲染和本地模拟</td></tr><tr><td>数据</td><td>完整、可保存</td><td>客户端需要的部分</td></tr><tr><td>控制</td><td>服务端线程</td><td>客户端线程</td></tr></tbody></table>
+<h3>两者对�?</h3>
+<table class="data-table"><thead><tr><th>特�?</th><th>ServerWorld</th><th>ClientWorld</th></tr></thead><tbody><tr><td>位置</td><td><code>net.minecraft.server.world</code></td><td><code>net.minecraft.client</code></td></tr><tr><td>用�?</td><td>游戏逻辑权威</td><td>渲染和本地模�?</td></tr><tr><td>数据</td><td>完整、可保存</td><td>客户端需要的部分</td></tr><tr><td>控制</td><td>服务端线�?</td><td>客户端线�?</td></tr></tbody></table>
 <div class="mermaid">flowchart TB
-    subgraph ServerWorld["ServerWorld 服务端世界"]
+    subgraph ServerWorld["ServerWorld 服务端世�?]
         direction TB
-        SW1["管理所有实体"]
+        SW1["管理所有实�?]
         SW2["处理世界保存"]
         SW3["执行游戏规则"]
-        SW4["广播数据包"]
+        SW4["广播数据�?]
     end
     
-    subgraph ClientWorld["ClientWorld 客户端世界"]
+    subgraph ClientWorld["ClientWorld 客户端世�?]
         direction TB
-        CW1["渲染方块和实体"]
+        CW1["渲染方块和实�?]
         CW2["播放声音"]
         CW3["本地粒子效果"]
-        CW4["接收服务器数据"]
+        CW4["接收服务器数�?]
     end
     
     SW1 -->|"同步"| CW1
-    SW2 -.->|"不直接同步"| CW2
+    SW2 -.->|"不直接同�?| CW2
     SW3 -->|"通知"| CW3
-    SW4 -->|"发送"| CW4</div>
+    SW4 -->|"发�?| CW4</div>
 <p><hr></p>
 <h2 id="数据包（Packet）：信息传递的桥梁">数据包（Packet）：信息传递的桥梁</h2>
 <h3>什么是数据包？</h3>
-<p>数据包就像<strong>餐厅的服务员</strong>，负责在客户端和服务端之间传递信息。</p>
+<p>数据包就�?<em>餐厅的服务员</em>*，负责在客户端和服务端之间传递信息�?</p>
 <div class="mermaid">sequenceDiagram
     participant P as 玩家
-    participant C as 客户端
-    participant S as 服务端
-    participant W as ServerWorld
+    participant C as 客户�?    participant S as 服务�?    participant W as ServerWorld
     
-    Note over P,C: 玩家按下"W"键移动
+    Note over P,C: 玩家按下"W"键移�?    
+    P->>C: 按下 W �?    C->>C: 更新本地显示
+    C->>S: 发�?MoveC2SPacket（位置更新）
     
-    P->>C: 按下 W 键
-    C->>C: 更新本地显示
-    C->>S: 发送 MoveC2SPacket（位置更新）
-    
-    S->>W: 服务端处理移动
-    W->>W: 验证移动合法性
-    W->>W: 更新玩家位置
+    S->>W: 服务端处理移�?    W->>W: 验证移动合法�?    W->>W: 更新玩家位置
     
     S->>S: 计算其他玩家的新位置
     
-    alt 移动被允许
-        S->>C: 发送确认包
+    alt 移动被允�?        S->>C: 发送确认包
         Note over C: 保持当前位置
-    else 移动被拒绝
-        S->>C: 发送玩家位置重置包
+    else 移动被拒�?        S->>C: 发送玩家位置重置包
         Note over C: 回退到服务端位置
     end
     
-    loop 广播给其他玩家
-        S->>C: EntityPositionS2CPacket
+    loop 广播给其他玩�?        S->>C: EntityPositionS2CPacket
     end</div>
 <h3>常见的数据包类型</h3>
 <pre class="code-block"><code class="language-text">C2S（客户端→服务端）：
 ├── MoveC2SPacket        - 玩家移动
-├── ChatMessageC2SPacket - 发送聊天
-├── PlayerInteractBlockC2SPacket - 右键方块
-├── ClickSlotC2SPacket  - 点击物品栏
-└── ClickButtonC2SPacket - 点击按钮
+├── ChatMessageC2SPacket - 发送聊�?├── PlayerInteractBlockC2SPacket - 右键方块
+├── ClickSlotC2SPacket  - 点击物品�?└── ClickButtonC2SPacket - 点击按钮
 
 S2C（服务端→客户端）：
 ├── EntityPositionS2CPacket   - 实体位置更新
 ├── BlockUpdateS2CPacket      - 方块更新
-├── WorldEventS2CPacket       - 世界事件（爆炸、雷击等）
-├── ParticleS2CPacket         - 粒子效果
-└── GameStateChangeS2CPacket  - 游戏状态变化</code></pre>
+├── WorldEventS2CPacket       - 世界事件（爆炸、雷击等�?├── ParticleS2CPacket         - 粒子效果
+└── GameStateChangeS2CPacket  - 游戏状态变�?</code></pre>
 <p><hr></p>
-<h2 id="服务端为什么是"权威"？">服务端为什么是"权威"？</h2>
+<h2 id="服务端为什么是"权威"�?">服务端为什么是"权威"�?</h2>
 <h3>生活中的例子</h3>
-<p>就像<strong>银行系统</strong>：</p>
-<table class="data-table"><thead><tr><th>银行场景</th><th>Minecraft 对应</th></tr></thead><tbody><tr><td>银行余额在银行服务器</td><td>服务端是真实数据</td></tr><tr><td>你手机显示的余额</td><td>客户端只是"显示"</td></tr><tr><td>你不能自己改余额</td><td>客户端不能作弊</td></tr></tbody></table>
+<p>就像<strong>银行系统</strong>�?
+<table class="data-table"><thead><tr><th>银行场景</th><th>Minecraft 对应</th></tr></thead><tbody><tr><td>银行余额在银行服务器</td><td>服务端是真实数据</td></tr><tr><td>你手机显示的余额</td><td>客户端只�?显示"</td></tr><tr><td>你不能自己改余额</td><td>客户端不能作�?</td></tr></tbody></table>
 <h3>服务端权威的体现</h3>
 <div class="mermaid">flowchart LR
     subgraph 作弊尝试["常见作弊手段"]
-        A1["修改客户端血量"]
+        A1["修改客户端血�?]
         A2["穿墙"]
-        A3["无冷却攻击"]
-        A4["修改掉落物"]
+        A3["无冷却攻�?]
+        A4["修改掉落�?]
     end
     
-    subgraph 服务端防护["服务端防护"]
-        B1["服务端计算伤害"]
-        B2["服务端检测碰撞"]
-        B3["服务端管理冷却"]
-        B4["服务端计算掉落"]
+    subgraph 服务端防护["服务端防�?]
+        B1["服务端计算伤�?]
+        B2["服务端检测碰�?]
+        B3["服务端管理冷�?]
+        B4["服务端计算掉�?]
     end
     
-    A1 -.->|"被阻止"| B1
-    A2 -.->|"被阻止"| B2
-    A3 -.->|"被阻止"| B3
-    A4 -.->|"被阻止"| B4
+    A1 -.->|"被阻�?| B1
+    A2 -.->|"被阻�?| B2
+    A3 -.->|"被阻�?| B3
+    A4 -.->|"被阻�?| B4
     
     style B1 fill:#ff6b6b,color:#fff
     style B2 fill:#ff6b6b,color:#fff
     style B3 fill:#ff6b6b,color:#fff
     style B4 fill:#ff6b6b,color:#fff</div>
-<h3>服务端校验流程</h3>
-<pre class="code-block"><code class="language-java">public class ServerPlayerInteractionManager {
-    public void attack(PlayerEntity player, Entity target) {
-        // 1. 检查攻击冷却
-        if (!isCoolDownComplete(player)) {
+<h3>服务端校验流�?</h3>
+<pre class="code-block"><code class="language-java">    public void attack(PlayerEntity player, Entity target) {
+        // 1. 检查攻击冷�?        if (!isCoolDownComplete(player)) {
             return;  // 拒绝
         }
         
-        // 2. 检查距离
-        if (!isInReachRange(player, target)) {
+        // 2. 检查距�?        if (!isInReachRange(player, target)) {
             return;  // 拒绝
         }
         
         // 3. 检查是否有武器
         ItemStack weapon = player.getActiveItem();
         
-        // 4. 服务端计算伤害
-        float damage = calculateDamage(player, target, weapon);
+        // 4. 服务端计算伤�?        float damage = calculateDamage(player, target, weapon);
         target.damage(serverWorld, DamageSource.playerAttack(player), damage);
         
         // 5. 通知所有客户端
@@ -689,16 +673,16 @@ S2C（服务端→客户端）：
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="单人游戏也是"客户端-服务端"？">单人游戏也是"客户端-服务端"？</h2>
-<h3>是的！</h3>
-<p>Minecraft 的单人游戏实际上<strong>也在内部启动了服务端</strong>：</p>
+<h2 id="单人游戏也是"客户�?服务�?�?">单人游戏也是"客户�?服务�?�?</h2>
+<h3>是的�?</h3>
+<p>Minecraft 的单人游戏实际上<strong>也在内部启动了服务端</strong>�?</p>
 <div class="mermaid">flowchart TB
     subgraph 单人游戏架构["单人游戏架构"]
         direction TB
         
         C["MinecraftClient<br/>（显示界面）"]
-        S["集成服务端<br/>（IntegratedServer）"]
-        W["ServerWorld + ClientWorld<br/>共享同一个世界"]
+        S["集成服务�?br/>（IntegratedServer�?]
+        W["ServerWorld + ClientWorld<br/>共享同一个世�?]
     end
     
     C -->|"本地通信"| S
@@ -707,74 +691,68 @@ S2C（服务端→客户端）：
     style C fill:#4d96ff,color:#fff
     style S fill:#ff6b6b,color:#fff
     style W fill:#ffd93d,color:#000</div>
-<h3>为什么单人游戏也要分开？</h3>
-<pre class="code-block"><code class="language-text">原因：
-1. 代码复用 - 单人和多人用同一套代码
-2. 方便测试 - 可以轻松切换单人/多人
-3. 未来兼容性 - 为未来功能做准备</code></pre>
+<h3>为什么单人游戏也要分开�?</h3>
+<pre class="code-block"><code class="language-text">原因�?1. 代码复用 - 单人和多人用同一套代�?2. 方便测试 - 可以轻松切换单人/多人
+3. 未来兼容�?- 为未来功能做准备</code></pre>
 <p><hr></p>
 <h2 id="共享代码 vs 独占代码">共享代码 vs 独占代码</h2>
 <h3>共享代码（两端都有）</h3>
 <div class="mermaid">flowchart TB
     subgraph 共享代码["共享代码（两边都一样）"]
-        S1["Registries 注册表"]
+        S1["Registries 注册�?]
         S2["Block 方块定义"]
         S3["Item 物品定义"]
         S4["EntityType 实体类型"]
         S5["Biome 生物群系"]
     end
     
-    subgraph 客户端独占["客户端独占"]
-        C1["渲染器 Renderer"]
+    subgraph 客户端独占["客户端独�?]
+        C1["渲染�?Renderer"]
         C2["GUI 系统"]
         C3["输入处理"]
         C4["音效管理"]
     end
     
-    subgraph 服务端独占["服务端独占"]
+    subgraph 服务端独占["服务端独�?]
         T1["游戏规则处理"]
         T2["世界保存"]
         T3["玩家管理"]
         T4["命令执行"]
     end
     
-    共享 --> 客户端独占
-    共享 --> 服务端独占</div>
+    共享 --> 客户端独�?    共享 --> 服务端独�?</div>
 <p><hr></p>
-<h2 id="实战：找到 isClient 的使用">实战：找到 isClient 的使用</h2>
-<h3>练习：搜索源码</h3>
+<h2 id="实战：找�?isClient 的使�?">实战：找�?isClient 的使�?</h2>
+<h3>练习：搜索源�?</h3>
 <p>在源码中找到以下 <code>isClient</code> 的使用例子：</p>
 <p><ul><li><code>LivingEntity.java</code> - 实体.tick() 方法</li>
-<li><code>Block.java</code> - 方块的 <code>onSteppedOn()</code> 方法</li>
+<li><code>Block.java</code> - 方块�?<code>onSteppedOn()</code> 方法</li>
 <li><code>PlayerEntity.java</code> - 玩家交互方法</li></ul></p>
 <h3>观察模式</h3>
 <p>尝试理解以下代码的作用：</p>
 <pre class="code-block"><code class="language-java">public boolean damage(ServerWorld world, DamageSource source, float amount) {
     if (this.isClient) {
-        // 客户端：播放受伤动画、红色闪烁效果
-        this.hurtTime = 10;
+        // 客户端：播放受伤动画、红色闪烁效�?        this.hurtTime = 10;
         this.maxHurtTime = 10;
         this.hurtDuration = 10;
         this.maxHurtDuration = 10;
     }
     
-    // 两端都执行：扣除生命值
-    this.setHealth(this.getHealth() - amount);
+    // 两端都执行：扣除生命�?    this.setHealth(this.getHealth() - amount);
     
     if (!this.isClient) {
-        // 仅服务端：检查死亡、触发事件、广播
-        this.onDeath(source);
+        // 仅服务端：检查死亡、触发事件、广�?        this.onDeath(source);
     }
 }</code></pre>
 <p><hr></p>
 <h2 id="小结">小结</h2>
 <div class="mermaid">flowchart TB
     subgraph 核心要点["本章核心要点"]
-        E1["1. isClient = true 表示客户端<br/>isClient = false 表示服务端"]
-        E2["2. ServerWorld 管理游戏逻辑<br/>ClientWorld 只负责渲染"]
+        E1["1. isClient = true 表示客户�?br/>isClient = false 表示服务�?]
+        E2["2. ServerWorld 管理游戏逻辑<br/>ClientWorld 只负责渲�?]
         E3["3. 服务端是"权威"<br/>所有重要计算都在服务端"]
-        E4["4. 数据包（Packet）是<br/>客户端和服务端通信的桥梁"]
-        E5["5. 单人游戏也有内置服务端<br/>称为 IntegratedServer"]
+        E4["4. 数据包（Packet）是<br/>客户端和服务端通信的桥�?]
+        E5["5. 单人游戏也有内置服务�?br/>称为 IntegratedServer"]
     end
     
     style E1 fill:#ffd93d,color:#000
@@ -784,8 +762,8 @@ S2C（服务端→客户端）：
     style E5 fill:#9b59b6,color:#fff</div>
 <p><hr></p>
 <h2 id="练习">练习</h2>
-<h3>练习1：识别客户端/服务端代码</h3>
-<p>以下代码会运行在客户端还是服务端？</p>
+<h3>练习1：识别客户端/服务端代�?</h3>
+<p>以下代码会运行在客户端还是服务端�?</p>
 <pre class="code-block"><code class="language-java">if (world.isClient) {
     playSound(SoundEvents.BLOCK_WOOD_BREAK);
 }
@@ -795,23 +773,20 @@ if (!world.isClient) {
     saveToFile();
 }
 
-// 情况3（无 isClient 判断）
-this.setHealth(this.getHealth() - damage);</code></pre>
+// 情况3（无 isClient 判断�?this.setHealth(this.getHealth() - damage);</code></pre>
 <h3>练习2：理解数据包流程</h3>
-<p>描述当你放置一个方块时，客户端和服务端之间的通信流程。</p>
-<h3>练习3：查找源码</h3>
-<p>在源码中找到 <code>ClientWorld</code> 类，阅读它的注释，了解它负责什么。</p>
-<p><hr></p>
+<p>描述当你放置一个方块时，客户端和服务端之间的通信流程�?
+<h3>练习3：查找源�?</h3>
+<p>在源码中找到 <code>ClientWorld</code> 类，阅读它的注释，了解它负责什么�?
+<hr></p>
 <h2 id="相关链接">相关链接</h2>
 <h3>源码文件</h3>
-<table class="data-table"><thead><tr><th>文件</th><th>路径</th><th>作用</th></tr></thead><tbody><tr><td><code>World.java</code></td><td><code>net/minecraft/world/World.java</code></td><td>世界的基类，包含 isClient</td></tr><tr><td><code>ServerWorld.java</code></td><td><code>net/minecraft/server/world/ServerWorld.java</code></td><td>服务端世界实现</td></tr><tr><td><code>MinecraftServer.java</code></td><td><code>net/minecraft/server/MinecraftServer.java</code></td><td>服务端主类</td></tr><tr><td><code>Registries.java</code></td><td><code>net/minecraft/registry/Registries.java</code></td><td>共享的注册表</td></tr></tbody></table>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th><th>作用</th></tr></thead><tbody><tr><td><code>World.java</code></td><td><code>net/minecraft/world/World.java</code></td><td>世界的基类，包含 isClient</td></tr><tr><td><code>ServerWorld.java</code></td><td><code>net/minecraft/server/world/ServerWorld.java</code></td><td>服务端世界实�?</td></tr><tr><td><code>MinecraftServer.java</code></td><td><code>net/minecraft/server/MinecraftServer.java</code></td><td>服务端主�?</td></tr><tr><td><code>Registries.java</code></td><td><code>net/minecraft/registry/Registries.java</code></td><td>共享的注册表</td></tr></tbody></table>
 <h3>进阶阅读</h3>
-<blockquote><p>注意：以下链接指向的文档可能尚未完成或位置可能变化</p></blockquote>
-<ul><li>下一章：<a href="../Part-1-Foundation/06-shared-constants.html">第六章：共享常量</a> - 了解游戏的基本数值设定</li>
-<li>数据包系统：深入了解数据包的工作原理</li></ul></p>
+<blockquote><p>注意：以下链接指向的文档可能尚未完成或位置可能变�?- 下一章：<a href="/mc/1.21/tutorials/Part-1-Foundation/06-shared-constants/">第六章：共享常量</a> - 了解游戏的基本数值设�?- 数据包系统：深入了解数据包的工作原理</p></blockquote>
 <p><hr></p>
-<blockquote><p>💡 <strong>提示</strong>：理解客户端-服务端架构对于理解 Minecraft 的多人游戏机制至关重要。记住：<strong>服务端是权威，客户端是展示</strong>。</p></blockquote>
-<p><hr></p>
+<blockquote><p>💡 <strong>提示</strong>：理解客户端-服务端架构对于理�?Minecraft 的多人游戏机制至关重要。记住：<em>*服务端是权威，客户端是展�?</em>�?</p></blockquote>
+<hr></p>
 <p><em>文档版本：Minecraft 1.21, Protocol 767, World Version 3953</em>
 <em>最后更新：2026-03-19</em>
 </p>
