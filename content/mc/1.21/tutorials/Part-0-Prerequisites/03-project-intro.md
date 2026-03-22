@@ -485,13 +485,13 @@ flowchart LR
 
 | 内容 | 链接 |
 |------|------|
-| 注册表系统 | [04-registry-system.md](./04-registry-system.md) |
-| 客户端架构 | [05-client-server-arch.md](./05-client-server-arch.md) |
-| 启动流程 | [07-bootstrap-flow.md](./07-bootstrap-flow.md) |
+| 注册表系统 | [04-registry-system.md](../Part-1-Foundation/04-registry-system.md) |
+| 客户端架构 | [05-client-server-arch.md](../Part-1-Foundation/05-client-server-arch.md) |
+| 启动流程 | [07-bootstrap-flow.md](../Part-1-Foundation/07-bootstrap-flow.md) |
 
 ---
 
-> **恭喜完成 Part-0！** 接下来开始学习 [04-registry-system.md](./04-registry-system.md)
+> **恭喜完成 Part-0！** 接下来开始学习 [04-registry-system.md](../Part-1-Foundation/04-registry-system.md)
 
 ---
 

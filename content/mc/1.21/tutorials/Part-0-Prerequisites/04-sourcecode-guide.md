@@ -550,7 +550,7 @@ mindmap
 > ⚠️ **注意**：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。
 
 - [Part-0: 项目结构](./03-project-intro.md)
-- [Part-1: 注册表系统](./04-registry-system.md)
+- [Part-1: 注册表系统](../Part-1-Foundation/04-registry-system.md)
 - Part-2: World核心 - 文档待完成
 
 ---

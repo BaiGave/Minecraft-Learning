@@ -572,7 +572,7 @@ public class Test {
 | Java 基础速查 | [01-java-basics.md](./01-java-basics.md) |
 | 开发环境搭建 | [02-development-env.md](./02-development-env.md) |
 | 项目结构介绍 | [03-project-intro.md](./03-project-intro.md) |
-| 注册表系统 | [04-registry-system.md](./04-registry-system.md) |
+| 注册表系统 | [04-registry-system.md](../Part-1-Foundation/04-registry-system.md) |
 
 ---
 
