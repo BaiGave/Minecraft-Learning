@@ -270,6 +270,7 @@ function cleanBuild() {
     const dirsToClean = [
         CONFIG.outputDir,
         path.join(CONFIG.blogDir, 'index.html'),
+        path.join(CONFIG.blogDir, 'tech-blog.html'),
         path.join(CONFIG.blogDir, 'article.html'),
         path.join(CONFIG.blogDir, 'sitemap.xml'),
         path.join(CONFIG.blogDir, 'robots.txt')

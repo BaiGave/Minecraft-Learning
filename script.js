@@ -586,7 +586,7 @@ function initArticlePage() {
                 <i class="fas fa-file-circle-xmark" style="font-size: 4rem; color: var(--text-muted, #94A3B8); margin-bottom: 24px;"></i>
                 <h2>文章未找到</h2>
                 <p>您访问的文章不存在或已被删除</p>
-                <a href="index.html" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--primary-color, #4F46E5); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                <a href="tech-blog.html" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--primary-color, #4F46E5); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
                     <i class="fas fa-home"></i> 返回首页
                 </a>
             </div>
@@ -609,7 +609,7 @@ function renderArticle(article, container) {
     container.innerHTML = `
         <div class="article-header-simple">
             <div class="container-narrow">
-                <a href="index.html" class="back-link">
+                <a href="tech-blog.html" class="back-link">
                     <i class="fas fa-arrow-left"></i> 返回文章列表
                 </a>
                 <h1>${article.title}</h1>

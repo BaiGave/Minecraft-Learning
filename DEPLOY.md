@@ -75,15 +75,16 @@ git push -u origin main
 
 ```
 https://你的用户名.github.io/仓库名/
-├── index.html          ← 博客首页
-├── article.html        ← 博客文章页
+├── index.html          ← 自动跳转到 website/index.html（Minecraft Learning 主页）
+├── tech-blog.html      ← 「技术随笔」博客文章列表（可选）
+├── article.html        ← 博客单篇文章页
 ├── styles.css          ← 博客样式
 ├── script.js           ← 博客脚本
 ├── posts/              ← 博客文章（Markdown）
-├── website/            ← MC 教程网站
-│   ├── index.html      ← 教程首页
+├── website/            ← MC 教程网站（主站）
+│   ├── index.html      ← Minecraft Learning 首页
 │   ├── catalog.html    ← 教程目录
-│   └── tutorials/      ← 所有教程页面
+│   └── docs/           ← 生成的文档 HTML
 ```
 
 ---

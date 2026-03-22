@@ -11,7 +11,7 @@
  * 使用方法：
  * 1. 将 Markdown 文件放到 posts/ 目录
  * 2. 运行 node convert.js
- * 3. 文章会自动添加到 index.html
+ * 3. 文章列表写入 tech-blog.html；仓库根 index.html 跳转至 website/（Minecraft Learning）
  */
 
 const fs = require('fs');
@@ -389,7 +389,57 @@ function hello() {
 }
 
 /**
- * Generate index.html
+ * 仓库根 index.html：立即跳转到 Minecraft Learning 主页（GitHub Pages 根路径）
+ */
+function generateRootRedirect() {
+    const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Learning</title>
+    <meta name="description" content="Minecraft 源码与模组开发文档站">
+    <script>
+        (function () {
+            var path = location.pathname;
+            if (!path.endsWith('/')) {
+                if (/\\.html?$/i.test(path)) {
+                    path = path.replace(/[^/]*$/, '');
+                } else {
+                    path += '/';
+                }
+            }
+            location.replace(path + 'website/index.html' + location.search + location.hash);
+        })();
+    </script>
+</head>
+<body>
+    <p style="font-family:system-ui,sans-serif;padding:2rem;text-align:center;color:#334155">
+        正在前往 <a id="ml-landing" href="#">Minecraft Learning</a>…
+    </p>
+    <script>
+        (function () {
+            var path = location.pathname;
+            if (!path.endsWith('/')) {
+                if (/\\.html?$/i.test(path)) {
+                    path = path.replace(/[^/]*$/, '');
+                } else {
+                    path += '/';
+                }
+            }
+            var href = path + 'website/index.html' + location.search + location.hash;
+            var a = document.getElementById('ml-landing');
+            if (a) a.href = href;
+        })();
+    </script>
+</body>
+</html>`;
+
+    return writeFile(path.join(CONFIG.outputDir, 'index.html'), html);
+}
+
+/**
+ * Generate tech-blog.html（技术随笔文章列表，非站点首页）
  */
 function generateIndex(articles) {
     const articlesGrid = articles.map((article, index) => generateArticleCard(article, index)).join('\n');
@@ -402,7 +452,7 @@ function generateIndex(articles) {
         }
     });
 
-    const indexHtml = `<!DOCTYPE html>
+    let indexHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -550,7 +600,8 @@ ${articlesGrid}
 </body>
 </html>`;
 
-    return writeFile(path.join(CONFIG.outputDir, 'index.html'), indexHtml);
+    indexHtml = indexHtml.replace(/href="index\.html/g, 'href="tech-blog.html');
+    return writeFile(path.join(CONFIG.outputDir, 'tech-blog.html'), indexHtml);
 }
 
 /**
@@ -559,7 +610,7 @@ ${articlesGrid}
 function generateArticlePage(articles) {
     const articlesJson = JSON.stringify(articles);
 
-    const articleHtml = `<!DOCTYPE html>
+    let articleHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -709,6 +760,7 @@ function generateArticlePage(articles) {
 </body>
 </html>`;
 
+    articleHtml = articleHtml.replace(/href="index\.html/g, 'href="tech-blog.html');
     return writeFile(path.join(CONFIG.outputDir, 'article.html'), articleHtml);
 }
 
@@ -749,11 +801,17 @@ function main() {
         return;
     }
 
-    // Generate index.html
-    Logger.subheader('生成 index.html...');
+    // Generate tech-blog.html + 根目录跳转 index.html
+    Logger.subheader('生成 tech-blog.html / 根目录跳转...');
     if (generateIndex(articles)) {
         stats.articles++;
-        Logger.success('Generated index.html');
+        Logger.success('Generated tech-blog.html');
+    } else {
+        stats.errors++;
+    }
+
+    if (generateRootRedirect()) {
+        Logger.success('Generated index.html → website/');
     } else {
         stats.errors++;
     }

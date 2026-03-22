@@ -6,8 +6,9 @@ Minecraft 原版 / Iris / Sodium 源码教程与技术分析站点，纯静态�
 
 ```
 MinecraftLearning/   （本地文件夹可仍命名为 Blog，仅作说明）
-├── index.html              # 博客首页
-├── article.html            # 博客文章页
+├── index.html              # 根路径：跳转至 website/index.html（主站）
+├── tech-blog.html          # 「技术随笔」文章列表（node convert.js 生成）
+├── article.html            # 博客单篇文章页
 ├── styles.css              # 博客主样式
 ├── script.js               # 博客交互脚本
 ├── convert.js              # 博客 Markdown → HTML 转换脚本
@@ -53,8 +54,8 @@ npm install
 # 使用静态服务器
 npm run dev
 
-# 或直接用浏览器打开
-open index.html
+# 或直接用浏览器打开（根目录 index 会跳到 website/）
+open website/index.html
 ```
 
 ### 3. 构建
