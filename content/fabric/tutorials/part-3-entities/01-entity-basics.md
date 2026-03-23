@@ -1,95 +1,155 @@
-# 第一章：实体基础
+# 👾 创建你的第一个生物！
 
-> 这一章学习如何在 Fabric 中创建自定义实体，包括生物、怪物等。
-
----
-
-## 目录
-
-1. [实体概述](#1-实体概述)
-2. [创建基本实体](#2-创建基本实体)
-3. [注册实体](#3-注册实体)
-4. [实体行为](#4-实体行为)
-5. [实体生成](#5-实体生成)
-6. [完整示例](#6-完整示例)
+> **TL;DR** 实体是 Minecraft 中的"活物"——会动、会攻击、会 AI！这一章教你创建自定义实体！
 
 ---
 
-## 1. 实体概述
+## 📖 目录
 
-### 1.1 什么是实体？
+1. [🎯 什么是实体？](#1-什么是实体)
+2. [🛠️ 创建实体类](#2-创建实体类)
+3. [🔖 注册实体](#3-注册实体)
+4. [🤖 实体 AI 行为](#4-实体-ai-行为)
+5. [🌍 实体生成](#5-实体生成)
+6. [📦 完整示例](#6-完整示例)
 
-实体是 Minecraft 中可以移动和交互的对象，包括：
-- 生物（玩家、动物、怪物）
-- 物品掉落物
-- 箭矢、投掷物
-- 矿车、船
+---
 
-### 1.2 实体的类型
+## 1. 什么是实体？
 
-```
-┌─────────────────────────────────────┐
-│              实体类型                    │
-├─────────────────────────────────────┤
-│  LivingEntity (活物)                  │
-│  ├── MobEntity (生物)                 │
-│  │   ├── CreatureEntity (动物)         │
-│  │   └── MonsterEntity (怪物)          │
-│  └── PlayerEntity (玩家)               │
-├─────────────────────────────────────┤
-│  Entity (非活物)                       │
-│  ├── ItemEntity (掉落物)               │
-│  ├── ProjectileEntity (弹射物)        │
-│  └── ExperienceOrbEntity (经验球)     │
-└─────────────────────────────────────┘
+### 1.1 实体 vs 方块
+
+```mermaid
+flowchart LR
+    subgraph "🧱 方块 Block"
+        B["静止不动<br/>固定的形状"]
+    end
+
+    subgraph "👾 实体 Entity"
+        E["可以移动<br/>有自己的行为"]
+    end
+
+    B -->|"组合"| W["🎮 世界"]
+    E -->|"添加活力"| W
+
+    style B fill:#3498db
+    style E fill:#e74c3c
 ```
 
+### 1.2 实体继承体系
+
+```mermaid
+flowchart TB
+    subgraph "👾 Entity 实体基类"
+        E["Entity<br/>所有实体的祖先"]
+    end
+
+    subgraph "🏃 LivingEntity 活物"
+        L["LivingEntity<br/>有生命值、可以受伤"]
+    end
+
+    subgraph "👤 MobEntity 怪物/生物"
+        M["MobEntity<br/>有 AI 控制"]
+    end
+
+    subgraph "🐄 具体类型"
+        P["PlayerEntity<br/>玩家"]
+        CREATURE["CreatureEntity<br/>动物"]
+        MONSTER["MonsterEntity<br/>怪物"]
+        PATH["PathAwareEntity<br/>会寻路的生物"]
+    end
+
+    E --> L --> M --> PATH
+    M --> CREATURE & MONSTER
+    PATH --> P
+
+    style E fill:#95a5a6
+    style L fill:#9b59b6,color:#fff
+    style M fill:#e67e22
+    style PATH fill:#e74c3c
+```
+
+### 1.3 实体类型一览
+
+```mermaid
+mindmap
+  root((👾 实体类型))
+    🐄 生物
+      动物
+      怪物
+      NPC
+    🎯 投射物
+      箭矢
+      投掷物
+      经验球
+    📦 物品
+      掉落物
+      矿车
+    🧍 特殊
+      玩家
+      投掷物
+```
+
 ---
 
-## 2. 创建基本实体
+## 2. 创建实体类
 
-### 2.1 创建实体类
+### 2.1 创建流程图
+
+```mermaid
+flowchart TD
+    A["📝 创建实体类"] --> B["继承 PathAwareEntity"]
+    B --> C["设置 initGoals()"]
+    C --> D["定义属性"]
+    D --> E["注册 EntityType"]
+
+    style A fill:#3498db
+    style E fill:#2ecc71
+```
+
+### 2.2 基础实体类
 
 ```java
 package net.example.mymod.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.control.JumpControl;
-import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.pathfinding.PathNodeType;
-import net.minecraft.entity.ai.pathfinding.SwimNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.world.World;
-
 public class MagicSlimeEntity extends PathAwareEntity {
 
-    public MagicSlimeEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
-        super(entityType, world);
+    public MagicSlimeEntity(EntityType<?> type, World world) {
+        super(type, world);
     }
 
+    // 设置 AI 行为
     @Override
     protected void initGoals() {
-        // 在这里设置 AI 目标
+        // 稍后填写
     }
 }
 ```
 
-### 2.2 实体属性
+### 2.3 实体属性
+
+```mermaid
+flowchart LR
+    subgraph "💪 属性设置"
+        H["❤️ 最大生命<br/>GENERIC_MAX_HEALTH"]
+        S["🏃 移动速度<br/>GENERIC_MOVEMENT_SPEED"]
+        A["⚔️ 攻击伤害<br/>GENERIC_ATTACK_DAMAGE"]
+        F["👁️ 追踪范围<br/>GENERIC_FOLLOW_RANGE"]
+    end
+
+    style H fill:#e74c3c
+    style S fill:#3498db
+    style A fill:#f39c12
+    style F fill:#9b59b6
+```
 
 ```java
 public static DefaultAttributeContainer.Builder createSlimeAttributes() {
     return LivingEntity.createLivingAttributes()
-        .add(EntityAttributes.GENERIC_MAX_HEALTH, 20.0)     // 最大生命
-        .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.25)  // 移动速度
-        .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 0.5)  // 抗击退
-        .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0)    // 攻击伤害
-        .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0);   // 追踪范围
+        .add(GENERIC_MAX_HEALTH, 20.0)        // ❤️ 20 点生命
+        .add(GENERIC_MOVEMENT_SPEED, 0.25)     // 🏃 移动速度
+        .add(GENERIC_ATTACK_DAMAGE, 3.0)      // ⚔️ 攻击力
+        .add(GENERIC_FOLLOW_RANGE, 16.0);      // 👁️ 追踪范围
 }
 ```
 
@@ -97,20 +157,29 @@ public static DefaultAttributeContainer.Builder createSlimeAttributes() {
 
 ## 3. 注册实体
 
-### 3.1 定义实体类型
+### 3.1 注册流程
+
+```mermaid
+flowchart TB
+    A["👾 定义 EntityType"] --> B["设置 SpawnGroup"]
+    B --> C["设置尺寸"]
+    C --> D["注册到注册表"]
+    D --> E["✅ 注册完成！"]
+
+    style A fill:#3498db
+    style E fill:#2ecc71
+```
+
+### 3.2 完整注册代码
 
 ```java
 public static final EntityType<MagicSlimeEntity> MAGIC_SLIME = EntityType.Builder
-    .create(MagicSlimeEntity::new, SpawnGroup.CREATURE)
-    .dimensions(1.0f, 1.0f)          // 碰撞箱大小
+    .create(MagicSlimeEntity::new, SpawnGroup.CREATURE)  // 工厂方法 + 生成组
+    .dimensions(1.0f, 1.0f)           // 宽度, 高度
     .maxTrackDistance(16.0f)          // 最大追踪距离
-    .trackRangeChunks(8)              // 追踪范围（区块）
-    .build("magic_slime");
-```
+    .trackRangeChunks(8)              // 追踪区块范围
+    .build("magic_slime");           // ID
 
-### 3.2 注册实体
-
-```java
 public static void register() {
     Registry.register(
         Registries.ENTITY_TYPE,
@@ -120,84 +189,232 @@ public static void register() {
 }
 ```
 
-### 3.3 实体参数说明
+### 3.3 SpawnGroup（生成组）对照
 
-```java
-EntityType.Builder.create(Factory, SpawnGroup)
-    .dimensions(width, height)           // 宽和高
-    .maxTrackDistance(distance)          // 最大追踪距离
-    .trackRangeChunks(chunks)            // 追踪区块范围
-    .fireImmune()                        // 火焰免疫
-    .spawnMethod(SpawnCondition)         // 生成条件
-    .build(id)                           // ID
-```
+```mermaid
+table
+    | 组 | 说明 | 示例 |
+    |------|------|------|
+    | CREATURE | 🐄 被动生物 | 牛、猪 |
+    | MONSTER | 💀 敌对生物 | 僵尸、骷髅 |
+    | AMBIENT | 🦇 环境生物 | 蝙蝠 |
+    | AQUATIC | 🐟 水生生物 | 鱼、鱿鱼 |
+    | MISC | 📦 其他 | 掉落物 |
 
 ---
 
-## 4. 实体行为
+## 4. 实体 AI 行为
 
-### 4.1 添加 AI 目标
+### 4.1 AI 系统架构
+
+```mermaid
+flowchart TB
+    subgraph "🧠 AI 控制系统"
+        G["🎯 goalSelector<br/>目标选择器<br/>做什么"]
+        T["👁️ targetSelector<br/>目标选择器<br/>攻击谁"]
+    end
+
+    subgraph "⚙️ 常见 AI"
+        G --> W["🏃 WanderGoal 徘徊"]
+        G --> L["👀 LookAtGoal 看向"]
+        G --> A["⚔️ MeleeAttackGoal 攻击"]
+
+        T --> R["RevengeGoal 复仇"]
+        T --> AT["ActiveTargetGoal 主动攻击"]
+    end
+```
+
+### 4.2 设置 AI 目标
 
 ```java
 @Override
 protected void initGoals() {
-    // 设置目标优先级
-    this.goalSelector.add(0, new WanderAroundGoal(this, 1.0));
-    this.goalSelector.add(1, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f));
-    this.goalSelector.add(2, new LookAtEntityGoal(this, MagicSlimeEntity.class, 8.0f));
-    this.goalSelector.add(3, new SwimGoal(this));
+    // ========== 目标选择器（做什么）==========
+    this.goalSelector.add(0, new SwimGoal(this));           // 🏊 游泳
+    this.goalSelector.add(1, new MeleeAttackGoal(this, 1.0, false));  // ⚔️ 近战攻击
+    this.goalSelector.add(2, new WanderAroundGoal(this, 0.8));       // 🚶 徘徊
+    this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f)); // 👀 看玩家
 
-    // 目标
-    this.targetSelector.add(0, new RevengeGoal(this));
-    this.targetSelector.add(1, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
+    // ========== 目标选择器（攻击谁）==========
+    this.targetSelector.add(0, new RevengeGoal(this));                                    // 😠 复仇
+    this.targetSelector.add(1, new ActiveTargetGoal<>(this, PlayerEntity.class, true)); // 🎯 主动攻击玩家
 }
 ```
 
-### 4.2 常用 AI 目标
+### 4.3 常用 AI 目标速查
 
-```java
-// 移动目标
-new WanderAroundGoal(this, speed)           // 徘徊
-new GoToWalkTargetGoal(this, speed)         // 走向目标点
-new SwimGoal(this)                          // 游泳
-new FleeEntityGoal<>(this, PlayerEntity.class, range)  // 逃离玩家
-
-// 看向目标
-new LookAtEntityGoal(this, PlayerEntity.class, distance)  // 看玩家
-new LookAtEntityGoal(this, EntityType, distance)          // 看其他实体
-
-// 攻击目标
-new ActiveTargetGoal<>(this, EntityType, keepDistance)     // 主动攻击
-new MeleeAttackGoal(this, speed, shouldFollow)            // 近战攻击
-new FollowTargetGoal<>(this, EntityType)                 // 追踪目标
-
-// 其他
-new BreatheAirGoal(this)                   // 呼吸空气
-new EatGrassGoal(this)                     // 吃草
+```mermaid
+mindmap
+  root((🤖 AI 目标))
+    🏃 移动
+      WanderAroundGoal 徘徊
+      GoToWalkTargetGoal 走向目标
+      SwimGoal 游泳
+    👁️ 观察
+      LookAtEntityGoal 看实体
+    ⚔️ 攻击
+      MeleeAttackGoal 近战攻击
+      ActiveTargetGoal 追踪攻击
+      RevengeGoal 复仇
 ```
 
 ---
 
 ## 5. 实体生成
 
-### 5.1 生物群系生成
+### 5.1 生成到世界中
+
+```mermaid
+flowchart TB
+    A["🌍 添加生成规则"] --> B["选择生物群系"]
+    B --> C["选择生成组"]
+    C --> D["设置权重和数量"]
+    D --> E["✅ 生成成功！"]
+
+    style A fill:#3498db
+    style E fill:#2ecc71
+```
+
+### 5.2 代码实现
 
 ```java
-// 在 Mod 初始化时注册
 public void onInitialize() {
-    // 添加到草地生物群系
+    // 在平原生物群系生成
     BiomeModifications.addSpawn(
-        BiomeSelectors.includeByKey(BiomeKeys.PLAINS),  // 生物群系
-        SpawnGroup.CREATURE,                             // 生成组
-        ModEntities.MAGIC_SLIME,                         // 实体类型
-        10,                                              // 权重
-        1,                                               // 最小数量
-        4                                                // 最大数量
+        BiomeSelectors.includeByKey(BiomeKeys.PLAINS),  // 🌿 平原
+        SpawnGroup.CREATURE,                           // 🐄 生成组
+        ModEntities.MAGIC_SLIME,                      // 👾 实体
+        10,     // 权重（越大越容易生成）
+        1,      // 最小群数
+        4       // 最大群数
     );
 }
 ```
 
-### 5.2 生成条件
+### 5.3 常用生物群系
+
+```mermaid
+pie "常见生物群系"
+    "PLAINS 平原" : 35
+    "FOREST 森林" : 25
+    "DESERT 沙漠" : 15
+    "MOUNTAINS 山地" : 15
+    "OCEAN 海洋" : 10
+```
+
+---
+
+## 6. 完整示例
+
+### 6.1 项目结构
+
+```mermaid
+flowchart TB
+    subgraph "📁 项目结构"
+        E["👾 entity/MagicSlimeEntity.java"]
+        A["🤖 entity/ai/MagicSlimeGoals.java"]
+        I["📋 init/ModEntities.java"]
+    end
+
+    E --> A
+    I --> E
+
+    style E fill:#e74c3c
+    style A fill:#9b59b6
+    style I fill:#3498db
+```
+
+### 6.2 完整代码
+
+```java
+// ========== 实体类 ==========
+public class MagicSlimeEntity extends PathAwareEntity {
+
+    public MagicSlimeEntity(EntityType<?> type, World world) {
+        super(type, world);
+    }
+
+    @Override
+    protected void initGoals() {
+        // AI 行为
+        this.goalSelector.add(1, new MeleeAttackGoal(this, 1.0, false));
+        this.goalSelector.add(2, new WanderAroundGoal(this, 0.8));
+        this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f));
+
+        // 攻击目标
+        this.targetSelector.add(1, new ActiveTargetGoal<>(this, PlayerEntity.class, true));
+    }
+}
+
+// ========== 属性 ==========
+public static DefaultAttributeContainer.Builder createSlimeAttributes() {
+    return LivingEntity.createLivingAttributes()
+        .add(GENERIC_MAX_HEALTH, 20.0)
+        .add(GENERIC_MOVEMENT_SPEED, 0.25)
+        .add(GENERIC_ATTACK_DAMAGE, 3.0);
+}
+
+// ========== 注册 ==========
+public static final EntityType<MagicSlimeEntity> MAGIC_SLIME = EntityType.Builder
+    .create(MagicSlimeEntity::new, SpawnGroup.CREATURE)
+    .dimensions(1.0f, 1.0f)
+    .build("magic_slime");
+
+// 在 onInitialize() 中调用
+BiomeModifications.addSpawn(
+    BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+    SpawnGroup.CREATURE, MAGIC_SLIME, 10, 1, 4
+);
+```
+
+### 6.3 最终效果
+
+```mermaid
+flowchart LR
+    A["🎮 游戏内"] --> B["🗺️ 平原"]
+    B --> C["👾 MagicSlime"]
+    C --> D["🚶 四处游荡"]
+    D --> E["⚔️ 玩家靠近时攻击"]
+
+    style A fill:#9b59b6,color:#fff
+    style C fill:#e74c3c
+```
+
+---
+
+## 🎯 总结
+
+```mermaid
+flowchart TD
+    START["👾 创建实体四步曲"] --> A["1️⃣ 继承 PathAwareEntity"]
+    A --> B["2️⃣ 设置 initGoals() AI"]
+    B --> C["3️⃣ 定义 createXxxAttributes()"]
+    C --> D["4️⃣ 注册 EntityType"]
+    D --> E["5️⃣ 添加生成规则"]
+
+    START2["💡 记住"] --> T1["goalSelector = 做事的顺序"]
+    START2 --> T2["targetSelector = 攻击谁"]
+    START2 --> T3["SpawnGroup = 哪里生成"]
+```
+
+### 你学到了：
+
+- ✅ 创建实体类
+- ✅ 设置实体属性
+- ✅ 注册实体
+- ✅ 添加 AI 行为
+- ✅ 添加到世界生成
+
+---
+
+## 下一步
+
+- [🪄 魔法棒](./03-magic-wand.md) - 创建发射魔法弹的武器
+- [🧚 魔法生物](./04-magic-creature.md) - 创建可驯服的生物
+
+---
+
+*💡 **挑战**：尝试创建一个会飞行的生物？提示：使用 `FlyingEntity` 而不是 `PathAwareEntity`！*
 
 ```java
 // 选择特定生物群系

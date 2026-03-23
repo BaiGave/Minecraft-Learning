@@ -1,61 +1,91 @@
-# 第一章：创建自定义方块
+# 🧱 创建你的第一个方块！
 
-> 这一章学习如何使用 Fabric 创建完整的自定义方块，包括纹理、模型和方块行为。
-
----
-
-## 目录
-
-1. [方块基础](#1-方块基础)
-2. [创建简单方块](#2-创建简单方块)
-3. [添加纹理和模型](#3-添加纹理和模型)
-4. [方块状态属性](#4-方块状态属性)
-5. [方块交互](#5-方块交互)
-6. [完整示例](#6-完整示例)
+> **TL;DR** 方块是 Minecraft 的灵魂！这一章教你从零创建一个会发光的方块！
 
 ---
 
-## 1. 方块基础
+## 📖 目录
 
-### 1.1 什么是方块？
+1. [🎯 方块是什么？](#1-方块是什么)
+2. [🛠️ 创建简单方块](#2-创建简单方块)
+3. [🎨 添加纹理和模型](#3-添加纹理和模型)
+4. [⚙️ 方块属性设置](#4-方块属性设置)
+5. [🖱️ 方块交互](#5-方块交互)
+6. [📦 完整示例](#6-完整示例)
 
-方块是 Minecraft 世界的基本组成部分。Minecraft 中的方块不仅仅是"一块方形的物体"，它可以是：
-- 固体（可以碰撞）
-- 透明（光可以通过）
-- 液体（可以流动）
-- 植物（可以跨格子）
-- 实体方块（有特殊行为）
+---
+
+## 1. 方块是什么？
+
+### 1.1 Minecraft 的积木
+
+```mermaid
+flowchart TB
+    subgraph "🎮 Minecraft 世界"
+        direction TB
+        W["🌍 世界"]
+        W --> B1["🧱 方块"]
+        W --> E1["👾 实体"]
+        W --> P1["📦 物品"]
+    end
+
+    subgraph "🧱 方块类型"
+        B1 --> SOLID["🏔️ 固体方块"]
+        B1 --> LIQUID["💧 液体方块"]
+        B1 --> PLANT["🌿 植物方块"]
+        B1 --> TRANSPARENT["🪟 透明方块"]
+        B1 --> ENTITY["📦 方块实体"]
+    end
+```
 
 ### 1.2 方块的组成
 
+```mermaid
+flowchart LR
+    subgraph "🧱 方块 = 属性 + 行为"
+        A["⚙️ 属性<br/>硬度和抗爆性<br/>音效和发光<br/>碰撞箱"] 
+        B["🎮 行为<br/>右键交互<br/>放置/破坏<br/>定时逻辑"]
+    end
+
+    A --> COMBINE["✨ 完整方块"]
+    B --> COMBINE
 ```
-┌─────────────────────────────────────┐
-│             方块 (Block)               │
-├─────────────────────────────────────┤
-│  基础属性                             │
-│  ├── 硬度（破坏时间）                  │
-│  ├── 抗爆性                          │
-│  ├── 音效                            │
-│  └── 发光等级                         │
-├─────────────────────────────────────┤
-│  渲染属性                             │
-│  ├── 纹理                            │
-│  ├── 模型                            │
-│  └── 透明度                          │
-├─────────────────────────────────────┤
-│  行为属性                             │
-│  ├── 是否固体                         │
-│  ├── 是否阻挡光照                      │
-│  ├── 碰撞箱                          │
-│  └── 交互行为                         │
-└─────────────────────────────────────┘
+
+### 1.3 方块 vs 物品
+
+```mermaid
+flowchart LR
+    subgraph "🧱 Block"
+        B["方块本身<br/>在世界中放置"]
+    end
+
+    subgraph "📦 Item"
+        I["物品形式<br/>玩家背包中"]
+    end
+
+    subgraph "🔗 关系"
+        B -.->|"自动生成"| I
+        I -.->|"放置生成"| B
+    end
 ```
 
 ---
 
 ## 2. 创建简单方块
 
-### 2.1 定义方块
+### 2.1 三步创建法
+
+```mermaid
+flowchart LR
+    A["📝 第一步<br/>创建 Block 对象"] --> B["🔖 第二步<br/>注册到注册表"]
+    B --> C["🎨 第三步<br/>添加资源文件"]
+
+    style A fill:#4ecdc4
+    style B fill:#ffe66d
+    style C fill:#ff6b6b
+```
+
+### 2.2 代码模板
 
 ```java
 package net.example.mymod.init;
@@ -65,59 +95,65 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 
 public class ModBlocks {
-    // 创建一个简单方块
+
+    // ========== 1️⃣ 创建方块对象 ==========
     public static final Block MAGIC_STONE = new Block(
         Block.Settings.create()
-            .strength(3.0f)  // 硬度：3.0（石头是 1.5）
-            .resistance(6.0f)  // 抗爆性：6.0
+            .strength(3.0f)   // 硬度
+            .resistance(6.0f) // 抗爆性
     );
 
+    // ========== 2️⃣ 注册方块 ==========
     public static void register() {
         registerBlock("magic_stone", MAGIC_STONE);
     }
 
     private static void registerBlock(String name, Block block) {
+        // 注册方块本身
         Registry.register(
             Registries.BLOCK,
             Identifier.of(Mymod.MOD_ID, name),
             block
         );
 
-        // 同时注册对应的物品（这样玩家才能获得）
+        // 同时注册物品形式（这样玩家才能获得）
         Registry.register(
             Registries.ITEM,
             Identifier.of(Mymod.MOD_ID, name),
-            new BlockItem(block, new net.fabricmc.fabric.api.item.v1.FabricItemSettings())
+            new BlockItem(block, new FabricItemSettings())
         );
     }
 }
 ```
 
-### 2.2 在 Mod 入口注册
+### 2.3 在 Mod 入口注册
+
+```mermaid
+sequenceDiagram
+    participant G as 🎮 游戏启动
+    participant M as 🧙 Mymod
+    participant B as 🧱 ModBlocks
+
+    G->>M: onInitialize()
+    M->>B: register()
+    B-->>M: ✅ 注册完成
+    M-->>G: ✅ Mod 加载完成
+```
 
 ```java
-package net.example.mymod;
-
-import net.fabricmc.api.ModInitializer;
-import net.example.mymod.init.ModBlocks;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class Mymod implements ModInitializer {
     public static final String MOD_ID = "mymod";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     @Override
     public void onInitialize() {
-        LOGGER.info("开始初始化 {}", MOD_ID);
+        LOGGER.info("🚀 开始加载 {}", MOD_ID);
 
-        // 注册方块
+        // 注册方块！
         ModBlocks.register();
 
-        LOGGER.info("{} 初始化完成", MOD_ID);
+        LOGGER.info("✅ {} 加载完成！", MOD_ID);
     }
 }
 ```
@@ -126,25 +162,44 @@ public class Mymod implements ModInitializer {
 
 ## 3. 添加纹理和模型
 
-### 3.1 创建纹理文件
+### 3.1 资源文件结构
 
-在 `src/main/resources/assets/mymod/textures/block/` 下创建图片：
+```mermaid
+filesystem
+    .
+    └── src/main/resources/
+        └── assets/
+            └── mymod/
+                ├── textures/
+                │   └── block/
+                │       └── magic_stone.png  ← 你的纹理
+                ├── models/
+                │   ├── block/
+                │   │   └── magic_stone.json  ← 方块模型
+                │   └── item/
+                │       └── magic_stone.json  ← 物品模型
+                └── lang/
+                    ├── en_us.json
+                    └── zh_cn.json
 ```
-resources/
-└── assets/
-    └── mymod/
-        └── textures/
-            └── block/
-                └── magic_stone.png    ← 创建 16x16 或 32x32 的图片
+
+### 3.2 模型类型选择
+
+```mermaid
+flowchart TD
+    A{"方块纹理特征？"} --> B{6面相同？}
+    B -->|是| C["✅ cube_all<br/>大多数方块"]
+    B -->|否| D{侧+顶底不同？}
+    D -->|是| E["✅ cube_column<br/>原木、陶瓦"]
+    D -->|否| F{有特殊形状？}
+    F -->|是| G["✅ 自定义模型<br/>楼梯、门等"]
+    F -->|否| H["✅ cube_all<br/>默认使用"]
 ```
 
-> **提示**：如果你不会画图，可以先用一个简单的纯色图片代替。
-
-### 3.2 创建方块模型
-
-创建 `resources/assets/mymod/models/block/magic_stone.json`：
+### 3.3 模型文件示例
 
 ```json
+// 方块模型 - 6面相同纹理
 {
     "parent": "minecraft:block/cube_all",
     "textures": {
@@ -153,96 +208,42 @@ resources/
 }
 ```
 
-**模型类型说明**：
+### 3.4 纹理文件
 
-| 模型类型 | JSON parent | 适用场景 |
-|----------|-------------|----------|
-| `cube_all` | 6面相同纹理 | 大多数方块 |
-| `cube_column` | 侧+顶底不同 | 原木、陶瓦 |
-| `cube_north` | 6面完全不同 | 复杂方块 |
-| `grass_block` | 特殊草地 | 草方块 |
-
-### 3.3 创建物品模型
-
-创建 `resources/assets/mymod/models/item/magic_stone.json`：
-
-```json
-{
-    "parent": "minecraft:block/magic_stone"
-}
-```
-
-### 3.4 添加语言文件
-
-创建 `resources/assets/mymod/lang/en_us.json`：
-
-```json
-{
-    "block.mymod.magic_stone": "Magic Stone"
-}
-```
-
-可选：创建 `resources/assets/mymod/lang/zh_cn.json`：
-
-```json
-{
-    "block.mymod.magic_stone": "魔法石头"
-}
-```
+> 💡 **提示**：可以用在线工具生成简单纹理
+> - [Craft Texturer](https://crafttexturer.com/)
+> - [NovaSkin](https://minecraft.novaskin.me/editor)
 
 ---
 
-## 4. 方块状态属性
+## 4. 方块属性设置
 
-### 4.1 常见属性设置
+### 4.1 属性速查表
 
-```java
-public static final Block EXAMPLE_BLOCK = new Block(
-    Block.Settings.create()
-        // 基础属性
-        .strength(3.0f)                    // 硬度
-        .strength(3.0f, 6.0f)             // 硬度和抗爆性
+```mermaid
+graph LR
+    subgraph "常用属性"
+        H1["💪 strength() 硬度"]
+        H2["🔊 sounds() 音效"]
+        H3["💡 luminance() 发光"]
+        H4["🔧 requiresTool() 需要工具"]
+    end
 
-        // 工具要求
-        .requiresTool()                     // 需要工具
-        .requiresTool(ToolType.PICKAXE)    // 需要镐子
-        .breakByTool(ToolType.HAND, -1)    // 手不能破坏
-
-        // 音效
-        .sounds(BlockSoundGroup.STONE)     // 石质音效
-        .sounds(BlockSoundGroup.WOOD)      // 木质音效
-        .sounds(BlockSoundGroup.METAL)     // 金属音效
-
-        // 发光和颜色
-        .luminance(state -> 15)            // 发光等级（0-15）
-        .emissive(face, state)             // 自定义发光
-
-        // 物理属性
-        .slipperiness(0.98f)              // 平滑度（冰=0.98）
-        .velocityMultiplier(0.8f)           // 速度乘数
-        .jumpVelocityMultiplier(1.2f)        // 跳跃乘数
-
-        // 固体和碰撞
-        .solidBlock((state, world, pos) -> true)   // 固体判定
-        .allowsSpawning((state, world, pos, entity) -> false)  // 允许实体生成
-        .solid()                           // 是固体（默认）
-        .air()                             // 是空气（透明）
-
-        // 其他
-        .isSolid(Blocks::isSolid)          // 引用其他方块的固体判定
-        .mapColor(MapColor.WHITE)          // 地图颜色
-);
+    style H1 fill:#ff6b6b
+    style H2 fill:#4ecdc4
+    style H3 fill:#ffe66d
+    style H4 fill:#9b59b6
 ```
 
-### 4.2 完整示例
+### 4.2 完整属性示例
 
 ```java
 // 发光方块
 public static final Block GLOWING_BLOCK = new Block(
     Block.Settings.create()
-        .strength(2.0f)
-        .luminance(state -> 15)  // 最大亮度
-        .sounds(BlockSoundGroup.GLASS)
+        .strength(2.0f)                    // 硬度
+        .luminance(state -> 15)             // 💡 发光等级（0-15）
+        .sounds(BlockSoundGroup.GLASS)      // 音效
 );
 
 // 透明方块
@@ -250,15 +251,33 @@ public static final Block GLASS_BLOCK = new Block(
     Block.Settings.create()
         .strength(1.5f)
         .sounds(BlockSoundGroup.GLASS)
-        .nonOpaque()  // 非不透明
+        .nonOpaque()                        // 非不透明
 );
 
-// 泥土类方块
-public static final Block MAGIC_DIRT = new Block(
+// 金属方块
+public static final Block METAL_BLOCK = new Block(
     Block.Settings.create()
-        .strength(0.5f)
-        .sounds(BlockSoundGroup.GRAVEL)
+        .strength(5.0f, 30.0f)             // 硬度和抗爆性
+        .requiresTool()                    // 🔧 需要工具
+        .sounds(BlockSoundGroup.METAL)
 );
+```
+
+### 4.3 发光等级对比
+
+```mermaid
+flowchart LR
+    L0["💡 0 - 不发光"] 
+    L4["💡 4 - 微弱"] 
+    L8["💡 8 - 中等"] 
+    L15["💡 15 - 最亮"]
+
+    L0 --> L4 --> L8 --> L15
+
+    style L0 fill:#666
+    style L4 fill:#ffe66d
+    style L8 fill:#ff9f43
+    style L15 fill:#ff6b6b,color:#fff
 ```
 
 ---
@@ -267,44 +286,50 @@ public static final Block MAGIC_DIRT = new Block(
 
 ### 5.1 创建可交互方块
 
-要处理方块交互，需要创建一个扩展 `Block` 的类：
+```mermaid
+flowchart TB
+    A["👤 玩家右键点击"] --> B["触发 onUse()"]
+    B --> C{world.isClient?}
+    C -->|是| D["播放音效/粒子"]
+    C -->|否| E["处理逻辑"]
+    D --> F["返回 SUCCESS"]
+    E --> G["发送消息/改变状态"]
+    G --> F
+
+    style B fill:#ffe66d
+    style E fill:#4ecdc4
+```
+
+### 5.2 完整交互代码
 
 ```java
-package net.example.mymod.block;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.world.World;
-
 public class MagicStoneBlock extends Block {
+
     public MagicStoneBlock(Settings settings) {
         super(settings);
     }
 
-    // 当玩家右键点击方块时调用
+    // 🖱️ 右键点击时调用
     @Override
     public ActionResult onUse(
-            BlockState state,           // 方块当前状态
-            World world,               // 所在世界
-            BlockPos pos,              // 方块位置
+            BlockState state,           // 当前状态
+            World world,                // 所在世界
+            BlockPos pos,               // 方块位置
             PlayerEntity player,        // 点击的玩家
             BlockHitResult hit         // 点击信息
     ) {
+        // 客户端：只做视觉效果
         if (world.isClient) {
-            // 客户端：只做视觉效果（如播放音效、显示粒子）
             return ActionResult.SUCCESS;
         }
 
         // 服务端：处理实际逻辑
-        player.sendMessage(Text.literal("你点击了魔法石头！"), false);
+        player.sendMessage(
+            Text.literal("✨ 你点击了魔法石头！"),
+            false
+        );
 
-        // 改变方块为钻石块
+        // 改变方块为钻石块（演示用）
         world.setBlockState(pos, Blocks.DIAMOND_BLOCK.getDefaultState());
 
         return ActionResult.SUCCESS;
@@ -312,148 +337,93 @@ public class MagicStoneBlock extends Block {
 }
 ```
 
-### 5.2 注册自定义方块类
+### 5.3 常用方法一览
 
-```java
-public static final Block MAGIC_STONE = new MagicStoneBlock(
-    Block.Settings.create().strength(3.0f)
-);
-```
-
-### 5.3 常用方块方法
-
-```java
-public class CustomBlock extends Block {
-
-    @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos,
-                             PlayerEntity player, Hand hand,
-                             BlockHitResult hit) {
-        // 右键点击
-        return ActionResult.SUCCESS;  // 或 PASS（让其他代码处理）
-    }
-
-    @Override
-    public void onBreak(World world, BlockPos pos, BlockState state,
-                        PlayerEntity player) {
-        // 方块被破坏时
-        // 可以在这里添加额外掉落
-    }
-
-    @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state,
-                        LivingEntity placer, ItemStack itemStack) {
-        // 方块被放置时
-    }
-
-    @Override
-    public boolean hasSidedTransparency(BlockState state) {
-        // 是否有面朝向透明
-        return true;
-    }
-
-    @Override
-    public float getHardness() {
-        // 自定义硬度
-        return 3.0f;
-    }
-
-    @Override
-    public float getBlastResistance() {
-        // 自定义抗爆性
-        return 6.0f;
-    }
-
-    @Override
-    public int getLuminance(BlockState state) {
-        // 自定义发光等级
-        return 15;
-    }
-}
+```mermaid
+mindmap
+  root((🧱 Block 方法))
+    🖱️ 交互
+      onUse 右键
+      onBreak 破坏
+      onPlaced 放置
+    💥 行为
+      hasSidedTransparency 透明
+      getHardness 硬度
+      getBlastResistance 抗爆
+    💡 光照
+      getLuminance 发光等级
+      emissive 自定义发光
+    👥 实体
+      allowsSpawning 实体生成
+      solidBlock 固体判定
 ```
 
 ---
 
 ## 6. 完整示例
 
-### 6.1 方块类
+### 6.1 项目结构图
+
+```mermaid
+flowchart TB
+    subgraph "📁 你的 Mod"
+        M["🧙 Mymod.java"]
+        MB["🧱 ModBlocks.java"]
+        B["💎 MagicStoneBlock.java"]
+    end
+
+    subgraph "📦 资源"
+        T["🎨 纹理文件"]
+        MOD["📄 JSON 模型"]
+        LANG["🌐 语言文件"]
+    end
+
+    M -->|"调用"| MB
+    MB -->|"创建"| B
+
+    B --> T & MOD & LANG
+
+    style M fill:#9b59b6,color:#fff
+    style B fill:#3498db
+```
+
+### 6.2 完整代码
 
 ```java
+// ========== 方块类 ==========
 package net.example.mymod.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.world.World;
+public class MagicStoneBlock extends Block {
 
-public class ClickableBlock extends Block {
-
-    public ClickableBlock(Settings settings) {
+    public MagicStoneBlock(Settings settings) {
         super(settings);
     }
 
     @Override
-    public ActionResult onUse(
-            BlockState state,
-            World world,
-            BlockPos pos,
-            PlayerEntity player,
-            Hand hand,
-            BlockHitResult hit) {
+    public ActionResult onUse(BlockState state, World world, BlockPos pos,
+                              PlayerEntity player, Hand hand, BlockHitResult hit) {
+        if (world.isClient) return ActionResult.SUCCESS;
 
-        if (world.isClient) {
-            return ActionResult.SUCCESS;
-        }
-
-        // 获取点击次数（存储在方块实体中会更好，这里简化处理）
-        int clicks = 0;
-        String message;
-
-        if (player.isSneaking()) {
-            // 潜行+右键：减少计数
-            clicks = Math.max(0, clicks - 1);
-            message = "计数减少！当前: " + clicks;
-        } else {
-            // 普通右键：增加计数
-            clicks++;
-            message = "计数增加！当前: " + clicks;
-        }
-
-        player.sendMessage(Text.literal(message), false);
-
+        // 发送消息
+        player.sendMessage(Text.literal("💎 魔法石头被点击了！"), false);
         return ActionResult.SUCCESS;
     }
 }
-```
 
-### 6.2 注册
-
-```java
+// ========== 注册类 ==========
 package net.example.mymod.init;
-
-import net.example.mymod.Mymod;
-import net.example.mymod.block.ClickableBlock;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 
 public class ModBlocks {
 
-    public static final Block CLICKABLE_BLOCK = new ClickableBlock(
+    public static final Block MAGIC_STONE = new MagicStoneBlock(
         Block.Settings.create()
             .strength(3.0f)
+            .luminance(state -> 10)
             .sounds(BlockSoundGroup.STONE)
     );
 
     public static void register() {
-        registerBlock("clickable_block", CLICKABLE_BLOCK);
+        registerBlock("magic_stone", MAGIC_STONE);
     }
 
     private static void registerBlock(String name, Block block) {
@@ -462,64 +432,63 @@ public class ModBlocks {
         // 注册方块
         Registry.register(Registries.BLOCK, id, block);
 
-        // 注册方块物品
+        // 注册物品
         Registry.register(
-            Registries.ITEM,
-            id,
+            Registries.ITEM, id,
             new BlockItem(block, new FabricItemSettings())
         );
     }
 }
 ```
 
-### 6.3 资源文件结构
+### 6.3 最终效果预览
 
-```
-src/main/resources/
-└── assets/
-    └── mymod/
-        ├── lang/
-        │   ├── en_us.json
-        │   └── zh_cn.json
-        ├── models/
-        │   ├── block/
-        │   │   └── clickable_block.json
-        │   └── item/
-        │       └── clickable_block.json
-        └── textures/
-            └── block/
-                └── clickable_block.png
+```mermaid
+flowchart LR
+    A["🎮 游戏内"] --> B["🔍 寻找方块"]
+    B --> C["💎 magic_stone"]
+    C --> D["🖱️ 右键点击"]
+    D --> E["💬 显示消息"]
+
+    style A fill:#9b59b6,color:#fff
+    style C fill:#3498db,color:#fff
+    style E fill:#2ecc71
 ```
 
-### 6.4 模型文件
+---
 
-**方块模型** `models/block/clickable_block.json`：
+## 🎯 总结
 
-```json
-{
-    "parent": "minecraft:block/cube_all",
-    "textures": {
-        "all": "mymod:block/clickable_block"
-    }
-}
+```mermaid
+flowchart TD
+    START["🧱 创建方块三步曲"] --> A["1️⃣ new Block()"]
+    A --> B["2️⃣ Block.Settings"]
+    B --> C["3️⃣ Registry.register()"]
+    C --> D["4️⃣ 添加资源文件"]
+
+    START2["💡 记住这些"] --> T1["方块 + BlockItem = 可放置"]
+    START2 --> T2["luminance() = 发光"]
+    START2 --> T3["onUse() = 右键交互"]
+
+    style START fill:#9b59b6,color:#fff
+    style D fill:#2ecc71
 ```
 
-**物品模型** `models/item/clickable_block.json`：
+### 你学到了：
 
-```json
-{
-    "parent": "minecraft:block/clickable_block"
-}
-```
+- ✅ 创建基础的方块对象
+- ✅ 设置方块属性（硬度、音效、发光）
+- ✅ 注册方块和物品
+- ✅ 创建 JSON 模型文件
+- ✅ 处理右键交互
 
 ---
 
 ## 下一步
 
-现在你已经学会了创建自定义方块！接下来可以学习：
-- [方块实体](./02-block-entity.md) - 学习存储数据的高级方块
-- [创建自定义物品](./03-creating-items.md) - 创建更多物品类型
+- [📦 方块实体](./02-block-entity.md) - 存储数据的进阶方块
+- [🪄 创建物品](./03-creating-items.md) - 创造更多物品类型
 
 ---
 
-*参考：[方块系统分析](../../analysis/02-block-system.md)* - 查看更多方块 API 详情
+*💡 **挑战**：尝试创建一个会变换颜色的方块？提示：使用 `onScheduledTick()` 方法！*

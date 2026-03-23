@@ -1,262 +1,273 @@
-# 第四章：注册系统
+# 🔖 注册系统 —— 给你的 Mod 对象发"身份证"！
 
-> 这一章介绍 Minecraft 的注册系统，学习如何正确注册方块、物品、实体等。
-
----
-
-## 目录
-
-1. [什么是注册？](#1-什么是注册)
-2. [注册表 (Registry)](#2-注册表-registry)
-3. [注册方块](#3-注册方块)
-4. [注册物品](#4-注册物品)
-5. [注册实体](#5-注册实体)
-6. [同时注册方块和物品](#6-同时注册方块和物品)
-7. [常见问题](#7-常见问题)
+> **TL;DR** 注册 = 给方块/物品/实体分配唯一的 ID，没有注册 = 游戏不认识你！
 
 ---
 
-## 1. 什么是注册？
+## 📖 目录
 
-### 1.1 为什么需要注册？
+1. [🎯 为什么要注册？](#1-为什么要注册)
+2. [📚 注册表系统](#2-注册表系统)
+3. [🧱 注册方块](#3-注册方块)
+4. [📦 注册物品](#4-注册物品)
+5. [👾 注册实体](#5-注册实体)
+6. [💡 同时注册方块和物品](#6-同时注册方块和物品)
+7. [❓ 常见问题](#7-常见问题)
 
-Minecraft 的世界由大量的游戏对象组成：
-- 100+ 种方块
-- 1000+ 种物品
-- 100+ 种生物
-- 还有很多...
+---
 
-这些都需要一个"身份证"来标识，注册就是给这些对象发"身份证"的过程。
+## 1. 为什么要注册？
+
+### 1.1 什么是注册？
+
+```mermaid
+flowchart LR
+    subgraph "🏠 Minecraft 世界"
+        direction TB
+        W["🎮 世界"]
+        W --> O1["🧱 方块"]
+        W --> O2["📦 物品"]
+        W --> O3["👾 实体"]
+    end
+
+    subgraph "🔖 注册 = 发身份证"
+        R["📋 注册表"]
+        R --> ID1["minecraft:stone"]
+        R --> ID2["mymod:magic_crystal"]
+        R --> ID3["minecraft:diamond"]
+    end
+
+    O1 -.->|"对照"| R
+```
+
+**注册 = 给游戏对象分配唯一的 Identifier（标识符）**
 
 ### 1.2 不注册会怎样？
 
+```mermaid
+flowchart TD
+    A["❌ 不注册"] --> B{"游戏不认识你的对象"}
+    B --> C["👤 玩家无法获得"]
+    B --> D["💾 无法保存到存档"]
+    B --> E["🌐 网络无法同步"]
+
+    style A fill:#e74c3c,color:#fff
+    style C fill:#f39c12
+    style D fill:#f39c12
+    style E fill:#f39c12
 ```
-❌ 不注册 = 游戏不认识你的对象
 
-示例：
-registry.register("my_block", new Block())  // 注册了，游戏认识
-registry.register("my_block", new Block())  // 重复注册，报错！
+### 1.3 注册的好处
 
-未注册方块：
-- 玩家无法获得（/give 命令无效）
-- 无法保存到存档
-- 网络无法同步
+```mermaid
+flowchart LR
+    subgraph "✅ 注册后"
+        G1["👤 玩家可用 /give 获取"]
+        G2["💾 自动保存到存档"]
+        G3["🌐 多人游戏同步"]
+        G4["📖 JEI/REI 显示"]
+    end
+
+    style G1 fill:#2ecc71
+    style G2 fill:#2ecc71
+    style G3 fill:#2ecc71
+    style G4 fill:#2ecc71
 ```
 
 ---
 
-## 2. 注册表 (Registry)
+## 2. 注册表系统
 
-### 2.1 什么是注册表？
+### 2.1 注册表是什么？
 
-注册表就像一个巨大的字典，记录了所有游戏对象：
+```mermaid
+flowchart TB
+    subgraph "📚 注册表 Registry = 大字典"
+        direction TB
 
-```
-┌─────────────────────────────────────┐
-│           注册表 (Registry)           │
-├─────────────────────────────────────┤
-│  物品注册表 (Registries.ITEM)        │
-│  ├── minecraft:diamond        → 钻石 │
-│  ├── minecraft:stick          → 木棍 │
-│  ├── mymod:magic_crystal     → 魔法水晶│
-│  └── ...                             │
-├─────────────────────────────────────┤
-│  方块注册表 (Registries.BLOCK)        │
-│  ├── minecraft:stone         → 石头 │
-│  ├── minecraft:diamond_block → 钻石块 │
-│  └── ...                             │
-└─────────────────────────────────────┘
-```
+        R1["📖 物品注册表<br/>Registries.ITEM"]
+        R1 --> I1["minecraft:diamond → 钻石"]
+        R1 --> I2["minecraft:stick → 木棍"]
+        R1 --> I3["mymod:crystal → 魔法水晶"]
 
-### 2.2 常用注册表
+        R2["🧱 方块注册表<br/>Registries.BLOCK"]
+        R2 --> B1["minecraft:stone → 石头"]
+        R2 --> B2["minecraft:bedrock → 基岩"]
 
-```java
-import net.minecraft.registry.Registries;
+        R3["👾 实体注册表<br/>Registries.ENTITY_TYPE"]
+        R3 --> E1["minecraft:pig → 猪"]
+        R3 --> E2["mymod:magic_slime → 魔法史莱姆"]
+    end
 
-// 物品注册表
-Registries.ITEM
-
-// 方块注册表
-Registries.BLOCK
-
-// 实体注册表
-Registries.ENTITY_TYPE
-
-// 音效注册表
-Registries.SOUND_EVENT
-
-// 粒子类型注册表
-Registries.PARTICLE_TYPE
-
-// 方块实体类型注册表
-Registries.BLOCK_ENTITY_TYPE
+    style R1 fill:#e74c3c,color:#fff
+    style R2 fill:#3498db,color:#fff
+    style R3 fill:#2ecc71,color:#fff
 ```
 
-### 2.3 理解 Identifier（标识符）
+### 2.2 Identifier（标识符）= 门牌号
 
-Identifier 就像是游戏对象的"门牌号"：
+```mermaid
+flowchart LR
+    ID["🔖 Identifier.of(namespace, path)"]
 
+    ID --> N["命名空间<br/>通常是 mod ID<br/>例：mymod"]
+    ID --> P["路径<br/>对象名称<br/>例：magic_crystal"]
+
+    ID --> FINAL["最终格式：mymod:magic_crystal"]
+    N -->|"组合"| FINAL
+    P --> FINAL
+
+    style ID fill:#9b59b6,color:#fff
+    style FINAL fill:#2ecc71
 ```
-Identifier = 命名空间 + 路径
 
-Identifier.of("mymod", "magic_crystal")
-    │        │
-    │        └── 路径（物品名称）
-    │
-    └── 命名空间（通常是 Mod ID）
-    
-最终格式：mymod:magic_crystal
+### 2.3 常用注册表速查
+
+```mermaid
+mindmap
+  root((📚 Registries))
+    🧱 方块
+      Registries.BLOCK
+      方块本身
+    📦 物品
+      Registries.ITEM
+      物品形式
+    👾 实体
+      Registries.ENTITY_TYPE
+      生物/投射物
+    🎵 音效
+      Registries.SOUND_EVENT
+      自定义声音
+    ✨ 粒子
+      Registries.PARTICLE_TYPE
+      特效粒子
+    📋 方块实体
+      Registries.BLOCK_ENTITY_TYPE
+      存储数据的方块
 ```
-
-**命名空间规则**：
-- 使用小写字母、数字、下划线
-- 通常是你的 Mod ID
-- 不能与其他 Mod 冲突
 
 ---
 
 ## 3. 注册方块
 
-### 3.1 基本语法
+### 3.1 注册流程图
 
-```java
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.block.Block;
+```mermaid
+flowchart TD
+    A["🧱 创建 Block 对象"] --> B["🔖 创建 Identifier"]
+    B --> C["📝 Registry.register()"]
+    C --> D["✅ 注册成功！"]
 
-// 定义方块
-Block myBlock = new Block(Block.Settings.create().strength(3.0f));
-
-// 注册到方块注册表
-Registry.register(
-    Registries.BLOCK,           // 注册表
-    Identifier.of("mymod", "my_block"),  // ID
-    myBlock                     // 方块对象
-);
+    style A fill:#3498db
+    style D fill:#2ecc71
 ```
 
-### 3.2 完整示例
+### 3.2 完整代码
 
 ```java
-package net.example.mymod.init;
+public class ModBlocks {
 
-import net.example.mymod.Mymod;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.block.Block;
-
-public class Blocks {
-    // 定义方块
+    // ========== 1️⃣ 创建方块 ==========
     public static final Block MAGIC_BLOCK = new Block(
         Block.Settings.create()
-            .strength(3.0f)           // 硬度（挖掘时间）
-            .requiresTool()            // 需要工具才能挖掘
+            .strength(3.0f)           // 硬度
+            .luminance(state -> 10)   // 发光
     );
 
-    public static final Block GLOWING_BLOCK = new Block(
-        Block.Settings.create()
-            .strength(2.0f)
-            .luminance(state -> 15)    // 发光等级（0-15）
-    );
-
+    // ========== 2️⃣ 注册方块 ==========
     public static void register() {
-        // 注册每个方块
         registerBlock("magic_block", MAGIC_BLOCK);
-        registerBlock("glowing_block", GLOWING_BLOCK);
     }
 
     private static void registerBlock(String name, Block block) {
+        // 注册到方块注册表
         Registry.register(
-            Registries.BLOCK,
+            Registries.BLOCK,                           // 注册表
+            Identifier.of(Mymod.MOD_ID, name),        // ID
+            block                                        // 方块对象
+        );
+
+        // 同时注册物品形式
+        Registry.register(
+            Registries.ITEM,
             Identifier.of(Mymod.MOD_ID, name),
-            block
+            new BlockItem(block, new FabricItemSettings())
         );
     }
 }
 ```
 
-### 3.3 方块属性
+### 3.3 方块属性对照表
 
-```java
-Block.Settings.create()
-    .strength(3.0f)                    // 硬度和抗爆属性（可以用 .breakByTool() 设置）
-    .strength(3.0f, 6.0f)             // 第一个是硬度，第二个是爆炸抗性
-    .requiresTool()                     // 需要工具才能挖掘
-    .requiresTool(ToolType.PICKAXE)     // 需要特定工具
-    .breakByTool(ToolType.HAND, 0)     // 手可以破坏
-    .luminance(state -> 15)           // 发光等级
-    .resistance(6.0f)                  // 爆炸抗性
-    .slipperiness(0.98f)               // 平滑度（冰是 0.98）
-    .velocityMultiplier(1.0f)           // 速度乘数
-    .jumpVelocityMultiplier(1.0f)      // 跳跃高度乘数
-    .air()                             // 是空气（透明）
-    .solid()                           // 是固体
-    .solidBlock((state, world, pos) -> true)  // 自定义固体判断
-    .sounds(BlockSoundGroup.GRASS)    // 音效
+```mermaid
+pie "方块属性用途"
+    "硬度 strength" : 40
+    "音效 sounds" : 20
+    "发光 luminance" : 20
+    "工具要求" : 20
 ```
 
 ---
 
 ## 4. 注册物品
 
-### 4.1 基本语法
+### 4.1 物品类型
 
-```java
-import net.minecraft.item.Item;
+```mermaid
+flowchart TD
+    A["📦 物品类型"] --> B["普通物品"]
+    A --> C["工具类物品"]
+    A --> D["食物"]
+    A --> E["方块物品"]
+    A --> F["特殊物品"]
 
-// 定义物品
-Item myItem = new Item(new Item.Settings().maxCount(64));
+    B --> B1["堆叠物品<br/>maxCount()"]
+    C --> C1["有耐久度<br/>maxDamage()"]
+    D --> D1["可食用<br/>food()"]
+    E --> E1["BlockItem"]
+    F --> F1["自定义行为<br/>继承 Item"]
 
-// 注册到物品注册表
-Registry.register(
-    Registries.ITEM,
-    Identifier.of("mymod", "my_item"),
-    myItem
-);
+    style A fill:#e74c3c,color:#fff
+    style B fill:#3498db
+    style C fill:#9b59b6
+    style D fill:#2ecc71
 ```
 
-### 4.2 完整示例
+### 4.2 完整代码
 
 ```java
-package net.example.mymod.init;
+public class ModItems {
 
-import net.example.mymod.Mymod;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.item.Item;
-
-public class Items {
-    // 普通物品
+    // ========== 普通物品 ==========
     public static final Item MAGIC_CRYSTAL = new Item(
         new FabricItemSettings().maxCount(64)
     );
 
-    // 不可堆叠物品
+    // ========== 不可堆叠 ==========
     public static final Item TOOL = new Item(
         new FabricItemSettings().maxCount(1)
     );
 
-    // 食物
+    // ========== 有耐久度 ==========
+    public static final Item DURABLE_ITEM = new Item(
+        new FabricItemSettings().maxDamage(100)
+    );
+
+    // ========== 食物 ==========
     public static final Item MAGIC_FOOD = new Item(
         new FabricItemSettings()
             .maxCount(16)
             .food(new FoodComponent.Builder()
-                .hunger(8)                    // 恢复 8 点饥饿值
-                .saturationModifier(10.0f)    // 饱和度
-                .meat()                       // 是肉类
-                .snack()                      // 是零食
-                .alwaysEdible()               // 总是可以吃（空腹时）
+                .hunger(8)           // 恢复 8 点饥饿
+                .saturationModifier(10f)
+                .alwaysEdible()        // 空腹时也可吃
                 .statusEffect(
                     new StatusEffectInstance(
-                        StatusEffects.SPEED,   // 给予速度效果
-                        600,                   // 持续 30 秒（600 ticks）
-                        0                      // 等级 0（第一级）
+                        StatusEffects.SPEED,
+                        600,          // 30 秒
+                        0             // 1 级
                     ),
-                    1.0f                     // 概率 100%
+                    1.0f            // 100% 概率
                 )
                 .build()
             )
@@ -278,76 +289,58 @@ public class Items {
 }
 ```
 
-### 4.3 物品设置
+### 4.3 物品设置速查
 
-```java
-new FabricItemSettings()
-    .maxCount(64)                     // 最大堆叠数
-    .maxCount(1)                     // 不可堆叠
-    .maxDamage(100)                  // 耐久度
-    .recipeRemainder(Items.STICK)    // 配方剩余物
-    .group(ItemGroup.MISC)           // 所属物品栏
-    .fireproof()                    // 防火
-    .enchantable(10)                 // 可附魔等级
+```mermaid
+table
+    | 设置 | 代码 | 说明 |
+    |------|------|------|
+    | 堆叠数 | .maxCount(64) | 最大 64 |
+    | 不可堆叠 | .maxCount(1) | 单独占位 |
+    | 耐久度 | .maxDamage(100) | 使用消耗 |
+    | 配方剩余 | .recipeRemainder(Items.STICK) | 留下什么 |
+    | 物品栏 | .group(ItemGroup.MISC) | 分类显示 |
+    | 防火 | .fireproof() | 不怕岩浆 |
 ```
 
 ---
 
 ## 5. 注册实体
 
-### 5.1 基本语法
+### 5.1 实体注册流程
 
-```java
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.world.World;
+```mermaid
+flowchart TD
+    A["👾 创建 EntityType"] --> B["设置属性"]
+    B --> C["指定 SpawnGroup"]
+    C --> D["注册到注册表"]
+    D --> E["✅ 实体创建成功"]
 
-// 定义实体
-EntityType<MyEntity> myEntity = EntityType.Builder.create(
-    MyEntity::new,                  // 实体工厂方法
-    SpawnGroup.CREATURE             // 生成组
-)
-.dimensions(0.8f, 0.8f)            // 大小（宽, 高）
-.maximumNoDespawnDistance(64)      // 最大不消失距离
-.spawnMethod(SpawnGroup.Creature.SpawnCondition::canSpawn)  // 生成条件
-.build("my_entity");
+    A -->|"EntityType.Builder.create()"| A
+    B -->|"dimensions()<br/>maxTrackDistance()"| B
+    C -->|"CREATURE<br/>MONSTER<br/>AQUATIC"| C
 
-// 注册到实体注册表
-Registry.register(
-    Registries.ENTITY_TYPE,
-    Identifier.of("mymod", "my_entity"),
-    myEntity
-);
+    style A fill:#3498db
+    style E fill:#2ecc71
 ```
 
-### 5.2 完整示例
+### 5.2 完整代码
 
 ```java
-package net.example.mymod.init;
+public class ModEntities {
 
-import net.example.mymod.Mymod;
-import net.example.mymod.entity.MagicSlime;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.Heightmap;
-
-public class Entities {
     public static final EntityType<MagicSlime> MAGIC_SLIME = EntityType.Builder
-        .create(MagicSlime::new, SpawnGroup.CREATURE)
-        .dimensions(1.0f, 1.0f)                   // 碰撞箱大小
-        .maxTrackDistance(10.0f)                   // 最大追踪距离
-        .trackRangeBlocks(8)                       // 追踪范围
-        .spawnMethod(SpawnGroup.CREATURE.SpawnCondition::canSpawn)
-        .build("magic_slime");
+        .create(MagicSlime::new, SpawnGroup.CREATURE)  // 实体工厂 + 生成组
+        .dimensions(1.0f, 1.0f)                       // 碰撞箱大小
+        .maxTrackDistance(10.0f)                       // 最大追踪距离
+        .trackRangeBlocks(8)                           // 追踪范围
+        .build("magic_slime");                         // ID
 
     public static void register() {
         registerEntity("magic_slime", MAGIC_SLIME);
     }
 
-    private static <T extends net.minecraft.entity.Entity> void registerEntity(String name, EntityType<T> entity) {
+    private static <T extends Entity> void registerEntity(String name, EntityType<T> entity) {
         Registry.register(
             Registries.ENTITY_TYPE,
             Identifier.of(Mymod.MOD_ID, name),
@@ -357,15 +350,23 @@ public class Entities {
 }
 ```
 
-### 5.3 生成组
+### 5.3 SpawnGroup（生成组）
 
-```java
-SpawnGroup.CREATURE       // 生物 - 动物、怪物
-SpawnGroup.MONSTER       // 怪物 - 僵尸、骷髅
-SpawnGroup.AMBIENT       // 环境生物 - 蝙蝠
-SpawnGroup.AQUATIC       // 水生生物 - 鱼、鱿鱼
-SpawnGroup.WATER_AMBIENT // 水环境 - 水母
-SpawnGroup.MISC         // 其他 - 掉落物、经验球
+```mermaid
+flowchart TB
+    SG["👾 SpawnGroup 生成组"]
+
+    SG --> CREATURE["🐄 CREATURE<br/>动物、被动生物"]
+    SG --> MONSTER["💀 MONSTER<br/>僵尸、骷髅等"]
+    SG --> AMBIENT["🦇 AMBIENT<br/>蝙蝠等"]
+    SG --> AQUATIC["🐟 AQUATIC<br/>鱼、鱿鱼"]
+    SG --> MISC["📦 MISC<br/>掉落物、经验球"]
+
+    style CREATURE fill:#2ecc71
+    style MONSTER fill:#e74c3c
+    style AMBIENT fill:#95a5a6
+    style AQUATIC fill:#3498db
+    style MISC fill:#f39c12
 ```
 
 ---
@@ -374,122 +375,125 @@ SpawnGroup.MISC         // 其他 - 掉落物、经验球
 
 ### 6.1 为什么要同时注册？
 
-当创建一个"可以放置的方块"时，你需要：
-1. 注册方块本身（用于放置）
-2. 注册对应的物品形式（用于玩家拿取）
+```mermaid
+flowchart LR
+    A["🧱 方块 Block"] --> B["放置到世界"]
+    B --> C["🎮 游戏内"]
+
+    D["📦 物品 Item"] --> E["玩家背包"]
+    E --> C
+
+    A -.->|"需要"| D["BlockItem"]
+
+    style A fill:#3498db
+    style D fill:#e74c3c
+```
 
 ### 6.2 推荐模式
 
 ```java
-public static void register() {
-    // 先注册方块
-    Registry.register(
-        Registries.BLOCK,
-        Identifier.of(MOD_ID, "magic_block"),
-        MAGIC_BLOCK
-    );
+private static void registerBlock(String name, Block block) {
+    Identifier id = Identifier.of(Mymod.MOD_ID, name);
 
-    // 再注册对应的物品
+    // 1️⃣ 先注册方块
+    Registry.register(Registries.BLOCK, id, block);
+
+    // 2️⃣ 再注册物品（BlockItem = 方块的物品形式）
     Registry.register(
-        Registries.ITEM,
-        Identifier.of(MOD_ID, "magic_block"),
-        new BlockItem(MAGIC_BLOCK, new FabricItemSettings())
+        Registries.ITEM, id,
+        new BlockItem(block, new FabricItemSettings())
     );
 }
 ```
 
-### 6.3 简化写法
+### 6.3 注册顺序
 
-```java
-public class Blocks {
-    public static final Block MAGIC_BLOCK = new Block(...);
+```mermaid
+flowchart LR
+    A["🧱 方块"] --> B["📦 物品"]
+    B --> C["👾 实体"]
+    C --> D["🎵 音效"]
+    D --> E["✨ 粒子"]
 
-    // 方法一：手动注册两个
-    public static final Item MAGIC_BLOCK_ITEM = new BlockItem(MAGIC_BLOCK, settings);
-
-    // 方法二：用辅助方法
-    public static void registerAll() {
-        registerBlock("magic_block", MAGIC_BLOCK);
-    }
-
-    private static void registerBlock(String name, Block block) {
-        // 注册方块
-        Registry.register(Registries.BLOCK, id(name), block);
-        // 注册方块物品
-        Registry.register(Registries.ITEM, id(name), new BlockItem(block, new FabricItemSettings()));
-    }
-
-    private static Identifier id(String path) {
-        return Identifier.of(MOD_ID, path);
-    }
-}
+    style A fill:#3498db
+    style B fill:#e74c3c
+    style C fill:#2ecc71
 ```
 
 ---
 
 ## 7. 常见问题
 
-### Q1: 报错 "Registry already contains"？
+### 7.1 错误排查流程
 
-**原因**：尝试重复注册相同 ID 的内容。
+```mermaid
+flowchart TD
+    A["❓ 游戏找不到？"] --> B{"注册方法调用了？"}
+    B -->|否| FIX["📝 调用 register()"]
+    B -->|是| C{"ID 正确？"}
+    C -->|否| FIX2["🔖 检查 Identifier"]
+    C -->|是| D{"资源文件存在？"}
+    D -->|否| FIX3["📁 添加语言文件"]
+    D -->|是| E["✅ 没问题"]
 
-```bash
-# 错误示例：重复注册
-Registry.register(Registries.ITEM, id("my_item"), item1);
-Registry.register(Registries.ITEM, id("my_item"), item2);  // ❌ 会报错！
+    style FIX fill:#e74c3c
+    style FIX2 fill:#e74c3c
+    style FIX3 fill:#e74c3c
+    style E fill:#2ecc71
 ```
 
-**解决**：确保每个 ID 只注册一次。
+### 7.2 常见错误
 
-### Q2: 游戏里找不到物品？
+```mermaid
+pie "注册错误分布"
+    "ID 重复" : 35
+    "忘记调用 register()" : 30
+    "资源文件缺失" : 20
+    "命名空间错误" : 15
+```
 
-**检查清单**：
-1. ✅ 是否调用了注册方法？
-2. ✅ 物品 ID 是否正确？
-3. ✅ 是否有对应的语言文件？
-4. ✅ 是否在 Mod 入口类中调用了注册？
+### 7.3 快速检查清单
 
-### Q3: 物品无法放置成方块？
-
-**原因**：只注册了物品，没有注册对应的方块。
-
-**解决**：同时注册方块和 BlockItem。
-
-### Q4: 注册顺序重要吗？
-
-**回答**：大多数情况下不重要，但建议遵循：
-1. 先注册方块
-2. 再注册物品
-3. 最后注册实体
+| 检查项 | ✅/❌ |
+|--------|--------|
+| 调用了 `register()` 方法？ | |
+| ID 格式正确（modid:name）？ | |
+| 命名空间用小写？ | |
+| 添加了语言文件？ | |
+| 重新构建了项目？ | |
 
 ---
 
-## 总结
+## 🎯 总结
 
+```mermaid
+flowchart TD
+    START["🔖 注册系统核心"] --> A["Identifier = 门牌号"]
+    START --> B["Registry = 大字典"]
+    START --> C["Registry.register() = 登记"]
+
+    A --> D["格式：modid:name"]
+    B --> E["BLOCK / ITEM / ENTITY_TYPE"]
+    C --> F["三参数：表 + ID + 对象"]
+
+    START2["💡 记住"] --> T1["先注册方块，再注册物品"]
+    START2 --> T2["方块 + BlockItem = 可放置"]
+    START2 --> T3["ID 唯一，不能重复"]
 ```
-注册三要素：
-┌─────────────────────────────────────┐
-│ 1. 标识符 (Identifier)               │
-│    Identifier.of("modid", "name")  │
-├─────────────────────────────────────┤
-│ 2. 注册表 (Registry)                 │
-│    Registries.ITEM                  │
-│    Registries.BLOCK                 │
-│    Registries.ENTITY_TYPE           │
-├─────────────────────────────────────┤
-│ 3. 注册方法                          │
-│    Registry.register(...)           │
-└─────────────────────────────────────┘
-```
+
+### 记住这三步：
+
+1. **创建对象** `new Block(...)` / `new Item(...)`
+2. **创建 ID** `Identifier.of(MOD_ID, name)`
+3. **注册** `Registry.register(Registries.XXX, id, object)`
 
 ---
 
 ## 下一步
 
-现在你学会了注册系统！接下来：
-- [创建自定义方块](../part-2-blocks-items/01-creating-blocks.md) - 学习创建完整的方块
-- [创建自定义物品](../part-2-blocks-items/03-creating-items.md) - 学习创建完整的物品
+- [🧱 创建方块](./01-creating-blocks.md) - 实战创建你的第一个方块
+- [📦 创建物品](./03-creating-items.md) - 创造更多物品类型
 
 ---
 
-*参考：[注册系统分析](../analysis/)* - 深入了解注册机制
+*💡 **提示**：注册是 Fabric 开发的基础，几乎每个 Mod 都要用到！*
