@@ -640,22 +640,35 @@ function groupByPart(tutorials) {
     return groups;
 }
 
-// Part 排序顺序（与源码目录 Part-X-XXX 对应，3-Block-Item 保证数字序 3 在 13 前）
-const partOrder = ['0-Prerequisites', '1-Foundation', '2-World', '3-Block', '3-Block-Item', '4-Entity', '5-AI', '6-Network', '7-Command', '8-Resource', '9-Client', '10-Server', '11-Advanced', '12-Practice', '13-Additional'];
+// Part 排序顺序（数字小的排前面）
+const partOrder = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'];
 
-function sortParts(partNames) {
-    return partNames.sort((a, b) => {
+function sortParts(partNamesList) {
+    return partNamesList.sort((a, b) => {
+        // 优先使用 partOrder 排序
         const indexA = partOrder.indexOf(a);
         const indexB = partOrder.indexOf(b);
-        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        // 其他情况按数字或字母排序
+        return a.localeCompare(b);
     });
 }
 
-// Part 名称映射
-const partNames = {
+// Part 显示名称映射（优先用数字作为键）
+const partDisplayNames = {
+    // 数字键 - 用于 content/fabric (part-0, part-1...)
+    '0': 'Part-0: 前置知识',
+    '1': 'Part-1: 基础知识',
+    '2': 'Part-2: 方块与物品',
+    '3': 'Part-3: 实体系统',
+    '4': 'Part-4: 世界生成',
+    '5': 'Part-5: 渲染系统',
+    '6': 'Part-6: 网络通信',
+    '7': 'Part-7: 进阶主题',
+    '8': 'Part-8: 实战项目',
+    // MC 特有（带连字符后缀的旧格式也兼容）
     '0-Prerequisites': 'Part-0: 前置知识',
     '1-Foundation': 'Part-1: 核心基础 ⭐',
     '2-World': 'Part-2: 世界系统',
@@ -688,7 +701,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     // 生成按 Part 分组的教程 HTML
     const tutorialsByPartHtml = sortedParts.map((partName, partIndex) => {
         const partItems = partGroups[partName];
-        const partLabel = partNames[partName] || partName;
+        const partLabel = partDisplayNames[partName] || partName;
         const learningAdvice = useCurriculumLayout && partLearningAdvice[partName];
         const prevPart = useCurriculumLayout && partIndex > 0 ? sortedParts[partIndex - 1] : null;
         const nextPart = useCurriculumLayout && partIndex < sortedParts.length - 1 ? sortedParts[partIndex + 1] : null;
@@ -711,8 +724,8 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                         ${topicsHtml}
                     </div>`;
             }).join('');
-            const prevLink = prevPart ? `<a href="#" onclick="scrollToPart('part-${prevPart}'); return false;" class="part-prev-next-prev">上一部分 ${partNames[prevPart] || prevPart}</a>` : '';
-            const nextLink = nextPart ? `<a href="#" onclick="scrollToPart('part-${nextPart}'); return false;" class="part-prev-next-next">下一部分 ${partNames[nextPart] || nextPart}</a>` : '';
+            const prevLink = prevPart ? `<a href="#" onclick="scrollToPart('part-${prevPart}'); return false;" class="part-prev-next-prev">上一部分 ${partDisplayNames[prevPart] || prevPart}</a>` : '';
+            const nextLink = nextPart ? `<a href="#" onclick="scrollToPart('part-${nextPart}'); return false;" class="part-prev-next-next">下一部分 ${partDisplayNames[nextPart] || nextPart}</a>` : '';
             partContent = `
                 <div class="curriculum-grid">
                     ${curriculumCards}
@@ -797,7 +810,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     }
 
     const partJumpOptions = sortedParts.map(partName => {
-        const pl = partNames[partName] || partName;
+        const pl = partDisplayNames[partName] || partName;
         return `<option value="part-${partName}">${pl.replace(/</g, '')}</option>`;
     }).join('');
 
@@ -1635,20 +1648,16 @@ function getActualDocFiles(sourceDir, recursive = true) {
         let icon = 'file-alt';
         let part = 'Other';
 
-        // 解析 Part 信息
-        const partMatch = f.path.match(/[\\/]Part-([^\\/]+)[\\/]/);
+        // 解析 Part 信息（兼容大小写：Part-0, part-0, PART-0）
+        const partMatch = f.path.match(/[\\/][Pp]art[-_](\d+)/);
         if (partMatch) {
             part = partMatch[1];
         }
 
-        // 计算相对路径（保留 Part 目录）
+        // 计算相对路径（只保留文件名，因为 HTML 输出到 tutorials/ 根目录）
         const relativePath = f.path.replace(/\\/g, '/');
         const parts = relativePath.split('/');
         const tutorialsIndex = parts.indexOf('tutorials');
-        let subPath = '';
-        if (tutorialsIndex !== -1) {
-            subPath = parts.slice(tutorialsIndex + 1).join('/').replace(/\.(md|markdown)$/, '').replace(/\\/g, '/');
-        }
 
         try {
             const content = fs.readFileSync(f.path, 'utf-8');
@@ -1660,8 +1669,8 @@ function getActualDocFiles(sourceDir, recursive = true) {
             // 忽略读取错误
         }
 
-        // htmlPath：相对 tutorials/ 的路径（含 Part 子目录），与 convert.js 输出目录一致
-        const htmlPath = subPath || slug;
+        // htmlPath：直接使用文件名（不含子目录），因为 HTML 输出到 tutorials/ 根目录
+        const htmlPath = slug;
 
         return {
             file: slug,

@@ -252,8 +252,8 @@ class AutoModuleScanner {
                     // 读取文件获取标题
                     const title = this.extractTitle(fullPath, entry.name);
 
-                    // 提取 Part 信息
-                    const partMatch = relativePath.match(/Part-(\d+)/);
+                    // 提取 Part 信息（兼容大小写：Part-0, part-0, PART-0）
+                    const partMatch = relativePath.match(/[Pp]art[-_]?(\d+)/);
                     const part = partMatch ? `Part-${partMatch[1]}` : 'Other';
 
                     // 生成 HTML 路径（保留子目录结构）
