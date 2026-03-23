@@ -1,285 +1,355 @@
-# 第一章：Fabric 简介
+# 🎮 Fabric 是什么？—— 让你的 MC 听你的话！
 
-> 这一章介绍 Fabric API 的基本概念，帮助你理解如何使用 Fabric 进行开发。
-
----
-
-## 目录
-
-1. [Fabric API 是什么？](#1-fabric-api-是什么)
-2. [Fabric API 能做什么？](#2-fabric-api-能做什么)
-3. [API 版本和兼容性](#3-api-版本和兼容性)
-4. [Fabric 模块一览](#4-fabric-模块一览)
-5. [常用 API 快速参考](#5-常用-api-快速参考)
+> **TL;DR** 如果你想让 Minecraft 执行你的想法，Fabric 就是那把钥匙！
 
 ---
 
-## 1. Fabric API 是什么？
+## 📖 目录
 
-### 1.1 定义
+1. [🎯 Fabric 是什么？](#1-fabric-是什么)
+2. [🔥 为什么选 Fabric？](#2-为什么选-fabric)
+3. [🏗️ Fabric 的核心架构](#3-fabric-的核心架构)
+4. [🧩 Fabric 能做什么？](#4-fabric-能做什么)
+5. [🚀 快速开始](#5-快速开始)
 
-Fabric API 是 Fabric 官方提供的开发工具库，为 Mod 开发者提供了大量现成的功能和接口。
+---
+
+## 1. Fabric 是什么？
+
+### 1.1 一句话解释
 
 ```
-没有 Fabric API 时：
-┌─────────────────┐
-│ 你想创建一个物品？│
-│ 需要自己写代码    │
-│ 直接操作注册表     │  ← 很复杂，容易出错
-│ 写 100 行代码    │
-└─────────────────┘
-
-有了 Fabric API 后：
-┌─────────────────┐
-│ 你想创建一个物品？│
-│ 调用 Fabric 提供的 API
-│ Registry.register() │  ← 简单，5 行代码
-│ 完成！             │
-└─────────────────┘
+🎮 Minecraft 就像一个精密的机器
+🔧 Fabric 就是让你能改装这台机器的工具箱
 ```
 
-### 1.2 Fabric API vs 纯 Mixin
+**没有 Mod**：你只能玩别人设计好的游戏
+**有 Fabric Mod**：你可以添加新物品、新世界、新玩法...一切皆有可能！
 
-| 方式 | 优点 | 缺点 |
+### 1.2 官方定义
+
+> Fabric 是一个轻量级、模块化的 Mod 加载工具和 API 框架
+
+翻译成人话就是：
+- **轻量级**：不会让游戏变卡
+- **模块化**：想要什么功能就加什么，不需要全部装
+- **API 框架**：提供了大量现成的代码，直接调用就行
+
+### 1.3 Fabric vs Forge 对比
+
+```mermaid
+graph TD
+    subgraph "选择 Fabric"
+        A[追求性能] --> F[轻量快速]
+        B[喜欢现代技术] --> F
+        C[想快速开发] --> F
+    end
+
+    subgraph "选择 Forge"
+        D[需要复杂功能] --> G[生态丰富]
+        E[老项目兼容] --> G
+    end
+
+    F -->|现代 Minecraft| H[推荐 1.20+]
+    G -->|传统方案| I[适合大型 Mod]
+```
+
+### 1.4 Fabric 的组成
+
+```mermaid
+graph TB
+    subgraph "Fabric 生态"
+        A[Fabric Loader<br/>Mod 加载器] --> B[Fabric API<br/>开发接口]
+        A --> C[Fabric Installer<br/>安装器]
+        B --> D[Mixin<br/>代码注入]
+    end
+
+    subgraph "你的 Mod"
+        E[你的代码] --> B
+    end
+
+    style A fill:#ff6b6b
+    style B fill:#4ecdc4
+    style D fill:#ffe66d
+```
+
+---
+
+## 2. 为什么选 Fabric？
+
+### 2.1 四大优势
+
+```mermaid
+quadrantChart
+    title 选择 Fabric 的理由
+    x-axis 低门槛 --> 高性能
+    y-axis 简单易用 --> 功能强大
+    quadrant-1 完美选择
+    quadrant-2 过渡方案
+    quadrant-3 不推荐
+    quadrant-4 别选这个
+    "🚀 轻量快速": [0.9, 0.8]
+    "📚 文档丰富": [0.7, 0.6]
+    "🎯 开发简单": [0.8, 0.5]
+    "💪 功能完整": [0.5, 0.7]
+```
+
+| 优势 | 说明 | 比喻 |
 |------|------|------|
-| **纯 Mixin** | 功能强大，灵活 | 需要深入了解游戏代码，容易出错 |
-| **Fabric API** | 简单易用，稳定可靠 | 可能没有覆盖所有功能 |
+| ⚡ **速度快** | 原生兼容，性能损失小 | 改装跑车不影响引擎 |
+| 📖 **文档好** | 官方文档详细，社区活跃 | 有详细的改装说明书 |
+| 🔧 **好上手** | 新手也能快速开发 | 乐高积木式的组装 |
+| 🧩 **模块化** | 按需引入，不臃肿 | 需要什么加什么 |
 
-**建议**：优先使用 Fabric API，只有当 API 不满足需求时才考虑使用 Mixin。
+### 2.2 开发体验对比
+
+```mermaid
+graph LR
+    subgraph "传统方式 Forge"
+        A[创建方块] --> B[写 50 行注册代码]
+        B --> C[配置 json]
+        C --> D[写 mixin]
+        D --> E[测试]
+    end
+
+    subgraph "Fabric 方式"
+        F[创建方块] --> G[FabricItemSettings]
+        G --> H[Registry.register]
+        H --> I[测试]
+    end
+
+    style B fill:#ff9999
+    style G fill:#99ff99
+```
 
 ---
 
-## 2. Fabric API 能做什么？
+## 3. Fabric 的核心架构
 
-### 2.1 主要功能分类
+### 3.1 整体架构图
 
-```
-Fabric API 提供的能力：
+```mermaid
+flowchart TB
+    subgraph "Minecraft 核心"
+        MC1["🎮 Minecraft 底层代码"]
+    end
 
-┌──────────────────────────────────────────────────────────────┐
-│                         世界生成                               │
-│  • 创建新方块、物品、生物群系                                   │
-│  • 添加矿石、地形、植被                                        │
-│  • 控制生物生成规则                                            │
-├────────────────────────────────────────────────────────────┤
-│                         实体系统                               │
-│  • 创建新实体、生物                                            │
-│  • 监听实体事件（生成、死亡、攻击）                            │
-│  • 实体属性（生命值、攻击力等）                                │
-├────────────────────────────────────────────────────────────┤
-│                         交互系统                               │
-│  • 方块交互事件                                               │
-│  • 物品使用事件                                               │
-│  • 自定义命令                                                 │
-├────────────────────────────────────────────────────────────┤
-│                         渲染系统                               │
-│  • 自定义粒子效果                                             │
-│  • 自定义方块渲染                                             │
-│  • 流体渲染扩展                                               │
-├────────────────────────────────────────────────────────────┤
-│                         网络系统                               │
-│  • 客户端-服务端通信                                          │
-│  • 自定义数据包                                               │
-│  • 玩家数据同步                                               │
-├────────────────────────────────────────────────────────────┤
-│                         数据系统                               │
-│  • 自动生成配方、战利品表、标签                               │
-│  • 数据包条件                                                 │
-│  • 注册表同步                                                 │
-└────────────────────────────────────────────────────────────┘
+    subgraph "Mixin 注入层"
+        MX1["💉 Mixin<br/>修改游戏行为"]
+        MX2["@Inject 注解"]
+    end
+
+    subgraph "Fabric API 层"
+        API1["📦 注册系统<br/>Registry"]
+        API2["⚡ 事件系统<br/>Event"]
+        API3["🌐 网络系统<br/>Networking"]
+        API4["🗺️ 世界生成<br/>Biome/Feature"]
+        API5["🎨 渲染系统<br/>Renderer"]
+    end
+
+    subgraph "你的 Mod"
+        MOD["✨ 你的代码"]
+    end
+
+    MC1 <--> MX1
+    MX1 <--> API1 & API2 & API3 & API4 & API5
+    MOD --> API1
+
+    style MC1 fill:#4a5568,color:#fff
+    style MX1 fill:#e53e3e,color:#fff
+    style API1 fill:#38a169,color:#fff
+    style MOD fill:#805ad5,color:#fff
 ```
 
-### 2.2 常用场景示例
+### 3.2 工作流程
 
-| 场景 | 使用哪个 API |
-|------|-------------|
-| 创建新方块 | `fabric-block-api-v1` |
-| 创建新物品 | `fabric-item-api-v1` |
-| 添加新矿石 | `fabric-biome-api-v1` |
-| 创建新生物 | `fabric-object-builder-api-v1` |
-| 监听玩家加入 | `fabric-entity-events-v1` |
-| 创建自定义粒子 | `fabric-particles-v1` |
-| 服务端-客户端通信 | `fabric-networking-api-v1` |
-| 创建自定义命令 | `fabric-command-api-v2` |
-| 修改 GUI 界面 | `fabric-screen-api-v1` |
-| 创建流体存储 | `fabric-transfer-api-v1` |
+```mermaid
+sequenceDiagram
+    participant U as 👤 你
+    participant F as 🔧 Fabric
+    participant M as 🎮 Minecraft
+    participant Mx as 💉 Mixin
+
+    U->>F: 编写 Mod 代码
+    F->>Mx: 通过 Mixin 注入
+    Mx->>M: 修改游戏行为
+    M-->>U: 游戏按你的想法运行！
+
+    Note over U,M: Mod 加载流程
+    M->>F: 启动游戏
+    F->>U: 加载你的 Mod
+    U->>M: 体验新功能！
+```
+
+### 3.3 注册系统架构
+
+```mermaid
+flowchart LR
+    subgraph "注册表 Registry"
+        direction TB
+        R1["📦 BLOCK<br/>方块"]
+        R2["📦 ITEM<br/>物品"]
+        R3["📦 ENTITY_TYPE<br/>实体"]
+        R4["📦 BIOME<br/>生物群系"]
+    end
+
+    subgraph "注册流程"
+        direction TB
+        P1["1️⃣ 创建对象"]
+        P2["2️⃣ 定义 ID"]
+        P3["3️⃣ 注册到表"]
+        P4["4️⃣ 同步到客户端"]
+    end
+
+    P1 --> P2 --> P3 --> P4
+    P3 --> R1 & R2 & R3 & R4
+
+    style R1 fill:#f6e05e
+    style R2 fill:#68d391
+    style R3 fill:#fc8181
+    style R4 fill:#63b3ed
+```
 
 ---
 
-## 3. API 版本和兼容性
+## 4. Fabric 能做什么？
 
-### 3.1 版本号格式
+### 4.1 功能全景图
 
-Fabric API 的版本号遵循以下格式：
-
+```mermaid
+mindmap
+  root((✨ 你能创造的))
+    🎮 游戏玩法
+      新物品
+      新装备
+      新附魔
+      新合成
+    🌍 世界改造
+      新生物群系
+      新地形
+      新矿物
+      新结构
+    👾 全新生物
+      友好的 NPC
+      敌对的怪物
+      坐骑系统
+    🎨 视觉特效
+      自定义粒子
+      光影效果
+      新的方块模型
+    ⚔️ 玩法系统
+      新职业
+      技能树
+      任务系统
+    🌐 多人玩法
+      自定义数据包
+      同步逻辑
+      新的聊天命令
 ```
-fabric-<模块名>-<版本>
 
-示例：
-fabric-api-base-1.0.0
-fabric-item-api-v1-1.0.0
+### 4.2 常用 API 一览
 
-版本号含义：
-├── 1.0.0        正式版
-├── 0.116.9-1.21.1  测试版（API版本-兼容的游戏版本）
-└── 0.1.0+1.21    实验版
+```mermaid
+graph TD
+    subgraph "📚 Fabric API 模块"
+        B1["fabric-block-api<br/>方块 API"]
+        B2["fabric-item-api<br/>物品 API"]
+        B3["fabric-entity-events<br/>实体事件"]
+        B4["fabric-biome-api<br/>生物群系"]
+        B5["fabric-networking<br/>网络通信"]
+        B6["fabric-command-api<br/>命令系统"]
+        B7["fabric-renderer<br/>渲染器"]
+    end
+
+    subgraph "🎯 你想实现"
+        G1["创造新方块"]
+        G2["创造新物品"]
+        G3["监听玩家"]
+        G4["创建新世界"]
+        G5["客户端服务端通信"]
+        G6["自定义命令"]
+    end
+
+    G1 --> B1
+    G2 --> B2
+    G3 --> B3
+    G4 --> B4
+    G5 --> B5
+    G6 --> B6
+
+    style B1 fill:#48bb78
+    style B2 fill:#48bb78
+    style B3 fill:#4299e1
+    style B4 fill:#9f7aea
+    style B5 fill:#ed8936
+    style B6 fill:#f56565
 ```
-
-### 3.2 版本稳定性标记
-
-| 标记 | 含义 | 稳定性 |
-|------|------|--------|
-| `stable` | 稳定版 | ✅ 可在生产环境使用 |
-| `experimental` | 实验版 | ⚠️ 可能有变化 |
-| `deprecated` | 废弃版 | ❌ 不推荐使用 |
-
-### 3.3 Minecraft 版本兼容性
-
-```
-Minecraft 1.21+  →  Fabric API 0.116.x
-Minecraft 1.20.x →  Fabric API 0.100.x
-Minecraft 1.19.x →  Fabric API 0.83.x
-```
-
-**注意**：不同版本的 API 不能混用！
 
 ---
 
-## 4. Fabric 模块一览
+## 5. 快速开始
 
-### 4.1 核心模块
+### 5.1 环境要求
 
-| 模块 | 说明 | 必需？ |
-|------|------|--------|
-| `fabric-api-base` | 事件系统、工具类、拓扑排序 | ✅ 是 |
-| `fabric-convention-tags-v2` | 约定标签系统 | 推荐 |
+```mermaid
+pie "开发环境" 
+    "Java 21" : 60
+    "IntelliJ IDEA" : 30
+    "Minecraft 1.21+" : 10
+```
 
-### 4.2 世界生成模块
+### 5.2 下一步
 
-| 模块 | 说明 |
-|------|------|
-| `fabric-biome-api-v1` | 生物群系添加和修改 |
-| `fabric-dimensions-v1` | 维度数据处理 |
+现在你已经了解了 Fabric 的全貌！接下来：
 
-### 4.3 实体/物品模块
+```mermaid
+graph LR
+    A[📖 继续学习] --> B["环境搭建<br/>part-0/02"]
+    B --> C["Mod 结构<br/>part-1/02"]
+    C --> D["事件系统<br/>part-1/03"]
+    D --> E["创建第一个方块<br/>part-2/01"]
 
-| 模块 | 说明 |
-|------|------|
-| `fabric-entity-events-v1` | 实体事件监听 |
-| `fabric-item-api-v1` | 物品扩展 |
-| `fabric-item-group-api-v1` | 创意物品栏 |
-| `fabric-recipe-api-v1` | 配方系统 |
-| `fabric-object-builder-api-v1` | 对象构建器 |
-
-### 4.4 渲染模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-renderer-api-v1` | 渲染器 API |
-| `fabric-renderer-indigo` | 默认渲染器实现 |
-| `fabric-rendering-v1` | 渲染事件 |
-| `fabric-rendering-fluids-v1` | 流体渲染 |
-| `fabric-particles-v1` | 粒子系统 |
-| `fabric-client-tags-api-v1` | 客户端标签 |
-
-### 4.5 交互模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-events-interaction-v0` | 交互事件 |
-| `fabric-command-api-v2` | 命令 API |
-| `fabric-screen-api-v1` | 屏幕 API |
-| `fabric-screen-handler-api-v1` | 屏幕处理器 |
-| `fabric-key-binding-api-v1` | 按键绑定 |
-
-### 4.6 网络模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-networking-api-v1` | 网络通信 |
-| `fabric-message-api-v1` | 消息 API |
-
-### 4.7 数据模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-transfer-api-v1` | 流体/物品传输 |
-| `fabric-data-attachment-api-v1` | 数据附件 |
-| `fabric-loot-api-v3` | 战利品表 |
-| `fabric-registry-sync-v0` | 注册表同步 |
-
-### 4.8 资源模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-resource-loader-v0` | 资源加载 |
-| `fabric-resource-conditions-api-v1` | 资源条件 |
-
-### 4.9 其他模块
-
-| 模块 | 说明 |
-|------|------|
-| `fabric-gametest-api-v1` | 游戏测试 |
-| `fabric-sound-api-v1` | 声音 API |
-| `fabric-api-lookup-api-v1` | API 查找 |
+    style A fill:#4c51bf,color:#fff
+    style E fill:#38a169,color:#fff
+```
 
 ---
 
-## 5. 常用 API 快速参考
+## 🎯 总结
 
-### 5.1 依赖添加
+```mermaid
+flowchart TD
+    START["🤔 你想制作 Mod"] --> Q1{选择框架}
+    Q1 -->|轻量快速| F[Fabric ✓]
+    Q1 -->|功能丰富| Fo[Forge]
+    F --> F1[安装 Fabric]
+    F1 --> F2[创建项目]
+    F2 --> F3[编写代码]
+    F3 --> F4[打包发布]
 
-在 `build.gradle` 中添加依赖：
+    START2["🎮 玩游戏"] -->|加载 Mod| LOAD[Mod Loader]
+    LOAD -->|Mixin 注入| MIX[修改行为]
+    MIX -->|API 调用| API[调用 Fabric]
+    API -->|运行| RUN[实现功能]
 
-```groovy
-dependencies {
-    modImplementation "net.fabricmc:fabric-api:${project.fabric_version}"
-}
+    style F fill:#4ecdc4
+    style F4 fill:#38a169
+    style RUN fill:#805ad5
 ```
 
-### 5.2 常用导入
-
-```java
-// 注册
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-
-// 事件
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-
-// 物品
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-
-// 方块
-import net.fabricmc.fabric.api.block.v1.FabricBlock;
-
-// 命令
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-
-// 网络
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-```
-
-### 5.3 常用方法速查
-
-| 操作 | 代码 |
-|------|------|
-| 注册方块 | `Registry.register(Registries.BLOCK, id, block)` |
-| 注册物品 | `Registry.register(Registries.ITEM, id, item)` |
-| 监听事件 | `Event.register(callback)` |
-| 发送网络包 | `ServerPlayNetworking.send(player, packet)` |
-| 注册命令 | `CommandRegistrationCallback.EVENT.register(...)` |
+**记住**：
+- Fabric = 轻量 + 快速 + 现代
+- 一切从注册开始
+- 事件系统是核心
 
 ---
 
 ## 下一步
 
-现在你了解了 Fabric API 的基本概念！接下来：
-- [Mod 项目结构](./02-mod-structure.md) - 了解代码组织方式
-- [事件系统入门](./03-event-system.md) - 学习如何使用事件
+- [🛠️ 环境搭建](../part-0-prerequisites/02-environment-setup.md) - 配置开发工具
+- [📁 Mod 项目结构](./02-mod-structure.md) - 了解代码组织
+- [⚡ 事件系统](./03-event-system.md) - 响应游戏事件
 
 ---
 
-*参考：[Fabric API 源码分析](../analysis/)* - 深入了解每个 API 的实现细节
+*有问题？加入 [Fabric Discord](https://discord.gg/fabricmc) 或在 GitHub 提问！*
