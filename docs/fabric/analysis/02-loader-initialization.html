@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <!-- Primary Meta Tags -->
+    <title>Fabric Loader 初始化流程 - Fabric 模组 教程</title>
+    <meta name="title" content="Fabric Loader 初始化流程 - Fabric 模组 教程">
+    <meta name="description" content="深入学习 Fabric 模组 源码，理解其内部工作原理">
+    <meta name="keywords" content="Fabric 模组, Minecraft, 源码教程, 源码分析, Java">
+    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/fabric/analysis/02-loader-initialization.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/fabric/analysis/02-loader-initialization.html">
+    <meta property="og:title" content="Fabric Loader 初始化流程 - Fabric 模组 教程">
+    <meta property="og:description" content="深入学习 Fabric 模组 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Fabric Loader 初始化流程 - Fabric 模组">
+    <meta name="twitter:description" content="深入学习 Fabric 模组 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Fabric Loader 初始化流程",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T18:58:45.563Z",
+        "dateModified": "2026-03-22T18:58:45.563Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="../../../index.html" class="navbar-logo">
+                <div class="navbar-logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="navbar-logo-text">Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="navbar-links">
+                <a href="../../../index.html" class="navbar-link">首页</a>
+                
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-trigger">
+                        文档中心 <i class="fas fa-chevron-down"></i>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        
+                        <a href="../../../docs/fabric/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-box"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Fabric 模组</div>
+                                <div class="nav-dropdown-item-desc">Fabric 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/forge/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-hammer"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Forge 模组</div>
+                                <div class="nav-dropdown-item-desc">Forge 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/iris/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Iris 光影</div>
+                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
+                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/neoforge/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-fire"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">NeoForge 模组</div>
+                                <div class="nav-dropdown-item-desc">NeoForge 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/sodium/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Sodium 优化</div>
+                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <a href="../../../about.html" class="navbar-link">关于</a>
+            </div>
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Fabric 模组</a>
+        
+            <span>/</span>
+            <span>源码分析</span>
+        
+        <span>/</span>
+        <span>Fabric Loader 初始化流程</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Fabric Loader 初始化流程</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge fabric">Fabric 模组</span>
+                    
+                    <span><i class="fas fa-file"></i> 源码分析</span>
+                    <span><i class="fas fa-file"></i> 02-loader-initialization</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="toc-list">
+                        <li><a href="#启动流程概览">启动流程概览</a></li><li><a href="#关键类">关键类</a></li><li class="h3"><a href="#fabricloader">FabricLoader</a></li><li class="h3"><a href="#entrypoint-机制">Entrypoint 机制</a></li><li><a href="#mixin-注入时机">Mixin 注入时机</a></li><li><a href="#与-forge-的区别">与 Forge 的区别</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
+                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
+                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Fabric 模组</p>
+                        
+                        <p><strong>类型：</strong>源码分析</p>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content article-content">
+                
+<h2 id="启动流程概览">启动流程概览</h2>
+
+<pre class="code-block"><code>Minecraft 启动
+    ↓
+FabricLoader 初始化
+    ↓
+加载 fabric.mod.json
+    ↓
+解析依赖关系
+    ↓
+初始化 EntryPoints
+    ↓
+注册 Registry
+    ↓
+Mixins 注入
+    ↓
+Mod 初始化完成</code></pre>
+
+<h2 id="关键类">关键类</h2>
+
+<h3 id="fabricloader">FabricLoader</h3>
+
+<p>主加载器，负责扫描 mods 目录、解析 <code>fabric.mod.json</code>：</p>
+
+<pre class="code-block"><code>public class FabricLoader {
+    public static FabricLoader instance;
+
+    public void initialize() {
+        // 1. 扫描所有 mod JAR
+        // 2. 解析 fabric.mod.json
+        // 3. 按依赖顺序加载
+        // 4. 调用 entrypoint
+    }
+}</code></pre>
+
+<h3 id="entrypoint-机制">Entrypoint 机制</h3>
+
+<pre class="code-block"><code>{
+  &quot;entrypoints&quot;: {
+    &quot;main&quot;: [&quot;com.example.ModInitializer&quot;],
+    &quot;client&quot;: [&quot;com.example.ClientInitializer&quot;],
+    &quot;fabric&quot;: [&quot;com.example.FabricModInitializer&quot;]
+  }
+}</code></pre>
+
+<h2 id="mixin-注入时机">Mixin 注入时机</h2>
+
+<p>Mixin 在游戏初始化早期注入，此时游戏类已加载但尚未执行初始化逻辑：</p>
+
+<p>1. <code>PreLaunch</code> → Mixin 配置加载</p>
+<p>2. <code>SettingUp</code> → Mixin 环境初始化</p>
+<p>3. <code>BeforeCoreSetup</code> → Mixin 处理器创建</p>
+<p>4. <code>Loading</code> → 真正的注入发生</p>
+
+<h2 id="与-forge-的区别">与 Forge 的区别</h2>
+
+<table><thead><tr><th>特性</th><th>Fabric</th><th>Forge</th></tr></thead><tbody><tr><td>------</td><td>--------</td><td>-------</td></tr><tr><td>加载速度</td><td>快</td><td>慢</td></tr><tr><td>Mixin vs ASM</td><td>原生支持</td><td>需要 ASM</td></tr><tr><td>API 设计</td><td>模块化、按需引入</td><td>大一统</td></tr><tr><td>更新频率</td><td>与 MC 同步</td><td>延迟</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Listen for theme changes to update Mermaid
+        window.addEventListener('themechange', (e) => {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
+                });
+            }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

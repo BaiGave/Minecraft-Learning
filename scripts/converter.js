@@ -3,18 +3,137 @@
  * 将 Markdown 文件转换为带主题的 HTML 文档页面
  *
  * 使用方法：
- * 1. 修改 config.js 中的模组配置
- * 2. 运行 node converter.js [模组名] [版本]
- *    - node converter.js iris tutorials     # 转换 Iris 教程
- *    - node converter.js iris analysis     # 转换 Iris 分析
- *    - node converter.js mc 1.21 tutorials # 转换 MC 1.21 教程
- *    - node converter.js mc 1.21 analysis # 转换 MC 1.21 分析
- *    - node converter.js all              # 转换所有
+ * 1. 在 content/ 目录下添加 .md 文件
+ * 2. 运行 node converter.js
+ *    - 自动扫描 content/ 发现所有模块
+ *    - 自动转换所有 markdown 到 html
+ * 3. 无需手动配置，模块会自动被发现
+ *
+ * 自动扫描说明：
+ * - content/{slug}/ 下每个子目录 = 一个模块
+ * - 模块下的 tutorials/ = 教程目录
+ * - 模块下的 analysis/ = 分析目录
+ * - 数字格式的子目录 (如 1.21) = 版本目录
  */
 
 const fs = require('fs');
 const path = require('path');
-const { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config, partLearningAdvice } = require('./config');
+
+// ============================================================================
+// 自动扫描模块配置
+// ============================================================================
+
+// 优先使用 auto-scanner.js 动态发现的模块
+let autoModules = {};
+let autoTutorialsNav = {};
+let autoAnalysisNav = {};
+
+const autoScannerPath = path.join(__dirname, 'auto-scanner.js');
+if (fs.existsSync(autoScannerPath)) {
+    try {
+        const { AutoModuleScanner } = require(autoScannerPath);
+        const scanner = new AutoModuleScanner();
+        const result = scanner.scanModules();
+
+        // 转换为 converter.js 需要的格式
+        autoModules = {};
+        autoTutorialsNav = {};
+        autoAnalysisNav = {};
+
+        for (const [slug, module] of Object.entries(result)) {
+            // 转换模块格式
+            autoModules[slug] = {
+                name: module.name,
+                slug: module.slug,
+                icon: module.icon,
+                color: module.color,
+                colorGradient: module.colorGradient,
+                description: module.description,
+                versions: module.versions,
+                defaultVersion: module.defaultVersion,
+                docsDir: module.docsDir,
+                theme: module.theme
+            };
+
+            // 转换导航格式
+            autoTutorialsNav[slug] = module.tutorials.map(doc => ({
+                id: doc.file,
+                title: doc.title,
+                icon: 'book',
+                file: doc.file,
+                part: doc.part,
+                topics: []
+            }));
+
+            autoAnalysisNav[slug] = module.analysis.map(doc => ({
+                id: doc.file,
+                title: doc.title,
+                icon: 'microscope',
+                file: doc.file
+            }));
+        }
+
+        console.log(`\n🔍 自动发现 ${Object.keys(autoModules).length} 个模块\n`);
+    } catch (e) {
+        console.warn('⚠ 自动扫描失败，使用备用配置:', e.message);
+    }
+}
+
+// 尝试加载 config.js 的备用配置
+let { modules, navigation, tutorialsNavigation, analysisNavigation, moduleCards, config, partLearningAdvice } = {};
+try {
+    const configModule = require('./config');
+    modules = configModule.modules || {};
+    tutorialsNavigation = configModule.tutorialsNavigation || {};
+    analysisNavigation = configModule.analysisNavigation || {};
+    moduleCards = configModule.moduleCards || {};
+    config = configModule.config || {};
+    partLearningAdvice = configModule.partLearningAdvice || {};
+} catch (e) {
+    // config.js 不存在，使用默认配置
+    config = {
+        defaults: { readingTime: 30 },
+        features: { syntaxHighlight: true, mermaid: true },
+        markdown: { extensions: ['.md'], ignorePrefixes: ['README', 'SUMMARY', 'index'] }
+    };
+}
+
+// 如果有自动扫描结果，合并到 modules 中
+// 自动发现的模块优先级更高
+if (Object.keys(autoModules).length > 0) {
+    for (const [slug, autoModule] of Object.entries(autoModules)) {
+        if (!modules[slug]) {
+            modules[slug] = autoModule;
+        }
+    }
+    // 使用自动发现的导航（更准确）
+    tutorialsNavigation = Object.assign(tutorialsNavigation, autoTutorialsNav);
+    analysisNavigation = Object.assign(analysisNavigation, autoAnalysisNav);
+}
+
+// 如果没有任何模块，扫描 content/ 目录
+if (Object.keys(modules).length === 0) {
+    const contentDir = path.join(__dirname, '..', 'content');
+    if (fs.existsSync(contentDir)) {
+        const entries = fs.readdirSync(contentDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.isDirectory() && !entry.name.startsWith('.')) {
+                modules[entry.name] = {
+                    name: entry.name,
+                    slug: entry.name,
+                    icon: 'book',
+                    color: '#5B8C5A',
+                    colorGradient: 'linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)',
+                    description: `${entry.name} 相关文档`,
+                    versions: null,
+                    defaultVersion: null,
+                    docsDir: `docs/${entry.name}`,
+                    theme: entry.name
+                };
+            }
+        }
+    }
+}
 const { markdownLinkToHtml, markdownImageToHtml } = require('./safe-markdown-link');
 
 // ============================================
@@ -259,6 +378,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${THEME_STORAGE_INLINE}
     <title>${doc.title} - ${module.name}</title>
+    <link rel="stylesheet" href="${relativePath}styles/main.css">
     <link rel="stylesheet" href="${relativePath}styles.css">
     <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -711,6 +831,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${THEME_STORAGE_INLINE}
     <title>${module.name}${versionInfo} - Minecraft Learning</title>
+    <link rel="stylesheet" href="${relativePath}styles/main.css">
     <link rel="stylesheet" href="${relativePath}styles.css">
     <link rel="stylesheet" href="${relativePath}styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

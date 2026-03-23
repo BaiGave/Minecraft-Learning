@@ -229,6 +229,38 @@ const SITE_CONFIG = {
                     type: 'tutorial'
                 }
             ]
+        },
+
+        // ========== Forge 模组 ==========
+        forge: {
+            id: 'forge',
+            name: 'Forge 模组',
+            shortName: 'Forge',
+            slug: 'forge',
+            icon: 'fa-hammer',
+            color: '#B87333',
+            colorGradient: 'linear-gradient(135deg, #B87333 0%, #D4956A 55%, #E8B896 100%)',
+            accentColor: '#8B5A2B',
+            description: 'Forge/NeoForge 模组开发框架深度学习',
+            category: 'forge',
+            order: 4,
+            
+            versions: null,
+            defaultVersion: null,
+            
+            docsDir: 'docs/forge',
+            hasTutorials: true,
+            hasAnalysis: false,
+            
+            featured: [
+                {
+                    id: '01-intro',
+                    title: 'Forge 入门',
+                    desc: '了解 Forge 基本概念与项目结构',
+                    time: '45分钟',
+                    type: 'tutorial'
+                }
+            ]
         }
     },
 
@@ -482,6 +514,55 @@ const SITE_CONFIG = {
         }
     }
 };
+
+// scan-docs:auto-modules:start
+(function applyAutoDiscoveredModulesFromDocs() {
+    var AUTO_SITE_MODULES = {
+    "fabric": {
+        "id": "fabric",
+        "name": "Fabric 生态",
+        "shortName": "Fabric ",
+        "slug": "fabric",
+        "icon": "fa-puzzle-piece",
+        "color": "#5B8C5A",
+        "colorGradient": "linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)",
+        "accentColor": "#171717",
+        "description": "Fabric 生态 的教程与源码分析文档",
+        "category": "fabric",
+        "order": 50,
+        "docsDir": "docs/fabric",
+        "hasTutorials": true,
+        "hasAnalysis": true,
+        "featured": [],
+        "versions": null,
+        "defaultVersion": null
+    },
+    "neoforge": {
+        "id": "neoforge",
+        "name": "NeoForge",
+        "shortName": "NeoForge",
+        "slug": "neoforge",
+        "icon": "fa-fire",
+        "color": "#5B8C5A",
+        "colorGradient": "linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)",
+        "accentColor": "#171717",
+        "description": "NeoForge的教程与源码分析文档",
+        "category": "forge",
+        "order": 51,
+        "docsDir": "docs/neoforge",
+        "hasTutorials": true,
+        "hasAnalysis": true,
+        "featured": [],
+        "versions": null,
+        "defaultVersion": null
+    }
+};
+    if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.modules) return;
+    Object.keys(AUTO_SITE_MODULES).forEach(function (id) {
+        if (!SITE_CONFIG.modules[id]) SITE_CONFIG.modules[id] = AUTO_SITE_MODULES[id];
+    });
+})();
+// scan-docs:auto-modules:end
 
 // ============================================
 // 辅助函数

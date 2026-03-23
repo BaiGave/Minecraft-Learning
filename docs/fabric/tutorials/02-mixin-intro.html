@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <!-- Primary Meta Tags -->
+    <title>Mixin 注入入门 - Fabric 模组 教程</title>
+    <meta name="title" content="Mixin 注入入门 - Fabric 模组 教程">
+    <meta name="description" content="深入学习 Fabric 模组 源码，理解其内部工作原理">
+    <meta name="keywords" content="Fabric 模组, Minecraft, 源码教程, 教程, Java">
+    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/fabric/tutorials/02-mixin-intro.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/fabric/tutorials/02-mixin-intro.html">
+    <meta property="og:title" content="Mixin 注入入门 - Fabric 模组 教程">
+    <meta property="og:description" content="深入学习 Fabric 模组 源码">
+    <meta property="og:site_name" content="Minecraft Learning">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Mixin 注入入门 - Fabric 模组">
+    <meta name="twitter:description" content="深入学习 Fabric 模组 源码">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Mixin 注入入门",
+        "description": "",
+        "author": {
+            "@type": "Person",
+            "name": "baigave"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Minecraft Learning"
+        },
+        "datePublished": "2026-03-22T18:58:45.557Z",
+        "dateModified": "2026-03-22T18:58:45.557Z"
+    }
+    </script>
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+</head>
+<body>
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="../../../index.html" class="navbar-logo">
+                <div class="navbar-logo-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <span class="navbar-logo-text">Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="navbar-links">
+                <a href="../../../index.html" class="navbar-link">首页</a>
+                
+                <div class="nav-dropdown">
+                    <span class="nav-dropdown-trigger">
+                        文档中心 <i class="fas fa-chevron-down"></i>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        
+                        <a href="../../../docs/fabric/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-box"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Fabric 模组</div>
+                                <div class="nav-dropdown-item-desc">Fabric 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/forge/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-hammer"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Forge 模组</div>
+                                <div class="nav-dropdown-item-desc">Forge 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/iris/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Iris 光影</div>
+                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
+                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/neoforge/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-fire"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">NeoForge 模组</div>
+                                <div class="nav-dropdown-item-desc">NeoForge 模组开发</div>
+                            </div>
+                        </a>
+                        <a href="../../../docs/sodium/index.html" class="nav-dropdown-item">
+                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
+                            <div class="nav-dropdown-item-content">
+                                <div class="nav-dropdown-item-title">Sodium 优化</div>
+                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <a href="../../../about.html" class="navbar-link">关于</a>
+            </div>
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="tutorial-page">
+        <header class="tutorial-header">
+            <div class="container">
+                <div class="tutorial-nav">
+                    <div class="tutorial-breadcrumb">
+                        
+        <a href="../../../index.html">文档中心</a>
+        <span>/</span>
+    
+            <a href="../index.html">Fabric 模组</a>
+        
+            <span>/</span>
+            <span>教程</span>
+        
+        <span>/</span>
+        <span>Mixin 注入入门</span>
+    
+                    </div>
+                </div>
+                <h1 class="tutorial-title">Mixin 注入入门</h1>
+                
+                <div class="tutorial-meta">
+                    <span class="module-badge fabric">Fabric 模组</span>
+                    
+                    <span><i class="fas fa-file"></i> 教程</span>
+                    <span><i class="fas fa-file"></i> 02-mixin-intro</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="tutorial-container">
+            <aside class="tutorial-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
+                    <ul class="toc-list">
+                        <li><a href="#mixin-是什么-">Mixin 是什么？</a></li><li><a href="#基本配置">基本配置</a></li><li class="h3"><a href="#添加依赖">添加依赖</a></li><li class="h3"><a href="#配置-mixins">配置 mixins</a></li><li><a href="#编写-mixin">编写 Mixin</a></li><li><a href="#常见注解">常见注解</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
+                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
+                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Fabric 模组</p>
+                        
+                        <p><strong>类型：</strong>教程</p>
+                    </div>
+                </div>
+            </aside>
+
+            <article class="tutorial-content article-content">
+                
+<h2 id="mixin-是什么-">Mixin 是什么？</h2>
+
+<p>Mixin 是一个 Java 注解处理器框架，允许你在不修改原类的情况下，向现有类注入代码。</p>
+
+<h2 id="基本配置">基本配置</h2>
+
+<h3 id="添加依赖">添加依赖</h3>
+
+<pre class="code-block"><code>implementation &quot;org.spongepowered:mixin:0.8.5&quot;</code></pre>
+
+<h3 id="配置-mixins">配置 mixins</h3>
+
+<p>在 <code>fabric.mod.json</code> 中注册：</p>
+
+<pre class="code-block"><code>&quot;mixins&quot;: [
+  &quot;modid.mixins.json&quot;
+]</code></pre>
+
+<p>创建 <code>src/main/resources/modid.mixins.json</code>：</p>
+
+<pre class="code-block"><code>{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;com.example.mixins&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_17&quot;,
+  &quot;mixins&quot;: [],
+  &quot;client&quot;: [&quot;ClientMixin&quot;],
+  &quot;injectors&quot;: { &quot;defaultRequire&quot;: 1 }
+}</code></pre>
+
+<h2 id="编写-mixin">编写 Mixin</h2>
+
+<pre class="code-block"><code>@Mixin(Player.class)
+public abstract class PlayerMixin {
+
+    @Inject(at = @At(&quot;HEAD&quot;), method = &quot;tick&quot;)
+    private void onTick(CallbackInfo ci) {
+        System.out.println(&quot;Player is ticking!&quot;);
+    }
+}</code></pre>
+
+<h2 id="常见注解">常见注解</h2>
+
+<table><thead><tr><th>注解</th><th>作用</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`@Inject`</td><td>在指定位置注入代码</td></tr><tr><td>`@Overwrite`</td><td>完全覆盖原方法</td></tr><tr><td>`@Redirect`</td><td>重定向方法调用</td></tr><tr><td>`@ModifyArg`</td><td>修改方法参数</td></tr></tbody></table>
+
+
+            </article>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../tutorial.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose',
+            flowchart: { htmlLabels: true }
+        });
+
+        // Listen for theme changes to update Mermaid
+        window.addEventListener('themechange', (e) => {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
+                });
+            }
+        });
+
+        // Copy code function
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-reference').querySelector('code');
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

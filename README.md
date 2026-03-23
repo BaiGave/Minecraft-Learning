@@ -5,39 +5,71 @@ Minecraft 原版 / Iris / Sodium 源码教程与技术分析站点，纯静态�
 ## 目录结构
 
 ```
-MinecraftLearning/   （本地文件夹可仍命名为 Blog，仅作说明）
-├── index.html              # 根路径：跳转至 website/index.html（主站）
-├── tech-blog.html          # 「技术随笔」文章列表（node convert.js 生成）
-├── article.html            # 博客单篇文章页
-├── styles.css              # 博客主样式
-├── script.js               # 博客交互脚本
-├── convert.js              # 博客 Markdown → HTML 转换脚本
+Minecraft-Learning/
+├── index.html              # 首页
+├── roadmap.html            # 学习路线图
+├── catalog.html            # 文档目录
+├── about.html              # 关于页面
 │
-├── posts/                  # 博客文章源文件（Markdown）
+├── styles.css              # 主页样式
+├── tutorial.css            # 教程页样式
+├── roadmap.css            # 路线图样式
+├── catalog.css             # 目录页样式
+├── about.css               # 关于页样式
 │
-├── website/                # MC 教程站
-│   ├── index.html          # 教程站首页
-│   ├── catalog.html        # 文档目录
-│   ├── styles.css          # 教程站主样式
-│   ├── script.js           # 教程站交互脚本
-│   ├── tutorial.js         # 教程页专用脚本
-│   ├── convert.js          # 教程 Markdown → HTML 转换脚本
-│   │
-│   ├── scripts/
-│   │   ├── config.js       # 模组配置文件
-│   │   └── utils.js       # 共享工具函数
-│   │
-│   ├── content/            # 教程源码（Markdown）
-│   │   ├── mc/1.21/        # MC 1.21 教程 + 源码分析
-│   │   ├── iris/           # Iris 光影教程 + 分析
-│   │   └── sodium/         # Sodium 优化教程 + 分析
-│   │
-│   ├── docs/               # 生成的 HTML 文档（部署用）
-│   └── tutorials/           # 编译后的教程页（备用）
+├── script.js               # 主页交互脚本
+├── tutorial.js             # 教程页交互脚本
 │
-├── static/                 # 静态资源
+├── site-stats.js           # 站点统计数据 (生成)
+├── site-stats.json         # 站点统计数据 (生成)
+│
 ├── package.json            # 项目配置
-└── DEPLOY.md              # 部署指南
+├── tailwind.config.js      # Tailwind 配置
+├── postcss.config.js       # PostCSS 配置
+│
+├── build/                   # 构建脚本目录
+│   ├── convert.js          # Markdown → HTML 转换脚本
+│   └── watch.js            # 文件监听与自动构建
+│
+├── scripts/                 # 构建辅助脚本
+│   ├── config.js           # 模块配置
+│   ├── utils.js            # 工具函数
+│   ├── convert.js           # 转换辅助脚本
+│   ├── converter.js         # 转换器核心
+│   ├── seo.js              # SEO 生成
+│   ├── search.js           # 搜索功能
+│   ├── theme.js            # 主题管理
+│   ├── safe-markdown-link.js
+│   ├── resolve-markdown-link.js
+│   ├── publish-config.js
+│   └── ...
+│
+├── content/                 # 教程源码（Markdown）
+│   ├── mc/1.21/            # MC 1.21 教程 + 源码分析
+│   ├── iris/               # Iris 光影教程 + 分析
+│   └── sodium/              # Sodium 优化教程 + 分析
+│
+├── styles/                  # 样式源文件
+│   ├── main.css
+│   ├── components.css
+│   ├── shell.css
+│   ├── variables.css
+│   └── tailwind.css
+│
+├── lib/                     # 第三方库本地副本
+│   ├── highlight.js/
+│   ├── flexsearch/
+│   ├── countup/
+│   ├── font-awesome/
+│   └── lucide/
+│
+├── src/                     # Tailwind 源码
+│   └── tailwind.css
+│
+└── docs/                   # 生成的 HTML 文档（部署用）
+    ├── mc/1.21/
+    ├── iris/
+    └── sodium/
 ```
 
 ## 快速开始
@@ -54,66 +86,24 @@ npm install
 # 使用静态服务器
 npm run dev
 
-# 或直接用浏览器打开（根目录 index 会跳到 website/）
-open website/index.html
+# 或直接用浏览器打开 index.html
 ```
 
-### 3. 构建
+### 3. 构建文档
 
 ```bash
-# 构建博客
-npm run build:blog
+# 转换 Markdown 到 HTML
+node build/convert.js
 
-# 构建教程站
-npm run build:website
-
-# 构建全部
-npm run build:all
-```
-
-## 写博客文章
-
-### 1. 创建文章
-
-在 `posts/` 目录下创建新的 Markdown 文件：
-
-```markdown
----
-title: 文章标题
-date: 2026-03-19
-category: frontend
-categoryName: 前端
-tags: [JavaScript, React]
-readingTime: 5
-excerpt: 文章摘要，简短介绍内容。
----
-
-## 正文内容
-
-这里是文章正文...
-```
-
-### 2. 支持的分类
-
-| category | categoryName |
-|----------|--------------|
-| frontend | 前端 |
-| backend | 后端 |
-| devops | DevOps |
-| tool | 工具 |
-| thoughts | 随想 |
-
-### 3. 重新构建
-
-```bash
-node convert.js
+# 监听文件变化并自动构建
+node build/watch.js
 ```
 
 ## 编写教程
 
 ### 1. 创建教程
 
-在 `website/content/` 下创建 Markdown 文件：
+在 `content/` 下创建 Markdown 文件：
 
 ```markdown
 # 教程标题
@@ -154,40 +144,43 @@ graph TD
 ### 3. 重新构建
 
 ```bash
-cd website
-node convert.js
+npm run build
 ```
 
 ## 项目脚本
 
 | 脚本 | 说明 |
 |------|------|
-| `npm run build:blog` | 构建博客 |
-| `npm run build:website` | 构建教程站 |
-| `npm run build:all` | 构建全部 |
-| `npm run seo` | 仅刷新根目录 `sitemap.xml` / `robots.txt` |
-| `npm run dev` | 启动开发服务器 |
-| `npm run clean` | 清理生成的文档 |
+| `npm run build` | 一键构建：MD→HTML → 索引页 → 统计（全量） |
+| `npm run dev` | 监听文件变化，自动重建（开发时用） |
+| `npm run preview` | 启动本地服务器 `http://localhost:3456` 预览 |
+| `npm run clean` | 清理 `docs/` 和样式文件 |
 
 ## 部署
 
 项目已配置 GitHub Pages：
 
 1. 推送代码到 GitHub `main` 分支
-2. GitHub Actions 自动构建
-3. 访问 `https://你的用户名.github.io/MincraftLearning/`（与 GitHub 仓库名一致）
+2. GitHub Actions 自动构建（若仓库中已配置 workflow）
+3. 访问 `https://你的用户名.github.io/Minecraft-Learning/`（站点根路径与仓库名一致）
 
-详细部署指南请查看 [DEPLOY.md](DEPLOY.md)。
+**本地预览（推荐）**：不要用资源管理器双击打开 `docs/*.html`（`file://` 协议下浏览器会限制跨文件访问、脚本与部分资源）。在项目根目录执行：
+
+```bash
+node server.js
+```
+
+浏览器打开 `http://localhost:3456` 即可，行为与 GitHub Pages 上的 `https` 站点一致。
 
 ## 技术栈
 
 - **样式**: Tailwind CSS 3.4 + 自定义 CSS
-- **图标**: Font Awesome 6.5（本地）+ Lucide Icons（新组件）
+- **图标**: Font Awesome 6.5 + Lucide Icons
 - **搜索**: FlexSearch（本地）
 - **代码高亮**: Highlight.js（本地）
 - **数字动画**: CountUp.js（本地）
 - **图表**: Mermaid.js（本地）
-- **字体**: Noto Sans SC（本地 Google Fonts）
+- **字体**: Noto Sans SC + Inter（Google Fonts CDN）
 
 ## 浏览器支持
 

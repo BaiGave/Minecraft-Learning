@@ -33,6 +33,8 @@
 | [04-shadow-system.md](04-shadow-system.md) | 阴影系统 - 视锥体剔除、阴影渲染 |
 | [05-framebuffer-texture.md](05-framebuffer-texture.md) | 帧缓冲与纹理系统 |
 | [06-uniforms.md](06-uniforms.md) | Uniform 管理 |
+| [07-sodium-integration.md](07-sodium-integration.md) | Sodium 集成系统 |
+| [08-mixin-mechanism.md](08-mixin-mechanism.md) | Mixin 注入机制 |
 
 ---
 

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>05 entity event system - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>05 entity event system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    05 entity event system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 实体与事件系统分析</h1>
+<h2 id="概述">概述</h2>
+<p>实体与事件系统包含三个核心模块：
+<ul><li><code>fabric-entity-events-v1</code> - 实体相关事件</li>
+<li><code>fabric-events-interaction-v0</code> - 玩家交互事件</li>
+<li><code>fabric-lifecycle-events-v1</code> - 服务端生命周期事件</li></ul></p>
+<p><hr></p>
+<h2 id="1. fabric-entity-events-v1 模块">1. fabric-entity-events-v1 模块</h2>
+<h3>1.1 ServerLivingEntityEvents (生存实体事件)</h3>
+<pre class="code-block"><code class="language-java">public final class ServerLivingEntityEvents {
+    // 伤害前检查，可取消
+    public static final Event&lt;AllowDamage&gt; ALLOW_DAMAGE = ...;
+
+    // 伤害后通知
+    public static final Event&lt;AfterDamage&gt; AFTER_DAMAGE = ...;
+
+    // 死亡前检查，可取消
+    public static final Event&lt;AllowDeath&gt; ALLOW_DEATH = ...;
+
+    // 死亡后通知
+    public static final Event&lt;AfterDeath&gt; AFTER_DEATH = ...;
+
+    // 生物转换后
+    public static final Event&lt;MobConversion&gt; MOB_CONVERSION = ...;
+}</code></pre>
+<h3>1.2 ServerPlayerEvents (玩家特定事件)</h3>
+<pre class="code-block"><code class="language-java">public final class ServerPlayerEvents {
+    // 玩家数据复制（重生时）
+    public static final Event&lt;ServerPlayerEvents.CopyFrom&gt; COPY_FROM = ...;
+
+    // 重生完成后
+    public static final Event&lt;ServerPlayerEvents.AfterRespawn&gt; AFTER_RESPAWN = ...;
+
+    // 玩家加入游戏
+    public static final Event&lt;Join&gt; JOIN = ...;
+
+    // 玩家离开游戏
+    public static final Event&lt;Leave&gt; LEAVE = ...;
+}</code></pre>
+<p><hr></p>
+<h2 id="2. fabric-events-interaction-v0 模块">2. fabric-events-interaction-v0 模块</h2>
+<h3>2.1 事件设计模式</h3>
+<p>Fabric 采用统一的 <code>EventFactory.createArrayBacked</code> 模式：</p>
+<pre class="code-block"><code class="language-java">public interface UseBlockCallback {
+    Event&lt;UseBlockCallback&gt; EVENT = EventFactory.createArrayBacked(
+        UseBlockCallback.class,
+        (listeners) -&gt; (player, world, hand, hitResult) -&gt; {
+            for (UseBlockCallback event : listeners) {
+                ActionResult result = event.interact(player, world, hand, hitResult);
+                if (result != ActionResult.PASS) {
+                    return result;
+                }
+            }
+            return ActionResult.PASS;
+        }
+    );
+
+    ActionResult interact(PlayerEntity player, World world, Hand hand, BlockHitResult hitResult);
+}</code></pre>
+<h3>2.2 返回值语义 (ActionResult)</h3>
+<table class="data-table"><thead><tr><th>返回值</th><th>客户端行为</th><th>服务端行为</th></tr></thead><tbody><tr><td><code>SUCCESS</code></td><td>取消后续处理，发送数据包</td><td>取消后续处理</td></tr><tr><td><code>PASS</code></td><td>继续处理</td><td>继续处理</td></tr><tr><td><code>FAIL</code></td><td>取消处理，不发包</td><td>取消处理</td></tr><tr><td><code>CONSUME</code></td><td>取消处理，发包，无手臂摆动</td><td>-</td></tr></tbody></table>
+<h3>2.3 PlayerBlockBreakEvents (方块破坏事件)</h3>
+<pre class="code-block"><code class="language-java">public final class PlayerBlockBreakEvents {
+    // 破坏前，可取消
+    public static final Event&lt;Before&gt; BEFORE = ...;
+
+    // 成功破坏后
+    public static final Event&lt;After&gt; AFTER = ...;
+
+    // 被取消时
+    public static final Event&lt;Canceled&gt; CANCELED = ...;
+}</code></pre>
+<p><hr></p>
+<h2 id="3. fabric-lifecycle-events-v1 模块">3. fabric-lifecycle-events-v1 模块</h2>
+<h3>3.1 ServerLifecycleEvents (服务端生命周期)</h3>
+<pre class="code-block"><code class="language-java">public final class ServerLifecycleEvents {
+    // 服务端启动前（玩家管理器和世界未加载）
+    public static final Event&lt;ServerStarting&gt; SERVER_STARTING = ...;
+
+    // 服务端启动完成（所有世界已加载）
+    public static final Event&lt;ServerStarted&gt; SERVER_STARTED = ...;
+
+    // 服务端开始关闭
+    public static final Event&lt;ServerStopping&gt; SERVER_STOPPING = ...;
+
+    // 服务端已关闭
+    public static final Event&lt;ServerStopped&gt; SERVER_STOPPED = ...;
+}</code></pre>
+<h3>3.2 服务端生命周期时序</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│  SERVER_STARTING                                       │
+│    - PlayerManager 未初始化                             │
+│    - 世界未加载                                         │
+├─────────────────────────────────────────────────────────┤
+│  SERVER_STARTED                                        │
+│    - 所有世界已加载                                     │
+│    - 即将开始第一次 tick                                │
+├─────────────────────────────────────────────────────────┤
+│  [正常运行 - 循环调用 TICK 事件]                         │
+├─────────────────────────────────────────────────────────┤
+│  SERVER_STOPPING                                       │
+│    - 网络通道即将关闭                                   │
+│    - 玩家即将断开连接                                   │
+├─────────────────────────────────────────────────────────┤
+│  SERVER_STOPPED                                        │
+│    - 所有世界已关闭                                     │
+│    - 所有实体已卸载                                     │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3>3.3 ServerTickEvents (刻事件)</h3>
+<pre class="code-block"><code class="language-java">public final class ServerTickEvents {
+    // 服务端刻开始
+    public static final Event&lt;StartTick&gt; START_SERVER_TICK = ...;
+
+    // 服务端刻结束
+    public static final Event&lt;EndTick&gt; END_SERVER_TICK = ...;
+
+    // 世界刻开始
+    public static final Event&lt;StartWorldTick&gt; START_WORLD_TICK = ...;
+
+    // 世界刻结束
+    public static final Event&lt;EndWorldTick&gt; END_WORLD_TICK = ...;
+}</code></pre>
+<h3>3.4 ServerChunkEvents (区块事件)</h3>
+<pre class="code-block"><code class="language-java">public final class ServerChunkEvents {
+    // 区块加载
+    public static final Event&lt;Load&gt; CHUNK_LOAD = ...;
+
+    // 新生成区块加载
+    public static final Event&lt;Generate&gt; CHUNK_GENERATE = ...;
+
+    // 区块卸载
+    public static final Event&lt;Unload&gt; CHUNK_UNLOAD = ...;
+
+    // 区块活跃等级变化
+    public static final Event&lt;LevelTypeChange&gt; CHUNK_LEVEL_TYPE_CHANGE = ...;
+}</code></pre>
+<p><hr></p>
+<h2 id="4. Mixin 注入点汇总">4. Mixin 注入点汇总</h2>
+<h3>fabric-entity-events-v1</h3>
+<table class="data-table"><thead><tr><th>目标类</th><th>方法</th><th>事件</th></tr></thead><tbody><tr><td><code>LivingEntity</code></td><td><code>damage</code></td><td><code>ALLOW<em>DAMAGE</code>, <code>AFTER</em>DAMAGE</code></td></tr><tr><td><code>LivingEntity</code></td><td><code>damage</code></td><td><code>ALLOW<em>DEATH</code></td></tr><tr><td><code>LivingEntity</code></td><td><code>onDeath</code></td><td><code>AFTER</em>DEATH</code></td></tr><tr><td><code>LivingEntity</code></td><td><code>sleep</code></td><td><code>START<em>SLEEPING</code></td></tr><tr><td><code>LivingEntity</code></td><td><code>wakeUp</code></td><td><code>STOP</em>SLEEPING</code></td></tr><tr><td><code>ServerPlayerEntity</code></td><td><code>worldChanged</code></td><td><code>AFTER<em>PLAYER</em>CHANGE<em>WORLD</code></td></tr><tr><td><code>ServerPlayerEntity</code></td><td><code>copyFrom</code></td><td><code>COPY</em>FROM</code></td></tr><tr><td><code>PlayerManager</code></td><td><code>onPlayerConnect</code></td><td><code>JOIN</code></td></tr><tr><td><code>PlayerManager</code></td><td><code>remove</code></td><td><code>LEAVE</code></td></tr><tr><td><code>PlayerManager</code></td><td><code>respawnPlayer</code></td><td><code>AFTER_RESPAWN</code></td></tr></tbody></table>
+<h3>fabric-events-interaction-v0</h3>
+<table class="data-table"><thead><tr><th>目标类</th><th>方法</th><th>事件</th></tr></thead><tbody><tr><td><code>ServerPlayerInteractionManager</code></td><td><code>processBlockBreakingAction</code></td><td><code>AttackBlockCallback</code></td></tr><tr><td><code>ServerPlayerInteractionManager</code></td><td><code>interactBlock</code></td><td><code>UseBlockCallback</code></td></tr><tr><td><code>ServerPlayerInteractionManager</code></td><td><code>interactItem</code></td><td><code>UseItemCallback</code></td></tr><tr><td><code>ServerPlayerInteractionManager</code></td><td><code>tryBreakBlock</code></td><td><code>PlayerBlockBreakEvents.BEFORE/AFTER</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="5. 使用示例">5. 使用示例</h2>
+<h3>5.1 监听实体死亡事件</h3>
+<pre class="code-block"><code class="language-java">ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -&gt; {
+    if (entity instanceof ServerPlayerEntity player) {
+        if (player.getInventory().contains(ItemStackPredicate.BLESSED_AMULET)) {
+            player.getInventory().remove(ItemStackPredicate.BLESSED_AMULET);
+            player.setHealth(1.0f);
+            return false; // 取消死亡
+        }
+    }
+    return true;
+});
+
+ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -&gt; {
+    if (entity instanceof CreeperEntity creeper) {
+        entity.getWorld().spawnEntity(new ItemEntity(
+            entity.getWorld(), entity.getX(), entity.getY(), entity.getZ(),
+            new ItemStack(Items.GUNPOWDER, 3)
+        ));
+    }
+});</code></pre>
+<h3>5.2 拦截方块交互</h3>
+<pre class="code-block"><code class="language-java">UseBlockCallback.EVENT.register((player, world, hand, hitResult) -&gt; {
+    if (world.getBlockState(hitResult.getBlockPos()).isOf(Blocks.ENDER_CHEST)) {
+        if (!player.hasPermissionLevel(2)) {
+            player.sendMessage(Text.literal(&quot;You need admin permission!&quot;));
+            return ActionResult.FAIL;
+        }
+    }
+    return ActionResult.PASS;
+});</code></pre>
+<h3>5.3 服务端刻事件</h3>
+<pre class="code-block"><code class="language-java">ServerTickEvents.END_SERVER_TICK.register(server -&gt; {
+    // 每刻检查逻辑
+    if (shouldSpawnMob) {
+        spawnCustomMob(server);
+    }
+});
+
+ServerTickEvents.END_WORLD_TICK.register(world -&gt; {
+    // 世界特定逻辑
+    if (world.getDimensionKey() == RegistryKey.of(Registry.WORLD_KEY, new Identifier(&quot;my_nether&quot;))) {
+        // 地狱特定处理
+    }
+});</code></pre>
+<p><hr></p>
+<h2 id="架构总结">架构总结</h2>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    事件层 (Event System)                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌─────────┐ │
+│  │ ServerLiving    │  │ ServerPlayer     │  │ Server  │ │
+│  │ EntityEvents    │  │ Events           │  │ Lifecycle│ │
+│  ├──────────────────┤  ├──────────────────┤  ├─────────┤ │
+│  │ ALLOW_DAMAGE    │  │ COPY_FROM        │  │ SERVER  │ │
+│  │ AFTER_DAMAGE    │  │ AFTER_RESPAWN   │  │ STARTING │ │
+│  │ ALLOW_DEATH    │  │ JOIN            │  │ SERVER  │ │
+│  │ AFTER_DEATH    │  │ LEAVE           │  │ STARTED │ │
+│  │ MOB_CONVERSION │  │                 │  │ SERVER  │ │
+│  └──────────────────┘  └──────────────────┘  │ STOPPING │ │
+│                                              │ SERVER   │ │
+│  ┌──────────────────┐  ┌──────────────────┐  │ STOPPED  │ │
+│  │ Interaction      │  │ Lifecycle        │  └─────────┘ │
+│  │ Events           │  │ Events           │              │
+│  ├──────────────────┤  ├──────────────────┤              │
+│  │ UseBlockCallback │  │ ServerTickEvents │              │
+│  │ UseItemCallback  │  │ ServerChunkEvents│              │
+│  │ AttackBlockCb    │  │ ServerWorldEvents│              │
+│  └──────────────────┘  └──────────────────┘              │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<p><em>源码位置: <code>fabric-entity-events-v1/</code>, <code>fabric-events-interaction-v0/</code>, <code>fabric-lifecycle-events-v1/</code></em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-biome-dimension-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 生物群系与维度系统分析
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

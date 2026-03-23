@@ -4,99 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <!-- Primary Meta Tags -->
-    <title>Iris 渲染管线 - Iris 光影 教程</title>
-    <meta name="title" content="Iris 渲染管线 - Iris 光影 教程">
-    <meta name="description" content="深入学习 Iris 光影 源码，理解其内部工作原理">
-    <meta name="keywords" content="Iris 光影, Minecraft, 源码教程, 源码分析, Java">
-    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/iris/analysis/02-rendering-pipeline.html">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/iris/analysis/02-rendering-pipeline.html">
-    <meta property="og:title" content="Iris 渲染管线 - Iris 光影 教程">
-    <meta property="og:description" content="深入学习 Iris 光影 源码">
-    <meta property="og:site_name" content="Minecraft Learning">
-    <meta property="og:locale" content="zh_CN">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Iris 渲染管线 - Iris 光影">
-    <meta name="twitter:description" content="深入学习 Iris 光影 源码">
-
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "Iris 渲染管线",
-        "description": "",
-        "author": {
-            "@type": "Person",
-            "name": "baigave"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "Minecraft Learning"
-        },
-        "datePublished": "2026-03-22T13:32:00.197Z",
-        "dateModified": "2026-03-22T13:32:00.197Z"
-    }
-    </script>
+    <title>02 rendering pipeline - Iris 光影</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
     <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="../../../scripts/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #404040; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #404040; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #404040; background: #40404015; }
+        .info-box i { color: #404040; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #404040; }
+        .docs-body h2 i { color: #404040; }
+        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #404040;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #404040, #40404099);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div class="reading-progress" id="readingProgress"></div>
+    <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="../../../index.html" class="navbar-logo">
-                <div class="navbar-logo-icon">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <span class="navbar-logo-text">Minecraft Learning</span>
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="navbar-links">
-                <a href="../../../index.html" class="navbar-link">首页</a>
-                <div class="nav-dropdown">
-                    <span class="nav-dropdown-trigger">
-                        文档中心 <i class="fas fa-chevron-down"></i>
-                    </span>
-                    <div class="nav-dropdown-menu">
-                        <a href="../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
-                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
-                            </div>
-                        </a>
-                        <a href="../../../docs/iris/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Iris 光影</div>
-                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
-                            </div>
-                        </a>
-                        <a href="../../../docs/sodium/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Sodium 优化</div>
-                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
-                            </div>
-                        </a>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
                     </div>
-                </div>
-                <a href="../../../about.html" class="navbar-link">关于</a>
-            </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
             <div class="navbar-actions">
                 <div class="theme-toggle" role="group" aria-label="主题切换">
                     <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
@@ -106,72 +151,86 @@
         </div>
     </nav>
 
-    <div class="tutorial-page">
-        <header class="tutorial-header">
-            <div class="container">
-                <div class="tutorial-nav">
-                    <div class="tutorial-breadcrumb">
-                        
-        <a href="../../../index.html">文档中心</a>
-        <span>/</span>
-    
-            <a href="../index.html">Iris 光影</a>
-        
-            <span>/</span>
-            <span>源码分析</span>
-        
-        <span>/</span>
-        <span>Iris 渲染管线</span>
-    
-                    </div>
-                </div>
-                <h1 class="tutorial-title">Iris 渲染管线</h1>
-                
-                <div class="tutorial-meta">
-                    <span class="module-badge iris">Iris 光影</span>
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 光影 Mod 整体架构分析
+        </a>
+<a href="02-rendering-pipeline.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Iris 渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 着色器包系统
+        </a>
+<a href="04-shadow-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 帧缓冲与纹理系统
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Uniform 系统
+        </a>
+<a href="07-sodium-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Sodium 集成系统分析
+        </a>
+<a href="08-mixin-mechanism.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Mixin 注入机制分析
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>02 rendering pipeline</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    02 rendering pipeline
+                </h1>
+                <div class="docs-meta">
                     
-                    <span><i class="fas fa-file"></i> 源码分析</span>
-                    <span><i class="fas fa-file"></i> 02-rendering-pipeline</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
             </div>
-        </header>
 
-        <div class="tutorial-container">
-            <aside class="tutorial-sidebar">
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
-                    <ul class="toc-list">
-                        <li><a href="#1-概述">1. 概述</a></li><li><a href="#2-渲染阶段-worldrenderingphase-">2. 渲染阶段 (WorldRenderingPhase)</a></li><li><a href="#3-irisrenderingpipeline-核心结构">3. IrisRenderingPipeline 核心结构</a></li><li class="h3"><a href="#3-1-渲染目标结构">3.1 渲染目标结构</a></li><li><a href="#4-渲染流程详解">4. 渲染流程详解</a></li><li class="h3"><a href="#4-1-beginlevelrendering-">4.1 beginLevelRendering()</a></li><li class="h3"><a href="#4-2-rendershadows-">4.2 renderShadows()</a></li><li class="h3"><a href="#4-3-begintranslucents-">4.3 beginTranslucents()</a></li><li class="h3"><a href="#4-4-finalizelevelrendering-">4.4 finalizeLevelRendering()</a></li><li><a href="#5-compositerenderer">5. CompositeRenderer</a></li><li class="h3"><a href="#5-1-pass-结构">5.1 Pass 结构</a></li><li><a href="#6-gbuffer-系统">6. GBuffer 系统</a></li><li class="h3"><a href="#6-1-渲染目标布局">6.1 渲染目标布局</a></li><li class="h3"><a href="#6-2-深度纹理复制">6.2 深度纹理复制</a></li><li><a href="#7-bufferflipper-缓冲翻转-">7. BufferFlipper (缓冲翻转)</a></li><li><a href="#8-渲染阶段顺序">8. 渲染阶段顺序</a></li><li><a href="#9-相关文档">9. 相关文档</a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
-                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
-                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Iris 光影</p>
-                        
-                        <p><strong>类型：</strong>源码分析</p>
-                    </div>
-                </div>
-            </aside>
-
-            <article class="tutorial-content article-content">
-                
-<blockquote>GBuffer、Composite Pass 与渲染阶段管理</blockquote>
-
-<h2 id="1-概述">1. 概述</h2>
-
+            <div class="docs-body doc-content">
+                <h1>Iris 渲染管线</h1>
+<blockquote><p>GBuffer、Composite Pass 与渲染阶段管理</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
 <p>Iris 的渲染管线是整个光影系统的核心，负责协调 GBuffer 渲染、阴影渲染、合成 Pass 和最终输出。</p>
-
 <p><strong>核心文件</strong>：</p>
-
-<table><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`IrisRenderingPipeline`</td><td>`pipeline/IrisRenderingPipeline.java`</td></tr><tr><td>`CompositeRenderer`</td><td>`pipeline/CompositeRenderer.java`</td></tr><tr><td>`FinalPassRenderer`</td><td>`pipeline/FinalPassRenderer.java`</td></tr><tr><td>`SodiumTerrainPipeline`</td><td>`pipeline/SodiumTerrainPipeline.java`</td></tr></tbody></table>
-
-<hr>
-
-<h2 id="2-渲染阶段-worldrenderingphase-">2. 渲染阶段 (WorldRenderingPhase)</h2>
-
-<pre class="code-block"><code>public enum WorldRenderingPhase {
-    NONE,           // 无阶段
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>IrisRenderingPipeline</code></td><td><code>pipeline/IrisRenderingPipeline.java</code></td></tr><tr><td><code>CompositeRenderer</code></td><td><code>pipeline/CompositeRenderer.java</code></td></tr><tr><td><code>FinalPassRenderer</code></td><td><code>pipeline/FinalPassRenderer.java</code></td></tr><tr><td><code>SodiumTerrainPipeline</code></td><td><code>pipeline/SodiumTerrainPipeline.java</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 渲染阶段 (WorldRenderingPhase)">2. 渲染阶段 (WorldRenderingPhase)</h2>
+<pre class="code-block"><code class="language-java">    NONE,           // 无阶段
     
     // 主世界渲染阶段
     SKY,            // 天空渲染
@@ -190,13 +249,9 @@
     FINAL,          // 最终
     AFTER_SKY,      // 天空之后
 }</code></pre>
-
-<hr>
-
-<h2 id="3-irisrenderingpipeline-核心结构">3. IrisRenderingPipeline 核心结构</h2>
-
-<pre class="code-block"><code>public class IrisRenderingPipeline implements WorldRenderingPipeline {
-    // 渲染目标管理
+<p><hr></p>
+<h2 id="3. IrisRenderingPipeline 核心结构">3. IrisRenderingPipeline 核心结构</h2>
+<pre class="code-block"><code class="language-java">    // 渲染目标管理
     private final RenderTargets renderTargets;
     
     // 着色器映射
@@ -223,11 +278,8 @@
     // Sodium 地形管线
     private final SodiumTerrainPipeline sodiumTerrainPipeline;
 }</code></pre>
-
-<h3 id="3-1-渲染目标结构">3.1 渲染目标结构</h3>
-
-<pre class="code-block"><code>public class RenderTargets {
-    // 主渲染目标数组 (colortex0-15)
+<h3>3.1 渲染目标结构</h3>
+<pre class="code-block"><code class="language-java">    // 主渲染目标数组 (colortex0-15)
     private final RenderTarget[] targets;
     
     // 深度纹理
@@ -239,15 +291,10 @@
     private final GlFramebuffer noTranslucentsDestFb;
     private final GlFramebuffer noHandDestFb;
 }</code></pre>
-
-<hr>
-
-<h2 id="4-渲染流程详解">4. 渲染流程详解</h2>
-
-<h3 id="4-1-beginlevelrendering-">4.1 beginLevelRendering()</h3>
-
-<pre class="code-block"><code>public void beginLevelRendering() {
-    isRenderingWorld = true;
+<p><hr></p>
+<h2 id="4. 渲染流程详解">4. 渲染流程详解</h2>
+<h3>4.1 beginLevelRendering()</h3>
+<pre class="code-block"><code class="language-java">    isRenderingWorld = true;
     
     // 1. 清除自定义图像
     for (GlImage image : clearImages) {
@@ -291,11 +338,8 @@
     // 9. 渲染地平线
     horizonRenderer.renderHorizon(...);
 }</code></pre>
-
-<h3 id="4-2-rendershadows-">4.2 renderShadows()</h3>
-
-<pre class="code-block"><code>public void renderShadows(LevelRendererAccessor worldRenderer, Camera playerCamera) {
-    // 阴影渲染
+<h3>4.2 renderShadows()</h3>
+<pre class="code-block"><code class="language-java">    // 阴影渲染
     if (shadowRenderer != null) {
         this.shadowRenderer.renderShadows(worldRenderer, playerCamera);
     }
@@ -303,11 +347,8 @@
     // Prepare Pass
     prepareRenderer.renderAll();
 }</code></pre>
-
-<h3 id="4-3-begintranslucents-">4.3 beginTranslucents()</h3>
-
-<pre class="code-block"><code>public void beginTranslucents() {
-    isBeforeTranslucent = false;
+<h3>4.3 beginTranslucents()</h3>
+<pre class="code-block"><code class="language-java">    isBeforeTranslucent = false;
     
     // 复制深度纹理 (不含半透明)
     renderTargets.copyPreTranslucentDepth();
@@ -318,11 +359,8 @@
     // 启用混合
     RenderSystem.enableBlend();
 }</code></pre>
-
-<h3 id="4-4-finalizelevelrendering-">4.4 finalizeLevelRendering()</h3>
-
-<pre class="code-block"><code>public void finalizeLevelRendering() {
-    isRenderingWorld = false;
+<h3>4.4 finalizeLevelRendering()</h3>
+<pre class="code-block"><code class="language-java">    isRenderingWorld = false;
     
     // Composite Pass
     compositeRenderer.renderAll();
@@ -330,13 +368,9 @@
     // Final Pass
     finalPassRenderer.renderFinalPass();
 }</code></pre>
-
-<hr>
-
-<h2 id="5-compositerenderer">5. CompositeRenderer</h2>
-
-<pre class="code-block"><code>public class CompositeRenderer {
-    private final RenderTargets renderTargets;
+<p><hr></p>
+<h2 id="5. CompositeRenderer">5. CompositeRenderer</h2>
+<pre class="code-block"><code class="language-java">    private final RenderTargets renderTargets;
     private final ImmutableList&lt;Pass&gt; passes;
     private final TextureAccess noiseTexture;
     private final CenterDepthSampler centerDepthSampler;
@@ -381,11 +415,8 @@
         FullScreenQuadRenderer.INSTANCE.end();
     }
 }</code></pre>
-
-<h3 id="5-1-pass-结构">5.1 Pass 结构</h3>
-
-<pre class="code-block"><code>private static class Pass {
-    int[] drawBuffers;                    // 绘制缓冲
+<h3>5.1 Pass 结构</h3>
+<pre class="code-block"><code class="language-java">    int[] drawBuffers;                    // 绘制缓冲
     int viewWidth;                        // 视口宽度
     int viewHeight;                       // 视口高度
     Program program;                      // 着色器程序
@@ -394,14 +425,10 @@
     GlFramebuffer framebuffer;           // 帧缓冲
     ViewportData viewportScale;          // 视口缩放
 }</code></pre>
-
-<hr>
-
-<h2 id="6-gbuffer-系统">6. GBuffer 系统</h2>
-
-<h3 id="6-1-渲染目标布局">6.1 渲染目标布局</h3>
-
-<pre class="code-block"><code>┌──────────────────────────────────────────────────────────────┐
+<p><hr></p>
+<h2 id="6. GBuffer 系统">6. GBuffer 系统</h2>
+<h3>6.1 渲染目标布局</h3>
+<pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────┐
 │                    Minecraft 帧缓冲                           │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │                  Depth Texture (depthtex0)              │  │
@@ -429,11 +456,8 @@
 │  │                    深度 + 颜色                           │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘</code></pre>
-
-<h3 id="6-2-深度纹理复制">6.2 深度纹理复制</h3>
-
-<pre class="code-block"><code>public void copyPreTranslucentDepth() {
-    if (translucentDepthDirty) {
+<h3>6.2 深度纹理复制</h3>
+<pre class="code-block"><code class="language-java">    if (translucentDepthDirty) {
         // 直接从主深度纹理复制
         RenderSystem.bindTexture(noTranslucents.getTextureId());
         depthSourceFb.bindAsReadBuffer();
@@ -445,15 +469,10 @@
                         getCurrentWidth(), getCurrentHeight());
     }
 }</code></pre>
-
-<hr>
-
-<h2 id="7-bufferflipper-缓冲翻转-">7. BufferFlipper (缓冲翻转)</h2>
-
+<p><hr></p>
+<h2 id="7. BufferFlipper (缓冲翻转)">7. BufferFlipper (缓冲翻转)</h2>
 <p>用于在主/备用纹理之间切换：</p>
-
-<pre class="code-block"><code>public class BufferFlipper {
-    private final Map&lt;Integer, Boolean&gt; flipped = new HashMap&lt;&gt;();
+<pre class="code-block"><code class="language-java">    private final Map&lt;Integer, Boolean&gt; flipped = new HashMap&lt;&gt;();
     
     public void flip(int buffer) {
         flipped.compute(buffer, (k, v) -&gt; v == null || !v);
@@ -463,12 +482,9 @@
         // 返回所有&quot;翻转&quot;状态的缓冲
     }
 }</code></pre>
-
-<hr>
-
-<h2 id="8-渲染阶段顺序">8. 渲染阶段顺序</h2>
-
-<pre class="code-block"><code>┌─────────────────────────────────────────────────────────────┐
+<p><hr></p>
+<h2 id="8. 渲染阶段顺序">8. 渲染阶段顺序</h2>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
 │                  完整渲染阶段顺序                             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
@@ -503,63 +519,52 @@
 │             └── 屏幕输出                                     │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="9. 相关文档">9. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
+<li><a href="03-shaderpack-system.html">03-shaderpack-system</a> - 着色器包系统</li>
+<li><a href="04-shadow-system.html">04-shadow-system</a> - 阴影系统</li>
+<li><a href="05-framebuffer-texture.html">05-framebuffer-texture</a> - 帧缓冲与纹理</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
 
-<hr>
-
-<h2 id="9-相关文档">9. 相关文档</h2>
-
-<p>- <a href="01-architecture-overview.html">01-architecture-overview.md</a> - 整体架构</p>
-<p>- <a href="03-shaderpack-system.html">03-shaderpack-system.md</a> - 着色器包系统</p>
-<p>- <a href="04-shadow-system.html">04-shadow-system.md</a> - 阴影系统</p>
-<p>- <a href="05-framebuffer-texture.html">05-framebuffer-texture.md</a> - 帧缓冲与纹理</p>
-
-<hr>
-
-<p><em>生成时间: 2026-03-19</em></p>
-
-
-            </article>
-        </div>
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-architecture-overview.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Iris 光影 Mod 整体架构分析
+        </a><a href="03-shaderpack-system.html" class="next">
+            Iris 着色器包系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
-            </div>
-        </div>
-    </footer>
-
     <script src="../../../script.js"></script>
-    <script src="../../../tutorial.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose',
-            flowchart: { htmlLabels: true }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
         });
-
-        // Listen for theme changes to update Mermaid
-        window.addEventListener('themechange', (e) => {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
-                });
-            }
-        });
-
-        // Copy code function
-        function copyCode(btn) {
-            const codeBlock = btn.closest('.code-reference').querySelector('code');
-            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
-                }, 2000);
-            });
-        }
+        hljs.highlightAll();
+      });
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
 </body>
 </html>

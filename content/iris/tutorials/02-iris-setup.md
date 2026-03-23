@@ -1,336 +1,262 @@
 # 第二章：Iris 开发环境搭建
 
-> 配置 Iris 开发环境与调试工具
+> 搭建完整的 Iris 光影开发环境
 
 ---
 
-## 目标
+## 环境要求
 
-学完本章后，你将能够：
+### 软件需求
 
-1. **搭建 Iris 开发环境**
-2. **编译并运行 Iris Mod**
-3. **配置开发工具进行调试**
-4. **了解项目结构**
-
----
-
-## 前置准备
-
-### 必需软件
-
-| 软件 | 版本 | 用途 |
+| 软件 | 版本 | 说明 |
 |------|------|------|
-| JDK | 21+ | Java 开发环境 |
-| Git | 最新 | 版本控制 |
-| IDEA / VSCode | 最新 | 代码编辑器 |
-| Minecraft | 1.21 | 游戏客户端 |
+| Java Development Kit (JDK) | 21+ | 必须，Minecraft 1.21 需要 |
+| Integrated Development Environment | - | 推荐 IntelliJ IDEA |
+| Git | - | 用于克隆源码 |
+| Minecraft Launcher | - | 游戏启动器 |
 
 ### 可选软件
 
 | 软件 | 用途 |
 |------|------|
-| GitHub Desktop | 可视化 Git 操作 |
-| HMC | Minecraft 启动器 |
+| Iris Mod | 测试你的 ShaderPack |
+| Sodium | 搭配 Iris 使用 |
+| VSCode / IDEA | 代码编辑 |
+| VSCode GLSL 插件 | 语法高亮 |
 
 ---
 
-## 获取源码
+## 第一步：安装 JDK 21
 
-### 1. 克隆仓库
+### Windows
+
+1. 访问 [Adoptium](https://adoptium.net/) 下载 JDK 21
+2. 运行安装程序
+3. 设置环境变量：
+
+```powershell
+# 在 PowerShell 中验证
+java -version
+```
+
+### 验证安装
 
 ```bash
-# 使用 Git 克隆 Iris 仓库
+$ java -version
+openjdk version "21.0.x" ...
+```
+
+---
+
+## 第二步：安装 IntelliJ IDEA
+
+1. 访问 [JetBrains](https://www.jetbrains.com/idea/) 下载 IDEA
+2. 安装并启动
+3. 安装 GLSL 插件：
+   - `File` → `Settings` → `Plugins`
+   - 搜索 "GLSL" 并安装
+
+---
+
+## 第三步：克隆 Iris 源码
+
+### 方法一：使用 Git
+
+```bash
+# 克隆仓库
 git clone https://github.com/IrisShaders/Iris.git
 
-# 进入项目目录
+# 进入目录
 cd Iris
 
 # 查看分支
 git branch -a
 ```
 
-### 2. 选择版本
+### 方法二：直接下载
 
-```bash
-# 查看可用的版本标签
-git tag
+1. 访问 [Iris GitHub Releases](https://github.com/IrisShaders/Iris/releases)
+2. 下载源码包
+3. 解压到本地目录
 
-# 切换到特定版本（例如 1.7.3）
-git checkout v1.7.3
-```
+---
 
-### 3. 项目结构
+## 第四步：导入项目
+
+### 使用 IDEA 导入
+
+1. `File` → `Open`
+2. 选择 Iris 项目根目录
+3. 选择 "Import as Gradle project"
+4. 等待依赖下载完成（约 5-10 分钟）
+
+### 目录结构
 
 ```
 Iris/
 ├── src/
-│   └── main/
-│       ├── java/net/irisshaders/iris/
-│       │   ├── pipeline/        # 渲染管线
-│       │   ├── shaderpack/      # 着色器包系统
-│       │   ├── shadows/         # 阴影系统
-│       │   ├── targets/         # 帧缓冲
-│       │   ├── uniforms/        # Uniform 管理
-│       │   ├── gl/              # OpenGL 封装
-│       │   └── mixin/           # Mixin 注入
-│       └── resources/
-│           └── assets/iris/     # 资源文件
-├── build.gradle                 # Gradle 构建配置
-├── gradle.properties           # Gradle 属性
-└── settings.gradle             # 项目设置
+│   ├── main/
+│   │   ├── java/           # Java 源代码
+│   │   └── resources/      # 资源文件 (shader, mixin配置)
+│   └── sodiumCompatibility/ # Sodium 兼容代码
+├── build.gradle.kts         # Gradle 构建配置
+├── settings.gradle.kts      # 项目设置
+└── gradle.properties       # Gradle 属性
 ```
 
 ---
 
-## 环境配置
+## 第五步：运行开发版本
 
-### 1. 安装 JDK 21
+### 配置运行目标
 
-Iris 需要 JDK 21 或更高版本。
+1. 在 IDEA 中打开 Gradle 面板
+2. 展开 `iris` → `Tasks` → `minecraft`
+3. 双击 `runClient` 运行测试客户端
 
-```bash
-# 检查 Java 版本
-java -version
-
-# 如果版本不对，设置 JAVA_HOME
-# Windows:
-set JAVA_HOME=C:\Program Files\Java\jdk-21
-
-# Linux/Mac:
-export JAVA_HOME=/usr/lib/jvm/jdk-21
-```
-
-### 2. Gradle 包装器
-
-Iris 使用 Gradle 进行构建管理：
+### 或使用命令行
 
 ```bash
 # Windows
-./gradlew.bat
+.\gradlew.bat runClient
 
-# Linux/Mac
-./gradlew
-
-# 首次运行会下载 Gradle（约 100MB）
-```
-
-### 3. 生成 IDE 项目
-
-```bash
-# 为 IntelliJ IDEA 生成项目
-./gradlew idea
-
-# 为 VSCode 生成项目
-./gradlew vscode
-
-# 为 Eclipse 生成项目
-./gradlew eclipse
-```
-
----
-
-## 构建项目
-
-### 基本构建命令
-
-```bash
-# 构建所有模块
-./gradlew build
-
-# 只构建主模块（跳过测试）
-./gradlew assemble
-
-# 清理后重新构建
-./gradlew clean build
-```
-
-### 运行测试
-
-```bash
-# 运行所有测试
-./gradlew test
-
-# 运行特定测试
-./gradlew test --tests "net.irisshaders.iris.*"
-```
-
-### 生成 JAR 文件
-
-```bash
-# 在 build/libs/ 目录生成 jar 文件
-./gradlew jar
-
-# 包含所有依赖的 fat jar
-./gradlew shadowJar
-```
-
----
-
-## 在游戏中测试
-
-### 方法 1：直接运行
-
-```bash
-# 启动 Minecraft 并加载 Iris Mod
+# macOS / Linux
 ./gradlew runClient
 ```
 
-### 方法 2：手动安装
+---
 
-1. 找到生成的 JAR 文件：
-   ```
-   build/libs/iris-1.7.3.jar
-   ```
+## 第六步：安装测试 Mod
 
-2. 复制到游戏的 mods 文件夹：
-   ```
-   .minecraft/mods/1.21/iris-1.7.3.jar
-   ```
+### 必需 Mod
 
-3. 确保已安装 Sodium 和 Fabric Loader
+| Mod | 版本 | 用途 |
+|-----|------|------|
+| Fabric Loader | 0.15.x | Mod 加载器 |
+| Fabric API | 0.100.x | Fabric API |
+| Sodium | 0.5.9+ | 渲染优化 |
+| Iris | 1.7.3+ | 光影支持 |
 
-### 方法 3：开发客户端
+### 安装步骤
+
+1. 安装 Fabric Loader（如果未安装）
+2. 启动一次游戏生成 `.minecraft/mods` 目录
+3. 将上述 Mod 的 `.jar` 文件放入 `mods` 目录
+4. 重新启动游戏
+
+---
+
+## 第七步：创建测试 ShaderPack
+
+### 项目结构
+
+```
+MyShaderPack/
+├── shaderpacks/                    # 放入 Minecraft 目录
+│   └── my-shaderpack/
+│       ├── shaders.properties       # 配置文件
+│       └── shaders/
+│           ├── gbuffers_terrain.vsh
+│           ├── gbuffers_terrain.fsh
+│           ├── gbuffers_water.vsh
+│           ├── gbuffers_water.fsh
+│           ├── composite1.vsh
+│           ├── composite1.fsh
+│           └── ...
+└── build.gradle.kts               # 可选：自动化构建
+```
+
+### 放入游戏目录
 
 ```bash
-# 启动带调试的开发客户端
-./gradlew runDevClient
-```
+# Windows
+C:\Users\你的用户名\AppData\Roaming\.minecraft\shaderpacks\
 
----
+# macOS
+~/Library/Application Support/minecraft/shaderpacks/
 
-## IDE 配置
-
-### IntelliJ IDEA
-
-1. **打开项目**
-   - File → Open → 选择 Iris 目录
-   - 选择 "Import as Gradle project"
-
-2. **配置 JDK**
-   - File → Project Structure → Project
-   - 设置 Project SDK 为 JDK 21
-
-3. **运行配置**
-   - Run → Edit Configurations
-   - 添加 Gradle 配置：
-   ```
-   Tasks: runClient
-   ```
-
-### VSCode
-
-1. **安装插件**
-   - Java Extension Pack
-   - Language Support for Java(TM) by Red Hat
-
-2. **配置 Java Home**
-   - Ctrl + Shift + P → Java: Configure Java Runtime
-   - 选择 JDK 21
-
----
-
-## 调试技巧
-
-### 1. 查看日志
-
-Iris 的日志位于：
-```
-.minecraft/logs/iris.log
-```
-
-### 2. 启用调试模式
-
-在 `gradle.properties` 中：
-
-```properties
-# 启用详细日志
-org.gradle.logging=debug
-
-# 启用 Mixin 调试
-mixin.env.remapRefMap=true
-mixin.env.transformCacheSize=2048
-```
-
-### 3. 使用 Debugger
-
-在 IDE 中设置断点：
-
-```java
-// 在关键位置设置断点
-public void onShaderLoaded(ShaderPack pack) {
-    // 断点可以设在这里
-    LOGGER.info("Loading shader: " + pack.getName());
-}
+# Linux
+~/.minecraft/shaderpacks/
 ```
 
 ---
 
 ## 常见问题
 
-### Q1：Gradle 构建失败
+### 1. Gradle 同步失败
+
+```
+问题：Could not resolve net.fabricmc:fabric-loader:...
+解决：检查网络连接，或配置国内镜像
+```
+
+在 `build.gradle.kts` 中添加：
+
+```kotlin
+repositories {
+    maven("https://maven.aliyun.com/repository/public")
+}
+```
+
+### 2. JDK 版本不匹配
+
+```
+问题：Unsupported class file major version 65
+解决：确保使用 JDK 21
+```
+
+在 IDEA 中设置：
+`File` → `Project Structure` → `Project SDK` → 选择 21
+
+### 3. 运行客户端无反应
+
+检查 IDEA 控制台是否有错误日志，常见原因：
+- 显存不足（降低游戏分辨率）
+- Mod 版本冲突
+- Java 内存不足
+
+---
+
+## 验证环境
+
+运行成功应该看到：
+
+```
+> Configure project :
+> Task :runClient
+[游戏窗口打开]
+```
+
+在游戏中：
+1. 进入 "Options" → "Video Settings" → "Shaders"
+2. 选择你的测试 ShaderPack
+3. 点击 "Done"
+
+---
+
+## 下一步
+
+- [第三章：创建第一个 Shader](03-create-simple-shader.md) - 编写你的第一个着色器
+- [第一章：Shader 基础](01-shader-basics.md) - 复习 GLSL 基础
+
+---
+
+## 附录：快捷命令
 
 ```bash
-# 清理缓存
-./gradlew clean --refresh-dependencies
+# 运行客户端
+./gradlew runClient
 
-# 重新下载依赖
-./gradlew --refresh-dependencies
-```
+# 构建发布版本
+./gradlew build
 
-### Q2：找不到 Minecraft 源码
+# 清理并重新构建
+./gradlew clean build
 
-确保已安装 Fabric 和 Minecraft 依赖：
-
-```bash
-./gradlew fetchMinecraft
-```
-
-### Q3：Java 版本不兼容
-
-```bash
-# 检查 Gradle 使用的 Java 版本
-./gradlew -version
-
-# 如果版本不对，设置 JAVA_HOME 后重试
+# 只编译 Java
+./gradlew compileJava
 ```
 
 ---
 
-## 小结
-
-```mermaid
-flowchart TB
-    subgraph 环境搭建["环境搭建流程"]
-        A1[克隆源码] --> A2[安装 JDK 21]
-        A2 --> A3[生成 IDE 项目]
-        A3 --> A4[构建项目]
-        A4 --> A5[测试运行]
-    end
-
-    subgraph 构建命令["常用命令"]
-        B1[./gradlew build]
-        B2[./gradlew runClient]
-        B3[./gradlew jar]
-    end
-
-    style A1 fill:#4d96ff,color:#fff
-    style B1 fill:#6bcb77,color:#fff
-```
-
----
-
-## 相关链接
-
-- 下一章：[创建第一个 Shader](./03-create-simple-shader.md) - 开始编写代码
-- [Iris GitHub](https://github.com/IrisShaders/Iris) - 官方仓库
-- [Mixin 文档](https://github.com/SpongePowered/Mixin) - 字节码注入框架
-
----
-
-> 💡 **提示**：遇到问题先查看日志文件，大部分构建问题都可以通过清理缓存解决。
-
----
-
-*文档版本：Iris 1.7.x / Minecraft 1.21*
-*最后更新：2026-03-21*
+*教程版本：Iris 1.7.x / Minecraft 1.21*

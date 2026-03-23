@@ -1,331 +1,285 @@
 # 第一章：Shader 基础入门
 
-> 学习 GLSL 语法与 Shader 基本概念
+> 零基础学习 GLSL 着色器编程
 
 ---
 
-## 目标
+## 什么是 Shader（着色器）？
 
-学完本章后，你将理解：
-1. **什么是 Shader（着色器）**
-2. **GLSL 语言基础语法**
-3. **顶点着色器 vs 片段着色器**
-4. **uniform、varying、attribute 的作用**
+Shader（着色器）是一种运行在 GPU 上的特殊程序，负责决定屏幕上每个像素的颜色。
 
----
-
-## 什么是 Shader？
-Shader（着色器）是一种运行在 GPU 上的特殊程序，用于控制如何绘制像素。
 ### 为什么需要 Shader？
-```
-CPU（串行） vs GPU（并行）
 
-CPU:  指令1 → 指令2 → 指令3 →...
-      （一次处理一个任务）
+| 对比项 | CPU 程序 | GPU Shader |
+|--------|---------|-----------|
+| 执行方式 | 顺序执行 | 并行执行（数千个线程） |
+| 擅长领域 | 逻辑判断、分支 | 图形计算、大量数据 |
+| 典型应用 | 游戏逻辑、AI | 渲染、特效 |
 
-GPU:  像素1 → 像素2 → 像素3 →...
-      像素4 → 像素5 → 像素6 →...
-      (同时处理数百万个像素)
-```
-
-### Minecraft 中的 Shader
-
-在 Minecraft 中，Shader 用于实现：
-- 光影效果（阴影、高光、反射）
-- 水面波动
-- 天空渐变
-- 后期处理效果
+在 Minecraft 中，Shader 可以实现：
+- 动态光照和阴影
+- 水面波纹和反射
+- 大气散射（天空颜色）
+- 各种视觉特效
 
 ---
 
 ## GLSL 基础语法
 
-### 1. 数据类型
+GLSL（OpenGL Shading Language）是编写 Shader 的语言，语法类似 C 语言。
+
+### 1. 变量类型
 
 ```glsl
-// 基本类型
-float a = 1.0;      // 浮点数
-int b = 10;          // 整数
-bool c = true;       // 布尔值
-// 向量类型（重要！）
-vec2 uv = vec2(0.5, 0.5);       // 2维向量
-vec3 color = vec3(1.0, 0.0, 0.0); // RGB 颜色
-vec4 position = vec4(0.0, 1.0, 0.0, 1.0); // 带透明度的位置
+// 标量类型
+float myFloat = 3.14;    // 浮点数
+int myInt = 42;          // 整数
+bool myBool = true;      // 布尔值
 
-// 矩阵类型
-mat3 rotation;       // 3x3 矩阵
-mat4 projection;     // 4x4 矩阵
+// 向量类型（重点！）
+vec2 uv = vec2(0.5, 1.0);      // 2D 向量（纹理坐标）
+vec3 normal = vec3(0.0, 1.0, 0.0);  // 3D 向量（法线、颜色）
+vec4 color = vec4(1.0, 0.0, 0.0, 1.0); // 4D 向量（RGBA 颜色）
+
+// 向量分量访问
+color.r = 0.5;           // 使用 r/g/b/a
+color.x = 0.5;           // 使用 x/y/z/w
+color.s = 0.5;           // 使用 s/t/p/q（纹理坐标用这个）
 ```
 
-### 2. 向量分量访问
+### 2. 矩阵类型
 
 ```glsl
-vec3 color = vec3(1.0, 0.5, 0.2);
+mat2 mat2x2 = mat2(1.0, 0.0,    // 第一列
+                   0.0, 1.0);    // 第二列
 
-// 方式1：用 x,y,z,w 访问
-float r = color.x;
+mat3 modelMatrix;        // 3x3 变换矩阵
+mat4 mvpMatrix;          // 4x4 MVP 矩阵（模型-视图-投影）
 
-// 方式2：用 r,g,b,a 访问（颜色用这个更直观）
-float red = color.r;
-
-// 方式3：用 s,t,p,q 访问（纹理坐标用这个）
-float s = color.s;
-
-// 也可以组合
-vec2 rg = color.rg;  // vec2(1.0, 0.5)
-vec3 rgb = color.rgb; // vec3(1.0, 0.5, 0.2)
+// 矩阵运算
+mat4 transformed = projectionMatrix * viewMatrix * modelMatrix;
 ```
 
-### 3. 内置函数
+### 3. 关键字
 
 ```glsl
-// 数学函数
-float sinValue = sin(angle);
-float cosValue = cos(angle);
-float length = length(vector);
+// 精度限定符
+precision highp float;    // 高精度（推荐）
 
-// 插值
-float mixed = mix(a, b, t);  // t 在 0-1 之间时，返回 a 到 b 的插值
-// 颜色操作
-vec3 darkened = color * 0.5;  // 变暗
-vec3 saturated = clamp(color, 0.0, 1.0);  // 限制在 0-1 范围
+// 存储限定符
+attribute vec3 position;  // 顶点属性（顶点着色器）
+varying vec2 texCoord;    // 在顶点/片元着色器间传递
+uniform mat4 mvp;         // 全局统一变量
 
-// 条件判断
-if (depth > 0.5) {
-    // 远处更暗
-}
+// 片元着色器专用
+gl_FragColor = vec4(1.0); // 输出像素颜色
+gl_FragCoord.xy;           // 像素的屏幕坐标
 ```
 
 ---
 
-## 顶点着色器 vs 片段着色器
+## 顶点着色器 vs 片元着色器
+
+Shader 分为两种类型，它们协同工作：
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      渲染管线流程                              │
+│                      渲染流程                                │
 ├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  顶点着色器 (Vertex Shader)                                 │
-│  ├── 处理每个顶点                                           │
-│  ├── 变换位置（模型 → 世界 → 视图 → 投影）                  │
-│  └── 输出顶点的各种属性                                     │
-│                          ↓                                  │
-│                   图元装配                                  │
-│                   (三角形、线段等)                          │
-│                          ↓                                  │
-│  片段着色器 (Fragment Shader)                               │
-│  ├── 处理每个像素                                           │
-│  ├── 计算最终颜色                                           │
-│  └── 输出到帧缓冲                                           │
-│                                                             │
+│                                                              │
+│  顶点着色器 (Vertex Shader)                                   │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  输入：顶点数据（位置、UV、法线...）                      │ │
+│  │  处理：坐标变换、传递数据给片元着色器                      │ │
+│  │  输出：裁剪空间坐标、插值数据                             │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                           ▼                                  │
+│                    GPU 自动插值                               │
+│                           ▼                                  │
+│  片元着色器 (Fragment/Pixel Shader)                          │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  输入：插值后的数据（顶点着色器输出的值）                  │ │
+│  │  处理：计算每个像素的颜色                                │ │
+│  │  输出：最终像素颜色                                      │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### 顶点着色器示例
 
 ```glsl
-#version 120
+#version 330 core
 
-attribute vec3 position;      // 顶点位置
-attribute vec2 texCoord;      // 纹理坐标
-attribute vec3 normal;        // 法线
+// 顶点属性（从 Minecraft 传入）
+in vec3 Position;           // 顶点位置
+in vec2 TexCoord;           // 纹理坐标
+in vec3 Normal;             // 法线
 
-varying vec2 uv;              // 传递给片段着色器
-varying vec3 normal;           // 法线
+// 输出到片元着色器
+out vec2 vTexCoord;
+out vec3 vNormal;
+out vec3 vPosition;
 
-uniform mat4 modelViewProjection;  // MVP 矩阵
+uniform mat4 ModelViewMatrix;   // 模型-视图矩阵
+uniform mat4 ProjectionMatrix;  // 投影矩阵
 
 void main() {
-    // 传递纹理坐标给片段着色器
-    uv = texCoord;
+    vTexCoord = TexCoord;
+    vNormal = Normal;
+    vPosition = Position;
 
-    // 传递法线（用于光照计算）
-    normal = normal;
-
-    // 顶点位置变换
-    gl_Position = modelViewProjection * vec4(position, 1.0);
+    // 坐标变换：世界坐标 → 裁剪坐标
+    gl_Position = ProjectionMatrix * ModelViewMatrix * vec4(Position, 1.0);
 }
 ```
 
-### 片段着色器示例
+### 片元着色器示例
 
 ```glsl
-#version 120
+#version 330 core
 
-varying vec2 uv;          // 从顶点着色器接收
-varying vec3 normal;      // 从顶点着色器接收
+// 从顶点着色器接收（已插值）
+in vec2 vTexCoord;
+in vec3 vNormal;
+in vec3 vPosition;
 
-uniform sampler2D texture; // 采样器
-uniform vec3 lightDir;     // 光照方向
+uniform sampler2D DiffuseSampler;  // 漫反射纹理
+uniform vec3 LightDirection;       // 光照方向
+
+out vec4 fragColor;
 
 void main() {
     // 采样纹理颜色
-    vec4 texColor = texture2D(texture, uv);
+    vec4 texColor = texture(DiffuseSampler, vTexCoord);
 
     // 简单光照计算
-    float diffuse = max(dot(normal, lightDir), 0.0);
+    float diffuse = max(dot(vNormal, LightDirection), 0.0);
+    vec3 finalColor = texColor.rgb * diffuse;
 
-    // 最终颜色
-    gl_FragColor = texColor * diffuse;
+    fragColor = vec4(finalColor, texColor.a);
 }
 ```
 
 ---
 
-## 修饰符详解
-### uniform（全局变量）
-```glsl
-uniform mat4 modelMatrix;      // 模型矩阵
-uniform mat4 viewMatrix;       // 视图矩阵
-uniform vec3 cameraPosition;   // 相机位置
-
-// uniform 在同一个 draw call 中所有顶点/像素都相同
-// 用于传递场景级别的数据
-```
-
-### attribute（顶点属性）
+## 常用内置函数
 
 ```glsl
-attribute vec3 position;   // 顶点位置
-attribute vec2 uv;         // 纹理坐标
-attribute vec3 normal;     // 法线
+// 数学函数
+sin(x), cos(x), tan(x)         // 三角函数
+pow(x, y)                      // 幂函数 x^y
+sqrt(x), inversesqrt(x)        // 平方根
+abs(x), sign(x)                // 绝对值、符号
+floor(x), ceil(x), fract(x)    // 向下/向上取整、取小数
 
-// attribute 每个顶点都不同
-// 在顶点着色器中使用
-```
+// 向量函数
+dot(a, b)                       // 点积
+cross(a, b)                      // 叉积
+length(v)                        // 向量长度
+normalize(v)                     // 归一化
+mix(a, b, t)                     // 线性插值 a*(1-t) + b*t
+clamp(x, min, max)               // 限制范围
+smoothstep(a, b, x)              // 平滑插值
 
-### varying（插值变量）
-
-```glsl
-varying vec2 uv;      // 顶点着色器写入
-varying vec3 normal;  // 片段着色器读取
-
-// varying 在顶点着色器和片段着色器之间传递数据
-// 值会自动在像素间进行插值
+// 纹理采样
+texture(sampler, coord)          // 采样纹理
+textureLod(sampler, coord, lod)  // 指定 LOD 采样
 ```
 
 ---
 
-## 实战：创建第一个简单 Shader
+## 实战：创建一个简单的颜色渐变
 
-### 1. 创建一个红色渐变
+### 1. 创建项目结构
+
+```
+my-shaderpack/
+└── shaders/
+    └── gbuffers_basic.vsh    // 顶点着色器
+    └── gbuffers_basic.fsh    // 片元着色器
+```
+
+### 2. 顶点着色器 (gbuffers_basic.vsh)
+
 ```glsl
-varying vec2 uv;
+#version 330 core
+
+// 从 Minecraft 传入的顶点属性（固定名称）
+in vec3 Position;
+in vec4 Color;
+
+out vec4 vColor;
+
+uniform mat4 ModelViewMatrix;
+uniform mat4 ProjectionMatrix;
 
 void main() {
-    // 使用 UV 的 R 分量作为红色通道
-    float red = uv.x;
+    vColor = Color;
 
-    // 输出红色渐变
-    gl_FragColor = vec4(red, 0.0, 0.0, 1.0);
+    // MVP 变换
+    gl_Position = ProjectionMatrix * ModelViewMatrix * vec4(Position, 1.0);
 }
 ```
 
-效果：
-```
-黑████████████████
-红████████████████
-红████████████████
-红████████████████
-  ←───────────────→   黑             红
-```
-
-### 2. 创建棋盘格纹理
-```glsl
-varying vec2 uv;
-
-void main() {
-    // 将 UV 放大 10 倍  
-    vec2 grid = floor(uv * 10.0);
-
-    // 奇偶性判断
-    float checker = mod(grid.x + grid.y, 2.0);
-
-    // 黑白色棋盘格
-    vec3 color = mix(
-        vec3(0.0),          // 黑色
-        vec3(1.0),          // 白色
-        checker
-    );
-
-    gl_FragColor = vec4(color, 1.0);
-}
-```
-
-### 3. 创建噪声效果
+### 3. 片元着色器 (gbuffers_basic.fsh)
 
 ```glsl
-varying vec2 uv;
+#version 330 core
 
-// 简单的伪随机函数
-float random(vec2 st) {
-    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-}
+in vec4 vColor;
+
+out vec4 fragColor;
 
 void main() {
-    // 创建噪点
-    float noise = random(uv * 10.0);
-
-    // 灰度颜色
-    gl_FragColor = vec4(vec3(noise), 1.0);
+    // 直接输出颜色（带渐强效果）
+    fragColor = vColor * 1.5;  // 让颜色更亮一些
 }
 ```
 
 ---
 
-## 小结
+## 调试技巧
 
-```mermaid
-flowchart TB
-    subgraph Shader基础["Shader 基础概念"]
-        GLSL["GLSL 语言"]
-        VS["顶点着色器"]
-        FS["片段着色器"]
-        U["uniform"]
-        V["varying"]
-    end
+### 1. 用颜色输出调试信息
 
-    subgraph 用途["各修饰符用途"]
-        U -->|场景数据| VS
-        U -->|场景数据| FS
-        VS -->|插值| V
-        V --> FS
-    end
+```glsl
+// 输出法线（用于检查法线是否正确）
+fragColor = vec4(vNormal * 0.5 + 0.5, 1.0);
 
-    style GLSL fill:#4d96ff,color:#fff
-    style VS fill:#6bcb77,color:#fff
-    style FS fill:#ff6b6b,color:#fff
+// 输出 UV 坐标（检查 UV 是否正确）
+fragColor = vec4(vTexCoord, 0.0, 1.0);
+
+// 输出深度（调试深度问题）
+fragColor = vec4(gl_FragCoord.z);
 ```
 
-### 关键要点
+### 2. 常见错误
 
-1. **Shader 是 GPU 程序** - 并行处理，效率极高
-2. **GLSL 是 Shader 语言** - 类似 C 的语法
-3. **顶点着色器处理顶点** - 位置变换、属性传递
-4. **片段着色器处理像素** - 颜色计算、光照
-5. **uniform/varying** - 数据传递桥梁
----
-
-## 练习
-
-### 练习 1：创建渐变
-尝试修改上面的红色渐变 shader，创建从左到右的绿色渐变。
-### 练习 2：创建环状渐变
-创建从中心向外扩散的圆形渐变效果。
-### 练习 3：理解插值
-修改顶点着色器添加一个 varying float，设为 0.0 或 1.0，观察片段着色器中的插值效果。
----
-
-## 相关链接
-
-- 下一章：[Iris 开发环境搭建](02-iris-setup.html) - 配置开发环境
-- [GLSL 官方文档](https://www.khronos.org/opengl/wiki/Core_Language_%28GLSL%29)
-- [GLSL 教程](https://learnopengl.com/Getting-started/Shaders)
+| 错误 | 原因 | 解决方法 |
+|------|------|----------|
+| 黑色画面 | 纹理未绑定 | 检查 sampler uniform |
+| 纯白画面 | 颜色计算错误 | 检查 uniform 值 |
+| 编译失败 | 语法错误 | 检查分号、括号 |
+| 位置偏移 | MVP 矩阵问题 | 检查 uniform 顺序 |
 
 ---
 
-> 💡 **提示**：理解 Shader 基础是学习 Iris 的关键。多动手实验，观察不同代码产生的效果变化。
+## 练习题
+
+1. **基础练习**：修改上面的片元着色器，让颜色从左到右渐变
+
+2. **进阶练习**：实现一个简单的棋盘格纹理效果
+
+3. **挑战练习**：实现一个随时间变化的颜色动画
+
 ---
 
-*文档版本：Iris 1.7.x / Minecraft 1.21*
-*最后更新：2026-03-21*
+## 下一步
+
+- [第二章：开发环境搭建](02-iris-setup.md) - 搭建 Iris 开发环境
+- [第四章：ShaderPack 结构详解](04-shaderpack-structure.md) - 理解完整的光影包结构
+
+---
+
+*教程版本：Iris 1.7.x / Minecraft 1.21*

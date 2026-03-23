@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>06 postprocessing basics - Iris 光影</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #404040; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #404040; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #404040; background: #40404015; }
+        .info-box i { color: #404040; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #404040; }
+        .docs-body h2 i { color: #404040; }
+        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #404040;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #404040, #40404099);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Iris 光影</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-shader-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Shader 基础入门
+        </a>
+<a href="02-iris-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Iris 开发环境搭建
+        </a>
+<a href="03-create-simple-shader.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：创建第一个 Shader
+        </a>
+<a href="04-shaderpack-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：ShaderPack 结构详解
+        </a>
+<a href="05-uniform-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第五章：Uniform 入门
+        </a>
+<a href="06-postprocessing-basics.html" class="active">
+            <i class="fas fa-book"></i>
+            第六章：后处理效果入门
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>06 postprocessing basics</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    06 postprocessing basics
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第六章：后处理效果入门</h1>
+<blockquote><p>创建合成着色器实现视觉效果</p></blockquote>
+<p><hr></p>
+<h2 id="什么是后处理？">什么是后处理？</h2>
+<p>后处理（Post-Processing）是在场景渲染完成后，对最终图像进行效果处理的技术。</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      渲染管线                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌─────────────┐                                           │
+│   │  GBuffer   │  ← 渲染场景到多个缓冲区                    │
+│   └──────┬──────┘                                           │
+│          │                                                   │
+│          ▼                                                   │
+│   ┌─────────────┐                                           │
+│   │ Composite1  │  ← 后处理 Pass 1                         │
+│   └──────┬──────┘                                           │
+│          │                                                   │
+│          ▼                                                   │
+│   ┌─────────────┐                                           │
+│   │ Composite2  │  ← 后处理 Pass 2                         │
+│   └──────┬──────┘                                           │
+│          │                                                   │
+│          ▼                                                   │
+│   ┌─────────────┐                                           │
+│   │   Final    │  ← 最终输出到屏幕                          │
+│   └─────────────┘                                           │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="合成着色器（Composite Shader）">合成着色器（Composite Shader）</h2>
+<h3>命名规则</h3>
+<table class="data-table"><thead><tr><th>文件名</th><th>说明</th></tr></thead><tbody><tr><td><code>composite1.vsh</code></td><td>合成 Pass 1 顶点着色器</td></tr><tr><td><code>composite1.fsh</code></td><td>合成 Pass 1 片元着色器</td></tr><tr><td><code>composite2.vsh</code></td><td>合成 Pass 2 顶点着色器</td></tr><tr><td><code>composite2.fsh</code></td><td>合成 Pass 2 片元着色器</td></tr></tbody></table>
+可以创建 <code>composite1</code> 到 <code>composite99</code>。</p>
+<p><hr></p>
+<h2 id="可用的 GBuffer 纹理">可用的 GBuffer 纹理</h2>
+<h3>颜色纹理（colortex）</h3>
+<table class="data-table"><thead><tr><th>纹理</th><th>说明</th></tr></thead><tbody><tr><td><code>colortex0</code></td><td>主颜色缓冲区</td></tr><tr><td><code>colortex1</code></td><td>法线/NRM</td></tr><tr><td><code>colortex2</code></td><td>镜面/Specular</td></tr><tr><td><code>colortex3-15</code></td><td>自定义缓冲区</td></tr></tbody></table>
+<h3>深度纹理</h3>
+<table class="data-table"><thead><tr><th>纹理</th><th>说明</th></tr></thead><tbody><tr><td><code>depthtex0</code></td><td>主深度（完整）</td></tr><tr><td><code>depthtex1</code></td><td>不含半透明</td></tr><tr><td><code>depthtex2</code></td><td>不含手部</td></tr></tbody></table>
+<h3>阴影纹理</h3>
+<table class="data-table"><thead><tr><th>纹理</th><th>说明</th></tr></thead><tbody><tr><td><code>shadowtex0</code></td><td>阴影深度</td></tr><tr><td><code>shadowcolor0</code></td><td>阴影颜色</td></tr></tbody></table>
+<hr></p>
+<h2 id="第一个合成着色器">第一个合成着色器</h2>
+<h3>创建文件</h3>
+<pre class="code-block"><code class="language-text">my-shaderpack/
+└── shaders/
+    ├── gbuffers_terrain.fsh           # 地形着色器
+    ├── composite1.vsh                 # 合成顶点着色器
+    └── composite1.fsh                 # 合成片元着色器</code></pre>
+<h3>顶点着色器 (composite1.vsh)</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+out vec2 texCoord;
+
+void main() {
+    // 生成全屏四边形的纹理坐标
+    vec2 position = vec2(
+        (gl_VertexID &amp; 1) * 2,
+        (gl_VertexID &gt;&gt; 1) * 2
+    ) - 1.0;
+
+    texCoord = position * 0.5 + 0.5;
+
+    gl_Position = vec4(position, 0.0, 1.0);
+}</code></pre>
+<h3>片元着色器 (composite1.fsh)</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;      // 主颜色
+uniform vec2 viewSize;           // 视图大小
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    // 采样主颜色
+    vec4 color = texture(colortex0, texCoord);
+
+    // 增加一点亮度
+    color.rgb *= 1.1;
+
+    fragColor = color;
+}</code></pre>
+<p><hr></p>
+<h2 id="实战：创建晕影效果">实战：创建晕影效果</h2>
+<h3>晕影（Vignette）效果</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;
+uniform vec2 viewSize;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    // 采样场景
+    vec4 color = texture(colortex0, texCoord);
+
+    // 计算到中心的距离
+    vec2 center = vec2(0.5);
+    float dist = distance(texCoord, center);
+
+    // 晕影强度
+    float vignette = smoothstep(0.8, 0.4, dist);
+
+    // 应用晕影
+    color.rgb *= vignette;
+
+    fragColor = color;
+}</code></pre>
+<p><hr></p>
+<h2 id="实战：创建色差效果">实战：创建色差效果</h2>
+<h3>色彩偏移（Chromatic Aberration）</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;
+uniform vec2 viewSize;
+uniform float frameTime;          // 用于动画
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    // 色差强度（随时间变化）
+    float aberration = 0.003 + 0.001 * sin(frameTime * 2.0);
+
+    // 偏移方向（从中心向外）
+    vec2 direction = texCoord - vec2(0.5);
+    float dist = length(direction);
+
+    // 分离 RGB 通道
+    vec2 offset = direction * dist * aberration;
+
+    float r = texture(colortex0, texCoord + offset).r;
+    float g = texture(colortex0, texCoord).g;
+    float b = texture(colortex0, texCoord - offset).b;
+
+    fragColor = vec4(r, g, b, 1.0);
+}</code></pre>
+<p><hr></p>
+<h2 id="实战：创建模糊效果">实战：创建模糊效果</h2>
+<h3>多级模糊</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;
+uniform vec2 viewSize;
+uniform float frameTime;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+// 9x9 高斯模糊核
+const int kernelSize = 4;
+const float weights[9] = float[](
+    0.0162162162, 0.0540540541, 0.1216216216, 0.1945945946,
+    0.2270270270,
+    0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162
+);
+
+void main() {
+    // 纹素大小
+    vec2 texelSize = 1.0 / viewSize;
+
+    vec4 color = vec4(0.0);
+
+    // 水平模糊
+    for (int i = -kernelSize; i &lt;= kernelSize; i++) {
+        vec2 offset = vec2(float(i) * texelSize.x, 0.0);
+        color += texture(colortex0, texCoord + offset) * weights[kernelSize + i];
+    }
+
+    fragColor = color;
+}</code></pre>
+<p><hr></p>
+<h2 id="深度应用：景深效果">深度应用：景深效果</h2>
+<h3>Depth of Field（景深）</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;
+uniform sampler2D depthtex0;     // 深度纹理
+uniform vec2 viewSize;
+uniform float frameTime;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+const float FOCUS_DISTANCE = 0.1;  // 焦点距离
+const float FOCUS_RANGE = 0.05;    // 焦点范围
+const int BLUR_SAMPLES = 8;         // 模糊采样数
+
+void main() {
+    // 读取深度并转为线性
+    float depth = texture(depthtex0, texCoord).r;
+    float linearDepth = depth * 1000.0;  // 简化的线性转换
+
+    // 计算模糊半径
+    float coc = abs(linearDepth - FOCUS_DISTANCE) / FOCUS_RANGE;
+    coc = clamp(coc, 0.0, 1.0);
+
+    // 如果不在焦点上，应用模糊
+    if (coc &gt; 0.0) {
+        vec2 texelSize = 1.0 / viewSize;
+        vec4 color = vec4(0.0);
+        float total = 0.0;
+
+        for (int i = 0; i &lt; BLUR_SAMPLES; i++) {
+            float angle = float(i) / float(BLUR_SAMPLES) * 6.28318;
+            vec2 offset = vec2(cos(angle), sin(angle)) * texelSize * coc * 10.0;
+            color += texture(colortex0, texCoord + offset);
+            total += 1.0;
+        }
+
+        fragColor = color / total;
+    } else {
+        fragColor = texture(colortex0, texCoord);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="最终着色器（Final Shader）">最终着色器（Final Shader）</h2>
+<p><code>final.vsh</code> / <code>final.fsh</code> 是最后一个处理的着色器，用于最终的屏幕输出。</p>
+<h3>示例：伽马校正</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+uniform sampler2D colortex0;
+
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    vec4 color = texture(colortex0, texCoord);
+
+    // 伽马校正（2.2）
+    color.rgb = pow(color.rgb, vec3(1.0 / 2.2));
+
+    fragColor = color;
+}</code></pre>
+<p><hr></p>
+<h2 id="多 Pass 组合">多 Pass 组合</h2>
+<h3>Pass 1: 模糊</h3>
+<pre class="code-block"><code class="language-glsl">uniform sampler2D colortex0;
+uniform vec2 viewSize;
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    vec2 texelSize = 1.0 / viewSize;
+    vec4 color = texture(colortex0, texCoord);
+
+    // 简单模糊
+    color += texture(colortex0, texCoord + vec2(texelSize.x, 0)) * 0.5;
+    color += texture(colortex0, texCoord - vec2(texelSize.x, 0)) * 0.5;
+
+    fragColor = color / 2.0;
+}</code></pre>
+<h3>Pass 2: 叠加</h3>
+<pre class="code-block"><code class="language-glsl">uniform sampler2D colortex0;  // 已处理（模糊）
+uniform sampler2D colortex1;  // 未处理（原始）
+in vec2 texCoord;
+out vec4 fragColor;
+
+void main() {
+    vec4 blurred = texture(colortex0, texCoord);
+    vec4 original = texture(colortex1, texCoord);
+
+    // 叠加效果
+    fragColor = mix(original, blurred, 0.5);
+}</code></pre>
+<p><hr></p>
+<h2 id="常用内置 Uniform">常用内置 Uniform</h2>
+<table class="data-table"><thead><tr><th>Uniform</th><th>类型</th><th>说明</th></tr></thead><tbody><tr><td><code>colortex[0-15]</code></td><td>sampler2D</td><td>颜色缓冲区</td></tr><tr><td><code>depthtex[0-2]</code></td><td>sampler2D</td><td>深度缓冲区</td></tr><tr><td><code>shadowtex[0-1]</code></td><td>sampler2D</td><td>阴影缓冲区</td></tr><tr><td><code>shadowcolor[0-7]</code></td><td>sampler2D</td><td>阴影颜色缓冲区</td></tr><tr><td><code>viewSize</code></td><td>vec2</td><td>视图分辨率</td></tr><tr><td><code>frameTime</code></td><td>float</td><td>帧时间</td></tr><tr><td><code>frameCounter</code></td><td>int</td><td>帧计数</td></tr></tbody></table>
+<hr></p>
+<h2 id="常见问题">常见问题</h2>
+<h3>1. 效果不显示</h3>
+<p><ul><li>检查文件名是否正确（<code>composite1</code> 不是 <code>composite</code>）</li>
+<li>确保有顶点着色器和片元着色器</li></ul></p>
+<h3>2. 纹理采样错误</h3>
+<p><ul><li>确认纹理在正确的 Pass 中可用</li>
+<li>GBuffer 纹理在 composite 中可用</li></ul></p>
+<h3>3. 性能问题</h3>
+<p><ul><li>减少采样次数</li>
+<li>使用近似算法代替精确计算</li></ul></p>
+<p><hr></p>
+<h2 id="练习">练习</h2>
+<h3>练习 1：创建晕影效果</h3>
+<p>创建一个简单的屏幕晕影效果。</p>
+<h3>练习 2：创建颜色分级</h3>
+<p>调整图像的颜色等级（增加对比度、饱和度）。</p>
+<h3>练习 3：创建动态效果</h3>
+<p>使用 <code>frameTime</code> 创建一个随时间变化的波纹效果。</p>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p><ul><li><a href="/iris/analysis/">分析文档</a> - 深入了解 Iris 内部机制</li>
+<li><a href="/iris/tutorials/03-create-simple-shader.html">第三章：创建第一个 Shader</a> - 回顾基础</li></ul></p>
+<p><hr></p>
+<p><em>教程版本：Iris 1.7.x / Minecraft 1.21</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-uniform-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第五章：Uniform 入门
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

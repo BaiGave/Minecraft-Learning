@@ -4,99 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <!-- Primary Meta Tags -->
-    <title>Sodium 着色器系统 - Sodium 优化 教程</title>
-    <meta name="title" content="Sodium 着色器系统 - Sodium 优化 教程">
-    <meta name="description" content="深入学习 Sodium 优化 源码，理解其内部工作原理">
-    <meta name="keywords" content="Sodium 优化, Minecraft, 源码教程, 源码分析, Java">
-    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/sodium/analysis/05-shader-system.html">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/sodium/analysis/05-shader-system.html">
-    <meta property="og:title" content="Sodium 着色器系统 - Sodium 优化 教程">
-    <meta property="og:description" content="深入学习 Sodium 优化 源码">
-    <meta property="og:site_name" content="Minecraft Learning">
-    <meta property="og:locale" content="zh_CN">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Sodium 着色器系统 - Sodium 优化">
-    <meta name="twitter:description" content="深入学习 Sodium 优化 源码">
-
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "Sodium 着色器系统",
-        "description": "",
-        "author": {
-            "@type": "Person",
-            "name": "baigave"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "Minecraft Learning"
-        },
-        "datePublished": "2026-03-22T13:32:00.212Z",
-        "dateModified": "2026-03-22T13:32:00.212Z"
-    }
-    </script>
+    <title>05 shader system - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
     <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="../../../scripts/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #404040; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #404040; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #404040; background: #40404015; }
+        .info-box i { color: #404040; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #404040; }
+        .docs-body h2 i { color: #404040; }
+        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #404040;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #404040, #40404099);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div class="reading-progress" id="readingProgress"></div>
+    <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="../../../index.html" class="navbar-logo">
-                <div class="navbar-logo-icon">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <span class="navbar-logo-text">Minecraft Learning</span>
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="navbar-links">
-                <a href="../../../index.html" class="navbar-link">首页</a>
-                <div class="nav-dropdown">
-                    <span class="nav-dropdown-trigger">
-                        文档中心 <i class="fas fa-chevron-down"></i>
-                    </span>
-                    <div class="nav-dropdown-menu">
-                        <a href="../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
-                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
-                            </div>
-                        </a>
-                        <a href="../../../docs/iris/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Iris 光影</div>
-                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
-                            </div>
-                        </a>
-                        <a href="../../../docs/sodium/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Sodium 优化</div>
-                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
-                            </div>
-                        </a>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
                     </div>
-                </div>
-                <a href="../../../about.html" class="navbar-link">关于</a>
-            </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
             <div class="navbar-actions">
                 <div class="theme-toggle" role="group" aria-label="主题切换">
                     <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
@@ -106,77 +151,81 @@
         </div>
     </nav>
 
-    <div class="tutorial-page">
-        <header class="tutorial-header">
-            <div class="container">
-                <div class="tutorial-nav">
-                    <div class="tutorial-breadcrumb">
-                        
-        <a href="../../../index.html">文档中心</a>
-        <span>/</span>
-    
-            <a href="../index.html">Sodium 优化</a>
-        
-            <span>/</span>
-            <span>源码分析</span>
-        
-        <span>/</span>
-        <span>Sodium 着色器系统</span>
-    
-                    </div>
-                </div>
-                <h1 class="tutorial-title">Sodium 着色器系统</h1>
-                
-                <div class="tutorial-meta">
-                    <span class="module-badge sodium">Sodium 优化</span>
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Sodium 优化</h3>
+                <span class="doc-badge">分析</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 整体架构分析
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成机制
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>05 shader system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    05 shader system
+                </h1>
+                <div class="docs-meta">
                     
-                    <span><i class="fas fa-file"></i> 源码分析</span>
-                    <span><i class="fas fa-file"></i> 05-shader-system</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
             </div>
-        </header>
 
-        <div class="tutorial-container">
-            <aside class="tutorial-sidebar">
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
-                    <ul class="toc-list">
-                        <li><a href="#1-概述">1. 概述</a></li><li><a href="#2-着色器资源结构">2. 着色器资源结构</a></li><li class="h3"><a href="#2-1-资源路径">2.1 资源路径</a></li><li><a href="#3-顶点着色器">3. 顶点着色器</a></li><li class="h3"><a href="#3-1-solid-顶点着色器">3.1 Solid 顶点着色器</a></li><li><a href="#4-片段着色器">4. 片段着色器</a></li><li class="h3"><a href="#4-1-solid-片段着色器">4.1 Solid 片段着色器</a></li><li><a href="#5-雾函数实现">5. 雾函数实现</a></li><li class="h3"><a href="#5-1-fog-glsl">5.1 Fog.glsl</a></li><li><a href="#6-顶点格式">6. 顶点格式</a></li><li class="h3"><a href="#6-1-vanilla-格式-24-bytes-">6.1 Vanilla 格式（24 bytes）</a></li><li class="h3"><a href="#6-2-immix-格式-16-bytes-优化格式-">6.2 IMMIX 格式（16 bytes，优化格式）</a></li><li class="h3"><a href="#6-3-顶点编码工具">6.3 顶点编码工具</a></li><li><a href="#7-着色器管理">7. 着色器管理</a></li><li class="h3"><a href="#7-1-chunkshader">7.1 ChunkShader</a></li><li class="h3"><a href="#7-2-shaderloader">7.2 ShaderLoader</a></li><li><a href="#8-着色器常量">8. 着色器常量</a></li><li class="h3"><a href="#8-1-shaderconstants">8.1 ShaderConstants</a></li><li class="h3"><a href="#8-2-uniform-定义">8.2 Uniform 定义</a></li><li><a href="#9-性能优化特性">9. 性能优化特性</a></li><li><a href="#10-opengl-要求">10. OpenGL 要求</a></li><li><a href="#11-相关文档">11. 相关文档</a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
-                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
-                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Sodium 优化</p>
-                        
-                        <p><strong>类型：</strong>源码分析</p>
-                    </div>
-                </div>
-            </aside>
-
-            <article class="tutorial-content article-content">
-                
-<blockquote>自定义 GLSL 着色器与顶点格式优化</blockquote>
-
-<h2 id="1-概述">1. 概述</h2>
-
+            <div class="docs-body doc-content">
+                <h1>Sodium 着色器系统</h1>
+<blockquote><p>自定义 GLSL 着色器与顶点格式优化</p></blockquote>
+<h2 id="1. 概述">1. 概述</h2>
 <p>Sodium 使用自定义 GLSL 着色器实现高级渲染效果，包括抗锯齿、雾渲染优化和顶点压缩。</p>
-
 <p><strong>核心文件</strong>：</p>
-
-<table><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`ChunkShader`</td><td>`common/.../render/chunk/shader/ChunkShader.java`</td></tr><tr><td>`ShaderConstants`</td><td>`common/.../gl/shader/ShaderConstants.java`</td></tr><tr><td>`ShaderLoader`</td><td>`common/.../gl/shader/ShaderLoader.java`</td></tr><tr><td>`GlShader`</td><td>`common/.../gl/shader/GlShader.java`</td></tr></tbody></table>
-
-<p><strong>着色器文件</strong>：</p>
-
-<table><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>------</td><td>------</td></tr><tr><td>`rendertype_solid.vsh`</td><td>`common/.../resources/assets/sodium/shaders/`</td></tr><tr><td>`rendertype_solid.fsh`</td><td>`common/.../resources/assets/sodium/shaders/`</td></tr><tr><td>`rendertype_cutout.vsh`</td><td>`common/.../resources/assets/sodium/shaders/`</td></tr><tr><td>`rendertype_translucent.vsh`</td><td>`common/.../resources/assets/sodium/shaders/`</td></tr></tbody></table>
-
-<hr>
-
-<h2 id="2-着色器资源结构">2. 着色器资源结构</h2>
-
-<h3 id="2-1-资源路径">2.1 资源路径</h3>
-
-<pre class="code-block"><code>common/src/main/resources/
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ChunkShader</code></td><td><code>common/.../render/chunk/shader/ChunkShader.java</code></td></tr><tr><td><code>ShaderConstants</code></td><td><code>common/.../gl/shader/ShaderConstants.java</code></td></tr><tr><td><code>ShaderLoader</code></td><td><code>common/.../gl/shader/ShaderLoader.java</code></td></tr><tr><td><code>GlShader</code></td><td><code>common/.../gl/shader/GlShader.java</code></td></tr></tbody></table>
+<strong>着色器文件</strong>：</p>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>rendertype<em>solid.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>solid.fsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype<em>cutout.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr><tr><td><code>rendertype</em>translucent.vsh</code></td><td><code>common/.../resources/assets/sodium/shaders/</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="2. 着色器资源结构">2. 着色器资源结构</h2>
+<h3>2.1 资源路径</h3>
+<pre class="code-block"><code class="language-text">common/src/main/resources/
 └── assets/
     └── sodium/
         └── shaders/
@@ -196,14 +245,10 @@
             └── environment/
                 ├── sky.glsl
                 └── clouds.glsl</code></pre>
-
-<hr>
-
-<h2 id="3-顶点着色器">3. 顶点着色器</h2>
-
-<h3 id="3-1-solid-顶点着色器">3.1 Solid 顶点着色器</h3>
-
-<pre class="code-block"><code>#version 450
+<p><hr></p>
+<h2 id="3. 顶点着色器">3. 顶点着色器</h2>
+<h3>3.1 Solid 顶点着色器</h3>
+<pre class="code-block"><code class="language-glsl">#version 450
 
 // 包含顶点属性定义
 #include &lt;vertex_attribute.glsl&gt;
@@ -285,14 +330,10 @@ void main() {
     v_FogColor = u_FogColor;
     v_FogShape = u_FogShape;
 }</code></pre>
-
-<hr>
-
-<h2 id="4-片段着色器">4. 片段着色器</h2>
-
-<h3 id="4-1-solid-片段着色器">4.1 Solid 片段着色器</h3>
-
-<pre class="code-block"><code>#version 450
+<p><hr></p>
+<h2 id="4. 片段着色器">4. 片段着色器</h2>
+<h3>4.1 Solid 片段着色器</h3>
+<pre class="code-block"><code class="language-glsl">#version 450
 
 // 包含雾函数
 #include &lt;fog.glsl&gt;
@@ -359,15 +400,10 @@ void main() {
     
     out_Color = color;
 }</code></pre>
-
-<hr>
-
-<h2 id="5-雾函数实现">5. 雾函数实现</h2>
-
-<h3 id="5-1-fog-glsl">5.1 Fog.glsl</h3>
-
-<pre class="code-block"><code>// 雾函数实现
-vec4 applyFog(vec4 color, float viewDepth, 
+<p><hr></p>
+<h2 id="5. 雾函数实现">5. 雾函数实现</h2>
+<h3>5.1 Fog.glsl</h3>
+<pre class="code-block"><code class="language-glsl">vec4 applyFog(vec4 color, float viewDepth, 
               float fogStart, float fogEnd, 
               vec4 fogColor, float fogShape) {
     
@@ -387,15 +423,10 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
     float fogRange = max(fogEnd - fogStart, 1e-5);
     return vec2(1.0 / fogRange, -fogStart / fogRange);
 }</code></pre>
-
-<hr>
-
-<h2 id="6-顶点格式">6. 顶点格式</h2>
-
-<h3 id="6-1-vanilla-格式-24-bytes-">6.1 Vanilla 格式（24 bytes）</h3>
-
-<pre class="code-block"><code>public enum ChunkVertexType {
-    VANILLA(24) {
+<p><hr></p>
+<h2 id="6. 顶点格式">6. 顶点格式</h2>
+<h3>6.1 Vanilla 格式（24 bytes）</h3>
+<pre class="code-block"><code class="language-java">    VANILLA(24) {
         @Override
         public ChunkVertexEncoder createEncoder() {
             return (ptr, materialBits, vertices, sectionIndex) -&gt; {
@@ -418,11 +449,8 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
         }
     }
 }</code></pre>
-
-<h3 id="6-2-immix-格式-16-bytes-优化格式-">6.2 IMMIX 格式（16 bytes，优化格式）</h3>
-
-<pre class="code-block"><code>    IMMIX(16) {
-        @Override
+<h3>6.2 IMMIX 格式（16 bytes，优化格式）</h3>
+<pre class="code-block"><code class="language-java">        @Override
         public ChunkVertexEncoder createEncoder() {
             return (ptr, materialBits, vertices, sectionIndex) -&gt; {
                 for (Vertex vertex : vertices) {
@@ -448,11 +476,8 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
         }
     }
 }</code></pre>
-
-<h3 id="6-3-顶点编码工具">6.3 顶点编码工具</h3>
-
-<pre class="code-block"><code>public interface ChunkVertexEncoder {
-    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
+<h3>6.3 顶点编码工具</h3>
+<pre class="code-block"><code class="language-java">    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
     
     class Vertex {
         public float x, y, z;
@@ -487,15 +512,10 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
         return (short)(sign | (exponent &lt;&lt; 10) | mantissa);
     }
 }</code></pre>
-
-<hr>
-
-<h2 id="7-着色器管理">7. 着色器管理</h2>
-
-<h3 id="7-1-chunkshader">7.1 ChunkShader</h3>
-
-<pre class="code-block"><code>public class ChunkShader implements AutoCloseable {
-    private final GlShader vertexShader;
+<p><hr></p>
+<h2 id="7. 着色器管理">7. 着色器管理</h2>
+<h3>7.1 ChunkShader</h3>
+<pre class="code-block"><code class="language-java">    private final GlShader vertexShader;
     private final GlShader fragmentShader;
     private final GlProgram program;
     
@@ -534,11 +554,8 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
         // ...
     }
 }</code></pre>
-
-<h3 id="7-2-shaderloader">7.2 ShaderLoader</h3>
-
-<pre class="code-block"><code>public class ShaderLoader {
-    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
+<h3>7.2 ShaderLoader</h3>
+<pre class="code-block"><code class="language-java">    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
     
     public GlShader loadVertexShader(String name) {
         String source = loadShaderSource(&quot;blocks/&quot; + name);
@@ -561,15 +578,10 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
                                  match -&gt; loadInclude(match.group(1)));
     }
 }</code></pre>
-
-<hr>
-
-<h2 id="8-着色器常量">8. 着色器常量</h2>
-
-<h3 id="8-1-shaderconstants">8.1 ShaderConstants</h3>
-
-<pre class="code-block"><code>public class ShaderConstants {
-    // 着色器宏定义
+<p><hr></p>
+<h2 id="8. 着色器常量">8. 着色器常量</h2>
+<h3>8.1 ShaderConstants</h3>
+<pre class="code-block"><code class="language-java">    // 着色器宏定义
     public static final String USE_FOG = &quot;USE_FOG&quot;;
     public static final String USE_FRAGMENT_DISCARD = &quot;USE_FRAGMENT_DISCARD&quot;;
     public static final String USE_VERTEX_COMPRESSION = &quot;USE_VERTEX_COMPRESSION&quot;;
@@ -586,10 +598,8 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
         public final int samples;
     }
 }</code></pre>
-
-<h3 id="8-2-uniform-定义">8.2 Uniform 定义</h3>
-
-<pre class="code-block"><code>layout(std140) uniform Uniforms {
+<h3>8.2 Uniform 定义</h3>
+<pre class="code-block"><code class="language-java">layout(std140) uniform Uniforms {
     mat4 u_ModelViewMatrix;              // 模型视图矩阵
     mat4 u_ProjectionMatrix;              // 投影矩阵
     mat4 u_ModelViewProjectionMatrix;   // MVP 矩阵
@@ -601,74 +611,57 @@ vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
     vec4 u_AmbientLight;                 // 环境光
     vec4 u_BlockLight;                   // 方块光
 };</code></pre>
+<p><hr></p>
+<h2 id="9. 性能优化特性">9. 性能优化特性</h2>
+<table class="data-table"><thead><tr><th>特性</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>顶点压缩</strong></td><td>Half-float 代替 float</td><td>减少 33% 带宽</td></tr><tr><td><strong>Include 预处理</strong></td><td>GLSL #include</td><td>代码复用</td></tr><tr><td><strong>Uniform 缓存</strong></td><td>预缓存位置</td><td>减少查询</td></tr><tr><td><strong>批量 Uniform</strong></td><td>std140 布局</td><td>减少设置调用</td></tr><tr><td><strong>RGSS 抗锯齿</strong></td><td>着色器内采样</td><td>平滑边缘</td></tr></tbody></table>
+<hr></p>
+<h2 id="10. OpenGL 要求">10. OpenGL 要求</h2>
+<table class="data-table"><thead><tr><th>要求</th><th>版本</th><th>说明</th></tr></thead><tbody><tr><td><strong>最低版本</strong></td><td>OpenGL 3.3</td><td>基本的顶点属性</td></tr><tr><td><strong>推荐版本</strong></td><td>OpenGL 4.5</td><td>SPIR-V 支持</td></tr><tr><td><strong>可选扩展</strong></td><td>GL<em>ARB</em>gl<em>spirv</td><td>SPIR-V 着色器</td></tr><tr><td><strong>可选扩展</strong></td><td>GL</em>ARB<em>vertex</em>attrib_64bit</td><td>64-bit 属性</td></tr></tbody></table>
+<hr></p>
+<h2 id="11. 相关文档">11. 相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
+<li><a href="02-chunk-render-system.html">02-chunk-render-system</a> - 区块渲染系统</li>
+<li><a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线</li></ul></p>
+<p><hr></p>
+<p><em>生成时间: 2026-03-19</em>
+</p>
+            </div>
 
-<hr>
-
-<h2 id="9-性能优化特性">9. 性能优化特性</h2>
-
-<table><thead><tr><th>特性</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>**顶点压缩**</td><td>Half-float 代替 float</td><td>减少 33% 带宽</td></tr><tr><td>**Include 预处理**</td><td>GLSL #include</td><td>代码复用</td></tr><tr><td>**Uniform 缓存**</td><td>预缓存位置</td><td>减少查询</td></tr><tr><td>**批量 Uniform**</td><td>std140 布局</td><td>减少设置调用</td></tr><tr><td>**RGSS 抗锯齿**</td><td>着色器内采样</td><td>平滑边缘</td></tr></tbody></table>
-
-<hr>
-
-<h2 id="10-opengl-要求">10. OpenGL 要求</h2>
-
-<table><thead><tr><th>要求</th><th>版本</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>------</td></tr><tr><td>**最低版本**</td><td>OpenGL 3.3</td><td>基本的顶点属性</td></tr><tr><td>**推荐版本**</td><td>OpenGL 4.5</td><td>SPIR-V 支持</td></tr><tr><td>**可选扩展**</td><td>GL_ARB_gl_spirv</td><td>SPIR-V 着色器</td></tr><tr><td>**可选扩展**</td><td>GL_ARB_vertex_attrib_64bit</td><td>64-bit 属性</td></tr></tbody></table>
-
-<hr>
-
-<h2 id="11-相关文档">11. 相关文档</h2>
-
-<p>- <a href="01-architecture-overview.html">01-architecture-overview.md</a> - 整体架构</p>
-<p>- <a href="02-chunk-render-system.html">02-chunk-render-system.md</a> - 区块渲染系统</p>
-<p>- <a href="04-render-pipeline.html">04-render-pipeline.md</a> - 渲染管线</p>
-
-<hr>
-
-<p><em>生成时间: 2026-03-19</em></p>
-
-
-            </article>
-        </div>
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-render-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Sodium 渲染管线
+        </a><a href="06-platform-integration.html" class="next">
+            Sodium 平台集成机制
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
-            </div>
-        </div>
-    </footer>
-
     <script src="../../../script.js"></script>
-    <script src="../../../tutorial.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose',
-            flowchart: { htmlLabels: true }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
         });
-
-        // Listen for theme changes to update Mermaid
-        window.addEventListener('themechange', (e) => {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
-                });
-            }
-        });
-
-        // Copy code function
-        function copyCode(btn) {
-            const codeBlock = btn.closest('.code-reference').querySelector('code');
-            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
-                }, 2000);
-            });
-        }
+        hljs.highlightAll();
+      });
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
 </body>
 </html>

@@ -88,6 +88,7 @@ function generateSitemapFromContent(options = {}) {
     // Module pages
     const modulePages = [
         { url: '/docs/mc/1.21/index.html', priority: '0.8', changefreq: 'weekly' },
+        { url: '/docs/forge/index.html', priority: '0.8', changefreq: 'weekly' },
         { url: '/docs/iris/index.html', priority: '0.8', changefreq: 'weekly' },
         { url: '/docs/sodium/index.html', priority: '0.8', changefreq: 'weekly' }
     ];
