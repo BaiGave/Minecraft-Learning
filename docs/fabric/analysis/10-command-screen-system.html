@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <title>03 item recipe system - Fabric 模组</title>
+    <title>10 command screen system - Fabric 模组</title>
     <link rel="stylesheet" href="../../../styles/main.css">
     <link rel="stylesheet" href="../../../styles.css">
     <link rel="stylesheet" href="../../../styles/site-shell.css">
@@ -166,7 +166,7 @@
             <i class="fas fa-microscope"></i>
             Fabric API 方块系统模块分析
         </a>
-<a href="03-item-recipe-system.html" class="active">
+<a href="03-item-recipe-system.html" class="">
             <i class="fas fa-microscope"></i>
             Fabric API 物品与配方系统分析
         </a>
@@ -194,7 +194,7 @@
             <i class="fas fa-microscope"></i>
             Fabric API 传输/存储系统分析
         </a>
-<a href="10-command-screen-system.html" class="">
+<a href="10-command-screen-system.html" class="active">
             <i class="fas fa-microscope"></i>
             Fabric API 命令与屏幕系统分析
         </a>
@@ -218,14 +218,14 @@
                     <i class="fas fa-chevron-right"></i>
                     <a href="../index.html">Fabric 模组</a>
                     <i class="fas fa-chevron-right"></i>
-                    <span>03 item recipe system</span>
+                    <span>10 command screen system</span>
                 </nav>
                 <h1>
                     <span class="doc-type-tag analysis">
                         <i class="fas fa-microscope"></i>
                         源码分析
                     </span>
-                    03 item recipe system
+                    10 command screen system
                 </h1>
                 <div class="docs-meta">
                     
@@ -234,187 +234,150 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>Fabric API 物品与配方系统分析</h1>
+                <h1>Fabric API 命令与屏幕系统分析</h1>
 <h2 id="概述">概述</h2>
-<p>物品与配方系统模块包含三个核心子模块：
-<ul><li><code>fabric-item-api-v1</code> - 物品 API 扩展</li>
-<li><code>fabric-recipe-api-v1</code> - 配方 API 扩展</li>
-<li><code>fabric-item-group-api-v1</code> - 物品栏分组系统</li></ul></p>
+<p>命令与屏幕系统包含四个核心模块：
+<ul><li><code>fabric-command-api-v2</code> - 命令 API</li>
+<li><code>fabric-screen-api-v1</code> - 屏幕 API</li>
+<li><code>fabric-screen-handler-api-v1</code> - 屏幕处理器 API</li>
+<li><code>fabric-key-binding-api-v1</code> - 按键绑定 API</li></ul></p>
 <p><hr></p>
-<h2 id="1. fabric-item-api-v1 模块">1. fabric-item-api-v1 模块</h2>
-<h3>1.1 FabricItem 接口</h3>
-<pre class="code-block"><code class="language-java">public interface FabricItem {
-    // 组件更新动画控制
-    default boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand,
-                                                  ItemStack oldStack, ItemStack newStack);
+<h2 id="1. fabric-command-api-v2 模块">1. fabric-command-api-v2 模块</h2>
+<h3>1.1 命令注册回调</h3>
+<pre class="code-block"><code class="language-java">public interface CommandRegistrationCallback {
+    Event&lt;CommandRegistrationCallback&gt; EVENT = ...;
 
-    // 持续挖掘进度控制
-    default boolean allowContinuingBlockBreaking(PlayerEntity player,
-                                                ItemStack oldStack, ItemStack newStack);
-
-    // 配方剩余物处理
-    default ItemStack getRecipeRemainder(ItemStack stack);
-
-    // 附魔检查
-    default boolean canBeEnchantedWith(ItemStack stack, RegistryEntry&lt;Enchantment&gt; enchantment,
-                                       EnchantingContext context);
-
-    // 获取创建者命名空间
-    default String getCreatorNamespace(ItemStack stack);
+    void register(
+        CommandDispatcher&lt;ServerCommandSource&gt; dispatcher,
+        CommandRegistryAccess registryAccess,
+        CommandManager.RegistrationEnvironment environment
+    );
 }</code></pre>
-<h3>1.2 CustomDamageHandler 接口</h3>
-<pre class="code-block"><code class="language-java">@FunctionalInterface
-public interface CustomDamageHandler {
-    int damage(ItemStack stack, int amount, LivingEntity entity,
-                EquipmentSlot slot, Runnable breakCallback);
-}</code></pre>
-<h3>1.3 EquipmentSlotProvider 接口</h3>
-<pre class="code-block"><code class="language-java">@FunctionalInterface
-public interface EquipmentSlotProvider {
-    EquipmentSlot getPreferredEquipmentSlot(LivingEntity entity, ItemStack stack);
-}</code></pre>
-<h3>1.4 使用示例 - 自定义伤害处理</h3>
-<pre class="code-block"><code class="language-java">public static final CustomDamageHandler WEIRD_DAMAGE_HANDLER =
-    (stack, amount, entity, slot, breakCallback) -&gt; {
-        if (entity.isSneaking()) {
-            return amount;
-        } else {
-            stack.set(WEIRD, Math.max(0, stack.getOrDefault(WEIRD, 0) + 1));
-            return 0;
-        }
-    };
+<h3>1.2 实体选择器选项注册</h3>
+<pre class="code-block"><code class="language-java">public final class EntitySelectorOptionRegistry {
+    public static void register(
+        Identifier id,
+        Text description,
+        EntitySelectorOptions.SelectorHandler handler,
+        Predicate&lt;EntitySelectorReader&gt; canUse
+    ) { ... }
 
-public static class WeirdPick extends PickaxeItem {
-    protected WeirdPick() {
-        super(ToolMaterials.GOLD,
-              new Item.Settings().customDamage(WEIRD_DAMAGE_HANDLER));
+    public static void registerNonRepeatable(
+        Identifier id,
+        Text description,
+        EntitySelectorOptions.SelectorHandler handler
+    ) { ... }
+}</code></pre>
+<h3>1.3 客户端命令</h3>
+<pre class="code-block"><code class="language-java">public final class ClientCommandManager {
+    public static @Nullable CommandDispatcher&lt;FabricClientCommandSource&gt; getActiveDispatcher() { ... }
+    public static LiteralArgumentBuilder&lt;FabricClientCommandSource&gt; literal(String name) { ... }
+    public static &lt;T&gt; RequiredArgumentBuilder&lt;FabricClientCommandSource, T&gt; argument(String name, ArgumentType&lt;T&gt; type) { ... }
+}</code></pre>
+<p><hr></p>
+<h2 id="2. fabric-screen-api-v1 模块">2. fabric-screen-api-v1 模块</h2>
+<h3>2.1 Screens 工具类</h3>
+<pre class="code-block"><code class="language-java">public final class Screens {
+    public static List&lt;ClickableWidget&gt; getButtons(Screen screen) { ... }
+    public static TextRenderer getTextRenderer(Screen screen) { ... }
+    public static MinecraftClient getClient(Screen screen) { ... }
+}</code></pre>
+<h3>2.2 ScreenEvents 事件系统</h3>
+<pre class="code-block"><code class="language-java">public final class ScreenEvents {
+    // 全局事件
+    public static final Event&lt;BeforeInit&gt; BEFORE_INIT = ...;
+    public static final Event&lt;AfterInit&gt; AFTER_INIT = ...;
+
+    // 每个屏幕实例的事件
+    public static Event&lt;Remove&gt; remove(Screen screen) { ... }
+    public static Event&lt;BeforeRender&gt; beforeRender(Screen screen) { ... }
+    public static Event&lt;AfterRender&gt; afterRender(Screen screen) { ... }
+    public static Event&lt;BeforeTick&gt; beforeTick(Screen screen) { ... }
+    public static Event&lt;AfterTick&gt; afterTick(Screen screen) { ... }
+}</code></pre>
+<h3>2.3 键盘/鼠标事件</h3>
+<pre class="code-block"><code class="language-java">public final class ScreenKeyboardEvents {
+    public static Event&lt;AllowKeyPress&gt; allowKeyPress(Screen screen) { ... }
+    public static Event&lt;BeforeKeyPress&gt; beforeKeyPress(Screen screen) { ... }
+    public static Event&lt;AfterKeyPress&gt; afterKeyPress(Screen screen) { ... }
+}
+
+public final class ScreenMouseEvents {
+    public static Event&lt;AllowMouseClick&gt; allowMouseClick(Screen screen) { ... }
+    public static Event&lt;BeforeMouseClick&gt; beforeMouseClick(Screen screen) { ... }
+    public static Event&lt;AfterMouseClick&gt; afterMouseClick(Screen screen) { ... }
+}</code></pre>
+<p><strong>事件触发顺序</strong>：<code>AllowX</code> → <code>BeforeX</code> → <code>AfterX</code></p>
+<p><hr></p>
+<h2 id="3. fabric-screen-handler-api-v1 模块">3. fabric-screen-handler-api-v1 模块</h2>
+<h3>3.1 扩展屏幕处理器类型</h3>
+<pre class="code-block"><code class="language-java">public class ExtendedScreenHandlerType&lt;T extends ScreenHandler, D&gt; extends ScreenHandlerType&lt;T&gt; {
+    private final ExtendedFactory&lt;T, D&gt; factory;
+    private final PacketCodec&lt;? super RegistryByteBuf, D&gt; packetCodec;
+
+    public T create(int syncId, PlayerInventory inventory, D data) {
+        return factory.create(syncId, inventory, data);
     }
 }</code></pre>
+<h3>3.2 扩展屏幕处理器工厂</h3>
+<pre class="code-block"><code class="language-java">public interface ExtendedScreenHandlerFactory&lt;D&gt; extends NamedScreenHandlerFactory {
+    D getScreenOpeningData(ServerPlayerEntity player);
+}</code></pre>
 <p><hr></p>
-<h2 id="2. fabric-recipe-api-v1 模块">2. fabric-recipe-api-v1 模块</h2>
-<h3>2.1 CustomIngredient 接口</h3>
-<pre class="code-block"><code class="language-java">public interface CustomIngredient {
-    // 测试物品堆栈是否匹配
-    boolean test(ItemStack stack);
+<h2 id="4. fabric-key-binding-api-v1 模块">4. fabric-key-binding-api-v1 模块</h2>
+<h3>4.1 KeyBindingHelper</h3>
+<pre class="code-block"><code class="language-java">public final class KeyBindingHelper {
+    public static KeyBinding registerKeyBinding(KeyBinding keyBinding) { ... }
+    public static InputUtil.Key getBoundKeyOf(KeyBinding keyBinding) { ... }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 使用示例">5. 使用示例</h2>
+<h3>5.1 注册服务端命令</h3>
+<pre class="code-block"><code class="language-java">CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -&gt; {
+    dispatcher.register(literal(&quot;fabric_common_test_command&quot;)
+        .executes(context -&gt; {
+            context.getSource().sendFeedback(Text.literal(&quot;Hello!&quot;));
+            return 1;
+        }));
 
-    // 获取匹配的物品堆栈列表（用于显示）
-    List&lt;ItemStack&gt; getMatchingStacks();
-
-    // 是否需要直接测试（NBT 检查）
-    boolean requiresTesting();
-
-    // 获取序列化器
-    CustomIngredientSerializer&lt;?&gt; getSerializer();
-
-    // 转换为原生 Ingredient
-    default Ingredient toVanilla() {
-        return new CustomIngredientImpl(this);
+    // 仅专用服务器
+    if (environment.dedicated) {
+        dispatcher.register(literal(&quot;fabric_dedicated_test_command&quot;)
+            .executes(context -&gt; { ... }));
     }
-}</code></pre>
-<h3>2.2 内置自定义成分</h3>
-<table class="data-table"><thead><tr><th>成分类型</th><th>标识符</th><th>用途</th></tr></thead><tbody><tr><td><code>AllIngredient</code></td><td><code>fabric:all</code></td><td>所有子成分都必须匹配</td></tr><tr><td><code>AnyIngredient</code></td><td><code>fabric:any</code></td><td>任一子成分匹配即可</td></tr><tr><td><code>DifferenceIngredient</code></td><td><code>fabric:difference</code></td><td>基础减去排除部分</td></tr><tr><td><code>CustomDataIngredient</code></td><td><code>fabric:custom_data</code></td><td>带有自定义 NBT 的物品</td></tr><tr><td><code>ComponentsIngredient</code></td><td><code>fabric:components</code></td><td>带有特定组件的物品</td></tr></tbody></table>
-<h3>2.3 JSON 数据包格式</h3>
-<pre class="code-block"><code class="language-json">{
-    &quot;fabric:type&quot;: &quot;fabric:all&quot;,
-    &quot;ingredients&quot;: [
-        {&quot;item&quot;: &quot;minecraft:diamond&quot;},
-        {&quot;tag&quot;: &quot;minecraft:wool&quot;}
-    ]
-}</code></pre>
-<p><hr></p>
-<h2 id="3. fabric-item-group-api-v1 模块">3. fabric-item-group-api-v1 模块</h2>
-<h3>3.1 创建自定义物品栏</h3>
-<pre class="code-block"><code class="language-java">Registry.register(Registries.ITEM_GROUP, ITEM_GROUP,
-    FabricItemGroup.builder()
-        .displayName(Text.literal(&quot;Test Item Group&quot;))
-        .icon(() -&gt; new ItemStack(Items.DIAMOND))
-        .entries((context, entries) -&gt; {
-            entries.addAll(Registries.ITEM.stream()
-                    .map(ItemStack::new)
-                    .filter(input -&gt; !input.isEmpty())
-                    .toList());
-        })
-        .build());</code></pre>
-<h3>3.2 FabricItemGroupEntries API</h3>
-<pre class="code-block"><code class="language-java">void add(ItemStack stack, ItemGroup.StackVisibility visibility);
-void add(ItemConvertible item);
-void prepend(ItemStack stack, ItemGroup.StackVisibility visibility);
-void addAfter(ItemConvertible afterLast, Collection&lt;ItemStack&gt; newStacks);
-void addBefore(ItemConvertible beforeFirst, Collection&lt;ItemStack&gt; newStacks);</code></pre>
-<h3>3.3 ItemGroupEvents 事件系统</h3>
-<pre class="code-block"><code class="language-java">public static final Event&lt;ModifyEntriesAll&gt; MODIFY_ENTRIES_ALL;
+});</code></pre>
+<h3>5.2 屏幕事件监听</h3>
+<pre class="code-block"><code class="language-java">ScreenEvents.AFTER_INIT.register((client, screen, width, height) -&gt; {
+    if (screen instanceof TitleScreen) {
+        List&lt;ClickableWidget&gt; buttons = Screens.getButtons(screen);
+        buttons.add(new ButtonWidget(...));
 
-// 获取特定物品栏的事件
-public static Event&lt;ModifyEntries&gt; modifyEntriesEvent(RegistryKey&lt;ItemGroup&gt; registryKey);</code></pre>
-<h3>3.4 使用示例</h3>
-<pre class="code-block"><code class="language-java">ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS)
-    .register((content) -&gt; {
-        content.add(TEST_ITEM);
-        content.addBefore(Blocks.OAK_FENCE, Items.DIAMOND);
-    });
+        ScreenEvents.afterRender(screen).register((_screen, drawContext, mouseX, mouseY, tickDelta) -&gt; {
+            drawContext.drawGuiTexture(ARMOR_FULL_TEXTURE, x, y, 20, 20);
+        });
+    }
+});</code></pre>
+<h3>5.3 按键绑定</h3>
+<pre class="code-block"><code class="language-java">KeyBinding binding = KeyBindingHelper.registerKeyBinding(
+    new KeyBinding(&quot;key.example.test1&quot;, InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_P, &quot;key.category.example&quot;)
+);
 
-// 全局修改所有物品栏
-ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, content) -&gt; {
-    if (group.getIcon() == ItemStack.EMPTY) return;
-    content.prepend(new ItemStack(Items.DIAMOND_PICKAXE));
+ClientTickEvents.END_CLIENT_TICK.register(client -&gt; {
+    while (binding.wasPressed()) {
+        client.player.sendMessage(Text.literal(&quot;Key pressed!&quot;), false);
+    }
 });</code></pre>
 <p><hr></p>
-<h2 id="4. Mixin 注入点">4. Mixin 注入点</h2>
-<table class="data-table"><thead><tr><th>Mixin 类</th><th>注入目标</th><th>目的</th></tr></thead><tbody><tr><td><code>ItemMixin</code></td><td><code>Item</code></td><td>实现 <code>FabricItem</code> 接口</td></tr><tr><td><code>ItemStackMixin</code></td><td><code>ItemStack</code></td><td>拦截 damage 方法</td></tr><tr><td><code>ItemSettingsMixin</code></td><td><code>Item.Settings</code></td><td>实现 <code>FabricItem.Settings</code> 接口</td></tr><tr><td><code>EnchantmentHelperMixin</code></td><td><code>EnchantmentHelper</code></td><td>重定向附魔检查方法</td></tr><tr><td><code>ComponentMapBuilderMixin</code></td><td><code>ComponentMap.Builder</code></td><td>实现 <code>FabricComponentMapBuilder</code> 接口</td></tr><tr><td><code>ItemGroupMixin</code></td><td><code>ItemGroup</code></td><td>在 <code>updateEntries</code> 末尾触发事件</td></tr><tr><td><code>ItemGroupsMixin</code></td><td><code>ItemGroups</code></td><td>实现分页和冲突检测</td></tr><tr><td><code>IngredientMixin</code></td><td><code>Ingredient</code></td><td>注入自定义编解码器</td></tr></tbody></table>
-<hr></p>
-<h2 id="5. 完整使用示例">5. 完整使用示例</h2>
-<h3>5.1 创建带自定义伤害处理的物品</h3>
-<pre class="code-block"><code class="language-java">public class BatterySword extends SwordItem {
-    private static final ComponentType&lt;Integer&gt; ENERGY = ...;
-    private static final CustomDamageHandler HANDLER =
-        (stack, amount, entity, slot, breakCallback) -&gt; {
-            int currentEnergy = stack.getOrDefault(ENERGY, 0);
-            int damageFromEnergy = Math.min(currentEnergy, amount);
-            int remainingDamage = amount - damageFromEnergy;
-
-            stack.set(ENERGY, currentEnergy - damageFromEnergy);
-
-            if (remainingDamage &gt; 0 &amp;&amp; stack.getDamage() + remainingDamage &gt;= stack.getMaxDamage()) {
-                breakCallback.run();
-                return 0;
-            }
-
-            return remainingDamage;
-        };
-
-    public BatterySword() {
-        super(ToolMaterials.GOLD,
-              new Item.Settings().customDamage(HANDLER)
-                                 .equipmentSlot((entity, stack) -&gt; EquipmentSlot.MAINHAND));
-    }
-}</code></pre>
-<h3>5.2 创建自定义物品栏并添加物品</h3>
-<pre class="code-block"><code class="language-java">private static final RegistryKey&lt;ItemGroup&gt; MY_GROUP = RegistryKey.of(
-    RegistryKeys.ITEM_GROUP, Identifier.of(MOD_ID, &quot;my_group&quot;));
-
-@Override
-public void onInitialize() {
-    Registry.register(Registries.ITEM_GROUP, MY_GROUP,
-        FabricItemGroup.builder()
-            .displayName(Text.translatable(&quot;itemgroup.my_mod.my_group&quot;))
-            .icon(() -&gt; new ItemStack(MyMod.MY_ITEM))
-            .entries((context, entries) -&gt; {
-                entries.add(MyMod.MY_ITEM);
-                entries.add(MyMod.MY_BLOCK);
-            })
-            .build());
-}</code></pre>
-<p><hr></p>
-<p><em>源码位置: <code>fabric-item-api-v1/</code>, <code>fabric-recipe-api-v1/</code>, <code>fabric-item-group-api-v1/</code></em>
+<p><em>源码位置: <code>fabric-command-api-v2/</code>, <code>fabric-screen-api-v1/</code>, <code>fabric-screen-handler-api-v1/</code>, <code>fabric-key-binding-api-v1/</code></em>
 </p>
             </div>
 
             <div class="docs-footer">
-                <div class="prev-next"><a href="02-block-system.html" class="prev">
+                <div class="prev-next"><a href="09-transfer-system.html" class="prev">
             <i class="fas fa-arrow-left"></i>
-            Fabric API 方块系统模块分析
-        </a><a href="04-biome-dimension-system.html" class="next">
-            Fabric API 生物群系与维度系统分析
+            Fabric API 传输/存储系统分析
+        </a><a href="11-other-subsystems.html" class="next">
+            Fabric API 其他子系统分析
             <i class="fas fa-arrow-right"></i>
         </a></div>
             </div>

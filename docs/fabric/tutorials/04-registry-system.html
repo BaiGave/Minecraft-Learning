@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>04 registry system - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-java-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Java 编程基础
+        </a>
+<a href="02-environment-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：开发环境搭建
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：Minecraft Mod 开发概念
+        </a>
+<a href="04-first-mod.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：创建你的第一个 Mod
+        </a>
+<a href="01-fabric-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Fabric 简介
+        </a>
+<a href="02-mod-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Mod 项目结构
+        </a>
+<a href="03-event-system.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：事件系统入门
+        </a>
+<a href="04-registry-system.html" class="active">
+            <i class="fas fa-book"></i>
+            第四章：注册系统
+        </a>
+<a href="01-creating-blocks.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：创建自定义方块
+        </a>
+<a href="03-creating-items.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义物品
+        </a>
+<a href="01-entity-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：实体基础
+        </a>
+<a href="01-biome-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：生物群系简介
+        </a>
+<a href="02-custom-biome.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义生物群系
+        </a>
+<a href="03-features.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：世界特征
+        </a>
+<a href="01-rendering-basics.html" class="">
+            <i class="fas fa-book"></i>
+            渲染基础
+        </a>
+<a href="02-custom-models.html" class="">
+            <i class="fas fa-book"></i>
+            自定义模型
+        </a>
+<a href="03-particles.html" class="">
+            <i class="fas fa-book"></i>
+            粒子效果
+        </a>
+<a href="01-networking-basics.html" class="">
+            <i class="fas fa-book"></i>
+            1. 网络基础
+        </a>
+<a href="02-custom-packets.html" class="">
+            <i class="fas fa-book"></i>
+            2. 自定义数据包
+        </a>
+<a href="03-commands.html" class="">
+            <i class="fas fa-book"></i>
+            3. 自定义命令
+        </a>
+<a href="01-transfer-api.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：传输 API 教程
+        </a>
+<a href="02-data-attachment.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：数据附件教程
+        </a>
+<a href="03-recipes.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：配方系统教程
+        </a>
+<a href="04-loot-tables.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：战利品表教程
+        </a>
+<a href="01-project-overview.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：项目概览 - 魔法水晶 mod
+        </a>
+<a href="02-magic-crystal.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：魔法水晶 - 完整实战
+        </a>
+<a href="03-magic-wand.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a>
+<a href="04-magic-creature.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：魔法生物 - 自定义实体与 AI
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>04 registry system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    04 registry system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第四章：注册系统</h1>
+<blockquote><p>这一章介绍 Minecraft 的注册系统，学习如何正确注册方块、物品、实体等。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-什么是注册">什么是注册？</a></li>
+<li><a href="#2-注册表-registry">注册表 (Registry)</a></li>
+<li><a href="#3-注册方块">注册方块</a></li>
+<li><a href="#4-注册物品">注册物品</a></li>
+<li><a href="#5-注册实体">注册实体</a></li>
+<li><a href="#6-同时注册方块和物品">同时注册方块和物品</a></li>
+<li><a href="#7-常见问题">常见问题</a></li></ul></p>
+<p><hr></p>
+<h2 id="1. 什么是注册？">1. 什么是注册？</h2>
+<h3>1.1 为什么需要注册？</h3>
+<p>Minecraft 的世界由大量的游戏对象组成：
+<ul><li>100+ 种方块</li>
+<li>1000+ 种物品</li>
+<li>100+ 种生物</li>
+<li>还有很多...</li></ul></p>
+<p>这些都需要一个"身份证"来标识，注册就是给这些对象发"身份证"的过程。</p>
+<h3>1.2 不注册会怎样？</h3>
+<pre class="code-block"><code class="language-text">❌ 不注册 = 游戏不认识你的对象
+
+示例：
+registry.register(&quot;my_block&quot;, new Block())  // 注册了，游戏认识
+registry.register(&quot;my_block&quot;, new Block())  // 重复注册，报错！
+
+未注册方块：
+- 玩家无法获得（/give 命令无效）
+- 无法保存到存档
+- 网络无法同步</code></pre>
+<p><hr></p>
+<h2 id="2. 注册表 (Registry)">2. 注册表 (Registry)</h2>
+<h3>2.1 什么是注册表？</h3>
+<p>注册表就像一个巨大的字典，记录了所有游戏对象：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────┐
+│           注册表 (Registry)           │
+├─────────────────────────────────────┤
+│  物品注册表 (Registries.ITEM)        │
+│  ├── minecraft:diamond        → 钻石 │
+│  ├── minecraft:stick          → 木棍 │
+│  ├── mymod:magic_crystal     → 魔法水晶│
+│  └── ...                             │
+├─────────────────────────────────────┤
+│  方块注册表 (Registries.BLOCK)        │
+│  ├── minecraft:stone         → 石头 │
+│  ├── minecraft:diamond_block → 钻石块 │
+│  └── ...                             │
+└─────────────────────────────────────┘</code></pre>
+<h3>2.2 常用注册表</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.registry.Registries;
+
+// 物品注册表
+Registries.ITEM
+
+// 方块注册表
+Registries.BLOCK
+
+// 实体注册表
+Registries.ENTITY_TYPE
+
+// 音效注册表
+Registries.SOUND_EVENT
+
+// 粒子类型注册表
+Registries.PARTICLE_TYPE
+
+// 方块实体类型注册表
+Registries.BLOCK_ENTITY_TYPE</code></pre>
+<h3>2.3 理解 Identifier（标识符）</h3>
+<p>Identifier 就像是游戏对象的"门牌号"：</p>
+<pre class="code-block"><code class="language-text">Identifier = 命名空间 + 路径
+
+Identifier.of(&quot;mymod&quot;, &quot;magic_crystal&quot;)
+    │        │
+    │        └── 路径（物品名称）
+    │
+    └── 命名空间（通常是 Mod ID）
+    
+最终格式：mymod:magic_crystal</code></pre>
+<p><strong>命名空间规则</strong>：
+<ul><li>使用小写字母、数字、下划线</li>
+<li>通常是你的 Mod ID</li>
+<li>不能与其他 Mod 冲突</li></ul></p>
+<p><hr></p>
+<h2 id="3. 注册方块">3. 注册方块</h2>
+<h3>3.1 基本语法</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.block.Block;
+
+// 定义方块
+Block myBlock = new Block(Block.Settings.create().strength(3.0f));
+
+// 注册到方块注册表
+Registry.register(
+    Registries.BLOCK,           // 注册表
+    Identifier.of(&quot;mymod&quot;, &quot;my_block&quot;),  // ID
+    myBlock                     // 方块对象
+);</code></pre>
+<h3>3.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.block.Block;
+
+public class Blocks {
+    // 定义方块
+    public static final Block MAGIC_BLOCK = new Block(
+        Block.Settings.create()
+            .strength(3.0f)           // 硬度（挖掘时间）
+            .requiresTool()            // 需要工具才能挖掘
+    );
+
+    public static final Block GLOWING_BLOCK = new Block(
+        Block.Settings.create()
+            .strength(2.0f)
+            .luminance(state -&gt; 15)    // 发光等级（0-15）
+    );
+
+    public static void register() {
+        // 注册每个方块
+        registerBlock(&quot;magic_block&quot;, MAGIC_BLOCK);
+        registerBlock(&quot;glowing_block&quot;, GLOWING_BLOCK);
+    }
+
+    private static void registerBlock(String name, Block block) {
+        Registry.register(
+            Registries.BLOCK,
+            Identifier.of(Mymod.MOD_ID, name),
+            block
+        );
+    }
+}</code></pre>
+<h3>3.3 方块属性</h3>
+<pre class="code-block"><code class="language-java">Block.Settings.create()
+    .strength(3.0f)                    // 硬度和抗爆属性（可以用 .breakByTool() 设置）
+    .strength(3.0f, 6.0f)             // 第一个是硬度，第二个是爆炸抗性
+    .requiresTool()                     // 需要工具才能挖掘
+    .requiresTool(ToolType.PICKAXE)     // 需要特定工具
+    .breakByTool(ToolType.HAND, 0)     // 手可以破坏
+    .luminance(state -&gt; 15)           // 发光等级
+    .resistance(6.0f)                  // 爆炸抗性
+    .slipperiness(0.98f)               // 平滑度（冰是 0.98）
+    .velocityMultiplier(1.0f)           // 速度乘数
+    .jumpVelocityMultiplier(1.0f)      // 跳跃高度乘数
+    .air()                             // 是空气（透明）
+    .solid()                           // 是固体
+    .solidBlock((state, world, pos) -&gt; true)  // 自定义固体判断
+    .sounds(BlockSoundGroup.GRASS)    // 音效</code></pre>
+<p><hr></p>
+<h2 id="4. 注册物品">4. 注册物品</h2>
+<h3>4.1 基本语法</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.item.Item;
+
+// 定义物品
+Item myItem = new Item(new Item.Settings().maxCount(64));
+
+// 注册到物品注册表
+Registry.register(
+    Registries.ITEM,
+    Identifier.of(&quot;mymod&quot;, &quot;my_item&quot;),
+    myItem
+);</code></pre>
+<h3>4.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.item.Item;
+
+public class Items {
+    // 普通物品
+    public static final Item MAGIC_CRYSTAL = new Item(
+        new FabricItemSettings().maxCount(64)
+    );
+
+    // 不可堆叠物品
+    public static final Item TOOL = new Item(
+        new FabricItemSettings().maxCount(1)
+    );
+
+    // 食物
+    public static final Item MAGIC_FOOD = new Item(
+        new FabricItemSettings()
+            .maxCount(16)
+            .food(new FoodComponent.Builder()
+                .hunger(8)                    // 恢复 8 点饥饿值
+                .saturationModifier(10.0f)    // 饱和度
+                .meat()                       // 是肉类
+                .snack()                      // 是零食
+                .alwaysEdible()               // 总是可以吃（空腹时）
+                .statusEffect(
+                    new StatusEffectInstance(
+                        StatusEffects.SPEED,   // 给予速度效果
+                        600,                   // 持续 30 秒（600 ticks）
+                        0                      // 等级 0（第一级）
+                    ),
+                    1.0f                     // 概率 100%
+                )
+                .build()
+            )
+    );
+
+    public static void register() {
+        registerItem(&quot;magic_crystal&quot;, MAGIC_CRYSTAL);
+        registerItem(&quot;magic_tool&quot;, TOOL);
+        registerItem(&quot;magic_food&quot;, MAGIC_FOOD);
+    }
+
+    private static void registerItem(String name, Item item) {
+        Registry.register(
+            Registries.ITEM,
+            Identifier.of(Mymod.MOD_ID, name),
+            item
+        );
+    }
+}</code></pre>
+<h3>4.3 物品设置</h3>
+<pre class="code-block"><code class="language-java">new FabricItemSettings()
+    .maxCount(64)                     // 最大堆叠数
+    .maxCount(1)                     // 不可堆叠
+    .maxDamage(100)                  // 耐久度
+    .recipeRemainder(Items.STICK)    // 配方剩余物
+    .group(ItemGroup.MISC)           // 所属物品栏
+    .fireproof()                    // 防火
+    .enchantable(10)                 // 可附魔等级</code></pre>
+<p><hr></p>
+<h2 id="5. 注册实体">5. 注册实体</h2>
+<h3>5.1 基本语法</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.world.World;
+
+// 定义实体
+EntityType&lt;MyEntity&gt; myEntity = EntityType.Builder.create(
+    MyEntity::new,                  // 实体工厂方法
+    SpawnGroup.CREATURE             // 生成组
+)
+.dimensions(0.8f, 0.8f)            // 大小（宽, 高）
+.maximumNoDespawnDistance(64)      // 最大不消失距离
+.spawnMethod(SpawnGroup.Creature.SpawnCondition::canSpawn)  // 生成条件
+.build(&quot;my_entity&quot;);
+
+// 注册到实体注册表
+Registry.register(
+    Registries.ENTITY_TYPE,
+    Identifier.of(&quot;mymod&quot;, &quot;my_entity&quot;),
+    myEntity
+);</code></pre>
+<h3>5.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.entity.MagicSlime;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.Heightmap;
+
+public class Entities {
+    public static final EntityType&lt;MagicSlime&gt; MAGIC_SLIME = EntityType.Builder
+        .create(MagicSlime::new, SpawnGroup.CREATURE)
+        .dimensions(1.0f, 1.0f)                   // 碰撞箱大小
+        .maxTrackDistance(10.0f)                   // 最大追踪距离
+        .trackRangeBlocks(8)                       // 追踪范围
+        .spawnMethod(SpawnGroup.CREATURE.SpawnCondition::canSpawn)
+        .build(&quot;magic_slime&quot;);
+
+    public static void register() {
+        registerEntity(&quot;magic_slime&quot;, MAGIC_SLIME);
+    }
+
+    private static &lt;T extends net.minecraft.entity.Entity&gt; void registerEntity(String name, EntityType&lt;T&gt; entity) {
+        Registry.register(
+            Registries.ENTITY_TYPE,
+            Identifier.of(Mymod.MOD_ID, name),
+            entity
+        );
+    }
+}</code></pre>
+<h3>5.3 生成组</h3>
+<pre class="code-block"><code class="language-java">SpawnGroup.CREATURE       // 生物 - 动物、怪物
+SpawnGroup.MONSTER       // 怪物 - 僵尸、骷髅
+SpawnGroup.AMBIENT       // 环境生物 - 蝙蝠
+SpawnGroup.AQUATIC       // 水生生物 - 鱼、鱿鱼
+SpawnGroup.WATER_AMBIENT // 水环境 - 水母
+SpawnGroup.MISC         // 其他 - 掉落物、经验球</code></pre>
+<p><hr></p>
+<h2 id="6. 同时注册方块和物品">6. 同时注册方块和物品</h2>
+<h3>6.1 为什么要同时注册？</h3>
+<p>当创建一个"可以放置的方块"时，你需要：
+<ul><li>注册方块本身（用于放置）</li>
+<li>注册对应的物品形式（用于玩家拿取）</li></ul></p>
+<h3>6.2 推荐模式</h3>
+<pre class="code-block"><code class="language-java">public static void register() {
+    // 先注册方块
+    Registry.register(
+        Registries.BLOCK,
+        Identifier.of(MOD_ID, &quot;magic_block&quot;),
+        MAGIC_BLOCK
+    );
+
+    // 再注册对应的物品
+    Registry.register(
+        Registries.ITEM,
+        Identifier.of(MOD_ID, &quot;magic_block&quot;),
+        new BlockItem(MAGIC_BLOCK, new FabricItemSettings())
+    );
+}</code></pre>
+<h3>6.3 简化写法</h3>
+<pre class="code-block"><code class="language-java">public class Blocks {
+    public static final Block MAGIC_BLOCK = new Block(...);
+
+    // 方法一：手动注册两个
+    public static final Item MAGIC_BLOCK_ITEM = new BlockItem(MAGIC_BLOCK, settings);
+
+    // 方法二：用辅助方法
+    public static void registerAll() {
+        registerBlock(&quot;magic_block&quot;, MAGIC_BLOCK);
+    }
+
+    private static void registerBlock(String name, Block block) {
+        // 注册方块
+        Registry.register(Registries.BLOCK, id(name), block);
+        // 注册方块物品
+        Registry.register(Registries.ITEM, id(name), new BlockItem(block, new FabricItemSettings()));
+    }
+
+    private static Identifier id(String path) {
+        return Identifier.of(MOD_ID, path);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7. 常见问题">7. 常见问题</h2>
+<h3>Q1: 报错 "Registry already contains"？</h3>
+<p><strong>原因</strong>：尝试重复注册相同 ID 的内容。</p>
+<pre class="code-block"><code class="language-bash"># 错误示例：重复注册
+Registry.register(Registries.ITEM, id(&quot;my_item&quot;), item1);
+Registry.register(Registries.ITEM, id(&quot;my_item&quot;), item2);  // ❌ 会报错！</code></pre>
+<p><strong>解决</strong>：确保每个 ID 只注册一次。</p>
+<h3>Q2: 游戏里找不到物品？</h3>
+<p><strong>检查清单</strong>：
+<ul><li>✅ 是否调用了注册方法？</li>
+<li>✅ 物品 ID 是否正确？</li>
+<li>✅ 是否有对应的语言文件？</li>
+<li>✅ 是否在 Mod 入口类中调用了注册？</li></ul></p>
+<h3>Q3: 物品无法放置成方块？</h3>
+<p><strong>原因</strong>：只注册了物品，没有注册对应的方块。</p>
+<p><strong>解决</strong>：同时注册方块和 BlockItem。</p>
+<h3>Q4: 注册顺序重要吗？</h3>
+<p><strong>回答</strong>：大多数情况下不重要，但建议遵循：
+<ul><li>先注册方块</li>
+<li>再注册物品</li>
+<li>最后注册实体</li></ul></p>
+<p><hr></p>
+<h2 id="总结">总结</h2>
+<pre class="code-block"><code class="language-text">注册三要素：
+┌─────────────────────────────────────┐
+│ 1. 标识符 (Identifier)               │
+│    Identifier.of(&quot;modid&quot;, &quot;name&quot;)  │
+├─────────────────────────────────────┤
+│ 2. 注册表 (Registry)                 │
+│    Registries.ITEM                  │
+│    Registries.BLOCK                 │
+│    Registries.ENTITY_TYPE           │
+├─────────────────────────────────────┤
+│ 3. 注册方法                          │
+│    Registry.register(...)           │
+└─────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p>现在你学会了注册系统！接下来：
+<ul><li><a href="../part-2-blocks-items/01-creating-blocks.html">创建自定义方块</a> - 学习创建完整的方块</li>
+<li><a href="../part-2-blocks-items/03-creating-items.html">创建自定义物品</a> - 学习创建完整的物品</li></ul></p>
+<p><hr></p>
+<p><em>参考：<a href="../analysis/">注册系统分析</a></em> - 深入了解注册机制
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-event-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第三章：事件系统入门
+        </a><a href="01-creating-blocks.html" class="next">
+            第一章：创建自定义方块
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

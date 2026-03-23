@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>03 features - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-java-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Java 编程基础
+        </a>
+<a href="02-environment-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：开发环境搭建
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：Minecraft Mod 开发概念
+        </a>
+<a href="04-first-mod.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：创建你的第一个 Mod
+        </a>
+<a href="01-fabric-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Fabric 简介
+        </a>
+<a href="02-mod-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Mod 项目结构
+        </a>
+<a href="03-event-system.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：事件系统入门
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：注册系统
+        </a>
+<a href="01-creating-blocks.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：创建自定义方块
+        </a>
+<a href="03-creating-items.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义物品
+        </a>
+<a href="01-entity-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：实体基础
+        </a>
+<a href="01-biome-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：生物群系简介
+        </a>
+<a href="02-custom-biome.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义生物群系
+        </a>
+<a href="03-features.html" class="active">
+            <i class="fas fa-book"></i>
+            第三章：世界特征
+        </a>
+<a href="01-rendering-basics.html" class="">
+            <i class="fas fa-book"></i>
+            渲染基础
+        </a>
+<a href="02-custom-models.html" class="">
+            <i class="fas fa-book"></i>
+            自定义模型
+        </a>
+<a href="03-particles.html" class="">
+            <i class="fas fa-book"></i>
+            粒子效果
+        </a>
+<a href="01-networking-basics.html" class="">
+            <i class="fas fa-book"></i>
+            1. 网络基础
+        </a>
+<a href="02-custom-packets.html" class="">
+            <i class="fas fa-book"></i>
+            2. 自定义数据包
+        </a>
+<a href="03-commands.html" class="">
+            <i class="fas fa-book"></i>
+            3. 自定义命令
+        </a>
+<a href="01-transfer-api.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：传输 API 教程
+        </a>
+<a href="02-data-attachment.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：数据附件教程
+        </a>
+<a href="03-recipes.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：配方系统教程
+        </a>
+<a href="04-loot-tables.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：战利品表教程
+        </a>
+<a href="01-project-overview.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：项目概览 - 魔法水晶 mod
+        </a>
+<a href="02-magic-crystal.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：魔法水晶 - 完整实战
+        </a>
+<a href="03-magic-wand.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a>
+<a href="04-magic-creature.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：魔法生物 - 自定义实体与 AI
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>03 features</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    03 features
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第三章：世界特征</h1>
+<blockquote><p>世界特征是 Minecraft 世界的精髓，从地下埋藏的矿石到地面上的树木，都是由特征系统生成的。这一章将教你如何创建和添加各种世界特征。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-特征系统概述">特征系统概述</a></li>
+<li><a href="#2-配置特征-configuredfeature">配置特征 (ConfiguredFeature)</a></li>
+<li><a href="#3-放置特征-placedfeature">放置特征 (PlacedFeature)</a></li>
+<li><a href="#4-创建自定义矿石">创建自定义矿石</a></li>
+<li><a href="#5-创建自定义树木">创建自定义树木</a></li>
+<li><a href="#6-创建自定义草丛">创建自定义草丛</a></li>
+<li><a href="#7-添加到生物群系">添加到生物群系</a></li>
+<li><a href="#8-完整示例">完整示例</a></li></ul></p>
+<p><hr></p>
+<h2 id="1. 特征系统概述">1. 特征系统概述</h2>
+<h3>1.1 什么是特征</h3>
+<p>特征（Feature）是世界中生成的各种物体的统称：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              世界特征类型                             │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  矿石类                                             │
+│  ├── 煤矿、铁矿、金矿                                │
+│  ├── 铜矿、稀土矿、绿宝石矿                          │
+│  └── 需要: OreFeature, ScatterableFeature           │
+│                                                     │
+│  植被类                                             │
+│  ├── 橡树、白桦树、巨型蘑菇                          │
+│  ├── 草地、花丛、甘蔗                               │
+│  └── 需要: TreeFeature, FlowerFeature                │
+│                                                     │
+│  地形类                                             │
+│  ├── 巨石、珊瑚、沙漠水井                           │
+│  ├── 铁矿石、废弃矿井                              │
+│  └── 需要: HugeFungusFeature, GeodeFeature          │
+│                                                     │
+│  结构类                                             │
+│  ├── 村庄、沙漠水井、要塞                          │
+│  └── 需要: StructureFeature                        │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>1.2 特征的工作流程</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              特征生成流程                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  配置特征 (ConfiguredFeature)                       │
+│  ─────────────────────────────────────────────      │
+│  • 定义&quot;生成什么东西&quot;                                 │
+│  • 定义&quot;生成的具体参数&quot;                               │
+│  • 例如：铜矿石，每次生成 8-12 块                    │
+│                                                     │
+│           ↓ 注册到 ConfiguredFeature 注册表          │
+│                                                     │
+���  放置特征 (PlacedFeature)                          │
+│  ─────────────────────────────────────────────      │
+│  • 定义&quot;在哪里生成&quot;                                   │
+│  • 定义&quot;生成的高度范围&quot;                               │
+│  • 定义&quot;生成的尝试次数&quot;                              │
+│  • 例如：在 Y=0 到 16 之间，尝试 9 次               │
+│                                                     │
+│           ↓ 注册到 PlacedFeature 注册表             │
+│                                                     │
+│  生物群系 (Biome)                                   │
+│  ─────────────────────────────────────────────      │
+│  • 定义&quot;在哪些生物群系生成&quot;                           │
+│  • 定义&quot;在哪个阶段生成&quot;                              │
+│  • 例如：在平原的地下矿石层生成                      │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>1.3 生成阶段</h3>
+<p>特征在不同的生成阶段被放置：</p>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.biome.v1.GenerationStep;
+
+// 生成阶段（按执行顺序）
+GenerationStep.Feature.values():
+│
+├── SURFACE_STRUCTURES    // 地表结构（村庄、沙漠水井）
+├── UNDERGROUND_STRUCTURES // 地下结构（矿井、地牢）
+├── UNDERGROUND_ORES      // 地下矿石
+├── UNDERGROUND_DECORATION // 地下装饰（洞穴内）
+├── VEGETAL_DECORATION    // 植被装饰（树木、花草）
+├── TOP_LAYER_SURFACE     // 表层（雪、菌丝）
+└── FLUID_SURFACE         // 地表液体（熔岩、水）</code></pre>
+<p><hr></p>
+<h2 id="2. 配置特征 (ConfiguredFeature)">2. 配置特征 (ConfiguredFeature)</h2>
+<h3>2.1 什么是配置特征</h3>
+<p>配置特征定义了要生成什么以及如何生成：</p>
+<pre class="code-block"><code class="language-java">ConfiguredFeature&lt;OreFeature, Void&gt; myOre = new ConfiguredFeature&lt;&gt;(
+    Feature.ORE,  // 特征类型：矿石
+    new OreFeature.Config(
+        new BlockStateRuleTestProvider(Blocks.STONE.getDefaultState()), // 在石头中生成
+        Blocks.DIAMOND_ORE.getDefaultState(),  // 生成钻石矿石
+        8  // 每区块尝试生成 8 次
+    )
+);</code></pre>
+<h3>2.2 常用配置特征类型</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.world.gen.feature.*;
+
+// 矿石配置
+OreFeature.Config(
+    RuleTestProvider state,  // 什么方块中可以生成
+    BlockStateProvider block, // 生成什么方块
+    int count               // 每次生成多少块
+)
+
+// 散布特征配置（用于花、草等）
+ScatterableFeatureConfig(
+    BlockStateProvider block, // 要散布的方块
+    int count,               // 散布数量
+    int reach,               // 散布范围
+    int sparse              // 稀疏度（跳过数量）
+)
+
+// 树木配置
+TreeFeatureConfig(
+    BlockStateProvider trunk,     // 树干方块
+    BlockStateProvider leaves,   // 树叶方块
+    int baseHeight,              // 树干基础高度
+    int heightOffset,            // 高度偏移
+    List&lt;TreeDecorator&gt; decorators // 装饰器（果实、蜂窝等）
+)</code></pre>
+<h3>2.3 完整的配置特征示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.feature;
+
+import net.minecraft.block.Blocks;
+import net.minecraft.block.RuleTestProvider;
+import net.minecraft.state.rule.BlockStateRuleTestProvider;
+import net.minecraft.world.gen.feature.OreFeature;
+import net.minecraft.world.gen.feature.OreFeatureConfig;
+import net.minecraft.world.gen.feature.TreeFeature;
+import net.minecraft.world.gen.feature.TreeFeatureConfig;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.state provider.BlockProviders;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+
+public class ModConfiguredFeatures {
+    
+    // ========================================
+    // 矿石类
+    // ========================================
+    
+    // 自定义蓝宝石矿石
+    public static final ConfiguredFeature&lt;OreFeature, OreFeatureConfig&gt; SAPPHIRE_ORE = 
+        new ConfiguredFeature&lt;&gt;(
+            Feature.ORE,
+            new OreFeatureConfig(
+                new BlockStateRuleTestProvider(Blocks.STONE.getDefaultState()),  // 在石头中
+                Blocks.DIAMOND_ORE.getDefaultState(),  // 使用钻石矿石纹理（你也可以用自定义方块）
+                6  // 每次生成 6 块
+            )
+        );
+    
+    // ========================================
+    // 树木类
+    // ========================================
+    
+    // 水晶树
+    public static final ConfiguredFeature&lt;TreeFeature, TreeFeatureConfig&gt; CRYSTAL_TREE = 
+        new ConfiguredFeature&lt;&gt;(
+            Feature.TREE,
+            new TreeFeatureConfig.Builder(
+                BlockProviders.staticProvider(Blocks.CRYSTAL_LOG),        // 树干
+                BlockProviders.staticProvider(Blocks.CRYSTAL_LEAVES),     // 树叶
+                UniformIntProvider.create(4, 6),   // 高度 4-6
+                UniformIntProvider.create(0, 2),  // 变化 0-2
+                new LightTreeDecorator(           // 光源装饰器（使树叶发光）
+                    BlockProviders.staticProvider(Blocks.GLOWSTONE)
+                )
+            ).build()
+        );
+}</code></pre>
+<p><hr></p>
+<h2 id="3. 放置特征 (PlacedFeature)">3. 放置特征 (PlacedFeature)</h2>
+<h3>3.1 什么是放置特征</h3>
+<p>放置特征定义了特征在哪里生成：</p>
+<pre class="code-block"><code class="language-java">PlacedFeature myOrePlacement = new PlacedFeature(
+    RegistryKey.of(RegistryKeys.CONFIGURED_FEATURE, id),  // 引用配置特征
+    List.of(
+        // 放置修饰器（PlacementModifier）
+        HeightRangePlacementModifier.uniform(
+            UniformIntProvider.create(0, 16),  // Y 轴范围
+        ),
+        CountPlacementModifier.create(8),       // 尝试 8 次
+        RoundedRangePlacementModifier.create(   // 水平散布范围
+            UniformIntProvider.create(0, 6)
+        )
+    )
+);</code></pre>
+<h3>3.2 放置修饰器类型</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.world.gen.placementmodifier.*;
+
+// 数量修饰器
+CountPlacementModifier.create(10)           // 生成 10 次
+CountPlacementModifier.of(10, 20)           // 生成 10-20 次
+SquarePlacementModifier.create()             // 方形分布
+
+// 高度修饰器
+HeightRangePlacementModifier.uniform(
+    UniformIntProvider.create(0, 64)         // Y: 0-64
+)
+HeightRangePlacementModifier.trapezoid(
+    UniformIntProvider.create(8, 32)         // 梯形分布
+)
+HeightRangePlacementModifier.of(
+    IntProvider.Constant.of(10)              // 固定高度 Y=10
+)
+
+// 生物群系修饰器
+BiomePlacementModifier.create()             // 只在选择的生物群系生成
+
+// 随机散布修饰器
+RandomOffsetPlacementModifier.create(      // 随机偏移
+    IntProvider.Constant.of(0),
+    IntProvider.Constant.of(0)
+)
+
+// 层级修饰器（用于多层生成）
+DepthAveragePlacementModifier.create(      // 深度平均
+    IntProvider.Constant.of(10),            // 基础深度
+    IntProvider.Constant.of(4)               // 散布范围
+)</code></pre>
+<h3>3.3 放置特征示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.feature;
+
+import net.minecraft.world.gen.placementmodifier.*;
+import net.minecraft.world.gen.feature.PlacedFeature;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+
+public class ModPlacedFeatures {
+    
+    // 蓝宝石矿石放置配置
+    public static PlacedFeature SAPPHIRE_ORE = new PlacedFeature(
+        ModConfiguredFeatures.SAPPHIRE_ORE.getRegistryKey(),  // 引用配置特征
+        List.of(
+            // 方形分布
+            SquarePlacementModifier.create(),
+            // 高度范围：Y=0 到 16
+            HeightRangePlacementModifier.uniform(
+                UniformIntProvider.create(0, 16)
+            ),
+            // 每区块尝试生成 8 次
+            CountPlacementModifier.create(8)
+        )
+    );
+    
+    // 水晶树放置配置
+    public static PlacedFeature CRYSTAL_TREE = new PlacedFeature(
+        ModConfiguredFeatures.CRYSTAL_TREE.getRegistryKey(),
+        List.of(
+            SquarePlacementModifier.create(),
+            // 高度范围：Y=32 到 128
+            HeightRangePlacementModifier.uniform(
+                UniformIntProvider.create(32, 128)
+            ),
+            // 每区块尝试 5 次
+            CountPlacementModifier.of(5, 7),
+            // 在表面生成（不是地下）
+            SurfacePlacementModifier.create()
+        )
+    );
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 创建自定义矿石">4. 创建自定义矿石</h2>
+<h3>4.1 矿石的结构</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              矿石生成过程                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  1. 配置特征 (ConfiguredFeature)                    │
+│     • 在石头/深层石头/下界岩中生成                   │
+│     • 生成钻石矿石方块                              │
+│     • 每次生成 4-8 块                               ��
+│                                                     │
+│  2. 放置特征 (PlacedFeature)                        │
+│     • 高度范围：Y=0 到 16                           │
+│     • 每区块尝试生成 7 次                           │
+│     • 方形分布                                      │
+│                                                     │
+│  3. 注册                                            │
+│     • 注册到 ConfiguredFeature 注册表               │
+│     • 注册到 PlacedFeature 注册表                  │
+│     • 添加到生物群系                                 │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>4.2 代码实现</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.feature;
+
+import net.example.mymod.Mymod;
+import net.minecraft.block.Blocks;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.OreFeature;
+import net.minecraft.world.gen.feature.OreFeatureConfig;
+import net.minecraft.world.gen.feature.PlacedFeature;
+import net.minecraft.world.gen.placementmodifier.HeightRangePlacementModifier;
+import net.minecraft.world.gen.placementmodifier.CountPlacementModifier;
+import net.minecraft.world.gen.placementmodifier.SquarePlacementModifier;
+import net.minecraft.state.rule.BlockStateRuleTestProvider;
+import net.minecraft.state.provider.BlockProviders;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+
+import java.util.List;
+
+public class ModOres {
+    
+    // 注册键
+    public static final RegistryKey&lt;PlacedFeature&gt; SAPPHIRE_ORE = 
+        RegistryKey.of(
+            Registries.PLACED_FEATURE,
+            Identifier.of(Mymod.MOD_ID, &quot;sapphire_ore&quot;)
+        );
+    
+    public static ConfiguredFeature&lt;?, ?&gt; SAPPHIRE_ORE_CONFIGURED = 
+        new ConfiguredFeature&lt;&gt;(
+            Feature.ORE,
+            new OreFeatureConfig(
+                // 在石头中生成（也可以用 DeepslateRuleTestProvider 替代）
+                new BlockStateRuleTestProvider(Blocks.STONE.getDefaultState()),
+                // 生成钻石矿石（你需要创建自定义方块）
+                BlockProviders.staticProvider(Blocks.DIAMOND_ORE),
+                // 每次生成 6 块
+                6
+            )
+        );
+    
+    public static PlacedFeature SAPPHIRE_ORE_PLACED = new PlacedFeature(
+        RegistryKey.of(
+            Registries.CONFIGURED_FEATURE,
+            Identifier.of(Mymod.MOD_ID, &quot;sapphire_ore&quot;)
+        ),
+        List.of(
+            SquarePlacementModifier.create(),
+            HeightRangePlacementModifier.uniform(
+                UniformIntProvider.create(0, 16)  // Y=0 到 16
+            ),
+            CountPlacementModifier.create(7)      // 尝试 7 次
+        )
+    );
+}</code></pre>
+<h3>4.3 注册特征</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.feature.ModOres;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.SimpleRegistry;
+
+public class ModFeatureRegistry {
+    
+    public static void register() {
+        // 注册配置特征
+        var configuredRegistry = new SimpleRegistry&lt;&gt;(
+            RegistryKeys.CONFIGURED_FEATURE,
+            net.minecraft.util.Util.createEmpty()
+        );
+        
+        // 注意：在 Fabric 1.20+ 中，这会自动处理
+        // 你只需要在 onInitialize 中确保特征被引用
+        
+        Mymod.LOGGER.info(&quot;特征注册完成&quot;);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. 创建自定义树木">5. 创建自定义树木</h2>
+<h3>5.1 树木的组成</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              树木生成过程                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  树干 (Trunk)                                       │
+│  └── 从地面向上生成 4-6 格                          │
+│                                                     │
+│  树叶 (Leaves)                                      │
+│  └── 包裹树干顶部，形成树冠                          │
+│                                                     │
+│  装饰器 (Decorators)                                │
+│  ├── 果实装饰器：在树叶上附加苹果                   │
+│  ├── 蜂窝装饰器：在树叶上附加蜂窝                   │
+│  └── 位置装饰器：调整生成位置                        │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>5.2 简单树木配置</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.world.gen.feature.TreeFeatureConfig;
+import net.minecraft.state.provider.BlockProviders;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.world.gen.feature.LightTreeDecorator;
+import net.minecraft.world.gen.feature.SimpleBlockFeatureConfig;
+
+// 创建简单的橡树配置
+TreeFeatureConfig simpleTree = new TreeFeatureConfig.Builder(
+    // 树干：使用原木
+    BlockProviders.staticProvider(Blocks.OAK_LOG),
+    // 树叶：使用树叶
+    BlockProviders.staticProvider(Blocks.OAK_LEAVES),
+    // 高度：4 到 6 格
+    UniformIntProvider.create(4, 6),
+    // 高度偏移：0 到 2
+    UniformIntProvider.create(0, 2),
+    // 底部树叶装饰器
+    new LightTreeDecorator(
+        BlockProviders.staticProvider(Blocks.GLOWSTONE)
+    )
+).build();</code></pre>
+<h3>5.3 自定义树木示例</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.feature;
+
+import net.minecraft.block.Blocks;
+import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.gen.feature.*;
+import net.minecraft.world.gen.feature.TreeFeatureConfig;
+import net.minecraft.state.provider.BlockProviders;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.util.Identifier;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+
+public class ModTrees {
+    
+    // 水晶树 - 带发光效果的魔法树
+    public static final ConfiguredFeature&lt;TreeFeature, TreeFeatureConfig&gt; CRYSTAL_TREE = 
+        new ConfiguredFeature&lt;&gt;(
+            Feature.TREE,
+            new TreeFeatureConfig.Builder(
+                // 树干：使用紫色原木（你需要创建自定义方块）
+                BlockProviders.staticProvider(Blocks.PURPLE_WOOD),
+                // 树叶：使用发光树叶
+                BlockProviders.staticProvider(Blocks.OAK_LEAVES),  // 或者自定义发光树叶
+                // 高度 5-7 格
+                UniformIntProvider.create(5, 7),
+                // 高度偏移 0-2
+                UniformIntProvider.create(0, 2),
+                // 没有特殊装饰器
+                new LightTreeDecorator(
+                    BlockProviders.staticProvider(Blocks.GLOWSTONE)
+                )
+            )
+            .ignoreVines()  // 忽略藤蔓
+            .build()
+        );
+    
+    // 注册键
+    public static final RegistryKey&lt;PlacedFeature&gt; CRYSTAL_TREE_KEY = 
+        RegistryKey.of(
+            Registries.PLACED_FEATURE,
+            Identifier.of(&quot;mymod&quot;, &quot;crystal_tree&quot;)
+        );
+    
+    // 放置配置
+    public static final PlacedFeature CRYSTAL_TREE_PLACED = new PlacedFeature(
+        RegistryKey.of(
+            Registries.CONFIGURED_FEATURE,
+            Identifier.of(&quot;mymod&quot;, &quot;crystal_tree&quot;)
+        ),
+        List.of(
+            SquarePlacementModifier.create(),
+            HeightRangePlacementModifier.uniform(
+                UniformIntProvider.create(32, 96)  // Y: 32-96
+            ),
+            CountPlacementModifier.of(5, 7),       // 尝试 5-7 次
+            SurfacePlacementModifier.create()      // 在表面生成
+        )
+    );
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 创建自定义草丛">6. 创建自定义草丛</h2>
+<h3>6.1 散布特征</h3>
+<p>草丛、花朵等使用散布特征（Scatterable Feature）：</p>
+<pre class="code-block"><code class="language-java">import net.minecraft.world.gen.feature.ScatterableFeatureConfig;
+
+// 创建草丛配置
+ScatterableFeatureConfig grassConfig = new ScatterableFeatureConfig(
+    // 要散布的方块
+    BlockProviders.staticProvider(Blocks.GRASS),  // 或者自定义方块
+    // 散布数量
+    32,
+    // 散布范围
+    7,
+    // 稀疏度（越大越稀疏）
+    3
+);</code></pre>
+<h3>6.2 花朵配置</h3>
+<pre class="code-block"><code class="language-java">ConfiguredFeature&lt;ScatterableFeatureConfig, ScatterableFeature&gt; FLOWERS = 
+    new ConfiguredFeature&lt;&gt;(
+        Feature.FLOWER,
+        new ScatterableFeatureConfig(
+            BlockProviders.staticProvider(Blocks.DANDELION),
+            64,  // 数量
+            6,   // 范围
+            3    // 稀疏
+        )
+    );
+
+// 放置配置
+PlacedFeature FLOWER_PLACED = new PlacedFeature(
+    ConfiguredFeatureKey,
+    List.of(
+        SquarePlacementModifier.create(),
+        HeightRangePlacementModifier.of(
+            IntProvider.Constant.of(0)  // 从 Y=0 开始
+        ),
+        CountPlacementModifier.create(32),
+        SurfacePlacementModifier.create()  // 在表面
+    )
+);</code></pre>
+<p><hr></p>
+<h2 id="7. 添加到生物群系">7. 添加到生物群系</h2>
+<h3>7.1 使用 Fabric API 添加特征</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.world;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.GenerationStep;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.BiomeKeys;
+
+public class ModWorldGeneration {
+    
+    public static void addFeaturesToBiomes() {
+        // ========================================
+        // 添加矿石
+        // ========================================
+        
+        // 在所有主世界生物群系添加蓝宝石矿石
+        BiomeModifications.addFeature(
+            BiomeSelectors.foundInOverworld(),  // 主世界
+            GenerationStep.Feature.UNDERGROUND_ORES,  // 矿石阶段
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;sapphire_ore&quot;)
+            )
+        );
+        
+        // ========================================
+        // 添加树木
+        // ========================================
+        
+        // 只在森林添加水晶树
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.FOREST),
+            GenerationStep.Feature.VEGETAL_DECORATION,  // 植被阶段
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;crystal_tree&quot;)
+            )
+        );
+        
+        // ========================================
+        // 添加草丛
+        // ========================================
+        
+        // 在平原添加自定义草丛
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+            GenerationStep.Feature.VEGETAL_DECORATION,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;custom_grass&quot;)
+            )
+        );
+    }
+}</code></pre>
+<h3>7.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">private static void addMultipleFeatures() {
+    // 在所有生物群系添加基础矿石
+    for (var biomeKey : new RegistryKey[]{
+        BiomeKeys.PLAINS,
+        BiomeKeys.FOREST,
+        BiomeKeys.DESERT,
+        BiomeKeys.MOUNTAINS,
+        BiomeKeys.SWAMP
+    }) {
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(biomeKey),
+            GenerationStep.Feature.UNDERGROUND_ORES,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;sapphire_ore&quot;)
+            )
+        );
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8. 完整示例">8. 完整示例</h2>
+<h3>8.1 项目结构</h3>
+<pre class="code-block"><code class="language-text">src/main/java/net/example/mymod/
+├── Mymod.java
+├── feature/
+│   ├── ModOres.java              # 矿石特征
+│   ├── ModTrees.java             # 树木特征
+│   └── ModFlowers.java           # 花草特征
+└── world/
+    └── ModWorldGeneration.java   # 世界生成配置</code></pre>
+<h3>8.2 完整代码</h3>
+<p><strong>Mymod.java</strong>:</p>
+<pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.api.ModInitializer;
+import net.example.mymod.world.ModWorldGeneration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Mymod implements ModInitializer {
+    public static final String MOD_ID = &quot;mymod&quot;;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info(&quot;开始初始化 {}&quot;, MOD_ID);
+        
+        // 配置世界生成
+        ModWorldGeneration.addFeaturesToBiomes();
+        
+        LOGGER.info(&quot;{} 初始化完成&quot;, MOD_ID);
+    }
+}</code></pre>
+<p><strong>ModOres.java</strong> (简化版):</p>
+<pre class="code-block"><code class="language-java">package net.example.mymod.feature;
+
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.OreFeature;
+import net.minecraft.world.gen.feature.OreFeatureConfig;
+import net.minecraft.world.gen.feature.PlacedFeature;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.placementmodifier.*;
+import net.minecraft.state.rule.BlockStateRuleTestProvider;
+import net.minecraft.state.provider.BlockProviders;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.util.Identifier;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.block.Blocks;
+
+import java.util.List;
+
+public class ModOres {
+    
+    // 配置特征 - 蓝宝石矿石
+    public static final ConfiguredFeature&lt;OreFeature, OreFeatureConfig&gt; SAPPHIRE_ORE = 
+        new ConfiguredFeature&lt;&gt;(
+            Feature.ORE,
+            new OreFeatureConfig(
+                new BlockStateRuleTestProvider(Blocks.STONE.getDefaultState()),
+                BlockProviders.staticProvider(Blocks.DIAMOND_ORE),  // 用钻石矿石作为示例
+                6
+            )
+        );
+    
+    // 放置特征 - 蓝宝石矿石
+    public static final PlacedFeature SAPPHIRE_ORE_PLACED = new PlacedFeature(
+        RegistryKey.of(
+            Registries.CONFIGURED_FEATURE,
+            Identifier.of(&quot;mymod&quot;, &quot;sapphire_ore&quot;)
+        ),
+        List.of(
+            SquarePlacementModifier.create(),
+            HeightRangePlacementModifier.uniform(
+                UniformIntProvider.create(0, 16)
+            ),
+            CountPlacementModifier.create(7)
+        )
+    );
+}</code></pre>
+<p><strong>ModWorldGeneration.java</strong>:</p>
+<pre class="code-block"><code class="language-java">package net.example.mymod.world;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.GenerationStep;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.BiomeKeys;
+
+public class ModWorldGeneration {
+    
+    public static void addFeaturesToBiomes() {
+        // 在主世界添加蓝宝石矿石
+        BiomeModifications.addFeature(
+            BiomeSelectors.foundInOverworld(),
+            GenerationStep.Feature.UNDERGROUND_ORES,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;sapphire_ore&quot;)
+            )
+        );
+        
+        // 在平原添加额外树木
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+            GenerationStep.Feature.VEGETAL_DECORATION,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;extra_trees&quot;)
+            )
+        );
+        
+        // 在山地添加铁矿石
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.MOUNTAINS),
+            GenerationStep.Feature.UNDERGROUND_ORES,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;iron_ore_high&quot;)
+            )
+        );
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<p>在这一章中，你学会了：</p>
+<p><ul><li><strong>特征系统概述</strong> - 理解特征的工作流程</li>
+<li><strong>配置特征</strong> - 定义生成什么</li>
+<li><strong>放置特征</strong> - 定义在哪里生成</li>
+<li><strong>创建自定义矿石</strong> - 完整的矿石实现</li>
+<li><strong>创建自定义树木</strong> - 树木生成</li>
+<li><strong>创建自定义草丛</strong> - 花草生成</li>
+<li><strong>添加到生物群系</strong> - 使用 Fabric API</li></ul></p>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p>现在你已经学会了世界特征的所有基础知识！接下来可以学习：</p>
+<p><ul><li><a href="./02-custom-biome.html">第二章：创建自定义生物群系</a> - 创建完整的生物群系</li>
+<li><a href="./01-biome-intro.html">第一章：生物群系简介</a> - 回顾基础知识</li></ul></p>
+<p><hr></p>
+<blockquote><p><strong>常见问题</strong></p></blockquote>
+>
+<blockquote><p><strong>Q: 特征没有生成？</strong></p></blockquote>
+<blockquote><p>- 检查特征是否正确注册</p></blockquote>
+<blockquote><p>- 确认放置修饰器配置正确</p></blockquote>
+<blockquote><p>- 验证是否添加到正确的生物群系和生成阶段</p></blockquote>
+<blockquote><p>- 使用 <code>/reload</code> 重载并检查</p></blockquote>
+>
+<blockquote><p><strong>Q: 矿石生成太多/太少？</strong></p></blockquote>
+<blockquote><p>- 调整 <code>CountPlacementModifier</code> 的参数</p></blockquote>
+<blockquote><p>- 调整高度范围</p></blockquote>
+>
+<blockquote><p><strong>Q: 树木生成位置不对？</strong></p></blockquote>
+<blockquote><p>- 使用 <code>SurfacePlacementModifier</code> 确保在表面生成</p></blockquote>
+<blockquote><p>- 检查高度范围是否正确</p></blockquote>
+>
+<blockquote><p><strong>Q: 如何创建自定义方块作为特征？</strong></p></blockquote>
+<blockquote><p>- 先创建自定义方块</p></blockquote>
+<blockquote><p>- 在 <code>BlockProviders.staticProvider(yourBlock)</code> 中使用它</p></blockquote>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-custom-biome.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：创建自定义生物群系
+        </a><a href="01-rendering-basics.html" class="next">
+            渲染基础
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

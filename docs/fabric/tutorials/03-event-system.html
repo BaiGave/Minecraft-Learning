@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>03 event system - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-java-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Java 编程基础
+        </a>
+<a href="02-environment-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：开发环境搭建
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：Minecraft Mod 开发概念
+        </a>
+<a href="04-first-mod.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：创建你的第一个 Mod
+        </a>
+<a href="01-fabric-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Fabric 简介
+        </a>
+<a href="02-mod-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Mod 项目结构
+        </a>
+<a href="03-event-system.html" class="active">
+            <i class="fas fa-book"></i>
+            第三章：事件系统入门
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：注册系统
+        </a>
+<a href="01-creating-blocks.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：创建自定义方块
+        </a>
+<a href="03-creating-items.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义物品
+        </a>
+<a href="01-entity-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：实体基础
+        </a>
+<a href="01-biome-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：生物群系简介
+        </a>
+<a href="02-custom-biome.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义生物群系
+        </a>
+<a href="03-features.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：世界特征
+        </a>
+<a href="01-rendering-basics.html" class="">
+            <i class="fas fa-book"></i>
+            渲染基础
+        </a>
+<a href="02-custom-models.html" class="">
+            <i class="fas fa-book"></i>
+            自定义模型
+        </a>
+<a href="03-particles.html" class="">
+            <i class="fas fa-book"></i>
+            粒子效果
+        </a>
+<a href="01-networking-basics.html" class="">
+            <i class="fas fa-book"></i>
+            1. 网络基础
+        </a>
+<a href="02-custom-packets.html" class="">
+            <i class="fas fa-book"></i>
+            2. 自定义数据包
+        </a>
+<a href="03-commands.html" class="">
+            <i class="fas fa-book"></i>
+            3. 自定义命令
+        </a>
+<a href="01-transfer-api.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：传输 API 教程
+        </a>
+<a href="02-data-attachment.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：数据附件教程
+        </a>
+<a href="03-recipes.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：配方系统教程
+        </a>
+<a href="04-loot-tables.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：战利品表教程
+        </a>
+<a href="01-project-overview.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：项目概览 - 魔法水晶 mod
+        </a>
+<a href="02-magic-crystal.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：魔法水晶 - 完整实战
+        </a>
+<a href="03-magic-wand.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a>
+<a href="04-magic-creature.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：魔法生物 - 自定义实体与 AI
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>03 event system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    03 event system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第三章：事件系统入门</h1>
+<blockquote><p>事件系统是 Fabric 开发的核心概念之一。学会使用事件，你就能响应游戏中的各种情况。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-什么是事件">什么是事件？</a></li>
+<li><a href="#2-如何使用事件">如何使用事件？</a></li>
+<li><a href="#3-常用事件一览">常用事件一览</a></li>
+<li><a href="#4-事件处理示例">事件处理示例</a></li>
+<li><a href="#5-事件优先级">事件优先级</a></li>
+<li><a href="#6-自定义事件">自定义事件</a></li></ul></p>
+<p><hr></p>
+<h2 id="1. 什么是事件？">1. 什么是事件？</h2>
+<h3>1.1 现实中的事件</h3>
+<p>想象你在餐厅点餐：</p>
+<pre class="code-block"><code class="language-text">场景：你在餐厅
+
+事件                    你的反应
+─────────────────────────────────
+服务员端上菜     →    开始吃饭
+手机响了          →    接电话
+餐厅着火          →    逃跑
+
+在 Minecraft 中：
+事件                    你的代码响应
+─────────────────────────────────
+玩家加入游戏     →    显示欢迎消息
+方块被放置      →    触发特殊效果
+实体死亡        →    掉落物品</code></pre>
+<h3>1.2 事件的工作原理</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────┐
+│              Minecraft 游戏                   │
+│                                              │
+│    ┌─────────────────────────────────┐     │
+│    │     事件系统 (Event System)       │     │
+│    │                                   │     │
+│    │   Event A ──→ [ 监听器1 ]       │     │
+│    │   Event B ──→ [ 监听器1 ]       │     │
+│    │               [ 监听器2 ]       │     │
+│    │               [ 监听器3 ]       │     │
+│    └─────────────────────────────────┘     │
+└─────────────────────────────────────────────┘
+                        ↑
+                        │
+              ┌─────────┴─────────┐
+              │      你的代码       │
+              │  Event.register()  │
+              └───────────────────┘</code></pre>
+<h3>1.3 事件的三个部分</h3>
+<pre class="code-block"><code class="language-text">事件 = 事件源 + 事件类型 + 监听器
+
+┌─────────────────────────────────────┐
+│           事件 &quot;玩家加入&quot;            │
+├─────────────────────────────────────┤
+│  事件源   →  玩家对象 (who joined) │
+│  事件类型 →  PLAYER_JOIN            │
+│  监听器   →  你的代码 (显示欢迎)    │
+└─────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2. 如何使用事件？">2. 如何使用事件？</h2>
+<h3>2.1 基本模式</h3>
+<p>使用事件只需要三步：</p>
+<pre class="code-block"><code class="language-text">第一步：找到对应事件类
+第二步：获取事件
+第三步：注册监听器</code></pre>
+<h3>2.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+
+public class MyMod implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        // 监听玩家死亡事件
+        ServerPlayerEvents.AFTER_DEATH.register((player, source) -&gt; {
+            // 当玩家死亡时执行这里
+            player.getWorld().sendMessage(
+                Text.literal(player.getName().getString() + &quot; 死了！&quot;)
+            );
+        });
+    }
+}</code></pre>
+<h3>2.3 Lambda 表达式</h3>
+<p>上例中的 <code>(player, source) -> { ... }</code> 就是 Lambda 表达式，是事件监听器的简洁写法：</p>
+<pre class="code-block"><code class="language-java">ServerPlayerEvents.AFTER_DEATH.register(new ServerPlayerEvents.AfterDeath() {
+    @Override
+    public void afterDeath(ServerPlayerEntity player, DamageSource source) {
+        // 代码
+    }
+});
+
+// Lambda 简化写法
+ServerPlayerEvents.AFTER_DEATH.register((player, source) -&gt; {
+    // 代码
+});</code></pre>
+<h3>2.4 注册的时机</h3>
+<p><strong>重要</strong>：事件必须在 Mod 初始化时注册！</p>
+<pre class="code-block"><code class="language-java">public class MyMod implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        // ✅ 正确：在这里注册
+        ServerPlayerEvents.JOIN.register(...);
+
+        // ❌ 错误：不要在其他地方注册
+        // 比如在某个方法里动态注册可能会出问题
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="3. 常用事件一览">3. 常用事件一览</h2>
+<h3>3.1 实体相关事件 (fabric-entity-events-v1)</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.entity.event.v1.*;
+
+// 玩家事件
+ServerPlayerEvents.JOIN           // 玩家加入
+ServerPlayerEvents.LEAVE          // 玩家离开
+ServerPlayerEvents.COPY_FROM       // 玩家数据复制（重生时）
+ServerPlayerEvents.AFTER_RESPAWN   // 玩家重生后
+
+// 实体死亡
+ServerLivingEntityEvents.ALLOW_DEATH   // 允许死亡？（可取消）
+ServerLivingEntityEvents.AFTER_DEATH    // 死亡后
+ServerLivingEntityEvents.ALLOW_DAMAGE   // 允许伤害？（可取消）
+ServerLivingEntityEvents.AFTER_DAMAGE    // 伤害后</code></pre>
+<h3>3.2 生命周期事件 (fabric-lifecycle-events-v1)</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.lifecycle.v1.*;
+
+// 服务端生命周期
+ServerLifecycleEvents.SERVER_STARTING  // 服务端启动中
+ServerLifecycleEvents.SERVER_STARTED   // 服务端已启动
+ServerLifecycleEvents.SERVER_STOPPING  // 服务端关闭中
+ServerLifecycleEvents.SERVER_STOPPED   // 服务端已关闭
+
+// 刻事件
+ServerTickEvents.END_SERVER_TICK    // 服务端刻结束
+ServerTickEvents.START_SERVER_TICK  // 服务端刻开始
+ServerTickEvents.END_WORLD_TICK     // 世界刻结束
+
+// 区块事件
+ServerChunkEvents.CHUNK_LOAD       // 区块加载
+ServerChunkEvents.CHUNK_UNLOAD      // 区块卸载</code></pre>
+<h3>3.3 交互事件 (fabric-events-interaction-v0)</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.player.*;
+
+// 方块交互
+UseBlockCallback.EVENT        // 使用方块（右击）
+UseItemCallback.EVENT         // 使用物品
+AttackBlockCallback.EVENT     // 攻击方块
+PlayerBlockBreakEvents.BEFORE // 方块破坏前
+PlayerBlockBreakEvents.AFTER  // 方块破坏后</code></pre>
+<p><hr></p>
+<h2 id="4. 事件处理示例">4. 事件处理示例</h2>
+<h3>4.1 监听玩家加入</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    // 发送欢迎消息
+    player.sendMessage(Text.literal(&quot;欢迎来到服务器！&quot;), false);
+});</code></pre>
+<h3>4.2 监听玩家死亡</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+
+ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -&gt; {
+    // 检查是否是玩家
+    if (entity instanceof ServerPlayerEntity player) {
+        // 广播死亡消息
+        player.getServerWorld().getServer().getPlayerManager().broadcast(
+            Text.literal(player.getName().getString() + &quot; 被 &quot; +
+                (source.getAttacker() != null ?
+                    source.getAttacker().getName().getString() : &quot;未知&quot;) + &quot; 杀死了&quot;),
+            false
+        );
+    }
+});</code></pre>
+<h3>4.3 监听服务端启动</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+
+ServerLifecycleEvents.SERVER_STARTED.register(server -&gt; {
+    // 服务器启动完成后执行
+    LOGGER.info(&quot;服务器已启动！当前玩家数：&quot; + server.getCurrentPlayerCount());
+});
+
+ServerLifecycleEvents.SERVER_STOPPING.register(server -&gt; {
+    // 服务器即将关闭时执行
+    LOGGER.info(&quot;服务器正在关闭...&quot;);
+});</code></pre>
+<h3>4.4 监听方块放置</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+
+PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) -&gt; {
+    // 检查是否是管理员
+    if (player.hasPermissionLevel(2)) {
+        // 管理员破坏方块不掉落
+        return true;  // 返回 true 表示允许（不禁用默认行为）
+    }
+    return true;
+});
+
+PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, entity) -&gt; {
+    // 方块被破坏后执行
+    // 比如给玩家奖励
+    player.giveItemStack(new ItemStack(Items.DIAMOND));
+});</code></pre>
+<h3>4.5 每刻执行逻辑</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+
+ServerTickEvents.END_SERVER_TICK.register(server -&gt; {
+    // 每个服务端刻（20次/秒）执行一次
+    // 注意：这个方法会被频繁调用，不要在这里做耗时操作！
+});
+
+// 世界刻
+ServerTickEvents.END_WORLD_TICK.register(world -&gt; {
+    if (world.getDimensionKey() == RegistryKey.of(Registry.WORLD_KEY, new Identifier(&quot;my_dim&quot;))) {
+        // 只在特定维度执行
+    }
+});</code></pre>
+<p><hr></p>
+<h2 id="5. 事件优先级">5. 事件优先级</h2>
+<h3>5.1 什么是优先级？</h3>
+<p>当多个监听器监听同一个事件时，优先级决定执行顺序：</p>
+<pre class="code-block"><code class="language-text">优先级数字越小，越先执行：
+
+优先级 100 (先) ──→ 监听器 A
+优先级 200     ──→ 监听器 B
+优先级 300 (后) ──→ 监听器 C</code></pre>
+<h3>5.2 在 Fabric 中使用优先级</h3>
+<pre class="code-block"><code class="language-java">// 但可以注册多个监听器，它们会按注册顺序执行
+
+// 先注册
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    LOGGER.info(&quot;第一个监听器&quot;);
+});
+
+// 后注册
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    LOGGER.info(&quot;第二个监听器&quot;);
+});
+
+// 输出顺序：
+// 第一个监听器
+// 第二个监听器</code></pre>
+<p><hr></p>
+<h2 id="6. 自定义事件">6. 自定义事件</h2>
+<h3>6.1 为什么需要自定义事件？</h3>
+<p>当你想让其他 Mod 能响应你的 Mod 中的事情时：</p>
+<pre class="code-block"><code class="language-text">场景：
+├── 你的 Mod 创建了一个新物品
+├── 其他 Mod 想在这个物品被使用时做点什么
+│
+└── 解决方案：定义一个自定义事件</code></pre>
+<h3>6.2 定义自定义事件</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
+
+public class MyEvents {
+    // 定义事件
+    public static final Event&lt;MyItemUsed&gt; MY_ITEM_USED = EventFactory.createArrayBacked(
+        MyItemUsed.class,
+        (listeners) -&gt; (player, itemStack) -&gt; {
+            for (MyItemUsed listener : listeners) {
+                listener.onItemUsed(player, itemStack);
+            }
+        }
+    );
+
+    // 定义监听器接口
+    @FunctionalInterface
+    public interface MyItemUsed {
+        void onItemUsed(ServerPlayerEntity player, ItemStack itemStack);
+    }
+}</code></pre>
+<h3>6.3 触发自定义事件</h3>
+<pre class="code-block"><code class="language-java">public class MyItem implements Item {
+    @Override
+    public boolean use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient &amp;&amp; player instanceof ServerPlayerEntity serverPlayer) {
+            // 触发自定义事件
+            MyEvents.MY_ITEM_USED.invoker().onItemUsed(serverPlayer, player.getStackInHand(hand));
+        }
+        return super.use(world, player, hand);
+    }
+}</code></pre>
+<h3>6.4 其他 Mod 监听自定义事件</h3>
+<pre class="code-block"><code class="language-java">public class OtherMod implements ModInitializer {
+    @Override
+    public void onInitialize() {
+        // 监听你的自定义事件
+        MyEvents.MY_ITEM_USED.register((player, itemStack) -&gt; {
+            LOGGER.info(&quot;检测到玩家使用了物品！&quot;);
+        });
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="总结">总结</h2>
+<pre class="code-block"><code class="language-text">事件使用三步曲：
+
+1️⃣ 找到事件
+    ServerPlayerEvents.JOIN
+
+2️⃣ 获取事件对象
+    .register(...)
+
+3️⃣ 写监听器
+    (player) -&gt; { ... }
+
+常见坑：
+❌ 不要在监听器里做耗时操作
+❌ 事件注册要放在 Mod 初始化时
+❌ 注意服务端/客户端事件别用错</code></pre>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p>现在你学会了事件系统！接下来：
+<ul><li><a href="./04-registry-system.html">注册系统</a> - 学习如何注册游戏对象</li>
+<li><a href="../part-2-blocks-items/03-creating-items.html">创建自定义物品</a> - 用事件响应物品使用</li></ul></p>
+<p><hr></p>
+<p><em>参考：<a href="../analysis/05-entity-event-system.html">实体事件分析</a></em> - 查看更详细的事件 API 说明
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-mod-structure.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：Mod 项目结构
+        </a><a href="04-registry-system.html" class="next">
+            第四章：注册系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>01 creating blocks - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-java-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Java 编程基础
+        </a>
+<a href="02-environment-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：开发环境搭建
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：Minecraft Mod 开发概念
+        </a>
+<a href="04-first-mod.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：创建你的第一个 Mod
+        </a>
+<a href="01-fabric-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Fabric 简介
+        </a>
+<a href="02-mod-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Mod 项目结构
+        </a>
+<a href="03-event-system.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：事件系统入门
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：注册系统
+        </a>
+<a href="01-creating-blocks.html" class="active">
+            <i class="fas fa-book"></i>
+            第一章：创建自定义方块
+        </a>
+<a href="03-creating-items.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义物品
+        </a>
+<a href="01-entity-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：实体基础
+        </a>
+<a href="01-biome-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：生物群系简介
+        </a>
+<a href="02-custom-biome.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义生物群系
+        </a>
+<a href="03-features.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：世界特征
+        </a>
+<a href="01-rendering-basics.html" class="">
+            <i class="fas fa-book"></i>
+            渲染基础
+        </a>
+<a href="02-custom-models.html" class="">
+            <i class="fas fa-book"></i>
+            自定义模型
+        </a>
+<a href="03-particles.html" class="">
+            <i class="fas fa-book"></i>
+            粒子效果
+        </a>
+<a href="01-networking-basics.html" class="">
+            <i class="fas fa-book"></i>
+            1. 网络基础
+        </a>
+<a href="02-custom-packets.html" class="">
+            <i class="fas fa-book"></i>
+            2. 自定义数据包
+        </a>
+<a href="03-commands.html" class="">
+            <i class="fas fa-book"></i>
+            3. 自定义命令
+        </a>
+<a href="01-transfer-api.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：传输 API 教程
+        </a>
+<a href="02-data-attachment.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：数据附件教程
+        </a>
+<a href="03-recipes.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：配方系统教程
+        </a>
+<a href="04-loot-tables.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：战利品表教程
+        </a>
+<a href="01-project-overview.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：项目概览 - 魔法水晶 mod
+        </a>
+<a href="02-magic-crystal.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：魔法水晶 - 完整实战
+        </a>
+<a href="03-magic-wand.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a>
+<a href="04-magic-creature.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：魔法生物 - 自定义实体与 AI
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>01 creating blocks</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    01 creating blocks
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第一章：创建自定义方块</h1>
+<blockquote><p>这一章学习如何使用 Fabric 创建完整的自定义方块，包括纹理、模型和方块行为。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-方块基础">方块基础</a></li>
+<li><a href="#2-创建简单方块">创建简单方块</a></li>
+<li><a href="#3-添加纹理和模型">添加纹理和模型</a></li>
+<li><a href="#4-方块状态属性">方块状态属性</a></li>
+<li><a href="#5-方块交互">方块交互</a></li>
+<li><a href="#6-完整示例">完整示例</a></li></ul></p>
+<p><hr></p>
+<h2 id="1. 方块基础">1. 方块基础</h2>
+<h3>1.1 什么是方块？</h3>
+<p>方块是 Minecraft 世界的基本组成部分。Minecraft 中的方块不仅仅是"一块方形的物体"，它可以是：
+<ul><li>固体（可以碰撞）</li>
+<li>透明（光可以通过）</li>
+<li>液体（可以流动）</li>
+<li>植物（可以跨格子）</li>
+<li>实体方块（有特殊行为）</li></ul></p>
+<h3>1.2 方块的组成</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────┐
+│             方块 (Block)               │
+├─────────────────────────────────────┤
+│  基础属性                             │
+│  ├── 硬度（破坏时间）                  │
+│  ├── 抗爆性                          │
+│  ├── 音效                            │
+│  └── 发光等级                         │
+├─────────────────────────────────────┤
+│  渲染属性                             │
+│  ├── 纹理                            │
+│  ├── 模型                            │
+│  └── 透明度                          │
+├─────────────────────────────────────┤
+│  行为属性                             │
+│  ├── 是否固体                         │
+│  ├── 是否阻挡光照                      │
+│  ├── 碰撞箱                          │
+│  └── 交互行为                         │
+└─────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2. 创建简单方块">2. 创建简单方块</h2>
+<h3>2.1 定义方块</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+
+public class ModBlocks {
+    // 创建一个简单方块
+    public static final Block MAGIC_STONE = new Block(
+        Block.Settings.create()
+            .strength(3.0f)  // 硬度：3.0（石头是 1.5）
+            .resistance(6.0f)  // 抗爆性：6.0
+    );
+
+    public static void register() {
+        registerBlock(&quot;magic_stone&quot;, MAGIC_STONE);
+    }
+
+    private static void registerBlock(String name, Block block) {
+        Registry.register(
+            Registries.BLOCK,
+            Identifier.of(Mymod.MOD_ID, name),
+            block
+        );
+
+        // 同时注册对应的物品（这样玩家才能获得）
+        Registry.register(
+            Registries.ITEM,
+            Identifier.of(Mymod.MOD_ID, name),
+            new BlockItem(block, new net.fabricmc.fabric.api.item.v1.FabricItemSettings())
+        );
+    }
+}</code></pre>
+<h3>2.2 在 Mod 入口注册</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.api.ModInitializer;
+import net.example.mymod.init.ModBlocks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Mymod implements ModInitializer {
+    public static final String MOD_ID = &quot;mymod&quot;;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info(&quot;开始初始化 {}&quot;, MOD_ID);
+
+        // 注册方块
+        ModBlocks.register();
+
+        LOGGER.info(&quot;{} 初始化完成&quot;, MOD_ID);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="3. 添加纹理和模型">3. 添加纹理和模型</h2>
+<h3>3.1 创建纹理文件</h3>
+<p>在 <code>src/main/resources/assets/mymod/textures/block/</code> 下创建图片：</p>
+<pre class="code-block"><code class="language-text">resources/
+└── assets/
+    └── mymod/
+        └── textures/
+            └── block/
+                └── magic_stone.png    ← 创建 16x16 或 32x32 的图片</code></pre>
+<blockquote><p><strong>提示</strong>：如果你不会画图，可以先用一个简单的纯色图片代替。</p></blockquote>
+<h3>3.2 创建方块模型</h3>
+<p>创建 <code>resources/assets/mymod/models/block/magic_stone.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;parent&quot;: &quot;minecraft:block/cube_all&quot;,
+    &quot;textures&quot;: {
+        &quot;all&quot;: &quot;mymod:block/magic_stone&quot;
+    }
+}</code></pre>
+<p><strong>模型类型说明</strong>：</p>
+<table class="data-table"><thead><tr><th>模型类型</th><th>JSON parent</th><th>适用场景</th></tr></thead><tbody><tr><td><code>cube<em>all</code></td><td>6面相同纹理</td><td>大多数方块</td></tr><tr><td><code>cube</em>column</code></td><td>侧+顶底不同</td><td>原木、陶瓦</td></tr><tr><td><code>cube<em>north</code></td><td>6面完全不同</td><td>复杂方块</td></tr><tr><td><code>grass</em>block</code></td><td>特殊草地</td><td>草方块</td></tr></tbody></table>
+<h3>3.3 创建物品模型</h3>
+<p>创建 <code>resources/assets/mymod/models/item/magic_stone.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;parent&quot;: &quot;minecraft:block/magic_stone&quot;
+}</code></pre>
+<h3>3.4 添加语言文件</h3>
+<p>创建 <code>resources/assets/mymod/lang/en_us.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;block.mymod.magic_stone&quot;: &quot;Magic Stone&quot;
+}</code></pre>
+<p>可选：创建 <code>resources/assets/mymod/lang/zh_cn.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;block.mymod.magic_stone&quot;: &quot;魔法石头&quot;
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 方块状态属性">4. 方块状态属性</h2>
+<h3>4.1 常见属性设置</h3>
+<pre class="code-block"><code class="language-java">public static final Block EXAMPLE_BLOCK = new Block(
+    Block.Settings.create()
+        // 基础属性
+        .strength(3.0f)                    // 硬度
+        .strength(3.0f, 6.0f)             // 硬度和抗爆性
+
+        // 工具要求
+        .requiresTool()                     // 需要工具
+        .requiresTool(ToolType.PICKAXE)    // 需要镐子
+        .breakByTool(ToolType.HAND, -1)    // 手不能破坏
+
+        // 音效
+        .sounds(BlockSoundGroup.STONE)     // 石质音效
+        .sounds(BlockSoundGroup.WOOD)      // 木质音效
+        .sounds(BlockSoundGroup.METAL)     // 金属音效
+
+        // 发光和颜色
+        .luminance(state -&gt; 15)            // 发光等级（0-15）
+        .emissive(face, state)             // 自定义发光
+
+        // 物理属性
+        .slipperiness(0.98f)              // 平滑度（冰=0.98）
+        .velocityMultiplier(0.8f)           // 速度乘数
+        .jumpVelocityMultiplier(1.2f)        // 跳跃乘数
+
+        // 固体和碰撞
+        .solidBlock((state, world, pos) -&gt; true)   // 固体判定
+        .allowsSpawning((state, world, pos, entity) -&gt; false)  // 允许实体生成
+        .solid()                           // 是固体（默认）
+        .air()                             // 是空气（透明）
+
+        // 其他
+        .isSolid(Blocks::isSolid)          // 引用其他方块的固体判定
+        .mapColor(MapColor.WHITE)          // 地图颜色
+);</code></pre>
+<h3>4.2 完整示例</h3>
+<pre class="code-block"><code class="language-java">public static final Block GLOWING_BLOCK = new Block(
+    Block.Settings.create()
+        .strength(2.0f)
+        .luminance(state -&gt; 15)  // 最大亮度
+        .sounds(BlockSoundGroup.GLASS)
+);
+
+// 透明方块
+public static final Block GLASS_BLOCK = new Block(
+    Block.Settings.create()
+        .strength(1.5f)
+        .sounds(BlockSoundGroup.GLASS)
+        .nonOpaque()  // 非不透明
+);
+
+// 泥土类方块
+public static final Block MAGIC_DIRT = new Block(
+    Block.Settings.create()
+        .strength(0.5f)
+        .sounds(BlockSoundGroup.GRAVEL)
+);</code></pre>
+<p><hr></p>
+<h2 id="5. 方块交互">5. 方块交互</h2>
+<h3>5.1 创建可交互方块</h3>
+<p>要处理方块交互，需要创建一个扩展 <code>Block</code> 的类：</p>
+<pre class="code-block"><code class="language-java">package net.example.mymod.block;
+
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.world.World;
+
+public class MagicStoneBlock extends Block {
+    public MagicStoneBlock(Settings settings) {
+        super(settings);
+    }
+
+    // 当玩家右键点击方块时调用
+    @Override
+    public ActionResult onUse(
+            BlockState state,           // 方块当前状态
+            World world,               // 所在世界
+            BlockPos pos,              // 方块位置
+            PlayerEntity player,        // 点击的玩家
+            BlockHitResult hit         // 点击信息
+    ) {
+        if (world.isClient) {
+            // 客户端：只做视觉效果（如播放音效、显示粒子）
+            return ActionResult.SUCCESS;
+        }
+
+        // 服务端：处理实际逻辑
+        player.sendMessage(Text.literal(&quot;你点击了魔法石头！&quot;), false);
+
+        // 改变方块为钻石块
+        world.setBlockState(pos, Blocks.DIAMOND_BLOCK.getDefaultState());
+
+        return ActionResult.SUCCESS;
+    }
+}</code></pre>
+<h3>5.2 注册自定义方块类</h3>
+<pre class="code-block"><code class="language-java">public static final Block MAGIC_STONE = new MagicStoneBlock(
+    Block.Settings.create().strength(3.0f)
+);</code></pre>
+<h3>5.3 常用方块方法</h3>
+<pre class="code-block"><code class="language-java">public class CustomBlock extends Block {
+
+    @Override
+    public ActionResult onUse(BlockState state, World world, BlockPos pos,
+                             PlayerEntity player, Hand hand,
+                             BlockHitResult hit) {
+        // 右键点击
+        return ActionResult.SUCCESS;  // 或 PASS（让其他代码处理）
+    }
+
+    @Override
+    public void onBreak(World world, BlockPos pos, BlockState state,
+                        PlayerEntity player) {
+        // 方块被破坏时
+        // 可以在这里添加额外掉落
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state,
+                        LivingEntity placer, ItemStack itemStack) {
+        // 方块被放置时
+    }
+
+    @Override
+    public boolean hasSidedTransparency(BlockState state) {
+        // 是否有面朝向透明
+        return true;
+    }
+
+    @Override
+    public float getHardness() {
+        // 自定义硬度
+        return 3.0f;
+    }
+
+    @Override
+    public float getBlastResistance() {
+        // 自定义抗爆性
+        return 6.0f;
+    }
+
+    @Override
+    public int getLuminance(BlockState state) {
+        // 自定义发光等级
+        return 15;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 完整示例">6. 完整示例</h2>
+<h3>6.1 方块类</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.block;
+
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.world.World;
+
+public class ClickableBlock extends Block {
+
+    public ClickableBlock(Settings settings) {
+        super(settings);
+    }
+
+    @Override
+    public ActionResult onUse(
+            BlockState state,
+            World world,
+            BlockPos pos,
+            PlayerEntity player,
+            Hand hand,
+            BlockHitResult hit) {
+
+        if (world.isClient) {
+            return ActionResult.SUCCESS;
+        }
+
+        // 获取点击次数（存储在方块实体中会更好，这里简化处理）
+        int clicks = 0;
+        String message;
+
+        if (player.isSneaking()) {
+            // 潜行+右键：减少计数
+            clicks = Math.max(0, clicks - 1);
+            message = &quot;计数减少！当前: &quot; + clicks;
+        } else {
+            // 普通右键：增加计数
+            clicks++;
+            message = &quot;计数增加！当前: &quot; + clicks;
+        }
+
+        player.sendMessage(Text.literal(message), false);
+
+        return ActionResult.SUCCESS;
+    }
+}</code></pre>
+<h3>6.2 注册</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.block.ClickableBlock;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.block.Block;
+import net.minecraft.item.BlockItem;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+
+public class ModBlocks {
+
+    public static final Block CLICKABLE_BLOCK = new ClickableBlock(
+        Block.Settings.create()
+            .strength(3.0f)
+            .sounds(BlockSoundGroup.STONE)
+    );
+
+    public static void register() {
+        registerBlock(&quot;clickable_block&quot;, CLICKABLE_BLOCK);
+    }
+
+    private static void registerBlock(String name, Block block) {
+        Identifier id = Identifier.of(Mymod.MOD_ID, name);
+
+        // 注册方块
+        Registry.register(Registries.BLOCK, id, block);
+
+        // 注册方块物品
+        Registry.register(
+            Registries.ITEM,
+            id,
+            new BlockItem(block, new FabricItemSettings())
+        );
+    }
+}</code></pre>
+<h3>6.3 资源文件结构</h3>
+<pre class="code-block"><code class="language-text">src/main/resources/
+└── assets/
+    └── mymod/
+        ├── lang/
+        │   ├── en_us.json
+        │   └── zh_cn.json
+        ├── models/
+        │   ├── block/
+        │   │   └── clickable_block.json
+        │   └── item/
+        │       └── clickable_block.json
+        └── textures/
+            └── block/
+                └── clickable_block.png</code></pre>
+<h3>6.4 模型文件</h3>
+<p><strong>方块模型</strong> <code>models/block/clickable_block.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;parent&quot;: &quot;minecraft:block/cube_all&quot;,
+    &quot;textures&quot;: {
+        &quot;all&quot;: &quot;mymod:block/clickable_block&quot;
+    }
+}</code></pre>
+<p><strong>物品模型</strong> <code>models/item/clickable_block.json</code>：</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;parent&quot;: &quot;minecraft:block/clickable_block&quot;
+}</code></pre>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p>现在你已经学会了创建自定义方块！接下来可以学习：
+<ul><li><a href="./02-block-entity.html">方块实体</a> - 学习存储数据的高级方块</li>
+<li><a href="./03-creating-items.html">创建自定义物品</a> - 创建更多物品类型</li></ul></p>
+<p><hr></p>
+<p><em>参考：<a href="../../analysis/02-block-system.html">方块系统分析</a></em> - 查看更多方块 API 详情
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-registry-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第四章：注册系统
+        </a><a href="03-creating-items.html" class="next">
+            第二章：创建自定义物品
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

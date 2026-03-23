@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>01 biome intro - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 主题样式 */
+        .docs-nav { background: #4A90D9; }
+        .docs-nav .nav-logo { color: white; }
+        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
+        .docs-nav .nav-links a:hover,
+        .docs-nav .nav-links a.active { color: white; }
+        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
+        .sidebar-header h3 { color: white; }
+        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
+        .sidebar-nav a { color: rgba(255,255,255,0.85); }
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
+        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb i.fa-chevron-right {
+            color: #ccc;
+            font-size: 0.65rem;
+            opacity: 0.65;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
+        .info-box i { color: #4A90D9; }
+        .info-table td:first-child { font-weight: 600; color: #666; }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
+        .docs-body h2 i { color: #4A90D9; }
+        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
+        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .docs-nav .dropdown-content {
+            z-index: 1001;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .docs-nav .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .docs-nav .dropdown-content a:hover {
+            background: var(--gray-light);
+            color: #4A90D9;
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <h3>Fabric 模组</h3>
+                <span class="doc-badge">教程</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-java-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Java 编程基础
+        </a>
+<a href="02-environment-setup.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：开发环境搭建
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：Minecraft Mod 开发概念
+        </a>
+<a href="04-first-mod.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：创建你的第一个 Mod
+        </a>
+<a href="01-fabric-intro.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：Fabric 简介
+        </a>
+<a href="02-mod-structure.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：Mod 项目结构
+        </a>
+<a href="03-event-system.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：事件系统入门
+        </a>
+<a href="04-registry-system.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：注册系统
+        </a>
+<a href="01-creating-blocks.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：创建自定义方块
+        </a>
+<a href="03-creating-items.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义物品
+        </a>
+<a href="01-entity-basics.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：实体基础
+        </a>
+<a href="01-biome-intro.html" class="active">
+            <i class="fas fa-book"></i>
+            第一章：生物群系简介
+        </a>
+<a href="02-custom-biome.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：创建自定义生物群系
+        </a>
+<a href="03-features.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：世界特征
+        </a>
+<a href="01-rendering-basics.html" class="">
+            <i class="fas fa-book"></i>
+            渲染基础
+        </a>
+<a href="02-custom-models.html" class="">
+            <i class="fas fa-book"></i>
+            自定义模型
+        </a>
+<a href="03-particles.html" class="">
+            <i class="fas fa-book"></i>
+            粒子效果
+        </a>
+<a href="01-networking-basics.html" class="">
+            <i class="fas fa-book"></i>
+            1. 网络基础
+        </a>
+<a href="02-custom-packets.html" class="">
+            <i class="fas fa-book"></i>
+            2. 自定义数据包
+        </a>
+<a href="03-commands.html" class="">
+            <i class="fas fa-book"></i>
+            3. 自定义命令
+        </a>
+<a href="01-transfer-api.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：传输 API 教程
+        </a>
+<a href="02-data-attachment.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：数据附件教程
+        </a>
+<a href="03-recipes.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：配方系统教程
+        </a>
+<a href="04-loot-tables.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：战利品表教程
+        </a>
+<a href="01-project-overview.html" class="">
+            <i class="fas fa-book"></i>
+            第一章：项目概览 - 魔法水晶 mod
+        </a>
+<a href="02-magic-crystal.html" class="">
+            <i class="fas fa-book"></i>
+            第二章：魔法水晶 - 完整实战
+        </a>
+<a href="03-magic-wand.html" class="">
+            <i class="fas fa-book"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a>
+<a href="04-magic-creature.html" class="">
+            <i class="fas fa-book"></i>
+            第四章：魔法生物 - 自定义实体与 AI
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>01 biome intro</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    01 biome intro
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第一章：生物群系简介</h1>
+<blockquote><p>生物群系是 Minecraft 世界的基本地形单位，理解生物群系是制作优秀 mod 的基础。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-什么是生物群系">什么是生物群系</a></li>
+<li><a href="#2-生物群系的组成">生物群系的组成</a></li>
+<li><a href="#3-如何使用-fabric-api-修改生物群系">如何使用 Fabric API 修改生物群系</a></li>
+<li><a href="#4-生物群系选择器">生物群系选择器</a></li>
+<li><a href="#5-修改阶段">修改阶段</a></li>
+<li><a href="#6-实战修改现有生物群系">实战：修改现有生物群系</a></li></ul></p>
+<p><hr></p>
+<h2 id="1. 什么是生物群系">1. 什么是生物群系</h2>
+<h3>1.1 简单理解</h3>
+<p>想象一下，Minecraft 的世界是由许多不同的"气候区"组成的。每个气候区有自己独特的：
+<ul><li>地形高度和形状</li>
+<li>地面上的方块（草地、泥土、沙子等）</li>
+<li>植被（树木、花草）</li>
+<li>天气特征（温度、湿度、降雨）</li>
+<li>生长的动物和怪物</li></ul></p>
+<p>这些气候区就叫做<strong>生物群系（Biome）</strong>。</p>
+<h3>1.2 常见的生物群系</h3>
+<p>在主世界（Overworld）中，你可以找到：</p>
+<table class="data-table"><thead><tr><th>生物群系</th><th>描述</th><th>典型特征</th></tr></thead><tbody><tr><td>平原（Plains）</td><td>平坦的绿色草地</td><td>牛、猪、羊</td></tr><tr><td>森林（Forest）</td><td>茂密的树林</td><td>狼、狐狸、蘑菇</td></tr><tr><td>沙漠（Desert）</td><td>干旱的沙丘</td><td>仙人掌、骷髅</td></tr><tr><td>山脉（Mountains）</td><td>高耸的山峰</td><td>goats、山羊</td></tr><tr><td>雪原（Snowy Plains）</td><td>冰雪覆盖</td><td>雪兔、流浪者</td></tr><tr><td>丛林（Jungle）</td><td>密集的热带雨林</td><td>豹猫、鹦鹉</td></tr><tr><td>沼泽（Swamp）</td><td>阴暗的湿地</td><td>史莱姆、女巫</td></tr></tbody></table>
+<h3>1.3 生物群系在哪里生效</h3>
+<p>Minecraft 有三个维度，每个维度都有不同的生物群系：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────┐
+│              Minecraft 世界                   │
+├─────────────────────────────────────────────┤
+│  主世界（Overworld）  - 草原、森林、沙漠...   │
+│         ↓ 生成在这里 ↓                       │
+│                                             │
+│  下界（Nether）      - 地狱、灵魂沙 valley... │
+│         ↓ 生成在这里 ↓                       │
+│                                             │
+│  末地（The End）    - 末地岛、空虚维度...    │
+└────────────────────��────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2. 生物群系的组成">2. 生物群系的组成</h2>
+<p>每个生物群系都由多个部分组成：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────┐
+│             生物群系 (Biome)                  │
+├─────────────────────────────────────────────┤
+│  气候属性                                    │
+│  ├── 温度 (Temperature)                      │
+│  ├── 湿度 (Humidity/Downfall)                │
+│  └── 降雪 (DoesNotSnow)                     │
+├─────────────────────────────────────────────┤
+│  地形特征                                    │
+│  ├── 地面方块 (Surface/Top Block)            │
+│  ├── 地下方块 (Underground)                  │
+│  └── 地形形状 (Terrain/Noise)                │
+├─────────────────────────────────────────────┤
+│  生成内容                                    │
+│  ├── 矿石 (Ores)                            │
+│  ├── 树木 (Trees)                           │
+│  ├── 草丛/花朵 (Vegetation)                 │
+│  ├─�� 结构 (Structures)                      │
+│  └── 实体 (Entities - 动物/怪物)            │
+├─────────────────────────────────────────────┤
+│  视觉效果                                    │
+│  ├── 天空颜色 (Sky Color)                    │
+│  ├── 雾效 (Fog)                             │
+│  ├── 音乐 (Ambient Sound)                   │
+│  └── 粒子 (Particles)                       │
+└─────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="3. 如何使用 Fabric API 修改生物群系">3. 如何使用 Fabric API 修改生物群系</h2>
+<p>Fabric 提供了一个强大的 <code>fabric-biome-api-v1</code> 模块，让你可以轻松修改和添加生物群系。</p>
+<h3>3.1 引入依赖</h3>
+<p>在你的 <code>build.gradle</code> 中添加：</p>
+<pre class="code-block"><code class="language-groovy">dependencies {
+    // 添加生物群系 API
+    modImplementation &quot;net.fabricmc.fabric-api:fabric-biome-api-v1&quot;
+}</code></pre>
+<h3>3.2 核心 API 概览</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
+
+// 添加特征（矿石、树木等）
+BiomeModifications.addFeature(
+    生物群系选择器,      // 在哪些生物群系中添加
+    生成步骤,           // 何时生成
+    特征ID              // 添加什么
+);
+
+// 添加实体生成
+BiomeModifications.addSpawn(
+    生物群系选择器,      // 在哪些生物群系中添加
+    生成组,             // 怪物/动物/经验等
+    实体类型,           // 添加什么生物
+    权重,               // 出现的几率
+    最小数量,           // 最少生成多少
+    最多数量            // 最多生成多少
+);</code></pre>
+<p><hr></p>
+<h2 id="4. 生物群系选择器">4. 生物群系选择器</h2>
+<p>选择器决定你的修改在哪些生物群系中生效。</p>
+<h3>4.1 基础选择器</h3>
+<pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+
+// 选择所有生物群系
+BiomeSelectors.all()
+
+// 选择原版生物群系（不包括模组添加的）
+BiomeSelectors.vanilla()
+
+// 选择主世界的生物群系
+BiomeSelectors.foundInOverworld()
+
+// 选择下界的生物群系
+BiomeSelectors.foundInTheNether()
+
+// 选择末地的生物群系
+BiomeSelectors.foundInTheEnd()</code></pre>
+<h3>4.2 高级选择器</h3>
+<pre class="code-block"><code class="language-java">import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.world.biome.BiomeKeys;
+
+// 选择特定的生物群系
+BiomeSelectors.includeByKey(
+    Set.of(
+        BiomeKeys.PLAINS,        // 平原
+        BiomeKeys.FOREST         // 森林
+    )
+);
+
+// 排除特定的生物群系
+BiomeSelectors.excludeByKey(
+    Set.of(
+        BiomeKeys.DESERT         // 不修改沙漠
+    )
+);
+
+// 根据标签选择（需要了解生物群系的标签系统）
+BiomeSelectors.tag(TagKey.of(RegistryKeys.BIOME, Identifier.of(&quot;minecraft&quot;, &quot;is_forest&quot;)))</code></pre>
+<h3>4.3 组合选择器</h3>
+<p>你可以通过 Java 的 <code>Predicate</code> 来组合更复杂的选择条件：</p>
+<pre class="code-block"><code class="language-java">Predicate&lt;BiomeSelectionContext&gt; customSelector = 
+    BiomeSelectors.foundInOverworld().and(
+        context -&gt; context.getTemperature() &gt; 0.5  // 温度大于 0.5
+    );
+
+// 使用 or 组合
+Predicate&lt;BiomeSelectionContext&gt; warmBiomes = 
+    BiomeSelectors.includeByKey(Set.of(BiomeKeys.DESERT, BiomeKeys.SAVANNA))
+    .or(BiomeSelectors.includeByKey(Set.of(BiomeKeys.PLAINS)));</code></pre>
+<p><hr></p>
+<h2 id="5. 修改阶段">5. 修改阶段</h2>
+<p>生物群系的修改按照阶段顺序执行：</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              修改阶段顺序                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  阶段 1: ADDITIONS (添加)                           │
+│  ─────────────────────────────────────────────      │
+│  • 添加矿石                                        │
+│  • 添加树木                                        │
+│  • 添加植被                                        │
+│  • 添加新结构                                      │
+│                                                     │
+│  阶段 2: REMOVALS (移除)                           │
+│  ─────────────────────────────────────────────      │
+│  • 移除不需要的生成物                               │
+│  • 移除特定实体                                     │
+│                                                     │
+│  阶段 3: REPLACEMENTS (替换)                       │
+│  ─────────────────────────────────────────────      │
+│  • 替换现有特征                                     │
+│  • 修改生成规则                                     │
+│                                                     │
+│  阶段 4: POST_PROCESSING (后处理)                   │
+│  ─────────────────────────────────────────────      │
+│  • 全局修改                                         │
+│  • 应用最终效果                                     │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+<h3>5.1 使用阶段</h3>
+<pre class="code-block"><code class="language-java">BiomeModification myModification = BiomeModifications.create(
+    Identifier.of(&quot;mymod&quot;, &quot;my_biome_change&quot;)
+);
+
+// 在添加阶段添加矿石
+myModification.add(
+    ModificationPhase.ADDITIONS,
+    BiomeSelectors.foundInOverworld(),
+    context -&gt; {
+        // 这里可以进一步筛选
+        // 但通常在 addFeature 中指定更方便
+    }
+);
+
+// 在后处理阶段修改天空颜色
+myModification.add(
+    ModificationPhase.POST_PROCESSING,
+    BiomeSelectors.foundInOverworld(),
+    context -&gt; {
+        context.getEffects().setSkyColor(0x87CEEB);  // 蓝色天空
+    }
+);</code></pre>
+<p><hr></p>
+<h2 id="6. 实战：修改现有生物群系">6. 实战：修改现有生物群系</h2>
+<p>让我们创建一个简单的例子：修改所有主世界生物群系，使其天空变成粉红色！</p>
+<h3>6.1 创建 Mod 入口类</h3>
+<pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
+import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Mymod implements ModInitializer {
+    public static final String MOD_ID = &quot;mymod&quot;;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info(&quot;开始初始化 {}&quot;, MOD_ID);
+
+        // 修改生物群系
+        modifyBiomes();
+
+        LOGGER.info(&quot;{} 初始化完成&quot;, MOD_ID);
+    }
+
+    private void modifyBiomes() {
+        // 创建一个自定义修改器
+        BiomeModifications.create(Identifier.of(MOD_ID, &quot;pink_sky&quot;))
+            .add(
+                ModificationPhase.POST_PROCESSING,
+                // 只修改主世界的生物群系
+                BiomeSelectors.foundInOverworld(),
+                context -&gt; {
+                    // 获取当前生物群系的效果
+                    var effects = context.getEffects();
+                    
+                    // 设置天空颜色为粉红色 (0xFF69B4 = RGB(255, 105, 180))
+                    effects.setSkyColor(0xFF69B4);
+                }
+            );
+    }
+}</code></pre>
+<h3>6.2 运行效果</h3>
+<p>当你进入任何主世界生物群系时，天空都会变成粉红色！</p>
+<h3>6.3 更多修改示例</h3>
+<pre class="code-block"><code class="language-java">private void modifyBiomes() {
+    // 示例 1：修改草原的温度，使其变成寒冷的草原
+    BiomeModifications.create(Identifier.of(MOD_ID, &quot;cold_plains&quot;))
+        .add(
+            ModificationPhase.ADDITIONS,
+            BiomeSelectors.includeByKey(Set.of(BiomeKeys.PLAINS)),
+            context -&gt; {
+                var weather = context.getWeather();
+                weather.setTemperature(0.2f);   // 设置为低温
+                weather.setDownfall(0.3f);       // 较少降雨
+            }
+        );
+
+    // 示例 2：移除森林中的狼
+    BiomeModifications.create(Identifier.of(MOD_ID, &quot;no_wolves&quot;))
+        .add(
+            ModificationPhase.REMOVALS,
+            BiomeSelectors.includeByKey(Set.of(BiomeKeys.FOREST)),
+            context -&gt; {
+                // 这里需要使用更底层的 API 来移除实体
+                // 详细见下一章
+            }
+        );
+}</code></pre>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<p>在这一章中，你学会了：</p>
+<p><ul><li><strong>什么是生物群系</strong> - Minecraft 世界的基本地形单位</li>
+<li><strong>生物群系的组成</strong> - 气候、地形、生成内容、视觉效果</li>
+<li><strong>Fabric API 基础</strong> - 如何使用 BiomeModifications</li>
+<li><strong>选择器</strong> - 如何选择要修改的生物群系</li>
+<li><strong>修改阶段</strong> - 修改的执行顺序</li>
+<li><strong>实战</strong> - 修改生物群系的示例</li></ul></p>
+<p><hr></p>
+<h2 id="下一步">下一步</h2>
+<p>现在你已经了解了生物群系的基础知识，接下来可以学习：</p>
+<p><ul><li><a href="./02-custom-biome.html">第二章：创建自定义生物群系</a> - 创建你自己的全新生物群系</li>
+<li><a href="./03-features.html">第三章：世界特征</a> - 添加矿石、树木等世界特征</li></ul></p>
+<p><hr></p>
+<blockquote><p><strong>提示</strong>：如果你在运行时遇到问题，检查控制台是否有错误信息。常见问题包括：</p></blockquote>
+<blockquote><p>- 忘记在 <code>build.gradle</code> 中添加 <code>fabric-biome-api-v1</code> 依赖</p></blockquote>
+<blockquote><p>- 使用了错误的生物群系 ID</p></blockquote>
+<blockquote><p>- 选择器条件过于严格导致没有匹配到任何生物群系</p></blockquote>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-entity-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第一章：实体基础
+        </a><a href="02-custom-biome.html" class="next">
+            第二章：创建自定义生物群系
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>

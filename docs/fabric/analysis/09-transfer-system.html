@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <title>03 item recipe system - Fabric 模组</title>
+    <title>09 transfer system - Fabric 模组</title>
     <link rel="stylesheet" href="../../../styles/main.css">
     <link rel="stylesheet" href="../../../styles.css">
     <link rel="stylesheet" href="../../../styles/site-shell.css">
@@ -166,7 +166,7 @@
             <i class="fas fa-microscope"></i>
             Fabric API 方块系统模块分析
         </a>
-<a href="03-item-recipe-system.html" class="active">
+<a href="03-item-recipe-system.html" class="">
             <i class="fas fa-microscope"></i>
             Fabric API 物品与配方系统分析
         </a>
@@ -190,7 +190,7 @@
             <i class="fas fa-microscope"></i>
             Fabric API 资源加载系统分析
         </a>
-<a href="09-transfer-system.html" class="">
+<a href="09-transfer-system.html" class="active">
             <i class="fas fa-microscope"></i>
             Fabric API 传输/存储系统分析
         </a>
@@ -218,14 +218,14 @@
                     <i class="fas fa-chevron-right"></i>
                     <a href="../index.html">Fabric 模组</a>
                     <i class="fas fa-chevron-right"></i>
-                    <span>03 item recipe system</span>
+                    <span>09 transfer system</span>
                 </nav>
                 <h1>
                     <span class="doc-type-tag analysis">
                         <i class="fas fa-microscope"></i>
                         源码分析
                     </span>
-                    03 item recipe system
+                    09 transfer system
                 </h1>
                 <div class="docs-meta">
                     
@@ -234,187 +234,219 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>Fabric API 物品与配方系统分析</h1>
+                <h1>Fabric API 传输/存储系统分析</h1>
 <h2 id="概述">概述</h2>
-<p>物品与配方系统模块包含三个核心子模块：
-<ul><li><code>fabric-item-api-v1</code> - 物品 API 扩展</li>
-<li><code>fabric-recipe-api-v1</code> - 配方 API 扩展</li>
-<li><code>fabric-item-group-api-v1</code> - 物品栏分组系统</li></ul></p>
+<p>Transfer API 是 Fabric 提供的统一资源传输抽象层，支持流体、物品等不同类型资源的插入和提取操作。</p>
+<p><strong>模块</strong>: <code>fabric-transfer-api-v1</code></p>
 <p><hr></p>
-<h2 id="1. fabric-item-api-v1 模块">1. fabric-item-api-v1 模块</h2>
-<h3>1.1 FabricItem 接口</h3>
-<pre class="code-block"><code class="language-java">public interface FabricItem {
-    // 组件更新动画控制
-    default boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand,
-                                                  ItemStack oldStack, ItemStack newStack);
+<h2 id="1. 核心接口架构">1. 核心接口架构</h2>
+<h3>1.1 存储接口层次</h3>
+<pre class="code-block"><code class="language-text">Storage&lt;T&gt;                    // 资源存储容器
+├── insert()                   // 插入资源
+├── extract()                  // 提取资源
+├── supportsInsertion()         // 是否支持插入
+├── supportsExtraction()        // 是否支持提取
+└── iterator()                // 遍历存储内容
 
-    // 持续挖掘进度控制
-    default boolean allowContinuingBlockBreaking(PlayerEntity player,
-                                                ItemStack oldStack, ItemStack newStack);
+StorageView&lt;T&gt;                // 单种资源的视图
+├── extract()                  // 从视图提取
+├── isResourceBlank()          // 资源是否为空
+├── getResource()             // 获取资源
+├── getAmount()                // 获取数量
+└── getCapacity()              // 获取容量
 
-    // 配方剩余物处理
-    default ItemStack getRecipeRemainder(ItemStack stack);
+SlottedStorage&lt;T&gt;             // 槽位化存储
+├── getSlotCount()            // 获取槽位数
+└── getSlot(index)            // 获取特定槽位
 
-    // 附魔检查
-    default boolean canBeEnchantedWith(ItemStack stack, RegistryEntry&lt;Enchantment&gt; enchantment,
-                                       EnchantingContext context);
+SingleSlotStorage&lt;T&gt;           // 单槽位存储</code></pre>
+<h3>1.2 Storage 接口</h3>
+<pre class="code-block"><code class="language-java">public interface Storage&lt;T&gt; extends Iterable&lt;StorageView&lt;T&gt;&gt; {
+    static &lt;T&gt; Storage&lt;T&gt; empty() { ... }
 
-    // 获取创建者命名空间
-    default String getCreatorNamespace(ItemStack stack);
+    default boolean supportsInsertion() { return true; }
+    long insert(T resource, long maxAmount, TransactionContext transaction);
+
+    default boolean supportsExtraction() { return true; }
+    long extract(T resource, long maxAmount, TransactionContext transaction);
+
+    Iterator&lt;StorageView&lt;T&gt;&gt; iterator();
+    default long getVersion() { ... }
 }</code></pre>
-<h3>1.2 CustomDamageHandler 接口</h3>
-<pre class="code-block"><code class="language-java">@FunctionalInterface
-public interface CustomDamageHandler {
-    int damage(ItemStack stack, int amount, LivingEntity entity,
-                EquipmentSlot slot, Runnable breakCallback);
+<p><hr></p>
+<h2 id="2. 流体存储系统">2. 流体存储系统</h2>
+<h3>2.1 FluidVariant 流体变体</h3>
+<pre class="code-block"><code class="language-java">public interface FluidVariant extends TransferVariant&lt;Fluid&gt; {
+    static FluidVariant blank() { return of(Fluids.EMPTY); }
+    static FluidVariant of(Fluid fluid) { return of(fluid, ComponentChanges.EMPTY); }
+    static FluidVariant of(Fluid fluid, ComponentChanges components) { ... }
+
+    default Fluid getFluid() { return getObject(); }
+    FluidVariant withComponentChanges(ComponentChanges changes);
 }</code></pre>
-<h3>1.3 EquipmentSlotProvider 接口</h3>
-<pre class="code-block"><code class="language-java">@FunctionalInterface
-public interface EquipmentSlotProvider {
-    EquipmentSlot getPreferredEquipmentSlot(LivingEntity entity, ItemStack stack);
+<h3>2.2 流体常量系统</h3>
+<pre class="code-block"><code class="language-java">public final class FluidConstants {
+    public static final long BUCKET = 81000;      // 1桶 = 81000滴
+    public static final long BOTTLE = 27000;      // 1瓶 = 27000滴
+    public static final long BLOCK = 81000;       // 1方块 = 81000滴
+    public static final long INGOT = 9000;        // 1锭 = 9000滴
+    public static final long NUGGET = 1000;       // 1粒 = 1000滴
+    public static final long DROPLET = 1;         // 1滴
 }</code></pre>
-<h3>1.4 使用示例 - 自定义伤害处理</h3>
-<pre class="code-block"><code class="language-java">public static final CustomDamageHandler WEIRD_DAMAGE_HANDLER =
-    (stack, amount, entity, slot, breakCallback) -&gt; {
-        if (entity.isSneaking()) {
-            return amount;
+<p><hr></p>
+<h2 id="3. 物品存储系统">3. 物品存储系统</h2>
+<h3>3.1 ItemVariant 物品变体</h3>
+<pre class="code-block"><code class="language-java">public interface ItemVariant extends TransferVariant&lt;Item&gt; {
+    static ItemVariant blank() { return of(Items.AIR); }
+    static ItemVariant of(ItemStack stack) { return of(stack.getItem(), stack.getComponentChanges()); }
+    static ItemVariant of(ItemConvertible item) { return of(item, ComponentChanges.EMPTY); }
+
+    boolean matches(ItemStack stack);  // 匹配物品和组件
+    ItemStack toStack();              // 转换为物品堆
+    ItemStack toStack(int count);
+}</code></pre>
+<h3>3.2 InventoryStorage 物品存储包装器</h3>
+<pre class="code-block"><code class="language-java">public interface InventoryStorage extends SlottedStorage&lt;ItemVariant&gt; {
+    static InventoryStorage of(Inventory inventory, @Nullable Direction direction) { ... }
+
+    @UnmodifiableView List&lt;SingleSlotStorage&lt;ItemVariant&gt;&gt; getSlots();
+}</code></pre>
+<p><hr></p>
+<h2 id="4. 事务管理系统">4. 事务管理系统</h2>
+<h3>4.1 事务核心接口</h3>
+<pre class="code-block"><code class="language-java">public interface Transaction extends AutoCloseable, TransactionContext {
+    static Transaction openOuter() { ... }
+    static boolean isOpen() { return getLifecycle() != Lifecycle.NONE; }
+
+    void abort();    // 回滚事务
+    void commit();    // 提交事务
+
+    enum Lifecycle { NONE, OPEN, CLOSING, OUTER_CLOSING }
+}</code></pre>
+<h3>4.2 SnapshotParticipant 快照参与者</h3>
+<pre class="code-block"><code class="language-java">public abstract class SnapshotParticipant&lt;T&gt; implements Transaction.CloseCallback,
+        Transaction.OuterCloseCallback {
+    // 1. 修改前调用：保存状态快照
+    public void updateSnapshots(TransactionContext transaction) { ... }
+
+    // 2. 事务关闭回调
+    @Override
+    public void onClose(TransactionContext transaction, Transaction.Result result) {
+        if (result.wasAborted()) {
+            readSnapshot(snapshot);      // 回滚到快照
+            releaseSnapshot(snapshot);
         } else {
-            stack.set(WEIRD, Math.max(0, stack.getOrDefault(WEIRD, 0) + 1));
-            return 0;
+            releaseSnapshot(snapshot);
+            transaction.addOuterCloseCallback(this);
+        }
+    }
+
+    protected abstract T createSnapshot();
+    protected abstract void readSnapshot(T snapshot);
+    protected void onFinalCommit() { }
+}</code></pre>
+<p><hr></p>
+<h2 id="5. API Lookup 机制">5. API Lookup 机制</h2>
+<h3>5.1 BlockApiLookup</h3>
+<pre class="code-block"><code class="language-java">public interface BlockApiLookup&lt;A, C&gt; {
+    static &lt;A, C&gt; BlockApiLookup&lt;A, C&gt; get(Identifier lookupId, Class&lt;A&gt; apiClass, Class&lt;C&gt; contextClass);
+
+    A find(World world, BlockPos pos, C context);
+
+    void registerSelf(BlockEntityType&lt;?&gt;... blockEntityTypes);
+    void registerForBlockEntity(BiFunction&lt;? super T, C, @Nullable A&gt; provider, BlockEntityType&lt;T&gt; blockEntityType);
+    void registerFallback(BlockApiProvider&lt;A, C&gt; fallbackProvider);
+}</code></pre>
+<p><hr></p>
+<h2 id="6. 使用示例">6. 使用示例</h2>
+<h3>6.1 创建流体存储方块实体</h3>
+<pre class="code-block"><code class="language-java">public class MyFluidTankBlockEntity extends BlockEntity {
+    private final SingleFluidStorage storage = new SingleFluidStorage() {
+        @Override
+        protected FluidVariant getBlankVariant() {
+            return FluidVariant.blank();
+        }
+
+        @Override
+        protected long getCapacity(FluidVariant variant) {
+            return FluidConstants.BUCKET * 100;  // 100桶容量
+        }
+
+        @Override
+        protected boolean canInsert(FluidVariant variant) {
+            return variant.isOf(Fluids.WATER);  // 只接受水
+        }
+
+        @Override
+        protected boolean canExtract(FluidVariant variant) {
+            return true;  // 可以提取任何流体
+        }
+
+        @Override
+        protected void onFinalCommit() {
+            markDirty();
         }
     };
+}</code></pre>
+<h3>6.2 使用存储</h3>
+<pre class="code-block"><code class="language-java">public void onBlockActivated(World world, BlockPos pos, PlayerEntity player) {
+    Storage&lt;FluidVariant&gt; storage = FluidStorage.SIDED.find(world, pos, null);
 
-public static class WeirdPick extends PickaxeItem {
-    protected WeirdPick() {
-        super(ToolMaterials.GOLD,
-              new Item.Settings().customDamage(WEIRD_DAMAGE_HANDLER));
+    if (storage != null) {
+        FluidVariant variant = FluidVariant.of(Fluids.WATER);
+
+        try (Transaction tx = Transaction.openOuter()) {
+            // 尝试插入1000滴水
+            long inserted = storage.insert(variant, 1000, tx);
+            tx.commit();  // 提交更改
+        }
     }
 }</code></pre>
+<h3>6.3 资源传输</h3>
+<pre class="code-block"><code class="language-java">long moved = StorageUtil.move(
+    sourceStorage,
+    targetStorage,
+    resource -&gt; true,  // 过滤器
+    FluidConstants.BUCKET,  // 最大数量
+    null  // 事务（null表示自动管理）
+);</code></pre>
 <p><hr></p>
-<h2 id="2. fabric-recipe-api-v1 模块">2. fabric-recipe-api-v1 模块</h2>
-<h3>2.1 CustomIngredient 接口</h3>
-<pre class="code-block"><code class="language-java">public interface CustomIngredient {
-    // 测试物品堆栈是否匹配
-    boolean test(ItemStack stack);
-
-    // 获取匹配的物品堆栈列表（用于显示）
-    List&lt;ItemStack&gt; getMatchingStacks();
-
-    // 是否需要直接测试（NBT 检查）
-    boolean requiresTesting();
-
-    // 获取序列化器
-    CustomIngredientSerializer&lt;?&gt; getSerializer();
-
-    // 转换为原生 Ingredient
-    default Ingredient toVanilla() {
-        return new CustomIngredientImpl(this);
-    }
-}</code></pre>
-<h3>2.2 内置自定义成分</h3>
-<table class="data-table"><thead><tr><th>成分类型</th><th>标识符</th><th>用途</th></tr></thead><tbody><tr><td><code>AllIngredient</code></td><td><code>fabric:all</code></td><td>所有子成分都必须匹配</td></tr><tr><td><code>AnyIngredient</code></td><td><code>fabric:any</code></td><td>任一子成分匹配即可</td></tr><tr><td><code>DifferenceIngredient</code></td><td><code>fabric:difference</code></td><td>基础减去排除部分</td></tr><tr><td><code>CustomDataIngredient</code></td><td><code>fabric:custom_data</code></td><td>带有自定义 NBT 的物品</td></tr><tr><td><code>ComponentsIngredient</code></td><td><code>fabric:components</code></td><td>带有特定组件的物品</td></tr></tbody></table>
-<h3>2.3 JSON 数据包格式</h3>
-<pre class="code-block"><code class="language-json">{
-    &quot;fabric:type&quot;: &quot;fabric:all&quot;,
-    &quot;ingredients&quot;: [
-        {&quot;item&quot;: &quot;minecraft:diamond&quot;},
-        {&quot;tag&quot;: &quot;minecraft:wool&quot;}
-    ]
-}</code></pre>
+<h2 id="架构总结">架构总结</h2>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Transfer API                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Storage&lt;T&gt;                                                │
+│  ├── CombinedStorage&lt;T,S&gt;                                   │
+│  ├── SingleVariantStorage&lt;T&gt;                                │
+│  │   ├── SingleFluidStorage                                 │
+│  │   └── SingleItemStorage                                 │
+│  └── InventoryStorageImpl                                   │
+│                                                              │
+│  TransferVariant&lt;O&gt;                                         │
+│  ├── FluidVariant                                          │
+│  └── ItemVariant                                           │
+│                                                              │
+│  Transaction                                                │
+│  ├── SnapshotParticipant                                    │
+│  └── Context/Result                                         │
+│                                                              │
+│  API Lookup                                                 │
+│  ├── BlockApiLookup&lt;A, C&gt;                                   │
+│  ├── ItemApiLookup&lt;A, C&gt;                                    │
+│  └── EntityApiLookup&lt;A, C&gt;                                  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
-<h2 id="3. fabric-item-group-api-v1 模块">3. fabric-item-group-api-v1 模块</h2>
-<h3>3.1 创建自定义物品栏</h3>
-<pre class="code-block"><code class="language-java">Registry.register(Registries.ITEM_GROUP, ITEM_GROUP,
-    FabricItemGroup.builder()
-        .displayName(Text.literal(&quot;Test Item Group&quot;))
-        .icon(() -&gt; new ItemStack(Items.DIAMOND))
-        .entries((context, entries) -&gt; {
-            entries.addAll(Registries.ITEM.stream()
-                    .map(ItemStack::new)
-                    .filter(input -&gt; !input.isEmpty())
-                    .toList());
-        })
-        .build());</code></pre>
-<h3>3.2 FabricItemGroupEntries API</h3>
-<pre class="code-block"><code class="language-java">void add(ItemStack stack, ItemGroup.StackVisibility visibility);
-void add(ItemConvertible item);
-void prepend(ItemStack stack, ItemGroup.StackVisibility visibility);
-void addAfter(ItemConvertible afterLast, Collection&lt;ItemStack&gt; newStacks);
-void addBefore(ItemConvertible beforeFirst, Collection&lt;ItemStack&gt; newStacks);</code></pre>
-<h3>3.3 ItemGroupEvents 事件系统</h3>
-<pre class="code-block"><code class="language-java">public static final Event&lt;ModifyEntriesAll&gt; MODIFY_ENTRIES_ALL;
-
-// 获取特定物品栏的事件
-public static Event&lt;ModifyEntries&gt; modifyEntriesEvent(RegistryKey&lt;ItemGroup&gt; registryKey);</code></pre>
-<h3>3.4 使用示例</h3>
-<pre class="code-block"><code class="language-java">ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS)
-    .register((content) -&gt; {
-        content.add(TEST_ITEM);
-        content.addBefore(Blocks.OAK_FENCE, Items.DIAMOND);
-    });
-
-// 全局修改所有物品栏
-ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, content) -&gt; {
-    if (group.getIcon() == ItemStack.EMPTY) return;
-    content.prepend(new ItemStack(Items.DIAMOND_PICKAXE));
-});</code></pre>
-<p><hr></p>
-<h2 id="4. Mixin 注入点">4. Mixin 注入点</h2>
-<table class="data-table"><thead><tr><th>Mixin 类</th><th>注入目标</th><th>目的</th></tr></thead><tbody><tr><td><code>ItemMixin</code></td><td><code>Item</code></td><td>实现 <code>FabricItem</code> 接口</td></tr><tr><td><code>ItemStackMixin</code></td><td><code>ItemStack</code></td><td>拦截 damage 方法</td></tr><tr><td><code>ItemSettingsMixin</code></td><td><code>Item.Settings</code></td><td>实现 <code>FabricItem.Settings</code> 接口</td></tr><tr><td><code>EnchantmentHelperMixin</code></td><td><code>EnchantmentHelper</code></td><td>重定向附魔检查方法</td></tr><tr><td><code>ComponentMapBuilderMixin</code></td><td><code>ComponentMap.Builder</code></td><td>实现 <code>FabricComponentMapBuilder</code> 接口</td></tr><tr><td><code>ItemGroupMixin</code></td><td><code>ItemGroup</code></td><td>在 <code>updateEntries</code> 末尾触发事件</td></tr><tr><td><code>ItemGroupsMixin</code></td><td><code>ItemGroups</code></td><td>实现分页和冲突检测</td></tr><tr><td><code>IngredientMixin</code></td><td><code>Ingredient</code></td><td>注入自定义编解码器</td></tr></tbody></table>
-<hr></p>
-<h2 id="5. 完整使用示例">5. 完整使用示例</h2>
-<h3>5.1 创建带自定义伤害处理的物品</h3>
-<pre class="code-block"><code class="language-java">public class BatterySword extends SwordItem {
-    private static final ComponentType&lt;Integer&gt; ENERGY = ...;
-    private static final CustomDamageHandler HANDLER =
-        (stack, amount, entity, slot, breakCallback) -&gt; {
-            int currentEnergy = stack.getOrDefault(ENERGY, 0);
-            int damageFromEnergy = Math.min(currentEnergy, amount);
-            int remainingDamage = amount - damageFromEnergy;
-
-            stack.set(ENERGY, currentEnergy - damageFromEnergy);
-
-            if (remainingDamage &gt; 0 &amp;&amp; stack.getDamage() + remainingDamage &gt;= stack.getMaxDamage()) {
-                breakCallback.run();
-                return 0;
-            }
-
-            return remainingDamage;
-        };
-
-    public BatterySword() {
-        super(ToolMaterials.GOLD,
-              new Item.Settings().customDamage(HANDLER)
-                                 .equipmentSlot((entity, stack) -&gt; EquipmentSlot.MAINHAND));
-    }
-}</code></pre>
-<h3>5.2 创建自定义物品栏并添加物品</h3>
-<pre class="code-block"><code class="language-java">private static final RegistryKey&lt;ItemGroup&gt; MY_GROUP = RegistryKey.of(
-    RegistryKeys.ITEM_GROUP, Identifier.of(MOD_ID, &quot;my_group&quot;));
-
-@Override
-public void onInitialize() {
-    Registry.register(Registries.ITEM_GROUP, MY_GROUP,
-        FabricItemGroup.builder()
-            .displayName(Text.translatable(&quot;itemgroup.my_mod.my_group&quot;))
-            .icon(() -&gt; new ItemStack(MyMod.MY_ITEM))
-            .entries((context, entries) -&gt; {
-                entries.add(MyMod.MY_ITEM);
-                entries.add(MyMod.MY_BLOCK);
-            })
-            .build());
-}</code></pre>
-<p><hr></p>
-<p><em>源码位置: <code>fabric-item-api-v1/</code>, <code>fabric-recipe-api-v1/</code>, <code>fabric-item-group-api-v1/</code></em>
+<p><em>源码位置: <code>fabric-transfer-api-v1/</code></em>
 </p>
             </div>
 
             <div class="docs-footer">
-                <div class="prev-next"><a href="02-block-system.html" class="prev">
+                <div class="prev-next"><a href="08-resource-system.html" class="prev">
             <i class="fas fa-arrow-left"></i>
-            Fabric API 方块系统模块分析
-        </a><a href="04-biome-dimension-system.html" class="next">
-            Fabric API 生物群系与维度系统分析
+            Fabric API 资源加载系统分析
+        </a><a href="10-command-screen-system.html" class="next">
+            Fabric API 命令与屏幕系统分析
             <i class="fas fa-arrow-right"></i>
         </a></div>
             </div>
