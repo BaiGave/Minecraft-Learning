@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第二十九章：传感器系统 - 生物的"感官" - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="29-sensor-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第二十九章：传感器系统 - 生物的"感官"</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第二十九章：传感器系统 - 生物的"感官"
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第二十九章：传感器系统 - 生物的"感官"</h1>
+
+
+<blockquote><p><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p></blockquote>
+
+<h2 id="目标">目标</h2>
+
+
+<ul><li>理解传感器是什么</li></ul>
+<ul><li>掌握常见传感器的功能</li></ul>
+<ul><li>了解感知范围和更新频率</li></ul>
+<ul><li>能够为自己的生物添加传感器</li></ul>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解记忆系统（见第二十八章）</li></ul>
+<ul><li>理解 Brain 的基本结构</li></ul>
+
+<h2 id="核心概念什么是传感器">核心概念：什么是传感器？</h2>
+
+
+<h3>生活比喻</h3>
+
+
+你的身体有各种感官：
+
+<ul><li><strong>眼睛</strong> → 看到东西</li></ul>
+<ul><li><strong>耳朵</strong> → 听到声音</li></ul>
+<ul><li><strong>鼻子</strong> → 闻到气味</li></ul>
+<ul><li><strong>皮肤</strong> → 感到疼痛</li></ul>
+
+传感器就是生物的"五官"：
+
+| 传感器 | 相当于 | 功能 |
+|--------|--------|------|
+| NearestEntitiesSensor | 眼睛 | 看到附近的生物 |
+| NearestBedSensor | 触觉 | 感知附近的床 |
+| HurtBySensor | 痛感神经 | 感知受到的伤害 |
+| InteractableDoorsSensor | 触觉 | 感知可交互的门 |
+
+<blockquote><p><strong>一句话理解</strong>：传感器就是生物的"感官器官"，负责收集周围世界的信息。</p></blockquote>
+
+<h3>源码解读</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class Sensor&lt;E extends LivingEntity&gt; {
+    // 感知间隔（默认20tick = 1秒）
+    private static final int DEFAULT_RUN_TIME = 20;
+
+    // 基础最大感知距离（默认16格）
+    private static final int BASE_MAX_DISTANCE = 16;
+
+    // 上一次感知的时间
+    private long lastSenseTime;
+
+    // 感知间隔
+    private final int senseInterval;
+
+    // 每tick执行一次
+    public final void tick(ServerWorld world, E entity) {
+        if (--this.lastSenseTime &lt;= 0L) {
+            this.lastSenseTime = this.senseInterval;
+            this.sense(world, entity);  // 执行实际的感知
+        }
+    }
+
+    // 子类实现具体的感知逻辑
+    protected abstract void sense(ServerWorld world, E entity);
+
+    // 返回这个传感器会更新哪些记忆
+    public abstract Set&lt;MemoryModuleType&lt;?&gt;&gt; getOutputMemoryModules();
+}</code></pre>
+
+
+<strong>源码位置</strong>：<code>net/minecraft/entity/ai/brain/sensor/Sensor.java</code>
+
+<h2 id="图解感知流程">图解：感知流程</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["Brain.tick() 每一刻"] --> B["Sensor.tick() 检查是否该感知"]
+    B --> C{"时间到了？"}
+    C -->|否| Z["跳过"]
+    C -->|是| D["Sensor.sense() 执行感知"]
+
+    D --> E["扫描周围环境"]
+    E --> F["更新到对应记忆"]
+    F --> G["NEAREST_XXX<br/>VISIBLE_XXX<br/>HURT_BY"]
+
+    style A fill:#e1f5fe
+    style G fill:#e8f5e8</div>
+</div>
+
+
+<h2 id="图解感知范围">图解：感知范围</h2>
+
+
+Minecraft 中的感知范围是<strong>球形</strong>的：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph "感知范围示意图"
+        Z["僵尸"]
+        R1["8格内 - 完全可见"]
+        R2["8-16格 - 模糊可见"]
+        R3["16格外 - 完全不可见"]
+    end
+
+    Z --> R1
+    Z --> R2
+    Z -.-> R3
+
+    style Z fill:#4caf50
+    style R1 fill:#81c784
+    style R2 fill:#a5d6a7
+    style R3 fill:#c8e6c9,opacity:0.5</div>
+</div>
+
+
+<h2 id="图解传感器更新时序">图解：传感器更新时序</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant 游戏 as 游戏刻 (Tick)
+    participant 传感器 as 传感器们
+    participant 记忆 as 记忆模块
+    participant 任务 as 任务们
+
+    Tick->>传感器: tick() 第1个tick
+    Note over 传感器: lastSenseTime = 20
+
+    Tick->>传感器: tick() 第2个tick
+    Note over 传感器: lastSenseTime = 19 (跳过)
+
+    Tick->>传感器: tick() ...
+    Note over 传感器: lastSenseTime = 1 (跳过)
+
+    Tick->>传感器: tick() 第20个tick
+    Note over 传感器: lastSenseTime = 0, 开始感知!
+    传感器->>记忆: 更新感知结果
+    记忆->>任务: 触发条件检查</div>
+</div>
+
+
+<h2 id="核心代码传感器使用">核心代码：传感器使用</h2>
+
+
+<h3>1. 创建大脑时添加传感器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">Profile&lt;E&gt; profile = Brain.createProfile(
+    memoryModules,                                    // 需要哪些记忆
+    ImmutableList.of(
+        SensorType.NEAREST_LIVING_ENTITIES,           // 最近生物
+        SensorType.NEAREST_PLAYERS,                   // 最近玩家
+        SensorType.HURT_BY                            // 伤害感知
+    )
+);</code></pre>
+
+
+<h3>2. 内置传感器类型</h3>
+
+
+Minecraft 提供了一系列内置传感器：
+
+| 传感器类型 | 作用 | 更新记忆 |
+|-----------|------|----------|
+| <code>NEAREST<em>LIVING</em>ENTITIES</code> | 检测附近所有活着的生物 | <code>VISIBLE<em>MOBS</code>, <code>NEAREST</em>HOSTILE</code> |
+| <code>NEAREST<em>PLAYERS</code> | 检测附近玩家 | <code>NEAREST</em>PLAYERS</code> |
+| <code>HURT<em>BY</code> | 感知伤害来源 | <code>HURT</em>BY<em>ENTITY</code>, <code>HURT</em>BY</code> |
+| <code>NEAREST<em>BED</code> | 感知附近的床 | <code>NEAREST</em>BED</code> |
+| <code>INTERACTABLE<em>DOORS</code> | 感知可交互的门 | <code>INTERACTABLE</em>DOORS</code> |
+| <code>NEAREST<em>VISIBLE</em>ADULT<em>PIGLINS</code> | 检测附近猪灵 | <code>NEAREST</em>VISIBLE<em>ADULT</em>PIGLINS</code> |
+| <code>NEAREST<em>VISIBLE</em>HUNTABLE<em>HOGLIN</code> | 检测可狩猎的疣猪兽 | <code>NEAREST</em>VISIBLE<em>HUNTABLE</em>HOGLIN</code> |
+
+<h3>3. 自定义传感器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class NearestGolemSensor extends Sensor&lt;PassiveEntity&gt; {
+
+    private static final int DETECTION_RANGE = 10;
+
+    public NearestGolemSensor() {
+        super(40);  // 每40tick感知一次（2秒）
+    }
+
+    @Override
+    protected void sense(ServerWorld world, PassiveEntity entity) {
+        // 扫描附近范围内的铁傀儡
+        List&lt;IronGolemEntity&gt; golems = world.getEntitiesByClass(
+            IronGolemEntity.class,
+            entity.getBoundingBox().expand(DETECTION_RANGE),
+            golem -&gt; golem.isAlive()
+        );
+
+        // 如果找到铁傀儡，记住它
+        if (!golems.isEmpty()) {
+            entity.getBrain().remember(MemoryModuleType.NEAREST_VISIBLE_ADULT, golems.get(0));
+        } else {
+            entity.getBrain().forget(MemoryModuleType.NEAREST_VISIBLE_ADULT);
+        }
+    }
+
+    @Override
+    public Set&lt;MemoryModuleType&lt;?&gt;&gt; getOutputMemoryModules() {
+        return ImmutableSet.of(MemoryModuleType.NEAREST_VISIBLE_ADULT);
+    }
+}</code></pre>
+
+
+<h2 id="实战演示村民的感知">实战演示：村民的感知</h2>
+
+
+村民（Villager）有多个传感器协同工作：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "村民的传感器"
+        S1["NearEntities<br/>附近生物"]
+        S2["NearBed<br/>附近床"]
+        S3["HurtBy<br/>受伤感知"]
+        S4["InteractDoors<br/>门感知"]
+    end
+
+    subgraph "村民的记忆"
+        M1["VISIBLE_MOBS"]
+        M2["NEAREST_BED"]
+        M3["HURT_BY_ENTITY"]
+        M4["INTERACTABLE_DOORS"]
+    end
+
+    subgraph "村民的行为"
+        B1["看到袭击者→躲藏"]
+        B2["找到床→睡觉"]
+        B3["受伤→逃跑"]
+    end
+
+    S1 --> M1 --> B1
+    S2 --> M2 --> B2
+    S3 --> M3 --> B3</div>
+</div>
+
+
+<h3>村民传感器的配置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class VillagerBrain {
+    public static Brain.Profile&lt;VillagerEntity&gt; createProfile() {
+        return Brain.createProfile(
+            // 需要的记忆模块
+            ImmutableList.of(
+                MemoryModuleType.HOME,
+                MemoryModuleType.JOB_SITE,
+                MemoryModuleType.MEETING_POINT,
+                MemoryModuleType.HURT_BY_ENTITY,
+                MemoryModuleType.NEAREST_BED
+            ),
+            // 传感器列表
+            ImmutableList.of(
+                SensorType.NEAREST_LIVING_ENTITIES,
+                SensorType.NEAREST_BED,
+                SensorType.HURT_BY,
+                SensorType.INTERACTABLE_DOORS
+            )
+        );
+    }
+}</code></pre>
+
+
+<h2 id="重要概念感知优先级">重要概念：感知优先级</h2>
+
+
+当多个目标同时存在时，传感器如何选择？
+</p>
+<p><pre class="code-block"><code class="language-java">public class NearestLivingEntitySensor extends Sensor&lt;LivingEntity&gt; {
+
+    protected void sense(ServerWorld world, LivingEntity entity) {
+        List&lt;LivingEntity&gt; entities = world.getEntities(
+            entity,
+            entity.getBoundingBox().expand(16.0),
+            target -&gt; target.isAlive() &amp;&amp; this.canSense(target, entity)
+        );
+
+        // 按距离排序，取最近的
+        entities.sort(Comparator.comparingDouble(entity::squaredDistanceTo));
+
+        if (!entities.isEmpty()) {
+            // 记住最近的那个
+            entity.getBrain().remember(MemoryModuleType.NEAREST_VISIBLE_ADULT, entities.get(0));
+        }
+    }
+}</code></pre>
+
+
+<strong>排序规则</strong>：通常是<strong>距离优先</strong>，取最近的实体。
+
+<h2 id="图解传感器与记忆的关系">图解：传感器与记忆的关系</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph "传感器"
+        S1["NearestEntitiesSensor"]
+        S2["HurtBySensor"]
+        S3["NearestBedSensor"]
+    end
+
+    subgraph "记忆"
+        M1["VISIBLE_MOBS"]
+        M2["HURT_BY_ENTITY"]
+        M3["NEAREST_BED"]
+    end
+
+    subgraph "任务"
+        T1["攻击任务"]
+        T2["逃跑任务"]
+        T3["回家任务"]
+    end
+
+    S1 -->|更新| M1 -->|读取| T1
+    S2 -->|更新| M2 -->|读取| T2
+    S3 -->|更新| M3 -->|读取| T3
+
+    style S1 fill:#bbdefb
+    style S2 fill:#f8bbd0
+    style S3 fill:#b2dfdb</div>
+</div>
+
+
+<h2 id="性能优化为什么用传感器">性能优化：为什么用传感器？</h2>
+
+
+<h3>对比：传感器 vs 直接计算</h3>
+
+
+<strong>方式1：不使用传感器（低效）</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">public class AttackTask extends Task&lt;VillagerEntity&gt; {
+    @Override
+    public void tick() {
+        // 每个tick都要扫描附近！
+        List&lt;PlayerEntity&gt; players = world.getPlayers();
+        // 计算距离、判断可见性...
+    }
+}
+
+public class FleeTask extends Task&lt;VillagerEntity&gt; {
+    @Override
+    public void tick() {
+        // 又要扫描一次附近！
+        List&lt;PlayerEntity&gt; players = world.getPlayers();
+        // 计算距离、判断威胁...
+    }
+}</code></pre>
+
+
+<strong>方式2：使用传感器（高效）</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">public class NearestPlayerSensor extends Sensor {
+    @Override
+    public void sense() {
+        // 计算一次，结果存入记忆
+        brain.remember(MemoryModuleType.NEAREST_PLAYERS, players);
+    }
+}
+
+// 所有任务共享记忆
+public class AttackTask extends Task {
+    @Override
+    public void tick() {
+        // 直接读取记忆，O(1)复杂度
+        Optional&lt;PlayerEntity&gt; target = brain.getOptionalRegisteredMemory(
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER
+        );
+    }
+}</code></pre>
+
+
+<blockquote><p><strong>核心优势</strong>：传感器让多个任务共享感知结果，避免重复计算！</p></blockquote>
+
+<h2 id="小结">小结</h2>
+
+
+<ul><li><strong>传感器</strong>是生物的感官，负责收集周围世界的信息</li></ul>
+<ul><li>传感器将感知结果<strong>写入记忆</strong>，供任务读取</li></ul>
+<ul><li>传感器有<strong>感知间隔</strong>（默认1秒），不会每tick都执行</li></ul>
+<ul><li>常见传感器：附近生物、最近床、伤害来源等</li></ul>
+<ul><li>使用传感器的目的是<strong>性能优化</strong>——多个任务共享感知结果</li></ul>
+<ul><li>感知范围默认是<strong>16格</strong>的球形区域</li></ul>
+
+<h2 id="练习">练习</h2>
+
+
+<ul><li><strong>思考题</strong>：如果怪物找不到玩家，它会一直搜索吗？</li></ul>
+<ul><li><strong>动手题</strong>：查看 <code>NearestBedSensor</code> 是如何感知床的</li></ul>
+<ul><li><strong>挑战题</strong>：创建一个能感知附近钻石的传感器</li></ul>
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<ul><li><strong>上一章</strong>：<a href="28-memory-system.html">第28章 记忆系统</a></li></ul>
+<ul><li><strong>下一章</strong>：<a href="30-task-system.html">第30章 任务系统</a></li></ul>
+<ul><li><strong>相关源码</strong>：</li></ul>
+  - <code>net/minecraft/entity/ai/brain/sensor/Sensor.java</code>
+  - <code>net/minecraft/entity/ai/brain/sensor/SensorType.java</code>
+
+<h3>源码文件位置</h3>
+
+
+| 文件 | 源码路径 | 说明 |
+|------|----------|------|
+| Sensor.java | <code>net/minecraft/entity/ai/sensing/Sensor.java</code> | 传感器基类 |
+| SensorType.java | <code>net/minecraft/entity/ai/sensing/SensorType.java</code> | 传感器类型 |
+| NearestLivingEntitySensor.java | <code>net/minecraft/entity/ai/sensing/NearestLivingEntitySensor.java</code> | 最近生物传感器 |
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="28-memory-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第28章：记忆系统 - 生物的"记忆库"
+        </a><a href="30-task-system.html" class="next">
+            第30章：任务系统 - 生物的"行为动作"
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

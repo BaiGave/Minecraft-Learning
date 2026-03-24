@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>✨ 第五章：Uniform 变量 - 让世界动起来！ - Iris 光影</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-introduction.html" class="">
+            <i class="fas fa-book"></i>
+            🎮 从零开始的 Shader 冒险！
+        </a>
+<a href="01-shader-basics.html" class="">
+            <i class="fas fa-book"></i>
+            🚀 第一章：Shader 是什么？
+        </a>
+<a href="02-iris-setup.html" class="">
+            <i class="fas fa-book"></i>
+            ⚙️ 第二章：开发环境搭建
+        </a>
+<a href="03-first-color.html" class="">
+            <i class="fas fa-book"></i>
+            🎨 第三章：第一个颜色魔法
+        </a>
+<a href="04-shaderpack-structure.html" class="">
+            <i class="fas fa-book"></i>
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
+        </a>
+<a href="05-uniform-animation.html" class="active">
+            <i class="fas fa-book"></i>
+            ✨ 第五章：Uniform 变量 - 让世界动起来！
+        </a>
+<a href="06-postprocessing.html" class="">
+            <i class="fas fa-book"></i>
+            🔮 第六章：后处理魔法 - 全屏特效！
+        </a>
+<a href="07-create-shaderpack.html" class="">
+            <i class="fas fa-book"></i>
+            🏆 最终章：创造你的第一个光影包！
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-book"></i>
+            🎮 Iris 光影开发教程
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>✨ 第五章：Uniform 变量 - 让世界动起来！</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    ✨ 第五章：Uniform 变量 - 让世界动起来！
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-1.7.3</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>✨ 第五章：Uniform 变量 - 让世界动起来！</h1>
+
+
+<blockquote><p>⚡ <em>赋予画面生命力！</em></p></blockquote>
+
+<hr>
+
+<h2 id="本章目标">🎯 本章目标</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">完成本章后，你将能够：
+├── ⏰ 让画面随时间变化
+├── 🌊 创建流动的波纹效果
+├── 💓 实现呼吸灯效果
+└── 🎮 组合多个动画效果</code></pre>
+
+
+<hr>
+
+<h2 id="什么是-uniform">🤔 什么是 Uniform？</h2>
+
+
+还记得我们之前学的 <code>attribute</code> 和 <code>varying</code> 吗？
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph CPU端
+        A[Java 代码] --> B[设置 Uniform 值]
+    end
+
+    subgraph GPU端
+        C[顶点着色器]
+        D[片段着色器]
+    end
+
+    B --> C
+    B --> D
+
+    subgraph 顶点数据
+        E[Position]
+        F[TexCoord]
+        G[Normal]
+    end
+
+    E --> C
+    F --> C
+    G --> C
+    C --> D
+    F --> D
+
+    style B fill:#ffcccc
+    style C fill:#ccffcc
+    style D fill:#ccccff</div>
+</div>
+
+
+| 类型 | 变化 | 用途 |
+|------|------|------|
+| <code>attribute</code> | 每顶点不同 | 位置、UV |
+| <code>varying</code> | 自动插值 | 顶点→片段 |
+| <code>uniform</code> | 整帧相同 | 时间、光照、天气 |
+
+<hr>
+
+<h2 id="时间-uniform-让画面跳动">⏰ 时间 Uniform - 让画面跳动！</h2>
+
+
+<h3>核心 Uniform</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">uniform float frameTime;      // ⏰ 当前时间（秒）
+uniform int frameCounter;      // 🔢 帧计数器
+uniform float frameRate;        // 📊 预估帧率</code></pre>
+
+
+<h3>第一个动画：闪烁效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;  // ⬅️ 重要！
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+
+    // sin(frameTime) 产生 -1 到 1 的波动
+    // 0.8 + 0.2 * sin() 变成 0.6 到 1.0
+    float flicker = 0.8 + 0.2 * sin(frameTime * 5.0);
+
+    fragColor = texColor * flicker;
+}</code></pre>
+
+
+<h3>可视化效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">frameTime = 0       frameTime = 0.5     frameTime = 1.0     frameTime = 1.5
+    │
+    ▼              ▼                 ▼                 ▼
+███████████    ███████████       ███████████       ███████████
+███████████    ████  █████      ███████████      ████  █████
+███████████    ███████████  ──▶ ███████████  ──▶ ███████████
+███████████    ███████████       ███████████       ███████████
+
+  最暗          中等             最亮             中等
+  0.6           0.8              1.0              0.8</code></pre>
+
+
+<h3>🎯 sin() 函数可视化</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    A[frameTime] --> B["sin(x)"]
+    B --> C["0.8 + 0.2 * sin()"]
+    C --> D["范围: 0.6 ~ 1.0"]</div>
+</div>
+
+
+<hr>
+
+<h2 id="实验-1彩虹呼吸效果">🌊 实验 1：彩虹呼吸效果</h2>
+
+
+<h3>完整代码</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+
+    // 🌈 RGB 分别用不同相位的 sin
+    vec3 rainbow = vec3(
+        sin(frameTime * 2.0) * 0.3 + 0.7,           // R: 0.4 ~ 1.0
+        sin(frameTime * 2.0 + 2.09) * 0.3 + 0.7,  // G: 0.4 ~ 1.0 (偏移120°)
+        sin(frameTime * 2.0 + 4.18) * 0.3 + 0.7   // B: 0.4 ~ 1.0 (偏移240°)
+    );
+
+    fragColor = texColor * vec4(rainbow, 1.0);
+}</code></pre>
+
+
+<h3>颜色变化效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">t=0               t=1               t=2               t=3
+  ▼                 ▼                 ▼                 ▼
+███████         █████████         █████████         █████████
+█红█████       ██绿█████       ███蓝█████       ██红██████
+█红█████  ──▶ ██绿█████  ──▶ ███蓝█████  ──▶ ██红██████
+██红████       ███绿████       ████蓝████       ███红████
+█████████       ██████████       ██████████       ██████████
+
+ 红色主导        绿色主导         蓝色主导          又回到红色</code></pre>
+
+
+<hr>
+
+<h2 id="实验-2心跳效果">💓 实验 2：心跳效果</h2>
+
+
+<h3>原理：多个 sin 叠加</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+
+    // 💓 心跳函数：快速上升，缓慢下降
+    float beat = abs(sin(frameTime * 3.0));
+    beat = pow(beat, 0.5);  // 让下降更平滑
+
+    // 亮度在 0.8 ~ 1.2 之间变化
+    float brightness = 0.8 + beat * 0.4;
+
+    fragColor = texColor * brightness;
+}</code></pre>
+
+
+<h3>可视化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">正常                  心跳效果
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+|                    │
+|    ████████████    |    ███
+|    ████████████    |   ██ ██
+|    ████████████    |  ██   ██
+|    ████████████    | ██     ██
+|                    |██       ██
+└────────────────────┘           └── 缓慢下降
+                    ↑
+              快速上升</code></pre>
+
+
+<hr>
+
+<h2 id="实验-3波浪效果">🌊 实验 3：波浪效果</h2>
+
+
+<h3>使用 UV 坐标 + 时间</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+
+    // 🌊 波浪 = sin(位置 + 时间)
+    float wave = sin(TexCoord.x * 10.0 + frameTime * 2.0) * 0.1;
+
+    // 用波浪来调整亮度
+    vec3 color = texColor.rgb + wave;
+
+    fragColor = vec4(color, texColor.a);
+}</code></pre>
+
+
+<h3>效果可视化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">静态                    波浪效果
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+│██████████████│        │▓▒░▓▒░▓▒░▓▒░│
+│██████████████│        │░▓▒░▓▒░▓▒░▓▒░│
+│██████████████│  ───▶  │▒░▒░▒░▒░▒░▒░▒░│
+│██████████████│        │░▓▒░▓▒░▓▒░▓▒░│
+│██████████████│        │▓▒░▓▒░▓▒░▓▒░▓│
+                              ↑
+                        颜色随波浪变化</code></pre>
+
+
+<hr>
+
+<h2 id="实验-4位置相关动画">🎨 实验 4：位置相关动画</h2>
+
+
+<h3>颜色渐变 + 时间</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+
+    // 根据 X 坐标产生颜色变化
+    float x = TexCoord.x;
+    vec3 colorShift = vec3(
+        sin(x * 3.14 + frameTime) * 0.3,
+        sin(x * 3.14 + frameTime + 2.0) * 0.3,
+        sin(x * 3.14 + frameTime + 4.0) * 0.3
+    );
+
+    fragColor = texColor + vec4(colorShift, 0.0);
+}</code></pre>
+
+
+<h3>效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">从左到右的颜色流动
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+t=0        ████████████████░░░░░░░░░░░░░░░
+t=1        ░░░░░░███████████████░░░░░░░░░░░
+t=2        ░░░░░░░░░░░███████████████░░░░░
+t=3        ░░░░░░░░░░░░░░░░░███████████████
+
+           ←─────────────────────────────────→
+                        颜色向左流动</code></pre>
+
+
+<hr>
+
+<h2 id="实验-5旋转效果">🌀 实验 5：旋转效果</h2>
+
+
+<h3>中心旋转</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    // 计算到中心距离
+    vec2 center = vec2(0.5);
+    vec2 toCenter = TexCoord - center;
+    float dist = length(toCenter);
+
+    // 根据距离旋转（中心不转，边缘转得多）
+    float angle = dist * 3.14 + frameTime;
+    float c = cos(angle);
+    float s = sin(angle);
+    mat2 rotation = mat2(c, -s, s, c);
+
+    // 旋转 UV
+    vec2 rotated = center + rotation * toCenter;
+
+    fragColor = texture(DiffuseSampler, rotated);
+}</code></pre>
+
+
+<h3>效果可视化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">旋转前                旋转后
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+│████████████│        │  ████████│
+│████████████│        │ ████████ │
+│████████████│  ───▶  │█████████ │
+│████████████│        │█████████ │
+│████████████│        │██████████│
+      ↑                    ↑
+   静态                 螺旋旋转</code></pre>
+
+
+<hr>
+
+<h2 id="综合实验动感滤镜">🎮 综合实验：动感滤镜</h2>
+
+
+<h3>代码</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+uniform float frameTime;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+    vec3 color = texColor.rgb;
+
+    // 1️⃣ 亮度脉动
+    float pulse = 0.8 + 0.2 * sin(frameTime * 2.0);
+
+    // 2️⃣ 暖色调随时间变化
+    float warmth = sin(frameTime) * 0.2;
+    color.r *= 1.0 + warmth;
+    color.b *= 1.0 - warmth;
+
+    // 3️⃣ 根据位置的波浪
+    float wave = sin(TexCoord.x * 20.0 + frameTime * 3.0) * 0.05;
+    color += wave;
+
+    fragColor = vec4(color * pulse, texColor.a);
+}</code></pre>
+
+
+<h3>组合效果示意</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    A[原色] --> B["亮度 × pulse"]
+    B --> C["色调偏移"]
+    C --> D["+ 波浪"]
+    D --> E[最终效果]</div>
+</div>
+
+
+<hr>
+
+<h2 id="常用-uniform-速查表">📋 常用 Uniform 速查表</h2>
+
+
+| Uniform | 类型 | 说明 | 常用值 |
+|---------|------|------|--------|
+| <code>frameTime</code> | float | 帧时间（秒） | 用于动画 |
+| <code>frameCounter</code> | int | 帧数 | 循环计数 |
+| <code>frameRate</code> | float | 预估 FPS | 性能检测 |
+| <code>viewSize</code> | vec2 | 视图大小 | 坐标转换 |
+
+<hr>
+
+<h2 id="小测验">🎯 小测验</h2>
+
+
+<h3>挑战 1：创建"闪烁霓虹灯"</h3>
+
+让颜色快速闪烁，像霓虹灯一样
+
+<details>
+<summary>👆 提示</summary>
+</p>
+<p><pre class="code-block"><code class="language-glsl">float flash = step(0.5, sin(frameTime * 10.0));
+color = mix(color * 0.5, color * 1.5, flash);</code></pre>
+
+
+</details>
+
+<h3>挑战 2：创建"颜色追逐"</h3>
+
+R、G、B 三个通道依次达到最亮
+
+<details>
+<summary>👆 提示</summary>
+</p>
+<p><pre class="code-block"><code class="language-glsl">color.r = 0.5 + 0.5 * sin(frameTime);
+color.g = 0.5 + 0.5 * sin(frameTime + 2.09);
+color.b = 0.5 + 0.5 * sin(frameTime + 4.18);</code></pre>
+
+
+</details>
+
+<hr>
+
+<h2 id="常见问题">🐛 常见问题</h2>
+
+
+<h3>问题 1：动画不工作</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-diff">- fragColor = texColor * sin(frameTime);
+
+// ✅ 正确声明
++ uniform float frameTime;
++ fragColor = texColor * sin(frameTime);</code></pre>
+
+
+<h3>问题 2：动画太快/太慢</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-diff">- float wave = sin(frameTime * 100.0);
+
+// ✅ 调慢（除以系数）
++ float wave = sin(frameTime * 2.0);</code></pre>
+
+
+<hr>
+
+<h2 id="本章总结">📊 本章总结</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">mindmap
+  root((第五章))
+    Uniform概念
+      CPU传入GPU
+      每帧可以改变
+      用于动画控制
+    时间动画
+      frameTime
+      sin函数
+      心跳/波浪
+    位置动画
+      TexCoord
+      UV空间变换
+      旋转/扭曲
+    组合效果
+      亮度+色调
+      多层动画
+      视觉叠加</div>
+</div>
+
+
+<h3>记住这三个动画公式：</h3>
+
+
+| 效果 | 代码 |
+|------|------|
+| 脉动 | <code>sin(frameTime)</code> |
+| 波浪 | <code>sin(TexCoord.x * n + frameTime)</code> |
+| 旋转 | <code>mat2(cos(angle), -sin(angle), ...) * uv</code> |
+
+<hr>
+
+<h2 id="下一步">🚀 下一步</h2>
+
+
+👉 <a href="06-postprocessing-basics.html">🔮 第六章：后处理魔法 - 创建全屏特效！</a>
+
+<hr>
+
+<em>🎉 恭喜你完成第五章！你已经能让世界动起来了！</em>
+
+<em>下一章我们将学习后处理，创建更酷的全屏特效！</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-shaderpack-structure.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
+        </a><a href="06-postprocessing.html" class="next">
+            🔮 第六章：后处理魔法 - 全屏特效！
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

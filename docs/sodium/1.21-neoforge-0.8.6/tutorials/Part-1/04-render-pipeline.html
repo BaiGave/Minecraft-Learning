@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第四章：渲染管线与批处理 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+<a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="04-render-pipeline.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+<a href="04-render-pipeline.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../Part-2/01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="../Part-2/01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="../Part-2/02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+<a href="../Part-2/02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第四章：渲染管线与批处理</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第四章：渲染管线与批处理
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-neoforge-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第四章：渲染管线与批处理</h1>
+
+
+<blockquote><p>⭐ <strong>本章将揭示 Minecraft 画面卡顿的真正原因，以及 Sodium 如何用"工厂流水线"的思路解决它！</strong></p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>渲染管线是什么</strong> - 想象成汽车工厂的装配流水线</li></ul>
+<ul><li><strong>Draw Call 是什么</strong> - 每帧向 GPU 发出的"绘制命令"</li></ul>
+<ul><li><strong>原版的问题</strong> - 为什么每个区块都要单独"喊话"一次</li></ul>
+<ul><li><strong>MultiDraw 批处理</strong> - Sodium 如何把多次命令合并成一次</li></ul>
+<ul><li><strong>直方图排序</strong> - 用"数手指"的方法快速排序</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 GPU 的基本概念（显卡负责画图）</li></ul>
+<ul><li>知道 Java 的基本语法</li></ul>
+<ul><li>知道什么是 <code>for</code> 循环（会遍历东西）</li></ul>
+
+<hr>
+
+<h2 id="什么是渲染管线">什么是渲染管线？</h2>
+
+
+<h3>比喻：汽车工厂的装配线 🏭</h3>
+
+
+想象你在经营一个<strong>汽车工厂</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                        汽车装配流水线                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  [零件区]  →  [焊接工位]  →  [喷漆工位]  →  [质检区]  →  [成品]  │
+│                                                               │
+│     │            │            │            │                   │
+│     ▼            ▼            ▼            ▼                   │
+│  准备车身      焊接车身      喷涂颜色      检查质量              │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<strong>渲染管线</strong>（Render Pipeline）就是 Minecraft 的"工厂流水线"：
+
+| 汽车工厂 | Minecraft 渲染管线 |
+|---------|-------------------|
+| 零件区 | 加载区块数据（方块、贴图） |
+| 焊接工位 | 生成网格（Mesh） |
+| 喷漆工位 | 应用着色器（Shader） |
+| 质检区 | 剔除不可见的部分 |
+| 成品车 | 最终画面 |
+
+<h3>渲染管线的输入与输出</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Input["输入"]
+        WORLD["世界数据<br/>方块、实体、光照..."]
+    end
+
+    subgraph Pipeline["渲染管线"]
+        CP["命令处理器<br/>收集绘制指令"]
+        CB["批处理<br/>合并相同指令"]
+        GPU["GPU<br/>执行绘制"]
+    end
+
+    subgraph Output["输出"]
+        SCREEN["屏幕画面<br/>我们看到的游戏"]
+    end
+
+    WORLD --> CP --> CB --> GPU --> SCREEN</div>
+</div>
+
+
+<hr>
+
+<h2 id="draw-call向-gpu-发号施令">Draw Call：向 GPU 发号施令</h2>
+
+
+<h3>什么是 Draw Call？</h3>
+
+
+<strong>Draw Call</strong> = 应用程序（CPU）向 GPU 发出的<strong>"画这个"命令</strong>。
+
+就像工厂主管对工人喊话：
+<ul><li>"<strong>画这块石头！</strong>"</li></ul>
+<ul><li>"<strong>画那棵树！</strong>"</li></ul>
+<ul><li>"<strong>画这片草地！</strong>"</li></ul>
+
+<h3>原版 Minecraft 的问题</h3>
+
+
+Minecraft 原版的渲染方式，就像一个话痨主管，<strong>每个方块都要单独喊一次</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────┐
+│                    原版 Minecraft 的渲染方式                   │
+├──────────────────────────────────────────────────────────────┤
+│                                                                │
+│  GPU 前面的队伍：                                               │
+│                                                                │
+│  [Draw Call #1: 画区块 0,0]                                    │
+│  [Draw Call #2: 画区块 1,0]                                    │
+│  [Draw Call #3: 画区块 2,0]                                    │
+│  [Draw Call #4: 画区块 0,1]                                    │
+│  ...                                                           │
+│  [Draw Call #500: 画区块 20,20]                                │
+│                                                                │
+│  💡 总计：约 500 次 Draw Call/帧！                              │
+│                                                                │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>为什么多次 Draw Call 效率低？</h3>
+
+
+| 问题 | 解释 |
+|------|------|
+| <strong>CPU 开销</strong> | 每次 Draw Call 都需要 CPU 准备数据、调用 API |
+| <strong>状态切换</strong> | 不同方块可能需要不同的渲染状态，切换浪费时间 |
+| <strong>显卡繁忙</strong> | GPU 不断被打断，无法高效工作 |
+</p>
+<p><pre class="code-block"><code class="language-text">💡 想象你是一名厨师：
+
+原版方式：来了 500 个顾客，每人点一道菜
+         你要：接单 → 炒菜 → 装盘 → 送餐 → 接单 → ...
+         结果：手忙脚乱，大部分时间在&quot;接单送餐&quot;
+
+Sodium 方式：把 500 道菜分成 5 类
+             50份宫保鸡丁 → 一起炒！
+             50份鱼香肉丝 → 一起炒！
+             ...
+         结果：效率极高！</code></pre>
+
+
+<hr>
+
+<h2 id="multidraw合并绘制命令">MultiDraw：合并绘制命令</h2>
+
+
+<h3>Sodium 的解决方案</h3>
+
+
+Sodium 发明了 <strong>MultiDraw</strong>（多次绘制）机制：
+
+<blockquote><p>💡 <strong>核心思路</strong>：把"喊 500 次话"变成"喊 1 次话，但说 500 件事"</p></blockquote>
+</p>
+<p><pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────┐
+│                   Sodium MultiDraw 的渲染方式                  │
+├──────────────────────────────────────────────────────────────┤
+│                                                                │
+│  原来的喊法：                                                   │
+│  &quot;画区块0,0！&quot; &quot;画区块1,0！&quot; &quot;画区块2,0！&quot; ...（500次）           │
+│                                                                │
+│  Sodium 的喊法：                                                │
+│  &quot;把这些区块都画了：[(0,0),(1,0),(2,0),...(20,20)]&quot;（1次）       │
+│                                                                │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>MultiDraw 的原理图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Before["原版方式"]
+        B1["区块 #1"] -->|"Draw Call"| B2["GPU"]
+        B3["区块 #2"] -->|"Draw Call"| B2
+        B4["区块 #3"] -->|"Draw Call"| B2
+        B5["..."] -->|"Draw Call"| B2
+        B6["区块 #N"] -->|"Draw Call"| B2
+    end
+
+    subgraph After["Sodium MultiDraw"]
+        A1["区块 #1"] ─┐
+        A2["区块 #2"] ─┤
+        A3["区块 #3"] ─┼-->|"1次 MultiDraw"| A7["GPU"]
+        A4["..."] ────┤
+        A5["区块 #N"] ─┘
+    end
+
+    style B2 fill:#ff6b6b,color:#fff
+    style A7 fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<h3>源码中的 MultiDraw</h3>
+
+
+Sodium 的批处理通过 <code>multiDrawElementsBaseVertex</code> 方法实现：
+</p>
+<p><pre class="code-block"><code class="language-java">public void multiDraw(CommandList commands,
+                     Tessellationator tessellation,
+                     GlBuffer indexBuffer) {
+
+    // 绑定顶点缓冲
+    commands.bindBuffer(this.vertexBuffer);
+
+    // 绑定索引缓冲
+    commands.bindBuffer(indexBuffer);
+
+    // 设置顶点格式
+    tessellation.bindAttributes(commands);
+
+    // ⭐ 批量绘制：一次调用绘制多个几何体！
+    commands.multiDrawElementsBaseVertex(
+        GL_TRIANGLES,
+        drawCounts,      // 每个绘制的顶点数（数组）
+        GL_UNSIGNED_INT,
+        drawOffsets,     // 偏移量数组
+        baseVertices     // 基础顶点偏移
+    );
+}</code></pre>
+
+
+<h3>Region 分组策略</h3>
+
+
+Sodium 不是把所有区块放一起，而是按 <strong>Region（区域）</strong> 分组：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                        世界地图                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐                        │
+│  │ Region  │ │ Region  │ │ Region  │                        │
+│  │   0,0   │ │   1,0   │ │   2,0   │                        │
+│  │(4×4区块)│ │(4×4区块)│ │(4×4区块)│                        │
+│  └─────────┘ └─────────┘ └─────────┘                        │
+│                                                               │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐                        │
+│  │ Region  │ │ Region  │ │ Region  │                        │
+│  │   0,1   │ │   1,1   │ │   2,1   │                        │
+│  └─────────┘ └─────────┘ └─────────┘                        │
+│                                                               │
+│  ✅ 每个 Region 内的所有区块，1 次 MultiDraw 绘制完成          │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="直方图排序更聪明的排队方式">直方图排序：更聪明的排队方式</h2>
+
+
+<h3>问题：为什么需要排序？</h3>
+
+
+渲染时按<strong>从远到近</strong>的顺序很重要（透明物体需要特殊处理）。
+
+<h3>普通排序 vs 直方图排序</h3>
+
+
+<strong>普通排序</strong>（像冒泡排序）：比较每个元素，时间复杂度 <strong>O(n log n)</strong>
+
+<strong>直方图排序</strong>：Sodium 用的方法，时间复杂度 <strong>O(n)</strong> ⭐
+
+<h3>数手指的比喻 👆</h3>
+
+
+想象你有一堆卡片，每张卡片上写着距离（1-63），你要把它们按距离排序：
+
+<strong>普通人的做法</strong>（冒泡）：</p>
+<p><pre class="code-block"><code class="language-text">第1轮：比较相邻两张，如果顺序不对就交换
+第2轮：再比较交换...
+...
+要比较很多次！😓</code></pre>
+
+
+<strong>聪明人的做法</strong>（直方图）：</p>
+<p><pre class="code-block"><code class="language-text">第1步：伸出一只手（5根手指），把卡片按距离分类
+       距离1的放第1堆，距离2的放第2堆...
+       （像数手指一样简单）
+
+第2步：按顺序收集每堆卡片
+       1,1,1 → 2,2 → 3 → 4,4,4,4 → ...</code></pre>
+
+
+<h3>源码中的直方图排序</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void sort() {
+    int[] histogram = new int[64];  // 距离直方图（0-63）
+
+    // 第一遍：按距离分类（像数手指）
+    for (int i = 0; i &lt; visibleCount; i++) {
+        int distance = getDistanceSquared(visibleSections[i]);
+        histogram[distance]++;  // 统计每个距离有多少个
+    }
+
+    // 第二遍：计算前缀和（确定每个距离的起始位置）
+    for (int i = 1; i &lt; 64; i++) {
+        histogram[i] += histogram[i - 1];
+    }
+
+    // 第三遍：收集结果（原地重排）
+    ChunkRenderable[] sorted = new ChunkRenderable[visibleCount];
+    for (int i = visibleCount - 1; i &gt;= 0; i--) {
+        int distance = getDistanceSquared(visibleSections[i]);
+        sorted[--histogram[distance]] = renderables[i];
+    }
+}</code></pre>
+
+
+<h3>排序效果对比</h3>
+
+
+| 方法 | 时间复杂度 | 1000个区块耗时 |
+|------|-----------|---------------|
+| 冒泡排序 | O(n²) | ~1000 步 |
+| 快速排序 | O(n log n) | ~100 步 |
+| <strong>直方图排序</strong> | <strong>O(n)</strong> | <strong>~10 步</strong> |
+
+<hr>
+
+<h2 id="渲染-pass分门别类处理">渲染 Pass：分门别类处理</h2>
+
+
+<h3>为什么要分 Pass？</h3>
+
+
+不同类型的方块有不同的渲染要求：
+
+| Pass 名称 | 处理的方块 | 特殊处理 |
+|-----------|-----------|----------|
+| SOLID | 石头、泥土、草方块 | 无需特殊处理 |
+| CUTOUT | 花、栅栏、玻璃板 | 有透明缝隙 |
+| TRANSLUCENT | 冰、染色玻璃 | 需要透明混合 |
+
+<h3>Pass 执行顺序</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant R as 渲染器
+    participant GPU as GPU
+
+    Note over R,GPU: 渲染 Pass 按顺序执行
+
+    R->>GPU: Pass #1 SOLID
+    Note right of GPU: 先画不透明的
+    GPU-->>R: 完成
+
+    R->>GPU: Pass #2 CUTOUT_MIPPED
+    GPU-->>R: 完成
+
+    R->>GPU: Pass #3 CUTOUT
+    GPU-->>R: 完成
+
+    R->>GPU: Pass #4 TRANSLUCENT
+    Note right of GPU: 最后画透明的<br/>需要启用混合模式
+    GPU-->>R: 完成</div>
+</div>
+
+
+<h3>为什么透明要最后画？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">💡 想象你在画一幅水彩画：
+
+1. 先画背景（不透明）
+2. 后画前景中的水（透明）
+
+如果你先画水，后画背景，水就被盖住了！</code></pre>
+
+
+<hr>
+
+<h2 id="性能对比数字说话">性能对比：数字说话</h2>
+
+
+<h3>Draw Call 减少</h3>
+
+
+| 指标 | 原版 Minecraft | Sodium | 提升 |
+|------|---------------|--------|------|
+| Draw Calls/帧 | ~500 | ~50 | <strong>90% 减少</strong> |
+| 着色器切换次数 | 频繁 | 按 Region 分组 | 显著减少 |
+| 区块网格构建 | 主线程 | 多线程 | <strong>帧率更稳定</strong> |
+
+<h3>实际效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    性能对比测试                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  场景：玩家在主世界中心，向四周看                               │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │                   原版 Minecraft                      │       │
+│  │  FPS: 45 → 突然掉到 20（区块加载时）                   │       │
+│  │  CPU: 单核 100%，其他核心闲置                          │       │
+│  └─────────────────────────────────────────────────────┘       │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │                   Sodium                              │       │
+│  │  FPS: 稳定在 120+                                     │       │
+│  │  CPU: 多核均衡负载                                    │       │
+│  └─────────────────────────────────────────────────────┘       │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>帧率稳定性对比</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">时间 →
+原版:   ████████████████░░░░░███████████████░░░░░███████████████
+       (加载区块时卡顿)  (加载区块时卡顿)  (加载区块时卡顿)
+
+Sodium: ████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░
+       (稳定的帧率，偶有轻微波动)</code></pre>
+
+
+<hr>
+
+<h2 id="流程总览图">流程总览图</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Setup["1. 场景设置"]
+        A1["检测相机移动"]
+        A2["执行遮挡剔除"]
+        A3["更新渲染列表"]
+    end
+
+    subgraph Build["2. 网格构建"]
+        B1["收集可见区块"]
+        B2["按 Region 分组"]
+        B3["多线程生成网格"]
+        B4["上传到 GPU"]
+    end
+
+    subgraph Draw["3. 绘制阶段"]
+        C1["按 Pass 遍历"]
+        C2["绑定着色器"]
+        C3["执行 MultiDraw"]
+        C4["直方图排序"]
+    end
+
+    subgraph Result["结果"]
+        D1["50 Draw Calls"]
+        D2["稳定 120+ FPS"]
+    end
+
+    Setup --> Build --> Draw --> Result</div>
+</div>
+
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 核心要点["本章核心要点"]
+        E1["1. 渲染管线 = 把世界数据变成屏幕画面的流水线"]
+        E2["2. Draw Call = 向 GPU 发出的绘制命令"]
+        E3["3. MultiDraw = 把多次绘制合并成一次"]
+        E4["4. 直方图排序 = O(n) 的高效排序算法"]
+        E5["5. Pass 分开渲染 = 确保正确的渲染顺序"]
+    end
+
+    style E1 fill:#ffd93d,color:#000
+    style E2 fill:#4d96ff,color:#fff
+    style E3 fill:#6bcb77,color:#fff
+    style E4 fill:#ff6b6b,color:#fff
+    style E5 fill:#9b59b6,color:#fff</div>
+</div>
+
+
+<h3>记住这个顺序</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">原版的问题：每个区块 → 单独 Draw Call → 500 次/帧
+    ↓
+Sodium 的解决：区块按 Region 分组 → MultiDraw → 50 次/帧
+    ↓
+背后的功臣：直方图排序（O(n)）+ 多线程构建 + 遮挡剔除</code></pre>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章节学习后，请确认你能回答以下问题：
+
+<ul><li>[ ] <strong>Q1</strong>: 渲染管线是什么？请用汽车工厂的比喻解释。</li></ul>
+<ul><li>[ ] <strong>Q2</strong>: Draw Call 是什么？为什么多次 Draw Call 会导致性能问题？</li></ul>
+<ul><li>[ ] <strong>Q3</strong>: MultiDraw 批处理的核心原理是什么？它如何减少 Draw Call 次数？</li></ul>
+<ul><li>[ ] <strong>Q4</strong>: 直方图排序相比普通排序有什么优势？时间复杂度是多少？</li></ul>
+<ul><li>[ ] <strong>Q5</strong>: 为什么透明物体要在不透明物体之后渲染？请解释原因。</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="../analysis/01-architecture-overview.html">01-architecture-overview</a> | Sodium 整体架构设计 |
+| <a href="../analysis/02-chunk-render-system.html">02-chunk-render-system</a> | 区块渲染系统详解 |
+| <a href="../analysis/03-occlusion-culling.html">03-occlusion-culling</a> | 遮挡剔除算法 |
+| <a href="../analysis/05-shader-system.html">05-shader-system</a> | 着色器系统 |
+
+<hr>
+
+<h2 id="附录核心文件速查">附录：核心文件速查</h2>
+
+
+| 功能 | 文件 |
+|------|------|
+| 主渲染器 | <code>SodiumWorldRenderer.java</code> |
+| 区块管理 | <code>RenderSectionManager.java</code> |
+| 异步构建 | <code>ChunkBuilder.java</code> |
+| 区块渲染 | <code>DefaultChunkRenderer.java</code> |
+| Pass 定义 | <code>TerrainRenderPass.java</code> |
+| 默认 Pass | <code>DefaultTerrainRenderPasses.java</code> |
+| 渲染列表 | <code>ChunkRenderList.java</code> |
+| 批处理缓存 | <code>CachedBatch.java</code> |
+| 缓冲区管理 | <code>GlBufferArena.java</code> |
+
+<hr>
+
+<em>文档版本：Sodium v0.8.6, Minecraft 1.21.11</em>
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-occlusion-culling.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            遮挡剔除算法
+        </a><a href="04-render-pipeline.html" class="next">
+            第四章：渲染管线与批处理
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

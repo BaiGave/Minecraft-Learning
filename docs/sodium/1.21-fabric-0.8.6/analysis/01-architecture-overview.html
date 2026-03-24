@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Sodium 架构概述 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+<a href="01-architecture-overview.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Sodium 架构概述</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Sodium 架构概述
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium 架构概述</h1>
+
+
+<blockquote><p>高性能 Minecraft 渲染优化 Mod 的整体架构设计、模块划分与核心组件分析</p></blockquote>
+
+<hr>
+</p>
+<p><pre class="code-block"><code class="language-yaml">---
+title: Sodium 架构概述
+description: 分析 Sodium mod 的整体架构设计、模块划分和核心组件
+readingTime: 25
+subsystem: architecture-overview
+---</code></pre>
+
+
+<h2 id="目录">目录</h2>
+
+
+<a href="#架构设计原则">架构设计原则</a>
+<a href="#模块划分">模块划分</a>
+<a href="#核心入口与初始化流程">核心入口与初始化流程</a>
+<a href="#主要包及职责">主要包及职责</a>
+<a href="#核心类详解">核心类详解</a>
+<a href="#设计模式分析">设计模式分析</a>
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="架构设计原则">架构设计原则</h2>
+
+
+Sodium 是一个专注于渲染性能优化的 Minecraft 客户端 Mod。其架构设计遵循以下核心原则：
+
+<h3>平台无关性优先</h3>
+
+
+Sodium 的核心渲染逻辑完全独立于任何模组加载器（Fabric/NeoForge）。通过 <strong>SPI（Service Provider Interface）</strong> 模式将平台特定的代码抽象为服务接口，由各平台模块提供实现。这种设计使得核心代码可以在不同的模组生态系统中复用。
+
+<h3>异步处理驱动</h3>
+
+
+原版 Minecraft 将所有区块网格构建放在主线程执行，当地图发生大规模变化时（如挖矿、爆炸），会导致明显的帧率下降。Sodium 通过 <strong>工作线程池</strong> 将网格构建任务异步化，确保渲染线程不被阻塞。
+
+<h3>内存拷贝最小化</h3>
+
+
+区块数据在渲染前需要从主世界状态中「克隆」出来。Sodium 采用 <strong>对象池化</strong> 和 <strong>直接内存操作</strong>，避免频繁的 GC 压力和内存分配开销。
+
+<hr>
+
+<h2 id="模块划分">模块划分</h2>
+
+
+Sodium 项目采用 Gradle 多模块结构，各模块职责明确：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph sodium["D:/Minecraft-Learning/assets/sodium"]
+        subgraph common["common 模块 - 核心渲染引擎"]
+            C1["client/ - 客户端代码"]
+            C2["mixin/ - 字节码注入"]
+            C3["api/ - 公共接口"]
+        end
+        
+        subgraph platform["平台特定模块"]
+            F["fabric/ - Fabric 集成"]
+            N["neoforge/ - NeoForge 集成"]
+        end
+        
+        subgraph frapi["frapi 模块"]
+            FR["Fabric Renderer API 实现"]
+        end
+    end
+    
+    common --> |SPI 实现| platform
+    common --> |API 定义| frapi
+    frapi --> |Mixin 注入| common</div>
+</div>
+
+
+<h3>模块依赖关系</h3>
+
+
+| 模块 | 依赖 | 职责 |
+|------|------|------|
+| <strong>common</strong> | Minecraft, Mixin | 包含所有渲染优化逻辑、遮挡剔除、多线程构建、批处理渲染 |
+| <strong>fabric</strong> | common, Fabric API | Fabric 平台的入口点、服务注册、Mixin 配置 |
+| <strong>neoforge</strong> | common, NeoForge API | NeoForge 平台的入口点、服务注册、Mixin 配置 |
+| <strong>frapi</strong> | common, Fabric Renderer API | 为第三方 mod 提供渲染 API 访问能力 |
+
+<h3>源码目录结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">assets/sodium/
+├── common/src/main/java/net/caffeinemc/mods/sodium/
+│   ├── client/                    # 客户端核心代码
+│   │   ├── SodiumClientMod.java  # 客户端入口类
+│   │   ├── render/               # 渲染系统
+│   │   │   ├── SodiumWorldRenderer.java
+│   │   │   ├── chunk/            # 区块渲染子系统
+│   │   │   └── gl/               # OpenGL 封装
+│   │   ├── model/                # 模型/光照处理
+│   │   ├── gui/                  # 配置 GUI
+│   │   ├── config/               # 配置系统
+│   │   └── services/             # 平台服务接口
+│   └── mixin/                    # Mixin 注入代码
+├── fabric/src/main/java/
+│   └── net/caffeinemc/mods/sodium/fabric/
+│       ├── SodiumFabricMod.java  # Fabric 入口
+│       └── SodiumPreLaunch.java  # Pre-launch 钩子
+├── neoforge/                     # NeoForge 平台代码
+└── frapi/                        # Fabric Renderer API 实现</code></pre>
+
+
+<hr>
+
+<h2 id="核心入口与初始化流程">核心入口与初始化流程</h2>
+
+
+<h3>Fabric 平台的初始化链</h3>
+
+
+Sodium 在 Fabric 上的初始化流程分为多个阶段：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Fabric as Fabric Loader
+    participant PreLaunch as SodiumPreLaunch
+    participant Mod as SodiumFabricMod
+    participant Client as SodiumClientMod
+    participant Services as Services
+    
+    Fabric->>PreLaunch: onPreLaunch()
+    PreLaunch->>PreLaunch: PreLaunchChecks.checkEnvironment()
+    PreLaunch->>PreLaunch: GraphicsAdapterProbe.findAdapters()
+    PreLaunch->>PreLaunch: Workarounds.init()
+    
+    Fabric->>Mod: onInitializeClient()
+    Mod->>Client: onInitialization(version)
+    Client->>Client: loadConfig()
+    Client->>Client: updateFingerprint()
+    Mod->>Services: FRAPIProvider.getInstance().register()</div>
+</div>
+
+
+<h3>核心入口类</h3>
+
+
+<strong>1. <code>SodiumFabricMod</code> - Fabric 入口点</strong>
+</p>
+<p><pre class="code-block"><code class="language-1">public class SodiumFabricMod implements ClientModInitializer {
+    @Override
+    public void onInitializeClient() {
+        ModContainer mod = FabricLoader.getInstance()
+                .getModContainer(&quot;sodium&quot;)
+                .orElseThrow(NullPointerException::new);
+
+        SodiumClientMod.onInitialization(mod.getMetadata().getVersion().getFriendlyString());
+
+        ConfigLoaderFabric.collectConfigEntryPoints();
+        ConfigManager.registerConfigsEarly();
+
+        FabricLoader.getInstance()
+                .getEntrypoints(&quot;frex_flawless_frames&quot;, Consumer.class)
+                .forEach(api -&gt; api.accept(FlawlessFrames.getProvider()));
+
+        FRAPIProvider.getInstance().register();
+    }
+}</code></pre>
+
+
+<strong>2. <code>SodiumClientMod</code> - 客户端核心</strong>
+</p>
+<p><pre class="code-block"><code class="language-1">public class SodiumClientMod {
+    private static SodiumOptions OPTIONS;
+    private static final Logger LOGGER = LoggerFactory.getLogger(&quot;Sodium&quot;);
+    
+    public static void onInitialization(String version) {
+        // 注册调试屏幕入口
+        entries.put(SODIUM_DEBUG_ENTRY_FULL, new SodiumDebugEntry(true));
+        
+        MOD_VERSION = version;
+        OPTIONS = loadConfig();
+        updateFingerprint();
+    }
+    
+    public static SodiumOptions options() {
+        if (OPTIONS == null) {
+            throw new IllegalStateException(&quot;Config not yet available&quot;);
+        }
+        return OPTIONS;
+    }
+}</code></pre>
+
+
+<h3>Pre-Launch 阶段</h3>
+
+
+<code>SodiumPreLaunch</code> 在游戏主类初始化之前执行，用于：
+</p>
+<p><pre class="code-block"><code class="language-1">public class SodiumPreLaunch implements PreLaunchEntrypoint {
+    @Override
+    public void onPreLaunch() {
+        PreLaunchChecks.checkEnvironment();      // 环境检测
+        GraphicsAdapterProbe.findAdapters();      // GPU 适配器探测
+        Workarounds.init();                        // 驱动兼容性问题修复
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="主要包及职责">主要包及职责</h2>
+
+
+<h3><code>client/services/</code> - 平台服务层</h3>
+
+
+这是 Sodium 架构中最关键的设计，通过 SPI 实现平台抽象：
+</p>
+<p><pre class="code-block"><code class="language-1">public class Services {
+    public static &lt;T&gt; T load(Class&lt;T&gt; clazz) {
+        final T loadedService = ServiceLoader.load(clazz)
+                .findFirst()
+                .orElseThrow(() -&gt; new NullPointerException(&quot;Failed to load service for &quot; + clazz.getName()));
+        return loadedService;
+    }
+
+    public static &lt;T&gt; T loadOr(Class&lt;T&gt; clazz, Supplier&lt;T&gt; supplier) {
+        final T loadedService = ServiceLoader.load(clazz)
+                .findFirst()
+                .orElse(supplier.get());
+        return loadedService;
+    }
+}</code></pre>
+
+
+核心服务接口包括：
+
+| 接口 | 职责 |
+|------|------|
+| <code>PlatformRuntimeInformation</code> | 提供运行环境信息（开发模式、配置目录） |
+| <code>PlatformBlockAccess</code> | 平台特定的方块属性查询 |
+| <code>PlatformLevelAccess</code> | 世界级别数据访问 |
+| <code>PlatformModelAccess</code> | 模型相关操作 |
+| <code>FluidRendererFactory</code> | 流体渲染器工厂 |
+
+<h3><code>client/render/</code> - 渲染系统</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph render["client/render/"]
+        W["SodiumWorldRenderer"]
+        C["RenderSectionManager"]
+        G["client/gl/"]
+    end
+    
+    W --> C
+    C --> G</div>
+</div>
+
+
+<ul><li><strong>SodiumWorldRenderer</strong>: 世界渲染协调器，持有 <code>RenderSectionManager</code></li></ul>
+<ul><li><strong>RenderSectionManager</strong>: 管理所有区块渲染节（RenderSection）</li></ul>
+<ul><li><strong>client/gl/</strong>: OpenGL 函数封装</li></ul>
+
+<h3><code>client/render/chunk/</code> - 区块渲染子系统</h3>
+
+
+这是性能优化的核心区域，包含：
+
+| 包 | 职责 |
+|-----|------|
+| <code>compile/</code> | 异步网格构建任务 |
+| <code>compile/executor/</code> | 工作线程池（ChunkBuilder） |
+| <code>occlusion/</code> | 遮挡剔除算法 |
+| <code>region/</code> | GPU 缓冲区管理 |
+| <code>terrain/</code> | 地形渲染 Pass |
+| <code>translucent_sorting/</code> | 半透明区块排序 |
+
+<h3><code>client/model/</code> - 模型与光照</h3>
+
+
+<ul><li><code>light/flat/</code> - 平面光照管线</li></ul>
+<ul><li><code>light/smooth/</code> - 平滑光照（软阴影）</li></ul>
+<ul><li><code>quad/</code> - 四边形（quad）数据处理</li></ul>
+
+<hr>
+
+<h2 id="核心类详解">核心类详解</h2>
+
+
+<h3>1. <code>RenderDevice</code> - OpenGL 设备抽象</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-1">public interface RenderDevice {
+    RenderDevice INSTANCE = new GLRenderDevice();
+
+    CommandList createCommandList();
+    
+    static void enterManagedCode() {
+        RenderDevice.INSTANCE.makeActive();
+    }
+    
+    static void exitManagedCode() {
+        RenderDevice.INSTANCE.makeInactive();
+    }
+
+    void makeActive();
+    void makeInactive();
+
+    GLCapabilities getCapabilities();
+    DeviceFunctions getDeviceFunctions();
+    int getSubTexelPrecisionBits();
+}</code></pre>
+
+
+<strong>职责</strong>：
+<ul><li>封装所有 OpenGL 操作</li></ul>
+<ul><li>提供线程安全的命令缓冲</li></ul>
+<ul><li>管理 OpenGL 上下文状态</li></ul>
+
+<strong>设计模式</strong>：<strong>单例模式</strong> + <strong>工厂方法</strong>（<code>createCommandList()</code>）
+
+<h3>2. <code>SodiumWorldRenderer</code> - 世界渲染协调器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-59">public class SodiumWorldRenderer {
+    private final Minecraft client;
+    private ClientLevel level;
+    private int renderDistance;
+    private Vector3d lastCameraPos;
+    private RenderSectionManager renderSectionManager;
+
+    public static SodiumWorldRenderer instance() {
+        var instance = instanceNullable();
+        if (instance == null) {
+            throw new IllegalStateException(&quot;No renderer attached to active level&quot;);
+        }
+        return instance;
+    }
+    
+    public static SodiumWorldRenderer instanceNullable() {
+        var level = Minecraft.getInstance().levelRenderer;
+        if (level instanceof LevelRendererExtension extension) {
+            return extension.sodium$getWorldRenderer();
+        }
+        return null;
+    }
+}</code></pre>
+
+
+<strong>职责</strong>：
+<ul><li>管理 <code>RenderSectionManager</code> 的生命周期</li></ul>
+<ul><li>处理相机变化检测</li></ul>
+<ul><li>协调区块更新与渲染</li></ul>
+<ul><li>支持实体剔除（Entity Culling）</li></ul>
+
+<strong>关键方法</strong>：
+
+| 方法 | 功能 |
+|------|------|
+| <code>setupTerrain()</code> | 每帧开始时设置渲染状态 |
+| <code>drawChunkLayer()</code> | 执行单个渲染 Pass |
+| <code>scheduleRebuildForChunk()</code> | 调度区块重建任务 |
+| <code>isEntityVisible()</code> | 判断实体是否可见 |
+
+<h3>3. <code>RenderSectionManager</code> - 区块渲染管理器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-64">public class RenderSectionManager {
+    private final ChunkBuilder builder;                    // 工作线程池
+    private final RenderRegionManager regions;             // GPU 缓冲区
+    private final ClonedChunkSectionCache sectionCache;   // 克隆数据缓存
+    private final Long2ReferenceMap&lt;RenderSection&gt; sectionByPosition;
+    private final OcclusionCuller occlusionCuller;        // 遮挡剔除器
+    private final SortBehavior sortBehavior;               // 半透明排序策略
+
+    public RenderSectionManager(ClientLevel level, int renderDistance, 
+                                 SortBehavior sortBehavior, CommandList commandList) {
+        this.chunkRenderer = new DefaultChunkRenderer(RenderDevice.INSTANCE, ChunkMeshFormats.COMPACT);
+        this.builder = new ChunkBuilder(level, ChunkMeshFormats.COMPACT);
+        this.regions = new RenderRegionManager(commandList);
+        this.sectionCache = new ClonedChunkSectionCache(this.level);
+        this.occlusionCuller = new OcclusionCuller(...);
+    }
+}</code></pre>
+
+
+<strong>职责</strong>：
+<ul><li>管理所有可见的 <code>RenderSection</code></li></ul>
+<ul><li>协调遮挡剔除与可见性更新</li></ul>
+<ul><li>调度区块构建任务</li></ul>
+<ul><li>处理区块加载/卸载事件</li></ul>
+
+<strong>核心数据结构</strong>：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph RSM["RenderSectionManager"]
+        A["sectionByPosition<br/>Long2ReferenceMap"]
+        B["renderableSectionTree<br/>RemovableMultiForest"]
+        C["taskLists<br/>EnumMap<TaskQueueType>"]
+        D["renderLists<br/>SortedRenderLists"]
+    end
+    
+    A --> |索引| B
+    C --> |调度| A
+    B --> |可见性| D</div>
+</div>
+
+
+<h3>4. <code>ChunkBuilder</code> - 异步构建执行器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-22">public class ChunkBuilder {
+    private final ChunkJobQueue queue = new ChunkJobQueue();
+    private final List&lt;Thread&gt; threads = new ArrayList&lt;&gt;();
+    private final ChunkBuildContext localContext;
+
+    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+        int count = getThreadCount();
+        for (int i = 0; i &lt; count; i++) {
+            ChunkBuildContext context = new ChunkBuildContext(level, vertexType);
+            WorkerRunnable worker = new WorkerRunnable(...);
+            Thread thread = new Thread(worker, &quot;Chunk Render Task Executor #&quot; + i);
+            thread.setPriority(Math.max(0, Thread.NORM_PRIORITY - 2));
+            thread.start();
+            this.threads.add(thread);
+        }
+    }
+    
+    private static int getOptimalThreadCount() {
+        return Mth.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
+    }
+}</code></pre>
+
+
+<strong>职责</strong>：
+<ul><li>管理工作线程池</li></ul>
+<ul><li>调度网格构建任务</li></ul>
+<ul><li>支持任务窃取负载均衡</li></ul>
+<ul><li>控制帧预算（frame budget）</li></ul>
+
+<strong>线程数量策略</strong>：自动检测 CPU 核心数，使用 <code>max(1, min(processors/3, processors-6, 10))</code>
+
+<h3>5. <code>LevelSlice</code> - 世界数据快照</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-48">public final class LevelSlice implements BlockAndTintGetter {
+    private static final int NEIGHBOR_BLOCK_RADIUS = 2;
+    private static final int NEIGHBOR_CHUNK_RADIUS = Mth.roundToward(NEIGHBOR_BLOCK_RADIUS, 16) &gt;&gt; 4;
+    
+    private final BlockState[][] blockArrays;           // 方块状态数组
+    private final DataLayer[][] lightArrays;            // 光照数据
+    private final Int2ReferenceMap&lt;BlockEntity&gt;[] blockEntityArrays;
+    private final SodiumAuxiliaryLightManager[] auxLightManager;
+    private final LevelBiomeSlice biomeSlice;
+    private final LevelColorCache biomeColors;
+
+    public static ChunkRenderContext prepare(Level level, SectionPos pos, ClonedChunkSectionCache cache) {
+        // 克隆区块数据用于离线程访问
+    }
+}</code></pre>
+
+
+<strong>职责</strong>：
+<ul><li>为每个区块构建任务创建数据快照</li></ul>
+<ul><li>确保线程看到一致的区块状态</li></ul>
+<ul><li>缓存方块状态、光照、生物群系数据</li></ul>
+
+<strong>内存布局</strong>：
+<ul><li>每个 <code>LevelSlice</code> 包含 5x5x5 = 125 个区块段的副本</li></ul>
+<ul><li>半径为 2 的邻居区块用于正确的光照计算</li></ul>
+
+<hr>
+
+<h2 id="设计模式分析">设计模式分析</h2>
+
+
+<h3>1. SPI（Service Provider Interface）</h3>
+
+
+Sodium 使用 Java 标准 <code>ServiceLoader</code> 实现平台抽象：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    S["Services.load()<br/>ServiceLoader.load()"]
+    
+    I1["PlatformRuntimeInformation"]
+    I2["PlatformBlockAccess"]
+    I3["FluidRendererFactory"]
+    
+    F1["FabricPlatformImpl"]
+    F2["FabricBlockAccess"]
+    
+    N1["NeoForgePlatformImpl"]
+    N2["NeoForgeBlockAccess"]
+    
+    S --> I1
+    S --> I2
+    S --> I3
+    
+    I1 <|-- F1
+    I1 <|-- N1
+    
+    I2 <|-- F2
+    I2 <|-- N2</div>
+</div>
+
+
+通过 <code>META-INF/services/</code> 配置文件指定实现类：
+</p>
+<p><pre class="code-block"><code class="language-text">META-INF/services/net.caffeinemc.mods.sodium.client.services.PlatformRuntimeInformation
+= net.caffeinemc.mods.sodium.fabric.FabricPlatformImpl</code></pre>
+
+
+<h3>2. Mixin 注入模式</h3>
+
+
+Mixin 用于在不修改原版类的情况下扩展功能：
+</p>
+<p><pre class="code-block"><code class="language-1">@Mixin(BlockStateModel.class)
+public interface BakedModelMixin extends FabricBlockStateModel {
+    @Override
+    default void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, 
+                           BlockPos pos, BlockState state, RandomSource random, 
+                           Predicate&lt;@Nullable Direction&gt; cullTest) {
+        // 自定义模型渲染逻辑
+        List&lt;BlockModelPart&gt; parts = PlatformModelAccess.getInstance()
+            .collectPartsOf((BlockStateModel) this, blockView, pos, state, random, ...);
+        
+        for (int i = 0; i &lt; partCount; ++i) {
+            ((FabricBlockModelPart) parts.get(i)).emitQuads(emitter, cullTest);
+        }
+    }
+}</code></pre>
+
+
+<h3>3. 工厂模式</h3>
+
+
+<code>FRAPIProvider</code> 使用简单工厂模式：
+</p>
+<p><pre class="code-block"><code class="language-1">public interface FRAPIProvider {
+    FRAPIProvider INSTANCE = Services.loadOr(FRAPIProvider.class, () -&gt; () -&gt; {});
+    
+    static FRAPIProvider getInstance() {
+        return INSTANCE;
+    }
+    
+    void register();
+}</code></pre>
+
+
+<h3>4. 策略模式</h3>
+
+
+半透明排序使用策略模式：
+</p>
+<p><pre class="code-block"><code class="language-java">public interface SortBehavior {
+    enum SortMode { OFF, STATIC, DYNAMIC, DYNAMIC_DEFER_NEARBY_ZERO_FRAMES }
+    DeferMode getDeferMode();
+    PriorityMode getPriorityMode();
+}</code></pre>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章节学习后，请确认你能够：
+
+<ul><li>[ ] 绘制 Sodium 的模块依赖关系图，并解释每个模块的职责</li></ul>
+<ul><li>[ ] 描述 Fabric 平台的完整初始化流程（Pre-Launch → ClientModInitializer → onInitialization）</li></ul>
+<ul><li>[ ] 解释 <code>RenderSectionManager</code> 如何协调区块的加载、构建和渲染</li></ul>
+<ul><li>[ ] 说明 <code>LevelSlice</code> 的设计目的（为异步任务提供一致的世界快照）</li></ul>
+<ul><li>[ ] 分析 Sodium 如何通过 SPI 实现 Fabric/NeoForge 双平台支持</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+<ul><li><a href="02-chunk-render-system.html">02-chunk-render-system</a> - 区块渲染系统详解</li></ul>
+<ul><li><a href="03-occlusion-culling.html">03-occlusion-culling</a> - 遮挡剔除算法</li></ul>
+<ul><li><a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线流程</li></ul>
+<ul><li><a href="05-shader-system.html">05-shader-system</a> - 着色器系统</li></ul>
+<ul><li><a href="06-platform-integration.html">06-platform-integration</a> - 平台集成机制</li></ul>
+<ul><li><a href="08-configuration-system.html">08-configuration-system</a> - 配置系统</li></ul>
+
+<hr>
+
+<em>分析时间: 2026-03-24</em>
+<em>基于 Sodium 源码 v0.8.6+</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="02-chunk-render-system.html" class="next">
+            Sodium 区块渲染系统 (Chunk Render System)
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

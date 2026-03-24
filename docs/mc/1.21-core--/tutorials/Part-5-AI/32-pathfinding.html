@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第32章：路径导航 - 生物的"GPS导航" - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="32-pathfinding.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第32章：路径导航 - 生物的"GPS导航"</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第32章：路径导航 - 生物的"GPS导航"
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第32章：路径导航 - 生物的"GPS导航"</h1>
+
+
+<blockquote><p><strong>注意</strong>：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。</p></blockquote>
+
+<h2 id="目标">目标</h2>
+
+
+<ul><li>理解路径导航是什么</li></ul>
+<ul><li>掌握 Path、PathNode 的结构</li></ul>
+<ul><li>学会使用 MoveControl 控制移动</li></ul>
+<ul><li>了解障碍物处理机制</li></ul>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Task 任务系统</li></ul>
+<ul><li>理解实体（Entity）的基本概念</li></ul>
+
+<h2 id="核心概念什么是路径导航">核心概念：什么是路径导航？</h2>
+
+
+<h3>生活比喻</h3>
+
+
+想象你要去一个陌生的地方：
+
+<ul><li><strong>打开地图</strong> → 计算从当前位置到目的地的路线</li></ul>
+<ul><li><strong>按路线走</strong> → 沿着导航给的路线前进</li></ul>
+<ul><li><strong>遇到障碍</strong> → 绕路或者重新计算</li></ul>
+<ul><li><strong>到达终点</strong> → 完成任务</li></ul>
+
+Minecraft 的路径导航就是生物的"GPS"：
+
+| GPS 功能 | Minecraft 实现 | 说明 |
+|----------|----------------|------|
+| 地图规划 | PathNode、Path | 规划路线 |
+| 实时导航 | EntityNavigation | 引导移动 |
+| 障碍处理 | PathNodeType | 判断能否通行 |
+| 运动控制 | MoveControl | 控制速度和方向 |
+
+<blockquote><p><strong>一句话理解</strong>：路径导航让生物知道"怎么走"，MoveControl 让生物"走起来"。</p></blockquote>
+
+<h3>源码解读</h3>
+
+
+<h4>PathNode 类 - 路径节点</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class PathNode {
+    public final int x, y, z;  // 节点坐标
+    public float pathLength;    // 从起点到该节点的距离
+    public float penalty;        // 惩罚值（越难走的路惩罚越高）
+    public PathNodeType type;   // 节点类型（能否通行）
+    public boolean visited;     // 是否已访问（A*算法用）
+    
+    // 计算到另一个节点的曼哈顿距离
+    public float getManhattanDistance(PathNode node) {
+        return Math.abs(node.x - this.x) + Math.abs(node.y - this.y) + Math.abs(node.z - this.z);
+    }
+}</code></pre>
+
+
+<strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/PathNode.java</code>
+
+<h4>Path 类 - 完整路径</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class Path {
+    private final List&lt;PathNode&gt; nodes;  // 路径节点列表
+    private int currentNodeIndex;        // 当前到达第几个节点
+    private final BlockPos target;      // 目标位置
+    
+    // 获取当前位置对应的目标点
+    public Vec3d getNodePosition(Entity entity) {
+        PathNode node = nodes.get(currentNodeIndex);
+        return new Vec3d(node.x + 0.5, node.y, node.z + 0.5);
+    }
+    
+    // 移动到下一个节点
+    public void next() {
+        currentNodeIndex++;
+    }
+    
+    // 检查路径是否走完
+    public boolean isFinished() {
+        return currentNodeIndex &gt;= nodes.size();
+    }
+}</code></pre>
+
+
+<strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/Path.java</code>
+
+<h4>EntityNavigation 类 - 导航系统</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class EntityNavigation {
+    protected final MobEntity entity;    // 被控制的生物
+    protected final World world;        // 所在世界
+    protected Path currentPath;          // 当前路径
+    protected double speed;             // 移动速度
+    
+    // 找路
+    public Path findPathTo(BlockPos target, int distance) {
+        // 使用 A* 算法计算最短路径
+    }
+    
+    // 开始移动
+    public boolean startMovingTo(Entity target, double speed) {
+        Path path = findPathTo(target, 1);
+        return startMovingAlong(path, speed);
+    }
+    
+    // 每tick调用
+    public void tick() {
+        if (isIdle()) return;
+        
+        // 沿路径继续移动
+        continueFollowingPath();
+        
+        // 通知 MoveControl 移动
+        Vec3d targetPos = currentPath.getNodePosition(entity);
+        entity.getMoveControl().moveTo(targetPos.x, targetPos.y, targetPos.z, speed);
+    }
+}</code></pre>
+
+
+<strong>源码位置</strong>：<code>net/minecraft/entity/ai/pathing/EntityNavigation.java</code>
+
+<h2 id="图解路径导航流程">图解：路径导航流程</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["Task: 设置 WALK_TARGET"] --> B["Brain.tick()"]
+    B --> C["Navigation.startMovingTo()"]
+    C --> D["findPathTo() 计算路径"]
+    D --> E{"找到路径?"}
+    E -->|是| F["保存 Path 对象"]
+    E -->|否| G["返回失败"]
+    F --> H["Navigation.tick() 每刻"]
+    H --> I["检查是否到达节点"]
+    I --> J{"到达节点?"}
+    J -->|是| K["Path.next() 到下一个节点"]
+    J -->|否| L["MoveControl 调整方向速度"]
+    K --> M{"路径结束?"}
+    M -->|是| N["停止移动"]
+    M -->|否| H
+    L --> H</div>
+</div>
+
+
+<h2 id="图解path-和-pathnode-的关系">图解：Path 和 PathNode 的关系</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph "Path (完整路径)"
+        N1["Node 0<br/>(起点)"]
+        N2["Node 1"]
+        N3["Node 2"]
+        N4["Node 3"]
+        N5["Node 4<br/>(终点)"]
+    end
+    
+    N1 -->|"next()"| N2
+    N2 -->|"next()"| N3
+    N3 -->|"next()"| N4
+    N4 -->|"next()"| N5
+    
+    subgraph "当前位置"
+        C1["currentIndex = 2"]
+    end
+    
+    C1 -.-> N3
+    
+    style N1 fill:#81c784
+    style N5 fill:#81c784
+    style N3 fill:#fff176</div>
+</div>
+
+
+<h2 id="图解a-寻路算法">图解：A* 寻路算法</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "A* 算法步骤"
+        A1["1. 从起点开始"]
+        A2["2. 找最小 F 值的节点<br/>F = G + H<br/>G=已走距离, H=到终点估计"]
+        A3["3. 扩展可通行的邻居"]
+        A4["4. 重复直到找到终点"]
+    end
+    
+    subgraph "节点类型"
+        T1["WALKABLE - 可行走"]
+        T2["BLOCKED - 阻挡"]
+        T3["WATER - 水中"]
+        T4["LAVA - 岩浆中"]
+        T5["OPEN - 空中"]
+    end
+    
+    A1 --> A2 --> A3 --> A4</div>
+</div>
+
+
+<h2 id="核心代码导航使用">核心代码：导航使用</h2>
+
+
+<h3>1. 让生物走向目标</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class WalkToTargetTask extends MultiTickTask&lt;VillagerEntity&gt; {
+    @Override
+    public void tick(ServerWorld world, VillagerEntity villager) {
+        // 从记忆中获取目标位置
+        villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+            .ifPresent(target -&gt; {
+                // 让导航系统移动到目标
+                villager.getNavigation().startMovingTo(
+                    target.getLookTarget().getBlockPos(),  // 目标位置
+                    target.getSpeed()                     // 移动速度
+                );
+            });
+    }
+}</code></pre>
+
+
+<h3>2. 直接导航到位置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void moveToWork(VillagerEntity villager, BlockPos workSite) {
+    // 开始移动到工作地点
+    boolean success = villager.getNavigation().startMovingTo(
+        workSite.getX(), workSite.getY(), workSite.getZ(),
+        0.8  // 速度：0.8 = 80% 正常速度
+    );
+    
+    if (!success) {
+        // 导航失败（比如距离太远）
+        villager.getBrain().remember(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, 
+            villager.getWorld().getTime());
+    }
+}</code></pre>
+
+
+<h3>3. 导航到实体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void chaseTarget(MobEntity mob, LivingEntity target) {
+    mob.getNavigation().startMovingTo(
+        target,           // 目标实体
+        1.2              // 1.2倍速度（比正常快）
+    );
+}</code></pre>
+
+
+<h3>4. 停止移动</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">mob.getNavigation().stop();
+
+// 检查是否在移动
+boolean isMoving = !mob.getNavigation().isIdle();</code></pre>
+
+
+<h2 id="核心代码movecontrol-运动控制">核心代码：MoveControl 运动控制</h2>
+
+
+<h3>MoveControl 的状态</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MoveControl {
+    // 运动状态枚举
+    enum State {
+        WAIT,      // 等待（不移动）
+        MOVE_TO,   // 移动到目标
+        STRAFE,    // 横扫移动（玩家控制用）
+        JUMPING    // 跳跃中
+    }
+    
+    public void moveTo(double x, double y, double z, double speed) {
+        this.targetX = x;
+        this.targetY = y;
+        this.targetZ = z;
+        this.speed = speed;
+        this.state = State.MOVE_TO;
+    }
+    
+    // 每tick执行
+    public void tick() {
+        switch (state) {
+            case MOVE_TO:
+                // 计算方向角
+                float angle = MathHelper.atan2(dz, dx);
+                // 转向目标
+                entity.setYaw(wrapDegrees(entity.getYaw(), angle, 90));
+                // 调整速度
+                entity.setMovementSpeed(speed * entity.getAttributeValue(GENERIC_MOVEMENT_SPEED));
+                // 跳跃检测
+                if (needToJump) {
+                    entity.getJumpControl().setActive();
+                }
+                break;
+            case JUMPING:
+                // 跳跃中等待落地
+                if (entity.isOnGround()) {
+                    state = State.WAIT;
+                }
+                break;
+        }
+    }
+}</code></pre>
+
+
+<h3>不同的 MoveControl 实现</h3>
+
+
+| 类 | 适用生物 | 特点 |
+|----|----------|------|
+| <code>MoveControl</code> | 陆地生物 | 普通行走 |
+| <code>AquaticMoveControl</code> | 水中生物 | 游泳控制 |
+| <code>FlightMoveControl</code> | 飞行生物 | 空中飞行 |
+| <code>LookControl</code> | 所有生物 | 控制头部转向 |
+
+<h2 id="图解障碍物处理">图解：障碍物处理</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph "障碍物类型判断"
+        B1["检查方块类型"]
+        B2["BlockState.isSolid()"]
+    end
+    
+    subgraph "PathNodeType"
+        T1["WALKABLE<br/>可通行"]
+        T2["BLOCKED<br/>阻挡"]
+        T3["WATER<br/>需游泳"]
+        T4["DANGER<br/>危险"]
+        T5["DOOR<br/>门"]
+    end
+    
+    B1 --> B2
+    B2 --> T1
+    B2 --> T2
+    B2 --> T3
+    T3 -->|"会游泳"| F1["可以进入"]
+    T3 -->|"不会游泳"| F2["绕路或等待"]
+    
+    style T2 fill:#ef5350
+    style T4 fill:#ff7043</div>
+</div>
+
+
+<h3>障碍物处理代码</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class CustomPathNodeMaker extends LandPathNodeMaker {
+    
+    @Override
+    public PathNodeType getDefaultNodeType(WorldView world, int x, int y, int z) {
+        BlockState state = world.getBlockState(new BlockPos(x, y, z));
+        
+        // 自定义逻辑：蜜蜂不能穿过玻璃
+        if (state.isOf(Blocks.GLASS) || state.isOf(Blocks.GLASS_PANE)) {
+            return PathNodeType.BLOCKED;
+        }
+        
+        // 其他使用默认逻辑
+        return super.getDefaultNodeType(world, x, y, z);
+    }
+}</code></pre>
+
+
+<h2 id="实战演示追踪和逃跑">实战演示：追踪和逃跑</h2>
+
+
+<h3>僵尸追玩家</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "感知"
+        S1["传感器发现玩家"]
+    end
+    
+    subgraph "决策"
+        D1{"能攻击?"}
+        D2{"距离够近?"}
+    end
+    
+    subgraph "执行"
+        E1["startMovingTo(player)"]
+        E2["MeleeAttackTask 攻击"]
+    end
+    
+    S1 --> D1
+    D1 -->|"有攻击目标"| D2
+    D2 -->|"不在攻击范围"| E1
+    D2 -->|"在攻击范围"| E2
+    E1 -.->|"每tick更新"| E2</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ZombieChaseTask extends MultiTickTask&lt;ZombieEntity&gt; {
+    
+    @Override
+    public void tick(ServerWorld world, ZombieEntity zombie) {
+        // 获取攻击目标
+        Optional&lt;LivingEntity&gt; target = zombie.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.ATTACK_TARGET);
+        
+        target.ifPresent(enemy -&gt; {
+            // 计算距离
+            double distance = zombie.squaredDistanceTo(enemy);
+            
+            if (distance &lt; 4.0) {  // 攻击范围 2 格
+                // 停止移动，准备攻击
+                zombie.getNavigation().stop();
+                // 攻击
+                zombie.tryAttack(enemy);
+            } else {
+                // 继续追踪
+                zombie.getNavigation().startMovingTo(enemy, 1.0);
+            }
+        });
+    }
+}</code></pre>
+
+
+<h3>动物逃跑</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class RabbitFleeTask extends MultiTickTask&lt;RabbitEntity&gt; {
+    
+    @Override
+    public void tick(ServerWorld world, RabbitEntity rabbit) {
+        Optional&lt;LivingEntity&gt; threat = rabbit.getBrain()
+            .getOptionalRegisteredMemory(MemoryModuleType.AVOID_TARGET);
+        
+        threat.ifPresent(danger -&gt; {
+            // 计算逃跑方向（远离威胁）
+            Vec3d away = rabbit.getPos().subtract(danger.getPos()).normalize();
+            Vec3d runTo = rabbit.getPos().add(away.multiply(10));  // 跑10格外
+            
+            // 逃跑！
+            rabbit.getNavigation().startMovingTo(runTo.x, runTo.y, runTo.z, 1.5);
+        });
+    }
+}</code></pre>
+
+
+<h2 id="重要概念导航失败处理">重要概念：导航失败处理</h2>
+
+
+<h3>路径计算失败的常见原因</h3>
+
+
+| 原因 | 表现 | 处理方式 |
+|------|------|----------|
+| 距离太远 | findPathTo 返回 null | 记录 <code>CANT<em>REACH</em>WALK<em>TARGET</em>SINCE</code> |
+| 被困住 | 路径全是 BLOCKED | 尝试跳跃或等待 |
+| 目标不可达 | 无法到达终点 | 寻找附近可达点 |
+
+<h3>超时检测</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void tick() {
+    // 超过100tick还没走完
+    if (tickCount - pathStartTime &gt; 100) {
+        // 检查是否真的在移动
+        if (currentPos.squaredDistanceTo(pathStartPos) &lt; expectedDistance) {
+            // 没移动，停止导航
+            navigation.stop();
+            brain.remember(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, world.getTime());
+        }
+    }
+}</code></pre>
+
+
+<h2 id="小结">小结</h2>
+
+
+<ul><li><strong>PathNode</strong> 是路径上的一个点（坐标），<strong>Path</strong> 是完整路线</li></ul>
+<ul><li><strong>EntityNavigation</strong> 负责找路和引导移动</li></ul>
+<ul><li><strong>MoveControl</strong> 控制生物的具体运动（速度、方向、跳跃）</li></ul>
+<ul><li>导航会每tick检查是否到达节点，到达后移动到下一个</li></ul>
+<ul><li><strong>PathNodeType</strong> 判断每个位置是否可通行</li></ul>
+<ul><li>导航失败时要记录到记忆中，让AI做出相应调整</li></ul>
+
+<h2 id="练习">练习</h2>
+
+
+<ul><li><strong>思考题</strong>：为什么僵尸能绕过障碍物追你？</li></ul>
+<ul><li><strong>动手题</strong>：写一个让生物在两点之间来回巡逻的代码</li></ul>
+<ul><li><strong>挑战题</strong>：实现一个"找最近的安全位置躲避"的AI</li></ul>
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<ul><li><strong>上一章</strong>：<a href="31-activity-schedule.html">第31章 活动与日程</a></li></ul>
+<ul><li><strong>相关源码</strong>：</li></ul>
+  - <code>net/minecraft/entity/ai/pathing/Path.java</code>
+  - <code>net/minecraft/entity/ai/pathing/PathNode.java</code>
+  - <code>net/minecraft/entity/ai/pathing/EntityNavigation.java</code>
+  - <code>net/minecraft/entity/ai/control/MoveControl.java</code>
+
+<h3>源码文件位置</h3>
+
+
+| 文件 | 源码路径 | 说明 |
+|------|----------|------|
+| Path.java | <code>net/minecraft/entity/Path.java</code> | 路径 |
+| PathNode.java | <code>net/minecraft/entity/PathNode.java</code> | 路径节点 |
+| EntityNavigation.java | <code>net/minecraft/entity/ai/Navigation.java</code> | 实体导航 |
+| PathfindingNodeEvaluator.java | <code>net/minecraft/entity/ai/pathing/PathfindingNodeEvaluator.java</code> | 寻路评估器 |
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="31-activity-schedule.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第31章：活动与日程 - 生物的"作息表"
+        </a><a href="../Part-6-Network/33-network-intro.html" class="next">
+            第33章 网络基础入门
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

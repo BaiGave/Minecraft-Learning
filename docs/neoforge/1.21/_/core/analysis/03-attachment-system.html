@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>附件系统 - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 1.21.x 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>附件系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    附件系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>附件系统</h1>
+
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-系统概述">1. 系统概述</a></li></ul>
+<ul><li><a href="#2-核心组件">2. 核心组件</a></li></ul>
+  - <a href="#21-attachmenttype---附件类型定义">2.1 AttachmentType - 附件类型定义</a>
+  - <a href="#22-iattachmentholder---附件持有者接口">2.2 IAttachmentHolder - 附件持有者接口</a>
+  - <a href="#23-attachmentholder---附件持有者实现">2.3 AttachmentHolder - 附件持有者实现</a>
+  - <a href="#24-iattachmentserializer---序列化器接口">2.4 IAttachmentSerializer - 序列化器接口</a>
+  - <a href="#25-iattachmentcopyhandler---复制处理器接口">2.5 IAttachmentCopyHandler - 复制处理器接口</a>
+  - <a href="#26-attachmentsynchandler---同步处理器接口">2.6 AttachmentSyncHandler - 同步处理器接口</a>
+  - <a href="#27-attachmentsync---同步管理器">2.7 AttachmentSync - 同步管理器</a>
+  - <a href="#28-levelattachmentssaveddata---维度附件持久化">2.8 LevelAttachmentsSavedData - 维度附件持久化</a>
+  - <a href="#29-attachmentinternals---内部事件处理">2.9 AttachmentInternals - 内部事件处理</a>
+<ul><li><a href="#3-工作流程图">3. 工作流程图</a></li></ul>
+  - <a href="#31-附件生命周期流程">3.1 附件生命周期流程</a>
+  - <a href="#32-网络同步流程">3.2 网络同步流程</a>
+<ul><li><a href="#4-api-使用示例">4. API 使用示例</a></li></ul>
+  - <a href="#41-定义简单附件类型">4.1 定义简单附件类型</a>
+  - <a href="#42-定义可序列化附件类型">4.2 定义可序列化附件类型</a>
+  - <a href="#43-定义可同步附件类型">4.3 定义可同步附件类型</a>
+  - <a href="#44-使用附件数据">4.4 使用附件数据</a>
+<ul><li><a href="#5-序列化机制">5. 序列化机制</a></li></ul>
+<ul><li><a href="#6-网络同步">6. 网络同步</a></li></ul>
+<ul><li><a href="#7-与其他系统的交互">7. 与其他系统的交互</a></li></ul>
+<ul><li><a href="#8-总结">8. 总结</a></li></ul>
+
+<hr>
+
+<h2 id="1-系统概述">1. 系统概述</h2>
+
+
+<strong>附件系统（Attachment System）</strong> 是 NeoForge 1.21.x 提供的一种通用数据存储机制，允许开发者为游戏中的各种对象（如实体、方块实体、区块、维度等）附加自定义数据。
+
+<h3>设计理念</h3>
+
+
+NeoForge 的附件系统借鉴了 Minecraft 1.20.5 中引入的 Fabric Data Attachment API，并进行了多项改进：
+
+| 特性 | 说明 |
+|------|------|
+| <strong>类型安全</strong> | 使用 <code>AttachmentType<T></code> 泛型确保数据类型安全 |
+| <strong>延迟初始化</strong> | 附件数据在首次访问时才创建（惰性加载） |
+| <strong>统一接口</strong> | 通过 <code>IAttachmentHolder</code> 接口为不同对象提供统一的数据访问方式 |
+| <strong>灵活序列化</strong> | 支持 NBT 持久化和网络同步 |
+| <strong>自动复制</strong> | 实体死亡/转换时自动处理附件复制 |
+
+<h3>支持的持有者类型</h3>
+
+
+附件可以附加到以下对象：
+
+<ul><li><strong>Entity</strong>（实体）- 玩家、生物、物品等</li></ul>
+<ul><li><strong>BlockEntity</strong>（方块实体）- 箱子、熔炉等</li></ul>
+<ul><li><strong>ChunkAccess</strong>（区块访问）- 包括 ProtoChunk 和 LevelChunk</li></ul>
+<ul><li><strong>Level</strong>（维度）- 世界维度级别</li></ul>
+
+<h3>核心概念</h3>
+
+
+<ul><li><strong>AttachmentType</strong>：定义附件的类型、默认值、序列化器和同步处理器</li></ul>
+<ul><li><strong>IAttachmentHolder</strong>：附件持有者的统一接口</li></ul>
+<ul><li><strong>IAttachmentSerializer</strong>：处理附件的序列化/反序列化</li></ul>
+<ul><li><strong>AttachmentSyncHandler</strong>：管理网络同步逻辑</li></ul>
+
+<hr>
+
+<h2 id="2-核心组件">2. 核心组件</h2>
+
+
+<h3>2.1 AttachmentType - 附件类型定义</h3>
+
+
+<code>AttachmentType<T></code> 是附件系统的核心类，用于定义一种附件的类型。
+</p>
+<p><pre class="code-block"><code class="language-10">public final class AttachmentType&lt;T&gt; {
+    final Function&lt;IAttachmentHolder, T&gt; defaultValueSupplier;
+    @Nullable
+    final IAttachmentSerializer&lt;T&gt; serializer;
+    final boolean copyOnDeath;
+    final IAttachmentCopyHandler&lt;T&gt; copyHandler;
+    @Nullable
+    AttachmentSyncHandler&lt;T&gt; syncHandler;</code></pre>
+
+
+<h4>关键字段</h4>
+
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| <code>defaultValueSupplier</code> | <code>Function<IAttachmentHolder, T></code> | 默认值供应器 |
+| <code>serializer</code> | <code>IAttachmentSerializer<T></code> | 序列化器（可选） |
+| <code>copyOnDeath</code> | <code>boolean</code> | 实体死亡时是否复制 |
+| <code>copyHandler</code> | <code>IAttachmentCopyHandler<T></code> | 复制处理器 |
+| <code>syncHandler</code> | <code>AttachmentSyncHandler<T></code> | 同步处理器（可选） |
+
+<h4>Builder 模式</h4>
+
+
+<code>AttachmentType</code> 使用 Builder 模式创建实例：
+</p>
+<p><pre class="code-block"><code class="language-java">public static &lt;T&gt; Builder&lt;T&gt; builder(Supplier&lt;T&gt; defaultValueSupplier)
+
+// 方式2：可访问持有者的默认值
+public static &lt;T&gt; Builder&lt;T&gt; builder(Function&lt;IAttachmentHolder, T&gt; defaultValueConstructor)
+
+// 方式3：使用 ValueIOSerializable 的序列化
+public static &lt;T extends ValueIOSerializable&gt; Builder&lt;T&gt; serializable(Supplier&lt;T&gt; defaultValueSupplier)</code></pre>
+
+
+<h4>Builder 常用方法</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">.serialize(IAttachmentSerializer&lt;T&gt; serializer)
+.serialize(MapCodec&lt;T&gt; codec)  // 使用 Codec
+
+// 配置死亡复制
+.copyOnDeath()  // 实体死亡时复制附件
+.copyHandler(IAttachmentCopyHandler&lt;T&gt;)  // 自定义复制逻辑
+
+// 配置网络同步
+.sync(AttachmentSyncHandler&lt;T&gt;)  // 完全自定义同步
+.sync(StreamCodec)  // 使用 StreamCodec 同步给所有客户端
+.sync(BiPredicate, StreamCodec)  // 选择性同步给特定玩家</code></pre>
+
+
+<h3>2.2 IAttachmentHolder - 附件持有者接口</h3>
+
+
+<code>IAttachmentHolder</code> 是附件持有者的统一接口，定义了访问附件数据的基本操作。
+</p>
+<p><pre class="code-block"><code class="language-15">public interface IAttachmentHolder {
+    /**
+     * {@return the data attachment of the given type}
+     *
+     * &lt;p&gt;If there is no data attachment of the given type, 
+     * &lt;b&gt;the default value is stored in this holder and returned.&lt;/b&gt;
+     */
+    &lt;T&gt; T getData(AttachmentType&lt;T&gt; type);
+
+    /**
+     * @return an existing data attachment value of the given type, 
+     * or null if there is no data attachment of the given type
+     */
+    @Nullable
+    &lt;T&gt; T getExistingDataOrNull(AttachmentType&lt;T&gt; type);
+
+    /**
+     * Sets the data attachment of the given type.
+     */
+    &lt;T&gt; @Nullable T setData(AttachmentType&lt;T&gt; type, T data);
+
+    /**
+     * Removes the data attachment of the given type.
+     */
+    &lt;T&gt; @Nullable T removeData(AttachmentType&lt;T&gt; type);
+
+    /**
+     * Syncs a data attachment of the given type with all relevant clients.
+     */
+    default void syncData(AttachmentType&lt;?&gt; type) {
+        // Do nothing by default, implementers should override this method if needed.
+    }
+}</code></pre>
+
+
+<h4>关键方法</h4>
+
+
+| 方法 | 说明 |
+|------|------|
+| <code>getData(type)</code> | 获取附件数据，若不存在则创建默认值 |
+| <code>getExistingDataOrNull(type)</code> | 获取附件数据，若不存在返回 null |
+| <code>hasData(type)</code> | 检查是否存在该类型的附件 |
+| <code>setData(type, data)</code> | 设置附件数据 |
+| <code>removeData(type)</code> | 移除附件数据 |
+| <code>syncData(type)</code> | 同步附件数据到客户端 |
+
+<h3>2.3 AttachmentHolder - 附件持有者实现</h3>
+
+
+<code>AttachmentHolder</code> 是 <code>IAttachmentHolder</code> 的抽象实现类，使用 <code>IdentityHashMap</code> 存储附件数据。
+</p>
+<p><pre class="code-block"><code class="language-26">public abstract class AttachmentHolder implements IAttachmentHolder {
+    public static final String ATTACHMENTS_NBT_KEY = &quot;neoforge:attachments&quot;;
+    
+    @Nullable
+    Map&lt;AttachmentType&lt;?&gt;, Object&gt; attachments = null;
+
+    final Map&lt;AttachmentType&lt;?&gt;, Object&gt; getAttachmentMap() {
+        if (attachments == null) {
+            attachments = new IdentityHashMap&lt;&gt;(4);
+        }
+        return attachments;
+    }
+
+    @Override
+    public final &lt;T&gt; T getData(AttachmentType&lt;T&gt; type) {
+        validateAttachmentType(type);
+        T ret = (T) getAttachmentMap().get(type);
+        if (ret == null) {
+            ret = type.defaultValueSupplier.apply(getExposedHolder());
+            attachments.put(type, ret);
+            syncData(type);  // 自动同步
+        }
+        return ret;
+    }
+}</code></pre>
+
+
+<h4>AsField 内部类</h4>
+
+
+当无法继承 <code>AttachmentHolder</code> 时（例如类已有其他父类），可以使用 <code>AsField</code> 内部类：
+</p>
+<p><pre class="code-block"><code class="language-172">public static class AsField extends AttachmentHolder {
+    private final IAttachmentHolder exposedHolder;
+
+    public AsField(IAttachmentHolder exposedHolder) {
+        this.exposedHolder = exposedHolder;
+    }
+
+    @Override
+    IAttachmentHolder getExposedHolder() {
+        return exposedHolder;
+    }
+
+    public void deserializeInternal(HolderLookup.Provider provider, ValueInput tag) {
+        deserializeAttachments(tag);
+    }
+
+    @Override
+    public void syncData(AttachmentType&lt;?&gt; type) {
+        exposedHolder.syncData(type);
+    }
+}</code></pre>
+
+
+<h3>2.4 IAttachmentSerializer - 序列化器接口</h3>
+
+
+<code>IAttachmentSerializer<T></code> 定义了附件数据的序列化/反序列化逻辑。
+</p>
+<p><pre class="code-block"><code class="language-16">public interface IAttachmentSerializer&lt;T&gt; {
+    /**
+     * Reads the attachment from NBT.
+     *
+     * @param holder the holder for the attachment, can be cast if the subtype is known
+     * @param input  the input to read from
+     */
+    T read(IAttachmentHolder holder, ValueInput input);
+
+    /**
+     * Writes the attachment to the value output, or returns {@code false} 
+     * if it is should not be serialized.
+     *
+     * &lt;p&gt;If {@code false} is returned, any data written to the value output 
+     * by this method will be discarded.
+     */
+    boolean write(T attachment, ValueOutput output);
+}</code></pre>
+
+
+<h3>2.5 IAttachmentCopyHandler - 复制处理器接口</h3>
+
+
+<code>IAttachmentCopyHandler<T></code> 定义了附件数据的复制逻辑，用于实体死亡/转换时的数据迁移。
+</p>
+<p><pre class="code-block"><code class="language-15">public interface IAttachmentCopyHandler&lt;T&gt; {
+    /**
+     * creates a copy of the attachment. 
+     * The copy should be equal to serializing and deserializing the attachment.
+     *
+     * @param attachment the attachment to copy
+     * @param holder     the holder the attachment will be part of after copying
+     * @return the copy or null if it shouldn&#39;t be copied.
+     */
+    @Nullable
+    T copy(T attachment, IAttachmentHolder holder, HolderLookup.Provider provider);
+}</code></pre>
+
+
+<h3>2.6 AttachmentSyncHandler - 同步处理器接口</h3>
+
+
+<code>AttachmentSyncHandler<T></code> 定义了附件数据如何从服务器同步到客户端。
+</p>
+<p><pre class="code-block"><code class="language-26">public interface AttachmentSyncHandler&lt;T&gt; {
+    /**
+     * Decides whether data should be sent to some player 
+     * that can see the holder.
+     *
+     * @param holder the holder for the attachment
+     * @param to     the player that might receive the data
+     * @return {@code true} to send data to the player, {@code false} otherwise
+     */
+    default boolean sendToPlayer(IAttachmentHolder holder, ServerPlayer to) {
+        return true;
+    }
+
+    /**
+     * Writes attachment data to a buffer.
+     *
+     * @param initialSync if true, write full data; if false, write delta only
+     */
+    void write(RegistryFriendlyByteBuf buf, T attachment, boolean initialSync);
+
+    /**
+     * Reads attachment data on the client side.
+     *
+     * @param previousValue the previous value, or null if there was no previous value
+     * @return the new value of the attachment, or null if should be removed
+     */
+    @Nullable
+    T read(IAttachmentHolder holder, RegistryFriendlyByteBuf buf, @Nullable T previousValue);
+}</code></pre>
+
+
+<h3>2.7 AttachmentSync - 同步管理器</h3>
+
+
+<code>AttachmentSync</code> 是附件同步的核心管理器，负责处理服务器到客户端的数据同步。
+</p>
+<p><pre class="code-block"><code class="language-42">public final class AttachmentSync {
+    /**
+     * 同步附件类型的专用注册表
+     */
+    public static final Registry&lt;AttachmentType&lt;?&gt;&gt; SYNCED_ATTACHMENT_TYPES = new RegistryBuilder&lt;&gt;(
+            ResourceKey.&lt;AttachmentType&lt;?&gt;&gt;createRegistryKey(
+                    Identifier.fromNamespaceAndPath(NeoForgeMod.MOD_ID, &quot;synced_attachment_types&quot;)))
+                            .sync(true)  // 自动同步到客户端
+                            .callback(ATTACHMENT_TYPE_ADD_CALLBACK)
+                            .create();
+
+    private static SyncAttachmentsPayload.Target syncTarget(AttachmentHolder holder) {
+        return switch (holder) {
+            case BlockEntity blockEntity -&gt; new SyncAttachmentsPayload.BlockEntityTarget(blockEntity.getBlockPos());
+            case AttachmentHolder.AsField asField when asField.getExposedHolder() instanceof LevelChunk chunk 
+                -&gt; new SyncAttachmentsPayload.ChunkTarget(chunk.getPos());
+            case Entity entity -&gt; new SyncAttachmentsPayload.EntityTarget(entity.getId());
+            case Level ignored -&gt; new SyncAttachmentsPayload.LevelTarget();
+            default -&gt; throw new UnsupportedOperationException(&quot;...&quot;);
+        };
+    }
+}</code></pre>
+
+
+<h4>同步目标类型</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-84">public sealed interface Target {
+    // ...
+}
+
+public record BlockEntityTarget(BlockPos pos) implements Target {}
+public record ChunkTarget(ChunkPos pos) implements Target {}
+public record EntityTarget(int entity) implements Target {}
+public record LevelTarget() implements Target {}</code></pre>
+
+
+<h3>2.8 LevelAttachmentsSavedData - 维度附件持久化</h3>
+
+
+<code>LevelAttachmentsSavedData</code> 负责将维度级别的附件数据持久化到磁盘。
+</p>
+<p><pre class="code-block"><code class="language-22">public class LevelAttachmentsSavedData extends SavedData {
+    public static final SavedDataType&lt;LevelAttachmentsSavedData&gt; TYPE = new SavedDataType&lt;&gt;(
+            &quot;neoforge_data_attachments&quot;,
+            LevelAttachmentsSavedData::new,
+            LevelAttachmentsSavedData::makeCodec);
+
+    public static void init(ServerLevel level) {
+        // 初始化并确保世界保存时自动持久化
+        level.getDataStorage().computeIfAbsent(TYPE);
+    }
+
+    @Override
+    public boolean isDirty() {
+        // 始终标记为脏，确保每次都保存
+        return true;
+    }
+}</code></pre>
+
+
+<h3>2.9 AttachmentInternals - 内部事件处理</h3>
+
+
+<code>AttachmentInternals</code> 处理附件系统的内部事件，如实体死亡复制、玩家重生等。
+</p>
+<p><pre class="code-block"><code class="language-21">public final class AttachmentInternals {
+    
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        // 玩家重生时复制附件
+        event.getEntity().copyAttachmentsFrom(event.getOriginal(), event.isWasDeath());
+    }
+
+    @SubscribeEvent
+    public static void onLivingConvert(LivingConversionEvent.Post event) {
+        // 生物转换时复制附件（如僵尸-&gt;村民）
+        event.getOutcome().copyAttachmentsFrom(event.getEntity(), true);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-工作流程图">3. 工作流程图</h2>
+
+
+<h3>3.1 附件生命周期流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 注册阶段
+        A1["创建 AttachmentType.Builder"]
+        A2["配置序列化器 .serialize()"]
+        A3[".build() 创建类型"]
+        A4["注册到 ATTACHMENT_TYPES"]
+        
+        A1 --> A2 --> A3 --> A4
+    end
+
+    subgraph 运行时生命周期
+        B1["getData() 调用"]
+        B2{"数据已存在?"}
+        B3["创建默认值"]
+        B4["存储到 Map"]
+        B5["触发 syncData()"]
+        B6["返回数据"]
+        
+        B1 --> B2
+        B2 -->|是| B6
+        B2 -->|否| B3 --> B4 --> B5 --> B6
+    end
+
+    subgraph 持久化流程
+        C1["世界保存"]
+        C2["serializeAttachments()"]
+        C3["写入 NBT"]
+        C4["世界加载"]
+        C5["deserializeAttachments()"]
+        C6["恢复数据"]
+        
+        C1 --> C2 --> C3
+        C4 --> C5 --> C6
+    end
+
+    注册阶段 --> 运行时生命周期
+    运行时生命周期 --> 持久化流程</div>
+</div>
+
+
+<h3>3.2 网络同步流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Server as 服务器
+    participant Client as 客户端
+    participant BE as 方块实体
+    participant Sync as AttachmentSync
+
+    Note over Server,Client: 初始同步
+    Server->>BE: getData(attachmentType)
+    BE->>BE: 创建/获取附件数据
+    Sync->>Sync: syncInitialAttachments()
+    Server->>Client: SyncAttachmentsPayload
+    Client->>Client: receiveSyncedDataAttachments()
+
+    Note over Server,Client: 数据更新同步
+    Server->>BE: setData(type, newValue)
+    BE->>Sync: syncUpdate()
+    Sync->>Sync: 检查 sendToPlayer
+    Server->>Client: 更新数据包
+    Client->>Client: 更新本地数据
+
+    Note over Server,Client: 玩家重生同步
+    Server->>Sync: syncInitialPlayerAttachments()
+    Server->>Client: 玩家自己的附件</div>
+</div>
+
+
+<hr>
+
+<h2 id="4-api-使用示例">4. API 使用示例</h2>
+
+
+<h3>4.1 定义简单附件类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final AttachmentType&lt;Integer&gt; VISIT_COUNT = AttachmentType.&lt;Integer&gt;builder()
+    .supplier(() -&gt; 0)  // 默认值为 0
+    .build();
+
+// 注册（必需）
+@SubscribeEvent
+public static void register(RegisterEvent event) {
+    event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, 
+        helper -&gt; helper.register(new Identifier(&quot;mymod&quot;, &quot;visit_count&quot;), VISIT_COUNT));
+}</code></pre>
+
+
+<h3>4.2 定义可序列化附件类型</h3>
+
+
+使用 Codec 进行序列化：
+</p>
+<p><pre class="code-block"><code class="language-java">public class CustomData implements ValueIOSerializable {
+    private int value;
+    private String name;
+
+    public CustomData() {
+        this.value = 0;
+        this.name = &quot;default&quot;;
+    }
+
+    @Override
+    public void serialize(ValueOutput output) {
+        output.store(CODEC, this);
+    }
+
+    @Override
+    public void deserialize(ValueInput input) {
+        // 使用 Codec 反序列化
+    }
+
+    // 定义 Codec
+    public static final MapCodec&lt;CustomData&gt; CODEC = RecordCodecBuilder.mapCodec(
+        instance -&gt; instance.group(
+            Codec.INT.fieldOf(&quot;value&quot;).forGetter(CustomData::getValue),
+            Codec.STRING.fieldOf(&quot;name&quot;).forGetter(CustomData::getName)
+        ).apply(instance, CustomData::new)
+    );
+}
+
+// 创建可序列化的附件类型
+public static final AttachmentType&lt;CustomData&gt; MY_DATA = AttachmentType.&lt;CustomData&gt;builder()
+    .serializable(CustomData::new)  // 自动使用 ValueIOSerializable
+    .build();</code></pre>
+
+
+使用自定义序列化器：
+</p>
+<p><pre class="code-block"><code class="language-java">public static final AttachmentType&lt;CustomData&gt; MY_DATA = AttachmentType.&lt;CustomData&gt;builder()
+    .serialize(new IAttachmentSerializer&lt;&gt;() {
+        @Override
+        public CustomData read(IAttachmentHolder holder, ValueInput input) {
+            CustomData data = new CustomData();
+            data.setValue(input.readInt(&quot;value&quot;));
+            data.setName(input.readString(&quot;name&quot;));
+            return data;
+        }
+
+        @Override
+        public boolean write(CustomData attachment, ValueOutput output) {
+            output.storeInt(&quot;value&quot;, attachment.getValue());
+            output.storeString(&quot;name&quot;, attachment.getName());
+            return true;  // 返回 false 可跳过序列化
+        }
+    })
+    .build();</code></pre>
+
+
+<h3>4.3 定义可同步附件类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final AttachmentType&lt;Integer&gt; SYNCED_COUNTER = AttachmentType.&lt;Integer&gt;builder()
+    .supplier(() -&gt; 0)
+    .serialize(IntCodecs.VARINT)  // 需要序列化才能同步
+    .sync(StreamCodec.of(
+        (buf, value) -&gt; buf.writeVarInt(value),
+        buf -&gt; buf.readVarInt()
+    ))
+    .build();
+
+// 条件同步 - 只同步给特定玩家
+public static final AttachmentType&lt;PlayerSpecificData&gt; PLAYER_DATA = 
+    AttachmentType.&lt;PlayerSpecificData&gt;builder()
+        .serializable(PlayerSpecificData::new)
+        .sync((holder, player) -&gt; {
+            // 只同步给所有者
+            return holder instanceof Entity entity &amp;&amp; 
+                   entity.getUUID().equals(player.getUUID());
+        }, StreamCodec.of(
+            PlayerSpecificData.STREAM_CODEC::encode,
+            PlayerSpecificData.STREAM_CODEC::decode
+        ))
+        .build();</code></pre>
+
+
+<h3>4.4 使用附件数据</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyBlockEntity extends BlockEntity {
+    public static final AttachmentType&lt;BlockState&gt; STORED_STATE = 
+        AttachmentType.&lt;BlockState&gt;builder()
+            .supplier(() -&gt; Blocks.AIR.defaultBlockState())
+            .serialize(BlockState.CODEC)
+            .build();
+
+    public void onPlayerInteract(Player player) {
+        // 获取或创建附件数据
+        BlockState state = getHolder().getData(STORED_STATE);
+        
+        // 修改数据
+        BlockState newState = Blocks.DIAMOND_BLOCK.defaultBlockState();
+        getHolder().setData(STORED_STATE, newState);
+        
+        // 标记方块已改变（触发保存）
+        setChanged();
+    }
+}
+
+public class MyEntity extends Entity {
+    public static final AttachmentType&lt;IntTag&gt; DAMAGE_COUNTER = 
+        AttachmentType.&lt;IntTag&gt;builder()
+            .supplier(() -&gt; IntTag.of(0))
+            .serialize(IntTag.CODEC)
+            .copyOnDeath()  // 死亡时复制
+            .build();
+
+    public void takeDamage(DamageSource source, float amount) {
+        IntTag counter = getHolder().getData(DAMAGE_COUNTER);
+        counter.putInt(&quot;value&quot;, counter.getAsInt() + 1);
+        getHolder().setData(DAMAGE_COUNTER, counter);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-序列化机制">5. 序列化机制</h2>
+
+
+附件系统的序列化通过 <code>IAttachmentSerializer</code> 接口实现：
+</p>
+<p><pre class="code-block"><code class="language-java">public interface IAttachmentSerializer&lt;T&gt; {
+    T read(IAttachmentHolder holder, ValueInput input);
+    boolean write(T attachment, ValueOutput output);
+}</code></pre>
+
+
+<h3>序列化流程</h3>
+
+
+<ul><li><strong>写入</strong>：当世界保存时，<code>AttachmentHolder.serializeAttachments()</code> 遍历所有附件</li></ul>
+<ul><li><strong>按类型查找</strong>：使用注册表键查找对应的 <code>AttachmentType</code></li></ul>
+<ul><li><strong>调用序列化器</strong>：调用 <code>serializer.write()</code> 将数据写入 NBT</li></ul>
+<ul><li><strong>跳过逻辑</strong>：如果 <code>write()</code> 返回 <code>false</code>，数据不会被写入</li></ul>
+
+<h3>反序列化流程</h3>
+
+
+<ul><li><strong>读取</strong>：当世界加载时，<code>AttachmentHolder.deserializeAttachments()</code> 读取 NBT</li></ul>
+<ul><li><strong>验证类型</strong>：通过键查找 <code>AttachmentType</code>，验证是否可序列化</li></ul>
+<ul><li><strong>调用反序列化器</strong>：调用 <code>serializer.read()</code> 恢复数据</li></ul>
+<ul><li><strong>错误处理</strong>：如果反序列化失败，记录错误日志并跳过</li></ul>
+
+<h3>持久化层级</h3>
+
+
+| 持有者类型 | 持久化方式 |
+|-----------|-----------|
+| Level | <code>LevelAttachmentsSavedData</code> |
+| LevelChunk | 随区块数据保存 |
+| BlockEntity | 随方块实体保存 |
+| Entity | 随实体数据保存 |
+
+<hr>
+
+<h2 id="6-网络同步">6. 网络同步</h2>
+
+
+网络同步通过 <code>SyncAttachmentsPayload</code> 数据包实现：
+</p>
+<p><pre class="code-block"><code class="language-java">public record SyncAttachmentsPayload(
+    Target target,                    // 同步目标
+    List&lt;AttachmentType&lt;?&gt;&gt; types,    // 附件类型列表
+    byte[] syncPayload                // 编码后的数据
+) implements CustomPacketPayload</code></pre>
+
+
+<h3>同步时机</h3>
+
+
+<ul><li><strong>初始同步</strong>：</li></ul>
+   - 玩家加入游戏
+   - 玩家传送到新区块
+   - 玩家重生
+
+<ul><li><strong>增量同步</strong>：</li></ul>
+   - 调用 <code>setData()</code> 时
+   - 调用 <code>removeData()</code> 时
+   - 调用 <code>syncData()</code> 时（用于可变数据）
+
+<h3>同步目标</h3>
+
+
+| 目标类型 | 说明 |
+|---------|------|
+| <code>BlockEntityTarget</code> | 同步到注视特定方块的玩家 |
+| <code>ChunkTarget</code> | 同步到区块内所有玩家 |
+| <code>EntityTarget</code> | 同步到实体追踪范围内的玩家 |
+| <code>LevelTarget</code> | 同步到维度内所有玩家 |
+
+<h3>过滤逻辑</h3>
+
+
+通过 <code>AttachmentSyncHandler.sendToPlayer()</code> 可以过滤接收者：
+</p>
+<p><pre class="code-block"><code class="language-java">.sync((holder, player) -&gt; {
+    // 只发送给管理员
+    return player.hasPermissions(4);
+}, streamCodec)</code></pre>
+
+
+<hr>
+
+<h2 id="7-与其他系统的交互">7. 与其他系统的交互</h2>
+
+
+<h3>7.1 实体系统</h3>
+
+
+<ul><li><strong>死亡复制</strong>：通过 <code>PlayerEvent.Clone</code> 事件处理</li></ul>
+<ul><li><strong>转换复制</strong>：通过 <code>LivingConversionEvent.Post</code> 事件处理</li></ul>
+<ul><li><strong>复制过滤器</strong>：<code>copyOnDeath</code> 标志控制是否在死亡时复制</li></ul>
+
+<h3>7.2 区块系统</h3>
+
+
+<ul><li><strong>ProtoChunk → LevelChunk</strong>：通过 <code>AttachmentInternals.copyChunkAttachmentsOnPromotion()</code> 复制</li></ul>
+<ul><li><strong>标记脏</strong>：修改后需调用 <code>ChunkAccess.markUnsaved()</code></li></ul>
+
+<h3>7.3 方块实体系统</h3>
+
+
+<ul><li><strong>保存触发</strong>：修改附件后需调用 <code>BlockEntity.setChanged()</code></li></ul>
+
+<h3>7.4 网络系统</h3>
+
+
+<ul><li>使用 <code>CustomPacketPayload</code> 发送同步数据</li></ul>
+<ul><li>支持 NeoForge 专有连接类型</li></ul>
+
+<hr>
+
+<h2 id="8-总结">8. 总结</h2>
+
+
+NeoForge 的附件系统是一个设计优雅、功能强大的数据存储框架：
+
+<h3>核心优势</h3>
+
+
+| 优势 | 说明 |
+|------|------|
+| <strong>统一接口</strong> | 通过 <code>IAttachmentHolder</code> 为不同对象提供一致的数据访问 |
+| <strong>延迟加载</strong> | 首次访问时才创建数据，优化内存使用 |
+| <strong>类型安全</strong> | 泛型系统确保编译期类型检查 |
+| <strong>灵活配置</strong> | Builder 模式支持多种配置组合 |
+| <strong>自动处理</strong> | 内置事件处理器自动处理实体死亡、转换等场景 |
+
+<h3>使用场景</h3>
+
+
+<ul><li>存储实体的状态数据（如战斗记录、背包数据）</li></ul>
+<ul><li>方块实体的持久化数据（如自定义方块的时间戳）</li></ul>
+<ul><li>区块级别的数据（如地形修改标记）</li></ul>
+<ul><li>维度级别的数据（如世界事件状态）</li></ul>
+
+<h3>最佳实践</h3>
+
+
+<ul><li><strong>始终注册</strong>：<code>AttachmentType</code> 必须注册到 <code>ATTACHMENT_TYPES</code> 注册表</li></ul>
+<ul><li><strong>合理设计默认值</strong>：默认值应该轻量且易于创建</li></ul>
+<ul><li><strong>适时同步</strong>：修改后调用 <code>syncData()</code> 同步客户端</li></ul>
+<ul><li><strong>注意性能</strong>：频繁修改的附件考虑使用增量同步</li></ul>
+<ul><li><strong>处理边界</strong>：实体死亡转换时考虑附件是否需要保留</li></ul>
+
+<hr>
+
+<h2 id="参考文件">参考文件</h2>
+
+
+<ul><li><code>AttachmentType.java</code> - 附件类型定义</li></ul>
+<ul><li><code>AttachmentHolder.java</code> - 附件持有者实现</li></ul>
+<ul><li><code>IAttachmentHolder.java</code> - 附件持有者接口</li></ul>
+<ul><li><code>IAttachmentSerializer.java</code> - 序列化器接口</li></ul>
+<ul><li><code>IAttachmentCopyHandler.java</code> - 复制处理器接口</li></ul>
+<ul><li><code>AttachmentSyncHandler.java</code> - 同步处理器接口</li></ul>
+<ul><li><code>AttachmentSync.java</code> - 同步管理器</li></ul>
+<ul><li><code>LevelAttachmentsSavedData.java</code> - 维度持久化</li></ul>
+<ul><li><code>AttachmentInternals.java</code> - 内部事件处理</li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-capability-transfer-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            能力与传输系统
+        </a><a href="04-network-system.html" class="next">
+            网络系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

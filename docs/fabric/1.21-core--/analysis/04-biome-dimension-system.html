@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Fabric API 生物群系与维度系统分析 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+<a href="06-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 渲染系统分析
+        </a>
+<a href="07-networking-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 网络系统分析
+        </a>
+<a href="08-resource-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 资源加载系统分析
+        </a>
+<a href="09-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 传输/存储系统分析
+        </a>
+<a href="10-command-screen-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 命令与屏幕系统分析
+        </a>
+<a href="11-other-subsystems.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 其他子系统分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 深度分析总览
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Fabric API 生物群系与维度系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Fabric API 生物群系与维度系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 生物群系与维度系统分析</h1>
+
+
+<h2 id="概述">概述</h2>
+
+
+生物群系与维度系统包含两个核心模块：
+<ul><li><code>fabric-biome-api-v1</code> - 添加、修改生物群系</li></ul>
+<ul><li><code>fabric-dimensions-v1</code> - 维度数据处理</li></ul>
+
+<hr>
+
+<h2 id="1-fabric-biome-api-v1-模块">1. fabric-biome-api-v1 模块</h2>
+
+
+<h3>1.1 核心 API</h3>
+
+
+<h4>BiomeModifications - 生物群系修改入口</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class BiomeModifications {
+    // 添加特征到指定生物群系
+    public static void addFeature(Predicate&lt;BiomeSelectionContext&gt; biomeSelector,
+                                 GenerationStep.Feature step,
+                                 RegistryKey&lt;PlacedFeature&gt; placedFeatureRegistryKey)
+
+    // 添加雕刻器到指定生物群系
+    public static void addCarver(Predicate&lt;BiomeSelectionContext&gt; biomeSelector,
+                                GenerationStep.Carver step,
+                                RegistryKey&lt;ConfiguredCarver&lt;?&gt;&gt; configuredCarverKey)
+
+    // 添加实体生成到指定生物群系
+    public static void addSpawn(Predicate&lt;BiomeSelectionContext&gt; biomeSelector,
+                              SpawnGroup spawnGroup, EntityType&lt;?&gt; entityType,
+                              int weight, int minGroupSize, int maxGroupSize)
+
+    // 创建新的生物群系修改器
+    public static BiomeModification create(Identifier id)
+}</code></pre>
+
+
+<h4>ModificationPhase - 修改阶段</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public enum ModificationPhase {
+    ADDITIONS,      // 添加阶段 - 添加矿石、植被、结构等
+    REMOVALS,       // 移除阶段 - 移除生成物
+    REPLACEMENTS,   // 替换阶段 - 替换现有特征
+    POST_PROCESSING  // 后处理阶段 - 全局后处理
+}</code></pre>
+
+
+<h3>1.2 生物群系选择器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class BiomeSelectors {
+    public static Predicate&lt;BiomeSelectionContext&gt; all()
+    public static Predicate&lt;BiomeSelectionContext&gt; vanilla()
+    public static Predicate&lt;BiomeSelectionContext&gt; foundInTheNether()
+    public static Predicate&lt;BiomeSelectionContext&gt; foundInTheEnd()
+    public static Predicate&lt;BiomeSelectionContext&gt; foundInOverworld()
+    public static Predicate&lt;BiomeSelectionContext&gt; tag(TagKey&lt;Biome&gt; tag)
+    public static Predicate&lt;BiomeSelectionContext&gt; excludeByKey(Collection&lt;RegistryKey&lt;Biome&gt;&gt; keys)
+    public static Predicate&lt;BiomeSelectionContext&gt; includeByKey(Collection&lt;RegistryKey&lt;Biome&gt;&gt; keys)
+}</code></pre>
+
+
+<h3>1.3 下界生物群系 API</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class NetherBiomes {
+    public static void addNetherBiome(RegistryKey&lt;Biome&gt; biome,
+                                       MultiNoiseUtil.NoiseValuePoint mixedNoisePoint)
+    public static void addNetherBiome(RegistryKey&lt;Biome&gt; biome,
+                                       MultiNoiseUtil.NoiseHypercube mixedNoisePoint)
+    public static boolean canGenerateInNether(RegistryKey&lt;Biome&gt; biome)
+}</code></pre>
+
+
+<h3>1.4 末地生物群系 API</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class TheEndBiomes {
+    public static void addMainIslandBiome(RegistryKey&lt;Biome&gt; biome, double weight)
+    public static void addHighlandsBiome(RegistryKey&lt;Biome&gt; biome, double weight)
+    public static void addSmallIslandsBiome(RegistryKey&lt;Biome&gt; biome, double weight)
+    public static void addMidlandsBiome(RegistryKey&lt;Biome&gt; highlands,
+                                         RegistryKey&lt;Biome&gt; midlands, double weight)
+    public static void addBarrensBiome(RegistryKey&lt;Biome&gt; highlands,
+                                        RegistryKey&lt;Biome&gt; barrens, double weight)
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-fabric-dimensions-v1-模块">2. fabric-dimensions-v1 模块</h2>
+
+
+<h3>2.1 主要功能</h3>
+
+
+维度 API 主要处理维度相关的数据兼容性问题，特别是升级包含模组自定义生成器的存档时。
+
+<h3>2.2 FailSoftMapCodec - 容错地图编解码器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public record FailSoftMapCodec&lt;K, V&gt;(Codec&lt;K&gt; keyCodec, Codec&lt;V&gt; elementCodec)
+        implements BaseMapCodec&lt;K, V&gt;, Codec&lt;Map&lt;K, V&gt;&gt; {
+    @Override
+    public &lt;T&gt; DataResult&lt;Map&lt;K, V&gt;&gt; decode(DynamicOps&lt;T&gt; ops, MapLike&lt;T&gt; input) {
+        // 解码时如果某个条目失败，记录错误但继续处理其他条目
+        // 解决卸载模组后无法加载存档的问题
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-世界生成集成">3. 世界生成集成</h2>
+
+
+<h3>3.1 修改执行流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    MinecraftServer 启动                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              MinecraftServerMixin.finalizeWorldGen()         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              BiomeModificationImpl.finalizeWorldGen()        │
+│                                                              │
+│  1. 按 RegistryKey 排序所有生物群系                           │
+│  2. 对每个生物群系:                                          │
+│     a) 创建 BiomeSelectionContext                             │
+│     b) 测试选择器条件                                        │
+│     c) 按阶段顺序应用修改器                                   │
+│  3. 冻结修改后的数据                                          │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="4-mixin-注入点">4. Mixin 注入点</h2>
+
+
+| Mixin 类 | 目标类 | 用途 |
+|----------|--------|------|
+| <code>MinecraftServerMixin</code> | <code>MinecraftServer</code> | 触发 finalizeWorldGen |
+| <code>BiomeSourceMixin</code> | <code>BiomeSource</code> | 修改生物群系获取 |
+| <code>TheEndBiomeSourceMixin</code> | <code>TheEndBiomeSource</code> | 末地生物群系加权选择 |
+| <code>DynamicRegistryManagerImmutableImplMixin</code> | 注册表管理器 | 标记已修改 |
+| <code>ChunkNoiseSamplerMixin</code> | <code>ChunkNoiseSampler</code> | 噪声采样器扩展 |
+| <code>TaggedChoiceTypeMixin</code> | <code>TaggedChoiceType</code> | 维度生成器容错 |
+
+<hr>
+
+<h2 id="5-使用示例">5. 使用示例</h2>
+
+
+<h3>5.1 添加矿石到所有主世界生物群系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">BiomeModifications.addFeature(
+    BiomeSelectors.foundInOverworld(),
+    GenerationStep.Feature.UNDERGROUND_ORES,
+    RegistryKey.of(RegistryKeys.PLACED_FEATURE,
+        Identifier.of(&quot;mymod&quot;, &quot;diamond_ore_deposit&quot;))
+);</code></pre>
+
+
+<h3>5.2 修改生物群系属性</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">BiomeModifications.create(Identifier.of(&quot;mymod&quot;, &quot;cold_plains&quot;))
+    .add(ModificationPhase.ADDITIONS,
+        BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+        context -&gt; {
+            // 将草原的温度降低
+            context.getWeather().setTemperature(0.3f);
+            context.getWeather().setDownfall(0.2f);
+        })
+    .add(ModificationPhase.POST_PROCESSING,
+        BiomeSelectors.foundInOverworld(),
+        context -&gt; {
+            // 将所有主世界生物群系的天空颜色改为红色
+            context.getEffects().setSkyColor(0xFF0000);
+        });</code></pre>
+
+
+<h3>5.3 添加下界生物群系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">NetherBiomes.addNetherBiome(
+    RegistryKey.of(RegistryKeys.BIOME, Identifier.of(&quot;mymod&quot;, &quot;crystal_caves&quot;)),
+    MultiNoiseUtil.createNoiseHypercube(
+        0.0F, 0.5F,  // temperature, humidity
+        0.0F, 0.0F,  // continentalness, erosion
+        0.0F, 0.0F,  // depth, weirdness
+        0.1F          // offset
+    )
+);</code></pre>
+
+
+<h3>5.4 添加末地生物群系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">TheEndBiomes.addHighlandsBiome(
+    RegistryKey.of(RegistryKeys.BIOME, Identifier.of(&quot;mymod&quot;, &quot;crystal_plains&quot;)),
+    5.0  // weight
+);
+
+// 为该高地添加附属的中地
+TheEndBiomes.addMidlandsBiome(
+    RegistryKey.of(RegistryKeys.BIOME, Identifier.of(&quot;mymod&quot;, &quot;crystal_plains&quot;)),
+    RegistryKey.of(RegistryKeys.BIOME, Identifier.of(&quot;mymod&quot;, &quot;crystal_midlands&quot;)),
+    10.0
+);</code></pre>
+
+
+<hr>
+
+<h2 id="架构总结">架构总结</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                        Mod Developer API                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
+│  │ BiomeModifications│  │   NetherBiomes   │  │ TheEndBiomes │ │
+│  └────────┬─────────┘  └────────┬─────────┘  └──────┬───────┘ │
+│           └─────────────────────┴────────────────────┘          │
+│                                 │                               │
+│                    ┌────────────┴────────────┐                 │
+│                    │   BiomeModification      │                 │
+│                    └────────────┬────────────┘                 │
+└─────────────────────────────────┼───────────────────────────────┘
+                                  │
+┌─────────────────────────────────┼───────────────────────────────┐
+│                     Implementation Layer                         │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              BiomeModificationImpl                         │  │
+│  │  - addModifier()                                          │  │
+│  │  - finalizeWorldGen()                                      │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<em>源码位置: <code>fabric-biome-api-v1/</code>, <code>fabric-dimensions-v1/</code></em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-item-recipe-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 物品与配方系统分析
+        </a><a href="05-entity-event-system.html" class="next">
+            Fabric API 实体与事件系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

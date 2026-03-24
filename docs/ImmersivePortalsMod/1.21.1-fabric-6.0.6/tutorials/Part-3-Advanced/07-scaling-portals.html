@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第七章：缩放传送 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-portal-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="../Part-1-Foundation/02-portal-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="../Part-1-Foundation/03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="../Part-2-Rendering/04-portal-rendering.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="07-scaling-portals.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="../Part-4-Development/08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="../Part-4-Development/09-portal-api-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第七章：缩放传送</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第七章：缩放传送
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1-fabric-6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第七章：缩放传送</h1>
+
+
+<blockquote><p><strong>本章目标</strong>：理解空间缩放传送门的原理，掌握巨型传送门和微型传送门的创建方法。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#目标">目标</a></li></ul>
+<ul><li><a href="#前置知识">前置知识</a></li></ul>
+<ul><li><a href="#什么是缩放传送门">什么是缩放传送门？</a></li></ul>
+<ul><li><a href="#缩放传送的原理">缩放传送的原理</a></li></ul>
+<ul><li><a href="#巨型传送门-vs-微型传送门">巨型传送门 vs 微型传送门</a></li></ul>
+<ul><li><a href="#缩放传送门示意图">缩放传送门示意图</a></li></ul>
+<ul><li><a href="#代码示例">代码示例</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>什么是缩放传送门</strong> - 通过传送门改变物体大小</li></ul>
+<ul><li><strong>缩放因子（scaling）</strong> - 控制空间缩放的比例</li></ul>
+<ul><li><strong>巨型传送门（scale > 1）</strong> - 让物体变大的传送门</li></ul>
+<ul><li><strong>微型传送门（scale < 1）</strong> - 让物体缩小的传送门</li></ul>
+<ul><li><strong>缩放传送的应用场景</strong> - 创意玩法和实用技巧</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>理解传送门实体的基本概念</li></ul>
+<ul><li>了解传送门的变换原理（参考第二章）</li></ul>
+<ul><li>知道向量和矩阵的基本运算</li></ul>
+<ul><li>了解<strong>缩放变换</strong>的概念</li></ul>
+
+<hr>
+
+<h2 id="什么是缩放传送门">什么是缩放传送门？</h2>
+
+
+<h3>概念解释</h3>
+
+
+<strong>缩放传送门</strong>是一种特殊的传送门，它不仅改变实体的<strong>位置</strong>，还会改变实体的<strong>大小</strong>。
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    普通传送门 vs 缩放传送门                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  普通传送门（scale = 1.0）                                  │
+│  ┌─────────────────┐                                        │
+│  │                 │                                        │
+│  │    [玩家 ●]     │                                        │
+│  │                 │                                        │
+│  └─────────────────┘                                        │
+│         ↓ scale = 1.0                                        │
+│         ↓ 不改变大小                                          │
+│         ↓                                                   │
+│  玩家保持原大小                                             │
+│                                                               │
+│  缩放传送门（scale = 0.5）                                  │
+│  ┌─────────────────┐                                        │
+│  │                 │                                        │
+│  │    [玩家 ●]     │                                        │
+│  │                 │                                        │
+│  └─────────────────┘                                        │
+│         ↓ scale = 0.5                                        │
+│         ↓ 缩小到一半                                          │
+│         ↓                                                   │
+│  玩家缩小到原来的 50%                                       │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>缩放因子（scaling）</h3>
+
+
+每个传送门都有一个 <code>scaling</code> 属性：
+
+| scaling 值 | 效果 | 示例应用 |
+|------------|------|----------|
+| <code>1.0</code> | 无缩放（普通传送门） | 标准传送 |
+| <code>> 1.0</code> | 放大 | 巨人国入口 |
+| <code>< 1.0</code> | 缩小 | 小人国入口 |
+| <code>0.5</code> | 缩小到一半 | 缩小效果 |
+| <code>2.0</code> | 放大到两倍 | 放大效果 |
+| <code>0.25</code> | 缩小到 1/4 | 微型世界 |
+| <code>4.0</code> | 放大到 4 倍 | 巨型世界 |
+
+<hr>
+
+<h2 id="缩放传送的原理">缩放传送的原理</h2>
+
+
+<h3>缩放变换数学</h3>
+
+
+缩放传送门的变换公式是：
+</p>
+<p><pre class="code-block"><code class="language-text">P&#39; = Scale × Rotation × (P - Origin) + Destination</code></pre>
+
+
+其中 <strong>Scale</strong> 就是 <code>scaling</code> 属性。
+
+<h3>缩放变换图解</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    缩放变换示意图                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  输入点 P = (4, 4)                                          │
+│  Origin = (2, 2)                                            │
+│  局部坐标 L = P - Origin = (2, 2)                           │
+│                                                               │
+│  scale = 0.5 (缩小)                                         │
+│  L&#39; = L × 0.5 = (1, 1)                                     │
+│                                                               │
+│  scale = 2.0 (放大)                                         │
+│  L&#39; = L × 2.0 = (4, 4)                                     │
+│                                                               │
+│  scale = 1.0 (无缩放)                                       │
+│  L&#39; = L × 1.0 = (2, 2)                                     │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>源码解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">
+/**
+ * 缩放传送门的点变换
+ */
+@Override
+public Vec3 transformPoint(Vec3 pos) {
+    // 1. 计算局部坐标（相对于传送门原点）
+    Vec3 localPos = pos.subtract(getOriginPos());
+
+    // 2. 应用旋转变换
+    Vec3 rotated = transformLocalVecNonScale(localPos);
+
+    // 3. 应用缩放变换
+    Vec3 scaled = rotated.scale(scaling);
+
+    // 4. 加上目标位置
+    return scaled.add(getDestPos());
+}
+
+/**
+ * 向量缩放变换
+ */
+@Override
+public Vec3 transformLocalVec(Vec3 localVec) {
+    // 先应用非缩放的变换（旋转等）
+    return transformLocalVecNonScale(localVec).scale(scaling);
+}</code></pre>
+
+
+<h3>实体穿过缩放传送门</h3>
+
+
+当实体穿过缩放传送门时：
+
+<ul><li><strong>位置变换</strong> - 传送到目标位置（按比例）</li></ul>
+<ul><li><strong>大小变换</strong> - 实体的碰撞箱和视觉大小按比例缩放</li></ul>
+<ul><li><strong>速度变换</strong> - 移动速度也按比例调整</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-java">public void teleportEntity(Entity entity, Portal portal) {
+    // 获取变换后的位置
+    Vec3 newPos = portal.transformPoint(entity.position());
+
+    // 获取缩放因子
+    double scale = portal.getScaling();
+
+    // 应用位置
+    entity.setPos(newPos);
+
+    // 应用缩放到实体大小
+    // 注意：Minecraft 实体的缩放需要特殊处理
+    entity.setScale(scale);
+
+    // 调整速度
+    Vec3 newVelocity = portal.transformLocalVec(entity.getDeltaMovement())
+        .scale(scale);
+    entity.setDeltaMovement(newVelocity);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="巨型传送门-vs-微型传送门">巨型传送门 vs 微型传送门</h2>
+
+
+<h3>巨型传送门（scale > 1）</h3>
+
+
+当你穿过巨型传送门时，你会<strong>变大</strong>。
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    巨型传送门 (scale &gt; 1)                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  场景：玩家要进入&quot;巨人王国&quot;                                    │
+│                                                               │
+│       正常大小的玩家                                           │
+│            ●                                                 │
+│  ┌─────────────────┐                                        │
+│  │   巨型传送门     │                                        │
+│  │    scale=3.0   │                                        │
+│  └─────────────────┘                                        │
+│            ↓                                                 │
+│            ↓                                                 │
+│       3倍大小的玩家                                           │
+│           ●●●                                                │
+│                                                               │
+│  💡 玩家现在可以踩爆建筑物！                                 │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>微型传送门（scale < 1）</h3>
+
+
+当你穿过微型传送门时，你会<strong>变小</strong>。
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    微型传送门 (scale &lt; 1)                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  场景：玩家要进入&quot;小人国&quot;                                      │
+│                                                               │
+│       正常大小的玩家                                           │
+│            ●                                                 │
+│  ┌─────────────────┐                                        │
+│  │   微型传送门     │                                        │
+│  │    scale=0.1    │                                        │
+│  └─────────────────┘                                        │
+│            ↓                                                 │
+│            ↓                                                 │
+│       1/10 大小的玩家                                         │
+│            ·                                                 │
+│                                                               │
+│  💡 玩家现在可以探索微观世界！                                │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>双向传送门的重要性</h3>
+
+
+缩放传送门通常需要<strong>成对</strong>创建：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    双向缩放传送门系统                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  普通世界 ────────┬────────────────────────────────────     │
+│                   │                                        │
+│                   │ scale = 3.0                             │
+│                   ↓                                        │
+│            ┌─────────────┐                                 │
+│            │  放大传送门  │                                 │
+│            └─────────────┘                                 │
+│                   │                                        │
+│                   │ scale = 1/3 ≈ 0.333                    │
+│                   ↓                                        │
+│  巨人王国 ────────┘                                        │
+│                                                               │
+│  ✅ 从普通世界进入巨人王国（变大）                            │
+│  ✅ 从巨人王国返回普通世界（变小回原样）                       │
+│                                                               │
+│  ⚠️ 注意：返回传送门的 scale 应该是 1/scale！               │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="缩放传送门示意图">缩放传送门示意图</h2>
+
+
+<h3>完整工作流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Normal["普通世界"]
+        P1["玩家 ●"]
+        A1["放大传送门\nscale=2.0"]
+    end
+
+    subgraph Giant["巨人王国"]
+        P2["玩家 ◉◉"]
+        B1["缩小传送门\nscale=0.5"]
+    end
+
+    P1 -->|"穿过 scale=2.0"| A1
+    A1 -->|"大小 ×2"| P2
+    P2 -->|"穿过 scale=0.5"| B1
+    B1 -->|"大小 ×0.5| P1
+
+    style P1 fill:#e3f2fd
+    style P2 fill:#fff3e0
+    style A1 fill:#c8e6c9
+    style B1 fill:#ffcdd2</div>
+</div>
+
+
+<h3>不同缩放比例的效果</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    缩放比例效果对比                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  scale = 4.0 (极巨化)                                        │
+│  ● ● ● ●                                                      │
+│  💡 玩家变成 4 倍大小，可以轻松翻越高山                      │
+│                                                               │
+│  scale = 2.0 (巨人化)                                        │
+│  ● ●                                                          │
+│  💡 玩家变成 2 倍大小，一步顶三步                            │
+│                                                               │
+│  scale = 1.0 (正常)                                           │
+│  ●                                                             │
+│  💡 普通大小                                                 │
+│                                                               │
+│  scale = 0.5 (小矮人)                                        │
+│      ·                                                        │
+│  💡 玩家变成一半大小，需要更小的空间                         │
+│                                                               │
+│  scale = 0.25 (微型)                                          │
+│      .                                                        │
+│  💡 玩家变成 1/4 大小，可以进入管道和缝隙                    │
+│                                                               │
+│  scale = 0.1 (纳米)                                           │
+│      ·                                                        │
+│  💡 玩家变得非常微小，视野完全不同                           │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>嵌套缩放传送门</h3>
+
+
+缩放传送门也可以嵌套！
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    嵌套缩放传送门                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Layer 0: scale=1.0  正常大小的世界                          │
+│  Layer 1: scale=2.0  2倍大小的世界                          │
+│  Layer 2: scale=0.5  1倍大小的世界（2×0.5=1）              │
+│                                                               │
+│  💡 嵌套缩放可以抵消效果，创建&quot;正常&quot;世界中的&quot;异常&quot;空间       │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="代码示例">代码示例</h2>
+
+
+<h3>创建缩放传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * 缩放传送门创建示例
+ */
+public class ScalingPortalExample {
+
+    /**
+     * 创建缩放传送门
+     *
+     * @param world     传送门所在的世界
+     * @param position  传送门位置
+     * @param destPos   目标位置
+     * @param normal    传送门法向量
+     * @param width     传送门宽度
+     * @param height    传送门高度
+     * @param scale     缩放因子（1.0 = 不缩放）
+     */
+    public static Portal createScalingPortal(
+        ServerLevel world,
+        Vec3 position,
+        Vec3 destPos,
+        Vec3 normal,
+        double width,
+        double height,
+        double scale
+    ) {
+        // 1. 创建传送门实体
+        Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+
+        // 2. 设置位置
+        portal.setPos(position.x, position.y, position.z);
+
+        // 3. 设置目标维度（同一维度则为自身）
+        portal.setDestDim(world.dimension());
+
+        // 4. 设置目标位置
+        portal.setDestination(destPos);
+
+        // 5. 设置法向量和轴
+        Vec3 up = new Vec3(0, 1, 0);
+        if (Math.abs(normal.dot(up)) &gt; 0.99) {
+            up = new Vec3(1, 0, 0);
+        }
+        Vec3 axisW = normal.cross(up).normalize();
+        Vec3 axisH = normal.cross(axisW).normalize();
+
+        portal.setAxisW(axisW);
+        portal.setAxisH(axisH);
+
+        // 6. 设置尺寸
+        portal.setWidth(width);
+        portal.setHeight(height);
+
+        // 7. 设置缩放因子 💡 关键！
+        portal.setScaling(scale);
+
+        // 8. 添加到世界
+        world.addFreshEntity(portal);
+
+        return portal;
+    }
+
+    /**
+     * 创建&quot;小人国&quot;传送门对
+     * 从正常世界进入微小世界，再返回
+     */
+    public static void createShrinkingWorldPair(ServerLevel world) {
+        Vec3 normal = new Vec3(0, 0, 1);
+        double scale = 0.1;  // 缩小到 1/10
+
+        // 正常世界 -&gt; 小人国（缩小）
+        createScalingPortal(
+            world,
+            new Vec3(100, 64, 100),   // 正常世界入口位置
+            new Vec3(200, 6.4, 200),   // 小人国目标位置（高度也缩小）
+            normal,
+            3.0,                        // 传送门宽度
+            4.0,                        // 传送门高度
+            scale                       // scale = 0.1
+        );
+
+        // 小人国 -&gt; 正常世界（放大回来）
+        createScalingPortal(
+            world,
+            new Vec3(200, 6.4, 200),   // 小人国入口位置
+            new Vec3(100, 64, 100),   // 正常世界目标位置
+            normal,
+            0.3,                        // 传送门宽度（缩小）
+            0.4,                        // 传送门高度（缩小）
+            1.0 / scale                 // scale = 10.0
+        );
+    }
+
+    /**
+     * 创建&quot;巨人国&quot;传送门对
+     * 从正常世界进入巨大世界，再返回
+     */
+    public static void createGiantWorldPair(ServerLevel world) {
+        Vec3 normal = new Vec3(0, 0, 1);
+        double scale = 4.0;  // 放大 4 倍
+
+        // 正常世界 -&gt; 巨人国（放大）
+        createScalingPortal(
+            world,
+            new Vec3(100, 64, 100),
+            new Vec3(300, 256, 300),    // 巨人国目标位置（高度放大）
+            normal,
+            3.0,
+            4.0,
+            scale                       // scale = 4.0
+        );
+
+        // 巨人国 -&gt; 正常世界（缩小回来）
+        createScalingPortal(
+            world,
+            new Vec3(300, 256, 300),
+            new Vec3(100, 64, 100),
+            normal,
+            12.0,                       // 传送门宽度（放大 3×4）
+            16.0,                       // 传送门高度（放大 4×4）
+            1.0 / scale                 // scale = 0.25
+        );
+    }
+}</code></pre>
+
+
+<h3>使用 PortalAPI 创建缩放传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * 使用 PortalAPI 创建缩放传送门的示例
+ */
+public class PortalAPIScalingExample {
+
+    /**
+     * 使用 PortalAPI 设置传送门属性
+     */
+    public static Portal createPortalWithAPI(
+        ServerLevel world,
+        Vec3 position,
+        Vec3 destDim,
+        Vec3 destPos,
+        double scale
+    ) {
+        // 1. 创建传送门实体
+        Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+
+        // 2. 使用 PortalAPI 设置位置和方向
+        // 注意：具体 API 调用可能略有不同，请参考官方文档
+        PortalAPI.setPortalPositionAndSize(
+            portal,
+            position,
+            destPos,
+            scale  // 缩放因子
+        );
+
+        // 3. 设置目标维度
+        portal.setDestDim(ResourceKey.create(Registries.DIMENSION, destDim));
+
+        // 4. 设置缩放（如果 API 不支持）
+        if (scale != 1.0) {
+            portal.setScaling(scale);
+        }
+
+        // 5. 添加到世界
+        world.addFreshEntity(portal);
+
+        // 6. 同步到客户端
+        portal.reloadAndSyncToClient();
+
+        return portal;
+    }
+}</code></pre>
+
+
+<h3>反向传送门的缩放计算</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * 创建反向传送门时自动计算缩放
+ */
+public class ReversePortalScaling {
+
+    /**
+     * 创建缩放传送门的反向传送门
+     * 反向传送门的缩放应该是原传送门的倒数
+     */
+    public static Portal createReverseScalingPortal(
+        Portal originalPortal,
+        ServerLevel targetWorld
+    ) {
+        // 使用 PortalManipulation 创建反向传送门
+        Portal reverse = PortalManipulation.createReversePortal(
+            originalPortal,
+            Portal.ENTITY_TYPE
+        );
+
+        // 重要：反向传送门的缩放应该是原传送门的倒数
+        double originalScale = originalPortal.getScaling();
+        double reverseScale = 1.0 / originalScale;
+
+        reverse.setScaling(reverseScale);
+
+        // 设置目标维度为原维度
+        reverse.setDestDim(originalPortal.level().dimension());
+
+        // 设置目标位置
+        reverse.setDestination(originalPortal.getOriginPos());
+
+        // 添加到世界
+        targetWorld.addFreshEntity(reverse);
+
+        return reverse;
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章节学习后，请确认你能回答以下问题：
+
+<ul><li>[ ] <strong>Q1</strong>: 什么是缩放传送门？它与普通传送门的核心区别是什么？</li></ul>
+
+<ul><li>[ ] <strong>Q2</strong>: 如果一个传送门的 scale = 3.0，穿过它后玩家会变大还是变小？变成原来的多少倍？</li></ul>
+
+<ul><li>[ ] <strong>Q3</strong>: 为什么缩放传送门通常需要成对创建？返回传送门的 scale 应该是多少？</li></ul>
+
+<ul><li>[ ] <strong>Q4</strong>: scale = 0.25 和 scale = 4.0 是什么关系？</li></ul>
+
+<ul><li>[ ] <strong>Q5</strong>: 列举至少 2 个缩放传送门的实际应用场景。</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="../analysis/02-portal-entity.html">02-portal-entity</a> | 传送门实体系统详解 |
+| <a href="../analysis/03-teleportation-system.html">03-teleportation-system</a> | 传送系统详解 |
+| <a href="05-nested-portals.html">05-nested-portals</a> | 嵌套传送门 |
+| <a href="../analysis/SUMMARY.html">SUMMARY</a> | 架构总结 |
+
+<hr>
+
+<h2 id="附录缩放公式速查">附录：缩放公式速查</h2>
+
+
+| 公式 | 说明 |
+|------|------|
+| <code>L' = L × scale</code> | 局部坐标缩放 |
+| <code>P' = (P - Origin) × scale + Destination</code> | 完整点变换 |
+| <code>reverseScale = 1.0 / originalScale</code> | 反向传送门缩放 |
+| <code>scale > 1</code> | 放大 |
+| <code>scale < 1</code> | 缩小 |
+| <code>scale = 1</code> | 无缩放 |
+
+<hr>
+
+<em>文档版本：ImmersivePortalsMod 6.0.6, Minecraft 1.21.1</em>
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="06-mirror-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            镜像系统
+        </a><a href="../Part-4-Development/08-portal-api-basics.html" class="next">
+            API 基础使用
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

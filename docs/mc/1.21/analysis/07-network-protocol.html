@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <title>07 network protocol - Minecraft 原版</title>
+    <title>Minecraft 1.21 网络协议分析 - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles/main.css">
     <link rel="stylesheet" href="../../../../styles.css">
     <link rel="stylesheet" href="../../../../styles/site-shell.css">
@@ -119,10 +119,10 @@
                         <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
                         <a href="../../../../docs/iris/index.html">Iris 光影</a>
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
-                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
-                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
-                        <a href="../../../../docs/ImmersivePortalsMod/index.html">Immersiveportalsmod</a>
-                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
                     </div>
                 </li>
                 <li><a href="../../../../about.html">关于</a></li>
@@ -189,6 +189,14 @@
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 包结构详解
         </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="../index.html">
@@ -210,14 +218,14 @@
                     <i class="fas fa-chevron-right"></i>
                     <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
-                    <span>07 network protocol</span>
+                    <span>Minecraft 1.21 网络协议分析</span>
                 </nav>
                 <h1>
                     <span class="doc-type-tag analysis">
                         <i class="fas fa-microscope"></i>
                         源码分析
                     </span>
-                    07 network protocol
+                    Minecraft 1.21 网络协议分析
                 </h1>
                 <div class="docs-meta">
                     <span><i class="fas fa-code-branch"></i> 1.21</span>
@@ -227,31 +235,45 @@
 
             <div class="docs-body doc-content">
                 <h1>Minecraft 1.21 网络协议分析</h1>
+
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#概述">概述</a></li>
-<li><a href="#协议架构">协议架构</a></li>
-<li><a href="#数据包packet系统">数据包（Packet）系统</a></li>
-<li><a href="#网络状态networkstate">网络状态（NetworkState）</a></li>
-<li><a href="#数据包字节缓冲packetbytebuf">数据包字节缓冲（PacketByteBuf）</a></li>
-<li><a href="#数据包类型定义">数据包类型定义</a></li>
-<li><a href="#客户端数据包clientbound">客户端数据包（Clientbound）</a></li>
-<li><a href="#服务端数据包serverbound">服务端数据包（Serverbound）</a></li>
-<li><a href="#序列化机制">序列化机制</a></li>
-<li><a href="#连接握手流程">连接握手流程</a></li>
-<li><a href="#关键代码引用">关键代码引用</a></li></ul></p>
-<p><hr></p>
+
+<ul><li><a href="#概述">概述</a></li></ul>
+<ul><li><a href="#协议架构">协议架构</a></li></ul>
+<ul><li><a href="#数据包packet系统">数据包（Packet）系统</a></li></ul>
+<ul><li><a href="#网络状态networkstate">网络状态（NetworkState）</a></li></ul>
+<ul><li><a href="#数据包字节缓冲packetbytebuf">数据包字节缓冲（PacketByteBuf）</a></li></ul>
+<ul><li><a href="#数据包类型定义">数据包类型定义</a></li></ul>
+<ul><li><a href="#客户端数据包clientbound">客户端数据包（Clientbound）</a></li></ul>
+<ul><li><a href="#服务端数据包serverbound">服务端数据包（Serverbound）</a></li></ul>
+<ul><li><a href="#序列化机制">序列化机制</a></li></ul>
+<ul><li><a href="#连接握手流程">连接握手流程</a></li></ul>
+<ul><li><a href="#关键代码引用">关键代码引用</a></li></ul>
+
+<hr>
+
 <h2 id="概述">概述</h2>
-<p>Minecraft 1.21 使用基于 Netty 的网络协议进行客户端与服务端之间的通信。协议采用状态机模式组织，支持版本协商、加密、登录和游戏数据传输。</p>
-<p><strong>协议特点：</strong>
-<ul><li>基于 TCP 协议</li>
-<li>使用 VarInt 变长整数编码节省带宽</li>
-<li>支持协议版本协商</li>
-<li>状态机驱动的连接流程</li>
-<li>数据包编解码器（PacketCodec）系统</li></ul></p>
-<p><hr></p>
+
+
+Minecraft 1.21 使用基于 Netty 的网络协议进行客户端与服务端之间的通信。协议采用状态机模式组织，支持版本协商、加密、登录和游戏数据传输。
+
+<strong>协议特点：</strong>
+<ul><li>基于 TCP 协议</li></ul>
+<ul><li>使用 VarInt 变长整数编码节省带宽</li></ul>
+<ul><li>支持协议版本协商</li></ul>
+<ul><li>状态机驱动的连接流程</li></ul>
+<ul><li>数据包编解码器（PacketCodec）系统</li></ul>
+
+<hr>
+
 <h2 id="协议架构">协议架构</h2>
+
+
 <h3>1.1 协议层次结构</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
 │                    Minecraft Protocol                        │
 ├─────────────────────────────────────────────────────────────┤
 │  连接层 (Connection Layer)                                  │
@@ -271,11 +293,25 @@
 │  ├── PacketType&lt;T&gt;                                        │
 │  └── PacketCodec&lt;B, T&gt;                                    │
 └─────────────────────────────────────────────────────────────┘</code></pre>
+
+
 <h3>1.2 协议状态定义</h3>
-<p><strong>核心文件：</strong> <code>..../source/net/minecraft/network/NetworkPhase.java</code></p>
-<table class="data-table"><thead><tr><th>状态</th><th>描述</th><th>方向</th></tr></thead><tbody><tr><td>HANDSHAKING</td><td>握手阶段，协议版本协商</td><td>双向</td></tr><tr><td>STATUS</td><td>服务器状态查询（ping）</td><td>双向</td></tr><tr><td>LOGIN</td><td>登录认证阶段</td><td>双向</td></tr><tr><td>CONFIGURATION</td><td>配置阶段，资源包同步</td><td>双向</td></tr><tr><td>PLAY</td><td>游戏play阶段</td><td>双向</td></tr></tbody></table>
+
+
+<strong>核心文件：</strong> <code>..../source/net/minecraft/network/NetworkPhase.java</code>
+
+| 状态 | 描述 | 方向 |
+|------|------|------|
+| HANDSHAKING | 握手阶段，协议版本协商 | 双向 |
+| STATUS | 服务器状态查询（ping） | 双向 |
+| LOGIN | 登录认证阶段 | 双向 |
+| CONFIGURATION | 配置阶段，资源包同步 | 双向 |
+| PLAY | 游戏play阶段 | 双向 |
+
 <h3>1.3 握手流程</h3>
-<pre class="code-block"><code class="language-text">Client                              Server
+
+</p>
+<p><pre class="code-block"><code class="language-text">Client                              Server
   │                                    │
   │ ──── Handshake ──────────────────&gt; │  (协议版本、意图)
   │                                    │
@@ -305,11 +341,19 @@
   │                                    │
   │ &lt;==== 游戏数据包交换 ====&gt;          │
   │                                    │</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="数据包packet系统">数据包（Packet）系统</h2>
+
+
 <h3>2.1 Packet 接口</h3>
-<p><strong>核心文件：</strong> <code>..../source/net/minecraft/network/packet/Packet.java</code></p>
-<pre class="code-block"><code class="language-java">13:39:..../source/net/minecraft/network/packet/Packet.java
+
+
+<strong>核心文件：</strong> <code>..../source/net/minecraft/network/packet/Packet.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">13:39:..../source/net/minecraft/network/packet/Packet.java
 public interface Packet&lt;T extends PacketListener&gt; {
     
     // 获取数据包类型
@@ -328,8 +372,12 @@ public interface Packet&lt;T extends PacketListener&gt; {
         return false;
     }
 }</code></pre>
+
+
 <h3>2.2 PacketType 定义</h3>
-<pre class="code-block"><code class="language-java">public interface PacketType&lt;T extends Packet&lt;?&gt;&gt; {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface PacketType&lt;T extends Packet&lt;?&gt;&gt; {
     
     // 数据包ID (状态内唯一)
     int getId();
@@ -340,8 +388,12 @@ public interface Packet&lt;T extends PacketListener&gt; {
     // 数据包编解码器
     PacketCodec&lt;ByteBuf, T&gt; getCodec();
 }</code></pre>
+
+
 <h3>2.3 数据包分类</h3>
-<pre class="code-block"><code class="language-text">Packet&lt;T&gt;
+
+</p>
+<p><pre class="code-block"><code class="language-text">Packet&lt;T&gt;
 ├── C2S (Client to Server)
 │   ├── HandshakeC2SPacket
 │   ├── LoginHelloC2SPacket
@@ -352,11 +404,19 @@ public interface Packet&lt;T extends PacketListener&gt; {
     ├── LoginSuccessS2CPacket
     ├── PlayS2CPacket
     └── ...</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="网络状态networkstate">网络状态（NetworkState）</h2>
+
+
 <h3>3.1 NetworkState 接口</h3>
-<p><strong>核心文件：</strong> <code>..../source/net/minecraft/network/NetworkState.java</code></p>
-<pre class="code-block"><code class="language-java">18:43:..../source/net/minecraft/network/NetworkState.java
+
+
+<strong>核心文件：</strong> <code>..../source/net/minecraft/network/NetworkState.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">18:43:..../source/net/minecraft/network/NetworkState.java
 public interface NetworkState&lt;T extends PacketListener&gt; {
     
     // 获取协议阶段
@@ -372,8 +432,12 @@ public interface NetworkState&lt;T extends PacketListener&gt; {
     @Nullable
     public PacketBundleHandler bundleHandler();
 }</code></pre>
+
+
 <h3>3.2 NetworkPhase 枚举</h3>
-<pre class="code-block"><code class="language-java">public enum NetworkPhase {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public enum NetworkPhase {
     HANDSHAKING,
     PLAY,
     STATUS,
@@ -383,12 +447,21 @@ public interface NetworkState&lt;T extends PacketListener&gt; {
     // 转换为数据包类型集合
     public PacketTypeHandler handler() { ... }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="数据包字节缓冲packetbytebuf">数据包字节缓冲（PacketByteBuf）</h2>
+
+
 <h3>4.1 概述</h3>
-<p>PacketByteBuf 是 Minecraft 对 Netty ByteBuf 的扩展，提供游戏特定的序列化/反序列化方法。</p>
-<p><strong>核心文件：</strong> <code>..../source/net/minecraft/network/PacketByteBuf.java</code></p>
-<pre class="code-block"><code class="language-java">192:1373:..../source/net/minecraft/network/PacketByteBuf.java
+
+
+PacketByteBuf 是 Minecraft 对 Netty ByteBuf 的扩展，提供游戏特定的序列化/反序列化方法。
+
+<strong>核心文件：</strong> <code>..../source/net/minecraft/network/PacketByteBuf.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">192:1373:..../source/net/minecraft/network/PacketByteBuf.java
 public class PacketByteBuf
 extends ByteBuf {
     
@@ -403,10 +476,29 @@ extends ByteBuf {
     // 最大文本长度
     public static final int MAX_TEXT_LENGTH = 262144; // 256KB
 }</code></pre>
+
+
 <h3>4.2 常用读写方法</h3>
-<table class="data-table"><thead><tr><th>类型</th><th>读方法</th><th>写方法</th></tr></thead><tbody><tr><td>VarInt</td><td><code>readVarInt()</code></td><td><code>writeVarInt(int)</code></td></tr><tr><td>VarLong</td><td><code>readVarLong()</code></td><td><code>writeVarLong(long)</code></td></tr><tr><td>String</td><td><code>readString()</code></td><td><code>writeString(String)</code></td></tr><tr><td>Identifier</td><td><code>readIdentifier()</code></td><td><code>writeIdentifier(Identifier)</code></td></tr><tr><td>UUID</td><td><code>readUuid()</code></td><td><code>writeUuid(UUID)</code></td></tr><tr><td>BlockPos</td><td><code>readBlockPos()</code></td><td><code>writeBlockPos(BlockPos)</code></td></tr><tr><td>NBT</td><td><code>readNbt()</code></td><td><code>writeNbt(NbtCompound)</code></td></tr><tr><td>Enum</td><td><code>readEnumConstant(Class)</code></td><td><code>writeEnumConstant(Enum)</code></td></tr><tr><td>Optional</td><td><code>readOptional(Reader)</code></td><td><code>writeOptional(Optional, Writer)</code></td></tr><tr><td>Collection</td><td><code>readCollection(factory, reader)</code></td><td><code>writeCollection(Collection, writer)</code></td></tr><tr><td>Map</td><td><code>readMap(...)</code></td><td><code>writeMap(...)</code></td></tr></tbody></table>
+
+
+| 类型 | 读方法 | 写方法 |
+|------|--------|--------|
+| VarInt | <code>readVarInt()</code> | <code>writeVarInt(int)</code> |
+| VarLong | <code>readVarLong()</code> | <code>writeVarLong(long)</code> |
+| String | <code>readString()</code> | <code>writeString(String)</code> |
+| Identifier | <code>readIdentifier()</code> | <code>writeIdentifier(Identifier)</code> |
+| UUID | <code>readUuid()</code> | <code>writeUuid(UUID)</code> |
+| BlockPos | <code>readBlockPos()</code> | <code>writeBlockPos(BlockPos)</code> |
+| NBT | <code>readNbt()</code> | <code>writeNbt(NbtCompound)</code> |
+| Enum | <code>readEnumConstant(Class)</code> | <code>writeEnumConstant(Enum)</code> |
+| Optional | <code>readOptional(Reader)</code> | <code>writeOptional(Optional, Writer)</code> |
+| Collection | <code>readCollection(factory, reader)</code> | <code>writeCollection(Collection, writer)</code> |
+| Map | <code>readMap(...)</code> | <code>writeMap(...)</code> |
+
 <h3>4.3 Registry 相关方法</h3>
-<pre class="code-block"><code class="language-java">RegistryEntry.Reference&lt;T&gt; readRegistryEntry(RegistryKey&lt;Registry&lt;T&gt;&gt; registry);
+
+</p>
+<p><pre class="code-block"><code class="language-java">RegistryEntry.Reference&lt;T&gt; readRegistryEntry(RegistryKey&lt;Registry&lt;T&gt;&gt; registry);
 
 // 写入注册表引用
 void writeRegistryEntry(RegistryEntry.Reference&lt;T&gt; entry);
@@ -416,9 +508,14 @@ RegistryKey&lt;T&gt; readRegistryKey(RegistryKey&lt;Registry&lt;T&gt;&gt; regist
 
 // 写入注册表键
 void writeRegistryKey(RegistryKey&lt;T&gt; key);</code></pre>
+
+
 <h3>4.4 VarInt 编码</h3>
-<p>Minecraft 使用 VarInt（可变长度整数）来节省带宽：</p>
-<pre class="code-block"><code class="language-java">// - 值 0-127: 1 字节
+
+
+Minecraft 使用 VarInt（可变长度整数）来节省带宽：
+</p>
+<p><pre class="code-block"><code class="language-java">// - 值 0-127: 1 字节
 // - 值 128-16383: 2 字节
 // - 值 16384-2097151: 3 字节
 // - 值 2097152-268435455: 4 字节
@@ -437,15 +534,55 @@ public int readVarInt() {
     }
     return value;
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="数据包类型定义">数据包类型定义</h2>
+
+
 <h3>5.1 Play 阶段数据包（游戏阶段）</h3>
-<p><strong>C2S (客户端到服务端) - Play 阶段：</strong></p>
-<table class="data-table"><thead><tr><th>数据包</th><th>ID</th><th>描述</th></tr></thead><tbody><tr><td>TeleportConfirmC2SPacket</td><td>0x00</td><td>传送确认</td></tr><tr><td>QueryTileEntityNbtC2SPacket</td><td>0x06</td><td>查询方块实体NBT</td></tr><tr><td>SetPlayerPositionC2SPacket</td><td>0x11</td><td>设置玩家位置</td></tr><tr><td>SetPlayerPositionAndRotationC2SPacket</td><td>0x12</td><td>设置位置和旋转</td></tr><tr><td>PlayerSessionC2SPacket</td><td>0x19</td><td>玩家会话</td></tr><tr><td>PlayerAbilitiesC2SPacket</td><td>0x1B</td><td>玩家能力</td></tr><tr><td>ChatMessageC2SPacket</td><td>0x07</td><td>聊天消息</td></tr><tr><td>ChatCommandSignedC2SPacket</td><td>0x08</td><td>签名的聊天命令</td></tr><tr><td>HandSwingC2SPacket</td><td>0x2D</td><td>手挥动</td></tr><tr><td>UseItemOnC2SPacket</td><td>0x2E</td><td>使用物品在方块上</td></tr><tr><td>UseItemC2SPacket</td><td>0x2F</td><td>使用物品</td></tr><tr><td>AcknowledgeBlockChangesC2SPacket</td><td>0x39</td><td>确认方块变化</td></tr></tbody></table>
-<strong>S2C (服务端到客户端) - Play 阶段：</strong></p>
-<table class="data-table"><thead><tr><th>数据包</th><th>ID</th><th>描述</th></tr></thead><tbody><tr><td>SpawnEntityS2CPacket</td><td>0x00</td><td>生成实体</td></tr><tr><td>SpawnEntityS2CPacket</td><td>0x01</td><td>玩家列表</td></tr><tr><td>BlockEntityUpdateS2CPacket</td><td>0x09</td><td>方块实体更新</td></tr><tr><td>BlockChangedS2CPacket</td><td>0x0B</td><td>方块变化</td></tr><tr><td>ChunkBatchFinishedS2CPacket</td><td>0x25</td><td>区块批次完成</td></tr><tr><td>ChunkBatchStartS2CPacket</td><td>0x24</td><td>区块批次开始</td></tr><tr><td>ChunkRenderDistanceCenterS2CPacket</td><td>0x49</td><td>区块渲染距离中心</td></tr><tr><td>GameEventS2CPacket</td><td>0x1F</td><td>游戏事件</td></tr><tr><td>LevelParticlesS2CPacket</td><td>0x22</td><td>等级粒子</td></tr><tr><td>EntityEventS2CPacket</td><td>0x1E</td><td>实体事件</td></tr><tr><td>ExplosionS2CPacket</td><td>0x1C</td><td>爆炸</td></tr><tr><td>WorldEventS2CPacket</td><td>0x23</td><td>世界事件</td></tr><tr><td>WorldParticlesS2CPacket</td><td>0x26</td><td>世界粒子</td></tr></tbody></table>
+
+
+<strong>C2S (客户端到服务端) - Play 阶段：</strong>
+
+| 数据包 | ID | 描述 |
+|--------|-----|------|
+| TeleportConfirmC2SPacket | 0x00 | 传送确认 |
+| QueryTileEntityNbtC2SPacket | 0x06 | 查询方块实体NBT |
+| SetPlayerPositionC2SPacket | 0x11 | 设置玩家位置 |
+| SetPlayerPositionAndRotationC2SPacket | 0x12 | 设置位置和旋转 |
+| PlayerSessionC2SPacket | 0x19 | 玩家会话 |
+| PlayerAbilitiesC2SPacket | 0x1B | 玩家能力 |
+| ChatMessageC2SPacket | 0x07 | 聊天消息 |
+| ChatCommandSignedC2SPacket | 0x08 | 签名的聊天命令 |
+| HandSwingC2SPacket | 0x2D | 手挥动 |
+| UseItemOnC2SPacket | 0x2E | 使用物品在方块上 |
+| UseItemC2SPacket | 0x2F | 使用物品 |
+| AcknowledgeBlockChangesC2SPacket | 0x39 | 确认方块变化 |
+
+<strong>S2C (服务端到客户端) - Play 阶段：</strong>
+
+| 数据包 | ID | 描述 |
+|--------|-----|------|
+| SpawnEntityS2CPacket | 0x00 | 生成实体 |
+| SpawnEntityS2CPacket | 0x01 | 玩家列表 |
+| BlockEntityUpdateS2CPacket | 0x09 | 方块实体更新 |
+| BlockChangedS2CPacket | 0x0B | 方块变化 |
+| ChunkBatchFinishedS2CPacket | 0x25 | 区块批次完成 |
+| ChunkBatchStartS2CPacket | 0x24 | 区块批次开始 |
+| ChunkRenderDistanceCenterS2CPacket | 0x49 | 区块渲染距离中心 |
+| GameEventS2CPacket | 0x1F | 游戏事件 |
+| LevelParticlesS2CPacket | 0x22 | 等级粒子 |
+| EntityEventS2CPacket | 0x1E | 实体事件 |
+| ExplosionS2CPacket | 0x1C | 爆炸 |
+| WorldEventS2CPacket | 0x23 | 世界事件 |
+| WorldParticlesS2CPacket | 0x26 | 世界粒子 |
+
 <h3>5.2 数据包注册</h3>
-<pre class="code-block"><code class="language-java">public final class PlayPackets {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class PlayPackets {
     
     // 客户端bound数据包
     public static final PacketType&lt;SpawnEntityS2CPacket&gt; SPAWN_ENTITY = 
@@ -464,8 +601,12 @@ public int readVarInt() {
     
     // ... 更多数据包
 }</code></pre>
+
+
 <h3>5.3 自定义数据包示例</h3>
-<pre class="code-block"><code class="language-java">public class MyCustomPacketS2C implements Packet&lt;ClientPlayPacketListener&gt; {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyCustomPacketS2C implements Packet&lt;ClientPlayPacketListener&gt; {
     
     private final String message;
     
@@ -497,10 +638,17 @@ public int readVarInt() {
         }
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="序列化机制">序列化机制</h2>
+
+
 <h3>6.1 PacketCodec 系统</h3>
-<pre class="code-block"><code class="language-java">public interface PacketCodec&lt;B, T&gt; {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface PacketCodec&lt;B, T&gt; {
     
     // 解码
     T decode(B buf);
@@ -519,8 +667,12 @@ public static &lt;B, T&gt; PacketCodec&lt;B, T&gt; of(
 public static &lt;B, T&gt; PacketCodec&lt;B, Collection&lt;T&gt;&gt; collect(
     PacketCodec&lt;B, T&gt; codec
 ) { ... }</code></pre>
+
+
 <h3>6.2 ItemStack 序列化</h3>
-<pre class="code-block"><code class="language-java">public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKET_CODEC = 
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final PacketCodec&lt;RegistryByteBuf, ItemStack&gt; OPTIONAL_PACKET_CODEC = 
     new PacketCodec&lt;RegistryByteBuf, ItemStack&gt;() {
         
         @Override
@@ -547,9 +699,14 @@ public static &lt;B, T&gt; PacketCodec&lt;B, Collection&lt;T&gt;&gt; collect(
             ComponentChanges.PACKET_CODEC.encode(buf, stack.getComponents().getChanges());
         }
     };</code></pre>
+
+
 <h3>6.3 RegistryByteBuf</h3>
-<p>RegistryByteBuf 是支持注册表感知的数据包缓冲区：</p>
-<pre class="code-block"><code class="language-java">public class RegistryByteBuf extends PacketByteBuf {
+
+
+RegistryByteBuf 是支持注册表感知的数据包缓冲区：
+</p>
+<p><pre class="code-block"><code class="language-java">public class RegistryByteBuf extends PacketByteBuf {
     
     // 获取注册表管理器
     public RegistryWrapper.Impl&lt;?&gt; getRegistryManager();
@@ -558,10 +715,17 @@ public static &lt;B, T&gt; PacketCodec&lt;B, Collection&lt;T&gt;&gt; collect(
     public &lt;T&gt; void writeRegistryEntry(RegistryEntry.Reference&lt;T&gt; entry);
     public &lt;T&gt; RegistryEntry.Reference&lt;T&gt; readRegistryEntry(RegistryKey&lt;Registry&lt;T&gt;&gt; key);
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="连接握手流程">连接握手流程</h2>
+
+
 <h3>7.1 完整连接流程</h3>
-<pre class="code-block"><code class="language-text">┌────────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌────────────────────────────────────────────────────────────────┐
 │                      连接建立流程                                 │
 └────────────────────────────────────────────────────────────────┘
 
@@ -640,8 +804,12 @@ public static &lt;B, T&gt; PacketCodec&lt;B, Collection&lt;T&gt;&gt; collect(
    │     └── ...
    │
    └─= 游戏数据包交换 = = = = = = = =</code></pre>
+
+
 <h3>7.2 客户端登录流程</h3>
-<pre class="code-block"><code class="language-java">public void onHello(LoginHelloC2SPacket packet) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void onHello(LoginHelloC2SPacket packet) {
     // 1. 验证服务器
     // 2. 准备加密 (如果需要)
     // 3. 发送登录开始包
@@ -658,10 +826,17 @@ public void onFinished(FinishConfigurationS2CPacket packet) {
     // 2. 进入 PLAY 状态
     // 3. 处理登录数据包
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="关键代码引用">关键代码引用</h2>
+
+
 <h3>8.1 创建数据包</h3>
-<pre class="code-block"><code class="language-java">SpawnEntityS2CPacket packet = new SpawnEntityS2CPacket(
+
+</p>
+<p><pre class="code-block"><code class="language-java">SpawnEntityS2CPacket packet = new SpawnEntityS2CPacket(
     entity,
     0, // yaw
     EntitySpawnS2CPacket data
@@ -669,8 +844,12 @@ public void onFinished(FinishConfigurationS2CPacket packet) {
 
 // 发送数据包
 serverPlayer.networkHandler.sendPacket(packet);</code></pre>
+
+
 <h3>8.2 处理数据包</h3>
-<pre class="code-block"><code class="language-java">public class ServerPlayPacketListenerImpl implements ServerPlayPacketListener {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ServerPlayPacketListenerImpl implements ServerPlayPacketListener {
     
     @Override
     public void onPlayerMove(PlayerMoveC2SPacket packet) {
@@ -691,15 +870,23 @@ serverPlayer.networkHandler.sendPacket(packet);</code></pre>
         }
     }
 }</code></pre>
+
+
 <h3>8.3 网络状态切换</h3>
-<pre class="code-block"><code class="language-java">public void switchToPlay() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void switchToPlay() {
     this.connection.transitionTo(NetworkState.PLAY);
     
     // 发送登录数据包
     this.connection.send(new LoginPlayS2CPacket(...));
 }</code></pre>
+
+
 <h3>8.4 数据包ID映射</h3>
-<pre class="code-block"><code class="language-java">int packetId = PlayPackets.SPAWN_ENTITY.getId();
+
+</p>
+<p><pre class="code-block"><code class="language-java">int packetId = PlayPackets.SPAWN_ENTITY.getId();
 
 // 发送原始数据包
 connection.send(packetId, buf -&gt; {
@@ -707,10 +894,17 @@ connection.send(packetId, buf -&gt; {
     buf.writeUuid(entityUuid);
     // ...
 });</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="协议版本管理">协议版本管理</h2>
+
+
 <h3>9.1 版本常量</h3>
-<pre class="code-block"><code class="language-java">public class SharedConstants {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class SharedConstants {
     public static final int PROTOCOL_VERSION = 765; // 1.21
     
     // 版本历史
@@ -719,8 +913,12 @@ connection.send(packetId, buf -&gt; {
     // 1.20.6: 764
     // 1.21: 765
 }</code></pre>
+
+
 <h3>9.2 版本兼容性检查</h3>
-<pre class="code-block"><code class="language-java">public void onHandshake(HandshakeC2SPacket packet) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void onHandshake(HandshakeC2SPacket packet) {
     int protocolVersion = packet.getProtocolVersion();
     
     if (protocolVersion != SharedConstants.PROTOCOL_VERSION) {
@@ -732,9 +930,14 @@ connection.send(packetId, buf -&gt; {
         );
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="架构图">架构图</h2>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
 │                         Netty 框架层                                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │  NioSocketChannel                                                  │
@@ -801,15 +1004,22 @@ connection.send(packetId, buf -&gt; {
 │      ├── UseItemOnC2SPacket                                        │
 │      └── [100+ 数据包...]                                          │
 └─────────────────────────────────────────────────────────────────────┘</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="总结">总结</h2>
-<p>Minecraft 1.21 的网络协议系统展现了几个关键设计：</p>
-<p><ul><li><strong>状态机驱动</strong>：通过 NetworkState 管理连接的不同阶段</li>
-<li><strong>编解码分离</strong>：PacketCodec 提供灵活的序列化策略</li>
-<li><strong>类型安全</strong>：泛型系统确保数据包与监听器的正确匹配</li>
-<li><strong>高效编码</strong>：VarInt 和数据压缩减少带宽占用</li>
-<li><strong>向后兼容</strong>：版本号机制支持增量升级</li></ul></p>
-<p>这套系统为多人游戏提供了可靠的基础，同时也为 Mod 开发提供了扩展数据包类型的接口。
+
+
+Minecraft 1.21 的网络协议系统展现了几个关键设计：
+
+<ul><li><strong>状态机驱动</strong>：通过 NetworkState 管理连接的不同阶段</li></ul>
+<ul><li><strong>编解码分离</strong>：PacketCodec 提供灵活的序列化策略</li></ul>
+<ul><li><strong>类型安全</strong>：泛型系统确保数据包与监听器的正确匹配</li></ul>
+<ul><li><strong>高效编码</strong>：VarInt 和数据压缩减少带宽占用</li></ul>
+<ul><li><strong>向后兼容</strong>：版本号机制支持增量升级</li></ul>
+
+这套系统为多人游戏提供了可靠的基础，同时也为 Mod 开发提供了扩展数据包类型的接口。
 </p>
             </div>
 

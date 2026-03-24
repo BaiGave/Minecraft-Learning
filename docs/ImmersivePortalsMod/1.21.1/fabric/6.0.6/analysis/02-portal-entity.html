@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Portal Entity System - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Architecture Summary
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Portal Entity System</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Portal Entity System
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 40 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Portal Entity System</h1>
+
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+
+<ul><li><a href="#overview">Overview</a></li></ul>
+<ul><li><a href="#portal-entity-class-hierarchy">Portal Entity Class Hierarchy</a></li></ul>
+<ul><li><a href="#core-portal-entity-portaljava">Core Portal Entity (Portal.java)</a></li></ul>
+<ul><li><a href="#transformation-mathematics">Transformation Mathematics</a></li></ul>
+<ul><li><a href="#mirror-system">Mirror System</a></li></ul>
+<ul><li><a href="#global-portal-storage">Global Portal Storage</a></li></ul>
+<ul><li><a href="#portal-types-classification">Portal Types Classification</a></li></ul>
+<ul><li><a href="#portal-lifecycle-management">Portal Lifecycle Management</a></li></ul>
+<ul><li><a href="#architecture-diagram">Architecture Diagram</a></li></ul>
+
+<hr>
+
+<h2 id="overview">Overview</h2>
+
+
+ImmersivePortalsMod 的传送门实体系统是整个模组的核心模块，负责实现跨维度传送、空间变换、渲染管理等关键功能。该系统基于 Minecraft 的实体系统（Entity）进行扩展，通过精心设计的数学变换实现复杂的空间扭曲效果。
+
+传送门实体系统的主要组件包括：
+
+| Component | Description |
+|-----------|-------------|
+| <code>Portal</code> | 核心传送门实体类，处理传送、变换、碰撞 |
+| <code>Mirror</code> | 镜像实体，继承自 Portal，提供反射变换 |
+| <code>PortalLike</code> | 接口，定义传送门行为的抽象 |
+| <code>PortalManipulation</code> | 工具类，提供传送门操作的静态方法 |
+| <code>PortalRenderInfo</code> | 客户端渲染信息管理 |
+| <code>GlobalPortalStorage</code> | 全局传送门持久化存储 |
+
+传送门系统支持多种高级特性：
+<ul><li><strong>空间缩放</strong>：通过传送门可以实现物品/玩家在不同尺寸空间间移动</li></ul>
+<ul><li><strong>空间旋转</strong>：传送时可以对玩家视角进行旋转</li></ul>
+<ul><li><strong>双向传送</strong>：两个平行传送门形成闭环</li></ul>
+<ul><li><strong>镜像反射</strong>：类似镜子的反射效果</li></ul>
+<ul><li><strong>动画系统</strong>：传送门可以具有动画效果</li></ul>
+
+<hr>
+
+<h2 id="portal-entity-class-hierarchy">Portal Entity Class Hierarchy</h2>
+
+
+<h3>Class Hierarchy Diagram</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class Entity {
+        <<Minecraft>>
+        +tick()
+        +getBoundingBox()
+        +setPos()
+    }
+    
+    class IPEntityEventListenableEntity {
+        <<interface>>
+        +ip_onEntityPositionUpdated()
+        +ip_onRemoved()
+    }
+    
+    class PortalLike {
+        <<interface>>
+        +transformPoint()
+        +transformLocalVec()
+        +getOriginPos()
+        +getDestPos()
+        +isConventionalPortal()
+    }
+    
+    Entity ..|> IPEntityEventListenableEntity
+    Entity ..|> PortalLike
+    
+    class Portal {
+        +Vec3 axisW
+        +Vec3 axisH
+        +Vec3 destination
+        +DQuaternion rotation
+        +double scaling
+        +PortalShape portalShape
+        +boolean isGlobalPortal
+        +transformPoint()
+        +canTeleportEntity()
+        +getFullSpaceTransformation()
+    }
+    
+    class Mirror {
+        +transformLocalVecNonScale()
+        +getMirrored()
+        +setRotationTransformationForMirror()
+    }
+    
+    Entity <|-- Portal
+    Portal ..|> IPEntityEventListenableEntity
+    Portal ..|> PortalLike
+    Portal <|-- Mirror</div>
+</div>
+
+
+<h3>Key Class Relationships</h3>
+
+
+传送门实体系统采用了多层继承和接口实现的架构：
+
+<ul><li><strong>基础层</strong>：Minecraft <code>Entity</code> 类提供实体基本功能</li></ul>
+<ul><li><strong>接口层</strong>：<code>PortalLike</code> 接口定义传送门核心行为，<code>IPEntityEventListenableEntity</code> 接口提供事件监听能力</li></ul>
+<ul><li><strong>实现层</strong>：<code>Portal</code> 类实现所有传送门逻辑</li></ul>
+<ul><li><strong>扩展层</strong>：<code>Mirror</code> 类在 Portal 基础上添加镜像变换</li></ul>
+
+<hr>
+
+<h2 id="core-portal-entity-portaljava">Core Portal Entity (Portal.java)</h2>
+
+
+<h3>Entity Type Creation</h3>
+
+
+<code>Portal.java</code> 是传送门系统的核心实体类。首先需要通过 Fabric 的 <code>FabricEntityTypeBuilder</code> 创建实体类型：
+</p>
+<p><pre class="code-block"><code class="language-83">public class Portal extends Entity implements
+    PortalLike, IPEntityEventListenableEntity {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    
+    public static final EntityType&lt;Portal&gt; ENTITY_TYPE = createPortalEntityType(Portal::new);
+    
+    public static &lt;T extends Portal&gt; EntityType&lt;T&gt; createPortalEntityType(
+        EntityType.EntityFactory&lt;T&gt; constructor
+    ) {
+        return FabricEntityTypeBuilder.create(
+                MobCategory.MISC,
+                constructor
+            ).dimensions(
+                // eye height should be 0
+                EntityDimensions.fixed(0, 0)
+            ).fireImmune()
+            .trackRangeBlocks(96)
+            .trackedUpdateRate(20)
+            .forceTrackedVelocityUpdates(true)
+            .build();
+    }</code></pre>
+
+
+关键配置说明：
+<ul><li><strong>尺寸固定为 (0, 0)</strong>：传送门是平面结构，不需要体积</li></ul>
+<ul><li><strong>火焰免疫</strong>：传送门不会被岩浆/火焰破坏</li></ul>
+<ul><li><strong>跟踪范围 96 方块</strong>：客户端需要同步的感知范围</li></ul>
+<ul><li><strong>强制追踪速度更新</strong>：确保位置同步精确</li></ul>
+
+<h3>Core Properties</h3>
+
+
+传送门实体的核心属性定义了传送门的空间特性和行为：
+</p>
+<p><pre class="code-block"><code class="language-113">    protected double width = 0;
+    protected double height = 0;
+    protected double thickness = 0;
+    
+    protected Vec3 axisW;
+    protected Vec3 axisH;
+    
+    protected ResourceKey&lt;Level&gt; dimensionTo;
+    
+    protected Vec3 destination;
+    
+    protected boolean teleportable = true;
+    
+    protected @Nullable PortalShape portalShape;
+    
+    @Nullable
+    public UUID specificPlayerId;
+    
+    @Nullable
+    protected DQuaternion rotation;
+    
+    protected double scaling = 1.0;</code></pre>
+
+
+| Property | Type | Description |
+|----------|------|-------------|
+| <code>axisW</code>, <code>axisH</code> | Vec3 | 定义传送门平面的两个正交轴向量 |
+| <code>dimensionTo</code> | ResourceKey<Level> | 目标维度 |
+| <code>destination</code> | Vec3 | 目标位置 |
+| <code>rotation</code> | DQuaternion | 旋转变换（四元数） |
+| <code>scaling</code> | double | 缩放因子 |
+| <code>portalShape</code> | PortalShape | 传送门形状（矩形、圆形等） |
+| <code>specificPlayerId</code> | UUID | 限制特定玩家使用 |
+
+<h3>Axis System (坐标轴系统)</h3>
+
+
+传送门的方向通过两个正交的轴向量 <code>axisW</code> 和 <code>axisH</code> 定义：
+
+<ul><li><code>axisW</code>：水平轴向量，确定传送门的"宽度"方向</li></ul>
+<ul><li><code>axisH</code>：垂直轴向量，确定传送门的"高度"方向</li></ul>
+<ul><li><code>normal = axisW.cross(axisH)</code>：平面法向量，垂直于传送门平面</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-482">    public Vec3 getNormal() {
+        if (normalCache == null) {
+            normalCache = axisW.cross(axisH).normalize();
+        }
+        return normalCache;
+    }</code></pre>
+
+
+<h3>NBT Serialization</h3>
+
+
+传送门数据通过 NBT 进行持久化存储：
+</p>
+<p><pre class="code-block"><code class="language-233">    @Override
+    protected void readAdditionalSaveData(CompoundTag compoundTag) {
+        width = compoundTag.getDouble(&quot;width&quot;);
+        height = compoundTag.getDouble(&quot;height&quot;);
+        thickness = compoundTag.getDouble(&quot;thickness&quot;);
+        axisW = Helper.getVec3d(compoundTag, &quot;axisW&quot;).normalize();
+        axisH = Helper.getVec3d(compoundTag, &quot;axisH&quot;).normalize();
+        dimensionTo = Helper.getWorldId(compoundTag, &quot;dimensionTo&quot;);
+        destination = Helper.getVec3d(compoundTag, &quot;destination&quot;);
+        specificPlayerId = Helper.getUuid(compoundTag, &quot;specificPlayer&quot;);
+        
+        if (compoundTag.contains(&quot;portalShape&quot;)) {
+            CompoundTag portalShapeTag = compoundTag.getCompound(&quot;portalShape&quot;);
+            PortalShape portalShape = PortalShapeSerialization.deserialize(portalShapeTag);
+            // ...
+        }
+        
+        if (compoundTag.contains(&quot;rotationA&quot;)) {
+            setRotationTransformationD(new DQuaternion(
+                compoundTag.getFloat(&quot;rotationB&quot;),
+                compoundTag.getFloat(&quot;rotationC&quot;),
+                compoundTag.getFloat(&quot;rotationD&quot;),
+                compoundTag.getFloat(&quot;rotationA&quot;)
+            ));
+        }
+        // ...
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="transformation-mathematics">Transformation Mathematics</h2>
+
+
+传送门系统使用四元数（Quaternion）和 4x4 变换矩阵实现复杂的三维空间变换。
+
+<h3>Point Transformation</h3>
+
+
+点的变换是传送门的核心功能，将原位置的点变换到目标位置：
+</p>
+<p><pre class="code-block"><code class="language-464">    /**
+     * @return use the portal&#39;s transformation to transform a point
+     */
+    @Override
+    public Vec3 transformPoint(Vec3 pos) {
+        Vec3 localPos = pos.subtract(getOriginPos());
+        
+        return transformLocalVec(localPos).add(getDestPos());
+    }
+    
+    /**
+     * Transform a vector in portal-centered coordinate (without translation transformation)
+     */
+    @Override
+    public Vec3 transformLocalVec(Vec3 localVec) {
+        return transformLocalVecNonScale(localVec).scale(scaling);
+    }</code></pre>
+
+
+<h3>Vector Transformation with Rotation</h3>
+
+
+向量的旋转变换通过四元数实现：
+</p>
+<p><pre class="code-block"><code class="language-1202">    public Vec3 transformLocalVecNonScale(Vec3 localVec) {
+        if (rotation == null) {
+            return localVec;
+        }
+        
+        return rotation.rotate(localVec);
+    }
+    
+    public Vec3 inverseTransformLocalVecNonScale(Vec3 localVec) {
+        if (rotation == null) {
+            return localVec;
+        }
+        
+        return rotation.getConjugated().rotate(localVec);
+    }</code></pre>
+
+
+<h3>Full Space Transformation Matrix</h3>
+
+
+完整空间变换使用 4x4 矩阵表示：
+</p>
+<p><pre class="code-block"><code class="language-1403">    public Matrix4d getFullSpaceTransformation() {
+        Vec3 originPos = getOriginPos();
+        Vec3 destPos = getDestPos();
+        DQuaternion rot = getRotationD();
+        return new Matrix4d()
+            .translation(destPos.x, destPos.y, destPos.z)
+            .scale(getScale())
+            .rotate(rot.toMcQuaternion())
+            .translate(-originPos.x, -originPos.y, -originPos.z);
+    }</code></pre>
+
+
+变换顺序（从右到左）：
+<ul><li><strong>平移到原点</strong>：<code>translate(-originPos)</code></li></ul>
+<ul><li><strong>旋转变换</strong>：<code>rotate(rot)</code></li></ul>
+<ul><li><strong>缩放变换</strong>：<code>scale(getScale)</code></li></ul>
+<ul><li><strong>平移到目标</strong>：<code>translate(destPos)</code></li></ul>
+
+<h3>Transformation Flow Diagram</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["Input Point P"] --> B["Subtract Origin\nP - OriginPos"]
+    B --> C{"Rotation Set?"}
+    C -->|Yes| D["Rotate Vector\nrotation.rotate"]
+    C -->|No| E["Return Local Vector"]
+    D --> F["Apply Scale\n.scale"]
+    E --> F
+    F --> G["Add Destination\n+ DestPos"]
+    G --> H["Output Point P'"]
+    
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9</div>
+</div>
+
+
+<h3>Orientation Quaternion</h3>
+
+
+传送门的方向通过四元数表示，这允许平滑的旋转插值：
+</p>
+<p><pre class="code-block"><code class="language-402">    public static DQuaternion getPortalOrientationQuaternion(
+        Vec3 axisW, Vec3 axisH
+    ) {
+        Vec3 normal = axisW.cross(axisH);
+        
+        return DQuaternion.matrixToQuaternion(axisW, axisH, normal);
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="mirror-system">Mirror System</h2>
+
+
+<code>Mirror</code> 是 <code>Portal</code> 的子类，专门实现镜像/反射效果。镜子在 ImmersivePortalsMod 中用于实现"镜像房间"等功能。
+
+<h3>Mirror Class Definition</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-12">public class Mirror extends Portal {
+    public static final EntityType&lt;Mirror&gt; ENTITY_TYPE = Portal.createPortalEntityType(Mirror::new);
+    
+    public Mirror(EntityType&lt;?&gt; entityType, Level world) {
+        super(entityType, world);
+    }
+    
+    @Override
+    public void tick() {
+        super.tick();
+        setTeleportable(false);
+        setInteractable(false);
+    }
+    
+    public Vec3 getMirrored(Vec3 vec) {
+        Vec3 normal = getNormal();
+        return mirroredVec(vec, normal);
+    }
+    
+    public static Vec3 mirroredVec(Vec3 vec, Vec3 normal) {
+        double len = vec.dot(normal);
+        return vec.add(normal.scale(len * -2));
+    }</code></pre>
+
+
+镜像的核心原理是向量反射公式：</p>
+<p><pre class="code-block"><code class="language-text">mirrored_vec = vec - 2 * (vec · normal) * normal</code></pre>
+
+
+<h3>Mirror Transformation Override</h3>
+
+
+Mirror 重写了向量的旋转变换，在原有旋转基础上添加镜像反射：
+</p>
+<p><pre class="code-block"><code class="language-27">    // rotate before mirror
+    @Override
+    public Vec3 transformLocalVecNonScale(Vec3 localVec) {
+        return getMirrored(super.transformLocalVecNonScale(localVec));
+    }
+    
+    @Override
+    public Vec3 inverseTransformLocalVecNonScale(Vec3 localVec) {
+        return super.inverseTransformLocalVecNonScale(getMirrored(localVec));
+    }</code></pre>
+
+
+<h3>Mirror Full Space Transformation</h3>
+
+
+Mirror 使用反射矩阵而不是旋转矩阵：
+</p>
+<p><pre class="code-block"><code class="language-52">    @Override
+    public Matrix4d getFullSpaceTransformation() {
+        Vec3 originPos = getOriginPos();
+        Vec3 destPos = getDestPos();
+        DQuaternion rot = getRotationD();
+        return new Matrix4d()
+            .translation(destPos.x, destPos.y, destPos.z)
+            .reflect(getNormal().x, getNormal().y, getNormal().z, 0)
+            .scale(getScale())
+            .rotate(rot.toMcQuaternion())
+            .translate(-originPos.x, -originPos.y, -originPos.z);
+    }</code></pre>
+
+
+<h3>Visual Rotation for Mirror</h3>
+
+
+为了使镜子的旋转在视觉上匹配预期，需要特殊的处理：
+</p>
+<p><pre class="code-block"><code class="language-65">    /**
+     * the mirror&#39;s transformation: firstly rotate, then mirror
+     * totalTrans = mirror * rotation
+     * the mirror transform is applied after rotation, so the reflection direction is rotated, which is not what we want
+     * to make the new mirror&#39;s rotation to visually match, we need
+     * visualRotation = newRotation * mirror
+     * newRotation = visualRotation * mirror^-1
+     * mirror = mirror^-1
+     */
+    public void setRotationTransformationForMirror(DQuaternion visualRotation) {
+        Matrix3d mirrorTrans = new Matrix3d().reflect(
+            getNormal().x, getNormal().y, getNormal().z
+        );
+        Matrix3d visualRotationTrans = new Matrix3d().rotate(visualRotation.toMcQuaternion());
+        Matrix3d newRotation = new Matrix3d().mul(visualRotationTrans).mul(mirrorTrans);
+        Quaterniond mirrorRotation = new Quaterniond().setFromNormalized(newRotation);
+        setRotation(DQuaternion.fromMcQuaternion(mirrorRotation));
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="global-portal-storage">Global Portal Storage</h2>
+
+
+全局传送门存储是 ImmersivePortalsMod 的持久化机制，允许传送门跨区块加载保持存在。
+
+<h3>GlobalPortalStorage Class</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-55">public class GlobalPortalStorage extends SavedData {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    
+    public List&lt;Portal&gt; data;
+    public final WeakReference&lt;ServerLevel&gt; world;
+    private int version = 1;
+    private boolean shouldReSync = false;
+    
+    @Nullable
+    public BlockState bedrockReplacement;
+    
+    public static void init() {
+        ServerTickEvents.END_SERVER_TICK.register((server) -&gt; {
+            server.getAllLevels().forEach(world1 -&gt; {
+                GlobalPortalStorage gps = GlobalPortalStorage.get(world1);
+                gps.tick();
+            });
+        });
+        // ...
+    }
+    
+    public static GlobalPortalStorage get(ServerLevel world) {
+        return world.getDataStorage().computeIfAbsent(
+            new SavedData.Factory&lt;&gt;(
+                () -&gt; {
+                    LOGGER.info(&quot;Global portal storage initialized {}&quot;, world.dimension().location());
+                    return new GlobalPortalStorage(world);
+                },
+                (nbt, holderLookup) -&gt; {
+                    GlobalPortalStorage globalPortalStorage = new GlobalPortalStorage(world);
+                    globalPortalStorage.fromNbt(nbt);
+                    return globalPortalStorage;
+                },
+                null
+            ),
+            &quot;global_portal&quot;
+        );
+    }</code></pre>
+
+
+<h3>Global Portal Lifecycle</h3>
+
+
+全局传送门通过以下方式管理：
+</p>
+<p><pre class="code-block"><code class="language-165">    public void removePortal(Portal portal) {
+        data.remove(portal);
+        portal.remove(Entity.RemovalReason.KILLED);
+        onDataChanged();
+    }
+    
+    public void addPortal(Portal portal) {
+        Validate.isTrue(!data.contains(portal));
+        
+        Validate.isTrue(portal.isPortalValid());
+        
+        portal.isGlobalPortal = true;
+        portal.myUnsetRemoved();
+        data.add(portal);
+        onDataChanged();
+    }</code></pre>
+
+
+<h3>Normal to Global Portal Conversion</h3>
+
+
+普通传送门可以转换为全局传送门：
+</p>
+<p><pre class="code-block"><code class="language-351">    public static void convertNormalPortalIntoGlobalPortal(Portal portal) {
+        Validate.isTrue(!portal.getIsGlobal());
+        Validate.isTrue(!portal.level().isClientSide());
+        
+        // global portal can only be square
+        portal.setPortalShapeToDefault();
+        
+        portal.remove(Entity.RemovalReason.KILLED);
+        
+        Portal newPortal = McHelper.copyEntity(portal);
+        
+        get(((ServerLevel) portal.level())).addPortal(newPortal);
+    }</code></pre>
+
+
+<h3>NBT Serialization</h3>
+
+
+全局传送门存储完整序列化所有传送门数据：
+</p>
+<p><pre class="code-block"><code class="language-265">    @Override
+    public @NotNull CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        if (data == null) {
+            return tag;
+        }
+        
+        ListTag listTag = new ListTag();
+        ServerLevel currWorld = world.get();
+        Validate.notNull(currWorld, &quot;world is null&quot;);
+        
+        for (Portal portal : data) {
+            Validate.isTrue(portal.level() == currWorld);
+            CompoundTag portalTag = new CompoundTag();
+            portal.saveWithoutId(portalTag);
+            portalTag.putString(
+                &quot;entity_type&quot;,
+                EntityType.getKey(portal.getType()).toString()
+            );
+            listTag.add(portalTag);
+        }
+        
+        tag.put(&quot;data&quot;, listTag);
+        tag.putInt(&quot;version&quot;, version);
+        
+        if (bedrockReplacement != null) {
+            tag.put(&quot;bedrockReplacement&quot;, NbtUtils.writeBlockState(bedrockReplacement));
+        }
+        
+        return tag;
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="portal-types-classification">Portal Types Classification</h2>
+
+
+ImmersivePortalsMod 支持多种传送门类型，形成复杂的传送门集群关系。
+
+<h3>Portal Relationships</h3>
+
+
+传送门之间可以形成多种关系类型：
+
+| Relationship | Description | Creation Method |
+|-------------|-------------|-----------------|
+| <strong>Reverse Portal</strong> | 目标世界的返回传送门 | <code>createReversePortal()</code> |
+| <strong>Flipped Portal</strong> | 同一世界的镜像传送门 | <code>createFlippedPortal()</code> |
+| <strong>Parallel Portal</strong> | 平行的双向传送门对 | 自动配对 |
+| <strong>Cluster Portal</strong> | 由主传送门派生的多个关联传送门 | PortalExtension |
+
+<h3>Reverse Portal Creation</h3>
+
+
+反向传送门创建函数：
+</p>
+<p><pre class="code-block"><code class="language-88">    public static &lt;T extends Portal&gt; T createReversePortal(Portal portal, EntityType&lt;T&gt; entityType) {
+        Level world = portal.getDestinationWorld();
+        
+        T newPortal = entityType.create(world);
+        assert newPortal != null;
+        newPortal.setDestDim(portal.level().dimension());
+        newPortal.setPos(portal.getDestPos().x, portal.getDestPos().y, portal.getDestPos().z);
+        newPortal.setDestination(portal.getOriginPos());
+        newPortal.specificPlayerId = portal.specificPlayerId;
+        
+        newPortal.setWidth(portal.getWidth() * portal.getScaling());
+        newPortal.setHeight(portal.getHeight() * portal.getScaling());
+        newPortal.setThickness(portal.getThickness() * portal.getScaling());
+        newPortal.setAxisW(portal.getAxisW().scale(-1));
+        newPortal.setAxisH(portal.getAxisH());
+        
+        newPortal.setPortalShape(portal.getPortalShape().getReverse());
+        
+        if (portal.getRotation() != null) {
+            rotatePortalBody(newPortal, portal.getRotation());
+            newPortal.setRotation(portal.getRotation().getConjugated());
+        }
+        
+        newPortal.setScaling(1.0 / portal.getScaling());
+        
+        copyAdditionalProperties(newPortal, portal);
+        
+        return newPortal;
+    }</code></pre>
+
+
+<h3>Flipped Portal Creation</h3>
+
+
+翻转传送门（同一世界的镜像）：
+</p>
+<p><pre class="code-block"><code class="language-132">    public static &lt;T extends Portal&gt; T createFlippedPortal(Portal portal, EntityType&lt;T&gt; entityType) {
+        Level world = portal.level();
+        T newPortal = entityType.create(world);
+        assert newPortal != null;
+        newPortal.setDestDim(portal.getDestDim());
+        newPortal.setPos(portal.getX(), portal.getY(), portal.getZ());
+        newPortal.setDestination(portal.getDestPos());
+        newPortal.specificPlayerId = portal.specificPlayerId;
+        
+        newPortal.setWidth(portal.getWidth());
+        newPortal.setHeight(portal.getHeight());
+        newPortal.setThickness(portal.getThickness());
+        newPortal.setAxisW(portal.getAxisW().scale(-1));
+        newPortal.setAxisH(portal.getAxisH());
+        
+        newPortal.setPortalShape(portal.getPortalShape().getFlipped());
+        
+        newPortal.setRotation(portal.getRotation());
+        newPortal.setScaling(portal.getScaling());
+        
+        copyAdditionalProperties(newPortal, portal);
+        
+        return newPortal;
+    }</code></pre>
+
+
+<h3>Portal Validation</h3>
+
+
+传送门的有效性检查：
+</p>
+<p><pre class="code-block"><code class="language-989">    public boolean isPortalValid() {
+        boolean valid = dimensionTo != null &amp;&amp;
+            width != 0 &amp;&amp;
+            height != 0 &amp;&amp;
+            axisW != null &amp;&amp;
+            axisH != null &amp;&amp;
+            getDestPos() != null &amp;&amp;
+            axisW.lengthSqr() &gt; 0.9 &amp;&amp;
+            axisH.lengthSqr() &gt; 0.9 &amp;&amp;
+            getY() &gt; (McHelper.getMinY(level()) - 100);
+        if (valid) {
+            if (level() instanceof ServerLevel serverLevel) {
+                ServerLevel destWorld = serverLevel.getServer().getLevel(dimensionTo);
+                if (destWorld == null) {
+                    LOGGER.error(&quot;Portal Dest Dimension Missing {}&quot;, dimensionTo.location());
+                    return false;
+                }
+                boolean inWorldBorder = destWorld.getWorldBorder().isWithinBounds(BlockPos.containing(getDestPos()));
+                if (!inWorldBorder) {
+                    LOGGER.error(&quot;Destination out of World Border {}&quot;, this);
+                    return false;
+                }
+            }
+            
+            if (level().isClientSide()) {
+                return isPortalValidClient();
+            }
+            
+            return true;
+        }
+        return false;
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="portal-lifecycle-management">Portal Lifecycle Management</h2>
+
+
+<h3>Entity Events</h3>
+
+
+传送门实现了 <code>IPEntityEventListenableEntity</code> 接口来处理生命周期事件：
+</p>
+<p><pre class="code-block"><code class="language-451">    @Override
+    public void ip_onEntityPositionUpdated() {
+        updateCache();
+    }
+    
+    @Override
+    public void ip_onRemoved(RemovalReason reason) {
+        PORTAL_DISPOSE_SIGNAL.invoker().accept(this);
+    }</code></pre>
+
+
+<h3>Portal Tick</h3>
+
+
+每个游戏刻传送门执行以下操作：
+</p>
+<p><pre class="code-block"><code class="language-930">    @Override
+    public void tick() {
+        if (getBoundingBox().equals(NULL_BOX)) {
+            LOGGER.error(&quot;Abnormal bounding box {}&quot;, this);
+        }
+        
+        lastTickPortalState = getThisTickPortalState();
+        
+        if (!level().isClientSide()) {
+            if (reloadAndSyncNextTick) {
+                reloadAndSyncToClient();
+            }
+        }
+        
+        if (level().isClientSide()) {
+            CLIENT_PORTAL_TICK_SIGNAL.invoker().accept(this);
+        }
+        else {
+            if (!isPortalValid()) {
+                LOGGER.info(&quot;Removed invalid portal {}&quot;, this);
+                remove(RemovalReason.KILLED);
+                return;
+            }
+            SERVER_PORTAL_TICK_SIGNAL.invoker().accept(this);
+        }
+        
+        animation.tick(this);
+        
+        super.tick();
+    }</code></pre>
+
+
+<h3>Cache System</h3>
+
+
+传送门使用缓存系统提高性能：
+</p>
+<p><pre class="code-block"><code class="language-552">    public void updateCache() {
+        if (axisW == null || axisH == null) {
+            return;
+        }
+        
+        portalStateCache = null;
+        boundingBoxCache = null;
+        thinBoundingBoxCache = null;
+        normalCache = null;
+        contentDirectionCache = null;
+        thisSideCollisionExclusion = null;
+        thisSideStateCache = null;
+        otherSideStateCache = null;
+    }</code></pre>
+
+
+缓存的字段（私有缓存）：
+<ul><li><code>boundingBoxCache</code>：碰撞箱</li></ul>
+<ul><li><code>thinBoundingBoxCache</code>：薄边界箱</li></ul>
+<ul><li><code>normalCache</code>：平面法向量</li></ul>
+<ul><li><code>contentDirectionCache</code>：内容方向</li></ul>
+<ul><li><code>portalStateCache</code>：传送门状态</li></ul>
+<ul><li><code>thisSideStateCache</code>/<code>otherSideStateCache</code>：双边状态</li></ul>
+
+<h3>Server-Client Synchronization</h3>
+
+
+服务器端修改传送门后需要同步到客户端：
+</p>
+<p><pre class="code-block"><code class="language-519">    public void reloadAndSyncToClient() {
+        reloadAndSyncNextTick = false;
+        
+        Validate.isTrue(!isGlobalPortal, &quot;global portal is not synced by this&quot;);
+        Validate.isTrue(!level().isClientSide(), &quot;must be used on server side&quot;);
+        updateCache();
+        
+        var packet = createSyncPacket();
+        
+        McHelper.sendToTrackers(this, packet);
+    }
+    
+    public void reloadAndSyncToClientNextTick() {
+        Validate.isTrue(!level().isClientSide(), &quot;must be used on server side&quot;);
+        reloadAndSyncNextTick = true;
+    }
+    
+    public void reloadAndSyncClusterToClientNextTick() {
+        PortalExtension.forClusterPortals(this, Portal::reloadAndSyncToClientNextTick);
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="portal-render-info-client-side">Portal Render Info (Client-Side)</h2>
+
+
+<code>PortalRenderInfo</code> 管理传送门的渲染相关状态，包括可见性预测。
+
+<h3>Visibility Prediction</h3>
+
+
+传送门使用 GPU 查询来实现可见性预测，减少不必要的渲染：
+</p>
+<p><pre class="code-block"><code class="language-212">    public static boolean renderAndDecideVisibility(Portal portal, Runnable queryRendering) {
+        ProfilerFiller profiler = Minecraft.getInstance().getProfiler();
+        
+        boolean decision;
+        if (IPGlobal.offsetOcclusionQuery) {
+            PortalRenderInfo renderInfo = get(portal);
+            
+            List&lt;UUID&gt; renderingDescription = WorldRenderInfo.getRenderingDescription();
+            
+            Visibility visibility = renderInfo.getVisibility(renderingDescription);
+            
+            GlQueryObject lastFrameQuery = visibility.lastFrameQuery;
+            GlQueryObject thisFrameQuery = visibility.acquireThisFrameQuery();
+            
+            thisFrameQuery.performQueryAnySamplePassed(queryRendering);
+            
+            boolean noPredict =
+                renderInfo.isFrequentlyMispredicted() ||
+                    QueryManager.queryStallCounter &lt;= 3;
+            
+            if (lastFrameQuery != null) {
+                boolean lastFrameVisible = lastFrameQuery.fetchQueryResult();
+                
+                if (!lastFrameVisible &amp;&amp; noPredict) {
+                    profiler.push(&quot;fetch_this_frame&quot;);
+                    decision = thisFrameQuery.fetchQueryResult();
+                    profiler.pop();
+                    QueryManager.queryStallCounter++;
+                }
+                else {
+                    decision = lastFrameVisible;
+                    renderInfo.updatePredictionStatus(visibility, decision);
+                }
+            }
+            else {
+                profiler.push(&quot;fetch_this_frame&quot;);
+                decision = thisFrameQuery.fetchQueryResult();
+                profiler.pop();
+                QueryManager.queryStallCounter++;
+            }
+        }
+        else {
+            decision = QueryManager.renderAndGetDoesAnySamplePass(queryRendering);
+        }
+        return decision;
+    }</code></pre>
+
+
+<h3>Resource Management</h3>
+
+
+使用 Java 的 Cleaner 机制进行资源清理：
+</p>
+<p><pre class="code-block"><code class="language-115">    public PortalRenderInfo() {
+        CLEANER.register(this, getGcDirectedCleaningFunc());
+    }
+    
+    private Runnable getGcDirectedCleaningFunc() {
+        Map&lt;List&lt;UUID&gt;, Visibility&gt; infoMap1 = this.infoMap;
+        return () -&gt; {
+            LOGGER.debug(&quot;Running GC-directed PortalRenderInfo clean&quot;);
+            
+            IPGlobal.PRE_TOTAL_RENDER_TASK_LIST.addOneShotTask(() -&gt; {
+                disposeInfoMap(infoMap1);
+            });
+        };
+    }
+    
+    @Override
+    public void close() throws Exception {
+        dispose();
+    }</code></pre>
+
+
+<hr>
+
+<h2 id="portallike-interface">PortalLike Interface</h2>
+
+
+<code>PortalLike</code> 接口定义了传送门行为的抽象，允许其他类实现类似的传送门功能：
+</p>
+<p><pre class="code-block"><code class="language-20">public interface PortalLike {
+    boolean isConventionalPortal();
+    
+    AABB getThinBoundingBox();
+    
+    Vec3 transformPoint(Vec3 pos);
+    
+    Vec3 transformLocalVec(Vec3 localVec);
+    
+    Vec3 transformLocalVecNonScale(Vec3 localVec);
+    
+    Vec3 inverseTransformLocalVec(Vec3 localVec);
+    
+    Vec3 inverseTransformPoint(Vec3 point);
+    
+    double getDistanceToNearestPointInPortal(Vec3 point);
+    
+    double getDestAreaRadiusEstimation();
+    
+    Vec3 getOriginPos();
+    
+    Vec3 getDestPos();
+    
+    Level getOriginWorld();
+    
+    Level getDestWorld();
+    
+    ResourceKey&lt;Level&gt; getDestDim();
+    
+    // ... more methods
+}</code></pre>
+
+
+<hr>
+
+<h2 id="architecture-diagram">Architecture Diagram</h2>
+
+
+<h3>Complete System Architecture</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Core["Core Portal System"]
+        Portal["Portal Entity"]
+        Mirror["Mirror Entity"]
+        PortalLike["PortalLike Interface"]
+        PortalExtension["PortalExtension"]
+    end
+    
+    subgraph Storage["Storage System"]
+        GlobalPortalStorage["GlobalPortalStorage"]
+        SavedData["SavedData"]
+    end
+    
+    subgraph Manipulation["Manipulation System"]
+        PortalManipulation["PortalManipulation"]
+        PortalCommand["PortalCommand"]
+    end
+    
+    subgraph Rendering["Client Rendering"]
+        PortalRenderInfo["PortalRenderInfo"]
+        PortalRenderer["PortalRenderer"]
+        PortalShape["PortalShape"]
+    end
+    
+    subgraph Animation["Animation System"]
+        PortalAnimation["PortalAnimation"]
+        PortalAnimationDriver["PortalAnimationDriver"]
+    end
+    
+    Portal -->|extends| Mirror
+    Portal -->|implements| PortalLike
+    Portal -->|has| PortalExtension
+    Portal -->|uses| PortalShape
+    Portal -->|has| PortalAnimation
+    
+    GlobalPortalStorage -->|manages| Portal
+    PortalManipulation -->|creates/modifies| Portal
+    PortalRenderInfo -->|manages| Portal
+    
+    PortalRenderer -->|renders| Portal
+    PortalShape -->|defines| Portal
+    
+    class Portal fill:#e3f2fd,stroke:#1976d2
+    class Mirror fill:#fce4ec,stroke:#c2185b
+    class GlobalPortalStorage fill:#e8f5e9,stroke:#388e3c</div>
+</div>
+
+
+<h3>Teleportation Flow</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Entity
+    participant Portal
+    participant CollisionHandler
+    participant Teleporter
+    participant DestPortal
+    
+    Entity->>Portal: Move through portal
+    Portal->>Portal: isMovedThroughPortal()
+    Portal->>Portal: canTeleportEntity(entity)
+    Portal->>CollisionHandler: Check collision
+    
+    alt Can Teleport
+        Portal->>Teleporter: Transform entity state
+        Teleporter->>Portal: Get destination
+        Teleporter->>Teleporter: transformPoint()
+        Teleporter->>Teleporter: transformLocalVec()
+        Teleporter->>Portal: Apply rotation/scale
+        Teleporter->>Entity: Set new position
+        Entity->>DestPortal: Spawn at destination
+    else Cannot Teleport
+        Portal->>Entity: Block/collide
+    end</div>
+</div>
+
+
+<hr>
+
+<h2 id="source-file-reference">Source File Reference</h2>
+
+
+| File | Path |
+|------|------|
+| Portal.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\portal\Portal.java</code> |
+| Mirror.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\portal\Mirror.java</code> |
+| PortalLike.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\portal\PortalLike.java</code> |
+| PortalManipulation.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\portal\PortalManipulation.java</code> |
+| PortalRenderInfo.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\portal\PortalRenderInfo.java</code> |
+| GlobalPortalStorage.java | <code>D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm<em>ptl\core\portal\global</em>portals\GlobalPortalStorage.java</code> |
+
+<hr>
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+
+<ul><li><strong>实体系统设计</strong>：传送门继承 Minecraft <code>Entity</code> 类，充分利用已有的实体管理机制</li></ul>
+<ul><li><strong>数学变换核心</strong>：四元数和 4x4 矩阵实现平滑的旋转和缩放变换</li></ul>
+<ul><li><strong>缓存优化</strong>：通过多重缓存减少重复计算，提升性能</li></ul>
+<ul><li><strong>持久化方案</strong>：全局传送门使用 SavedData 实现跨维度持久化</li></ul>
+<ul><li><strong>客户端同步</strong>：服务器端修改后通过自定义数据包同步到客户端</li></ul>
+<ul><li><strong>接口抽象</strong>：PortalLike 接口允许第三方实现传送门行为</li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-core-architecture.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a><a href="03-teleportation-system.html" class="next">
+            Teleportation System
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

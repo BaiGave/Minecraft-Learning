@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Fabric API 传输/存储系统分析 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+<a href="06-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 渲染系统分析
+        </a>
+<a href="07-networking-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 网络系统分析
+        </a>
+<a href="08-resource-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 资源加载系统分析
+        </a>
+<a href="09-transfer-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 传输/存储系统分析
+        </a>
+<a href="10-command-screen-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 命令与屏幕系统分析
+        </a>
+<a href="11-other-subsystems.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 其他子系统分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 深度分析总览
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Fabric API 传输/存储系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Fabric API 传输/存储系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 传输/存储系统分析</h1>
+
+
+<h2 id="概述">概述</h2>
+
+
+Transfer API 是 Fabric 提供的统一资源传输抽象层，支持流体、物品等不同类型资源的插入和提取操作。
+
+<strong>模块</strong>: <code>fabric-transfer-api-v1</code>
+
+<hr>
+
+<h2 id="1-核心接口架构">1. 核心接口架构</h2>
+
+
+<h3>1.1 存储接口层次</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">Storage&lt;T&gt;                    // 资源存储容器
+├── insert()                   // 插入资源
+├── extract()                  // 提取资源
+├── supportsInsertion()         // 是否支持插入
+├── supportsExtraction()        // 是否支持提取
+└── iterator()                // 遍历存储内容
+
+StorageView&lt;T&gt;                // 单种资源的视图
+├── extract()                  // 从视图提取
+├── isResourceBlank()          // 资源是否为空
+├── getResource()             // 获取资源
+├── getAmount()                // 获取数量
+└── getCapacity()              // 获取容量
+
+SlottedStorage&lt;T&gt;             // 槽位化存储
+├── getSlotCount()            // 获取槽位数
+└── getSlot(index)            // 获取特定槽位
+
+SingleSlotStorage&lt;T&gt;           // 单槽位存储</code></pre>
+
+
+<h3>1.2 Storage 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface Storage&lt;T&gt; extends Iterable&lt;StorageView&lt;T&gt;&gt; {
+    static &lt;T&gt; Storage&lt;T&gt; empty() { ... }
+
+    default boolean supportsInsertion() { return true; }
+    long insert(T resource, long maxAmount, TransactionContext transaction);
+
+    default boolean supportsExtraction() { return true; }
+    long extract(T resource, long maxAmount, TransactionContext transaction);
+
+    Iterator&lt;StorageView&lt;T&gt;&gt; iterator();
+    default long getVersion() { ... }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-流体存储系统">2. 流体存储系统</h2>
+
+
+<h3>2.1 FluidVariant 流体变体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface FluidVariant extends TransferVariant&lt;Fluid&gt; {
+    static FluidVariant blank() { return of(Fluids.EMPTY); }
+    static FluidVariant of(Fluid fluid) { return of(fluid, ComponentChanges.EMPTY); }
+    static FluidVariant of(Fluid fluid, ComponentChanges components) { ... }
+
+    default Fluid getFluid() { return getObject(); }
+    FluidVariant withComponentChanges(ComponentChanges changes);
+}</code></pre>
+
+
+<h3>2.2 流体常量系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class FluidConstants {
+    public static final long BUCKET = 81000;      // 1桶 = 81000滴
+    public static final long BOTTLE = 27000;      // 1瓶 = 27000滴
+    public static final long BLOCK = 81000;       // 1方块 = 81000滴
+    public static final long INGOT = 9000;        // 1锭 = 9000滴
+    public static final long NUGGET = 1000;       // 1粒 = 1000滴
+    public static final long DROPLET = 1;         // 1滴
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-物品存储系统">3. 物品存储系统</h2>
+
+
+<h3>3.1 ItemVariant 物品变体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface ItemVariant extends TransferVariant&lt;Item&gt; {
+    static ItemVariant blank() { return of(Items.AIR); }
+    static ItemVariant of(ItemStack stack) { return of(stack.getItem(), stack.getComponentChanges()); }
+    static ItemVariant of(ItemConvertible item) { return of(item, ComponentChanges.EMPTY); }
+
+    boolean matches(ItemStack stack);  // 匹配物品和组件
+    ItemStack toStack();              // 转换为物品堆
+    ItemStack toStack(int count);
+}</code></pre>
+
+
+<h3>3.2 InventoryStorage 物品存储包装器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface InventoryStorage extends SlottedStorage&lt;ItemVariant&gt; {
+    static InventoryStorage of(Inventory inventory, @Nullable Direction direction) { ... }
+
+    @UnmodifiableView List&lt;SingleSlotStorage&lt;ItemVariant&gt;&gt; getSlots();
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-事务管理系统">4. 事务管理系统</h2>
+
+
+<h3>4.1 事务核心接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface Transaction extends AutoCloseable, TransactionContext {
+    static Transaction openOuter() { ... }
+    static boolean isOpen() { return getLifecycle() != Lifecycle.NONE; }
+
+    void abort();    // 回滚事务
+    void commit();    // 提交事务
+
+    enum Lifecycle { NONE, OPEN, CLOSING, OUTER_CLOSING }
+}</code></pre>
+
+
+<h3>4.2 SnapshotParticipant 快照参与者</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class SnapshotParticipant&lt;T&gt; implements Transaction.CloseCallback,
+        Transaction.OuterCloseCallback {
+    // 1. 修改前调用：保存状态快照
+    public void updateSnapshots(TransactionContext transaction) { ... }
+
+    // 2. 事务关闭回调
+    @Override
+    public void onClose(TransactionContext transaction, Transaction.Result result) {
+        if (result.wasAborted()) {
+            readSnapshot(snapshot);      // 回滚到快照
+            releaseSnapshot(snapshot);
+        } else {
+            releaseSnapshot(snapshot);
+            transaction.addOuterCloseCallback(this);
+        }
+    }
+
+    protected abstract T createSnapshot();
+    protected abstract void readSnapshot(T snapshot);
+    protected void onFinalCommit() { }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-api-lookup-机制">5. API Lookup 机制</h2>
+
+
+<h3>5.1 BlockApiLookup</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface BlockApiLookup&lt;A, C&gt; {
+    static &lt;A, C&gt; BlockApiLookup&lt;A, C&gt; get(Identifier lookupId, Class&lt;A&gt; apiClass, Class&lt;C&gt; contextClass);
+
+    A find(World world, BlockPos pos, C context);
+
+    void registerSelf(BlockEntityType&lt;?&gt;... blockEntityTypes);
+    void registerForBlockEntity(BiFunction&lt;? super T, C, @Nullable A&gt; provider, BlockEntityType&lt;T&gt; blockEntityType);
+    void registerFallback(BlockApiProvider&lt;A, C&gt; fallbackProvider);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-使用示例">6. 使用示例</h2>
+
+
+<h3>6.1 创建流体存储方块实体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyFluidTankBlockEntity extends BlockEntity {
+    private final SingleFluidStorage storage = new SingleFluidStorage() {
+        @Override
+        protected FluidVariant getBlankVariant() {
+            return FluidVariant.blank();
+        }
+
+        @Override
+        protected long getCapacity(FluidVariant variant) {
+            return FluidConstants.BUCKET * 100;  // 100桶容量
+        }
+
+        @Override
+        protected boolean canInsert(FluidVariant variant) {
+            return variant.isOf(Fluids.WATER);  // 只接受水
+        }
+
+        @Override
+        protected boolean canExtract(FluidVariant variant) {
+            return true;  // 可以提取任何流体
+        }
+
+        @Override
+        protected void onFinalCommit() {
+            markDirty();
+        }
+    };
+}</code></pre>
+
+
+<h3>6.2 使用存储</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void onBlockActivated(World world, BlockPos pos, PlayerEntity player) {
+    Storage&lt;FluidVariant&gt; storage = FluidStorage.SIDED.find(world, pos, null);
+
+    if (storage != null) {
+        FluidVariant variant = FluidVariant.of(Fluids.WATER);
+
+        try (Transaction tx = Transaction.openOuter()) {
+            // 尝试插入1000滴水
+            long inserted = storage.insert(variant, 1000, tx);
+            tx.commit();  // 提交更改
+        }
+    }
+}</code></pre>
+
+
+<h3>6.3 资源传输</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">long moved = StorageUtil.move(
+    sourceStorage,
+    targetStorage,
+    resource -&gt; true,  // 过滤器
+    FluidConstants.BUCKET,  // 最大数量
+    null  // 事务（null表示自动管理）
+);</code></pre>
+
+
+<hr>
+
+<h2 id="架构总结">架构总结</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Transfer API                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Storage&lt;T&gt;                                                │
+│  ├── CombinedStorage&lt;T,S&gt;                                   │
+│  ├── SingleVariantStorage&lt;T&gt;                                │
+│  │   ├── SingleFluidStorage                                 │
+│  │   └── SingleItemStorage                                 │
+│  └── InventoryStorageImpl                                   │
+│                                                              │
+│  TransferVariant&lt;O&gt;                                         │
+│  ├── FluidVariant                                          │
+│  └── ItemVariant                                           │
+│                                                              │
+│  Transaction                                                │
+│  ├── SnapshotParticipant                                    │
+│  └── Context/Result                                         │
+│                                                              │
+│  API Lookup                                                 │
+│  ├── BlockApiLookup&lt;A, C&gt;                                   │
+│  ├── ItemApiLookup&lt;A, C&gt;                                    │
+│  └── EntityApiLookup&lt;A, C&gt;                                  │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<em>源码位置: <code>fabric-transfer-api-v1/</code></em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-resource-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 资源加载系统分析
+        </a><a href="10-command-screen-system.html" class="next">
+            Fabric API 命令与屏幕系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

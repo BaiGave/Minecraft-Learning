@@ -166,9 +166,19 @@ const SITE_CONFIG = {
             category: 'shader',
             order: 2,
             
-            // 无版本化
-            versions: null,
-            defaultVersion: null,
+            // 版本化配置
+            versions: {
+                '1.21-fabric-1.7.3': {
+                    name: '1.21-fabric-1.7.3',
+                    codename: '',
+                    isDefault: true,
+                    status: 'stable',
+                    tutorialCount: 0,
+                    analysisCount: 0,
+                    releaseDate: ''
+                }
+            },
+            defaultVersion: '1.21-fabric-1.7.3',
             
             docsDir: 'docs/iris',
             hasTutorials: true,
@@ -534,8 +544,27 @@ const SITE_CONFIG = {
         "hasTutorials": true,
         "hasAnalysis": true,
         "featured": [],
-        "versions": null,
-        "defaultVersion": null
+        "versions": {
+            "1.21.1": {
+                "name": "1.21.1",
+                "codename": "",
+                "isDefault": false,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            },
+            "1.21.1-fabric-6.0.6": {
+                "name": "1.21.1-fabric-6.0.6",
+                "codename": "",
+                "isDefault": true,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            }
+        },
+        "defaultVersion": "1.21.1-fabric-6.0.6"
     },
     "fabric": {
         "id": "fabric",
@@ -553,8 +582,27 @@ const SITE_CONFIG = {
         "hasTutorials": true,
         "hasAnalysis": true,
         "featured": [],
-        "versions": null,
-        "defaultVersion": null
+        "versions": {
+            "1.21": {
+                "name": "1.21",
+                "codename": "",
+                "isDefault": false,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            },
+            "1.21-core--": {
+                "name": "1.21-core--",
+                "codename": "",
+                "isDefault": true,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            }
+        },
+        "defaultVersion": "1.21-core--"
     },
     "neoforge": {
         "id": "neoforge",
@@ -572,8 +620,27 @@ const SITE_CONFIG = {
         "hasTutorials": true,
         "hasAnalysis": true,
         "featured": [],
-        "versions": null,
-        "defaultVersion": null
+        "versions": {
+            "1.21": {
+                "name": "1.21",
+                "codename": "",
+                "isDefault": false,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            },
+            "1.21-core--": {
+                "name": "1.21-core--",
+                "codename": "",
+                "isDefault": true,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            }
+        },
+        "defaultVersion": "1.21-core--"
     }
 };
     if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.modules) return;

@@ -7,6 +7,15 @@
  * 3. 自动生成模块配置（名称、颜色、图标等）
  * 4. 不需要手动注册新模块
  *
+ * 目录结构：
+ * content/{模组}/{MC版本}/{加载器}/{模组版本}/{tutorials,analysis}/...
+ *
+ * 示例：
+ *   content/mc/1.21/core/-/tutorials/...
+ *   content/fabric/1.21/core/-/tutorials/...
+ *   content/sodium/1.21/fabric/0.8.6/tutorials/...
+ *   content/iris/1.21/fabric/1.7.3/tutorials/...
+ *
  * 使用方法：
  *   node auto-scanner.js          # 扫描并打印配置
  *   node auto-scanner.js --watch  # 监听变化
@@ -29,7 +38,6 @@ const CONFIG = {
 // ============================================================================
 
 function generateColor(seed) {
-    // 基于模块名生成固定颜色
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
         hash = ((hash << 5) - hash) + seed.charCodeAt(i);
@@ -61,7 +69,7 @@ const iconMap = {
     'minecraft': 'cube',
     'forge': 'hammer',
     'fabric': 'layer-group',
-    'neoforge': 'hammer',
+    'neoforge': 'fire',
     'iris': 'sun',
     'sodium': 'bolt',
     'lithium': 'atom',
@@ -92,7 +100,7 @@ const descriptionMap = {
     'sodium': 'Sodium 现代渲染优化与架构设计',
     'lithium': 'Lithium 游戏性能优化插件分析',
     'optifine': 'OptiFine 光影优化深度解析',
-    'mod': '模组开发教程与指南'
+    'immersionportalsmod': 'Immersive Portals 传送门模组深度解析'
 };
 
 // ============================================================================
@@ -141,7 +149,7 @@ class AutoModuleScanner {
     scanModule(slug, modulePath) {
         const colorScheme = generateColor(slug);
 
-        // 检查是否有版本子目录（Minecraft 等有多版本的模块）
+        // 检查是否有版本子目录
         const versions = this.detectVersions(modulePath);
 
         // 扫描教程和分析文档
@@ -149,7 +157,7 @@ class AutoModuleScanner {
         const analysis = this.scanDocType(modulePath, 'analysis', versions);
 
         // 获取描述
-        const description = descriptionMap[slug] || `${slug} 相关文档`;
+        const description = descriptionMap[slug.toLowerCase()] || `${slug} 相关文档`;
 
         return {
             name: this.formatModuleName(slug),
@@ -170,19 +178,48 @@ class AutoModuleScanner {
 
     /**
      * 检测是否有版本目录
+     * 新结构：content/{模组}/{MC版本}/{加载器}/{模组版本}/
+     * 示例：iris/1.21/fabric/1.7.3/tutorials, mc/1.21/core/-/tutorials
      */
     detectVersions(modulePath) {
-        const entries = fs.readdirSync(modulePath, { withFileTypes: true });
         const versions = [];
+        const versionSet = new Set();
 
-        for (const entry of entries) {
-            if (entry.isDirectory() && !entry.name.startsWith('.')) {
-                // 检查是否是版本目录（通常是数字格式如 1.18, 1.21, 1.21.4）
-                if (this.isVersionDir(entry.name)) {
-                    versions.push(entry.name);
+        // 递归扫描找到所有包含 tutorials 或 analysis 的路径
+        const scanForContent = (dirPath, parts = [], depth = 0) => {
+            if (!fs.existsSync(dirPath)) return;
+
+            const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+
+                const subPath = path.join(dirPath, entry.name);
+
+                // 检查是否是 tutorials 或 analysis
+                if (entry.name === 'tutorials' || entry.name === 'analysis') {
+                    // 找到了内容目录，从 parts 中提取版本信息
+                    // parts 应该包含 {MC版本, 加载器, 模组版本}
+                    if (parts.length >= 2) {
+                        // 补齐到 3 层
+                        while (parts.length < 3) {
+                            parts.push('-');
+                        }
+                        const versionStr = parts.join('-');
+                        if (!versionSet.has(versionStr)) {
+                            versionSet.add(versionStr);
+                            versions.push(versionStr);
+                        }
+                    }
+                    continue;
                 }
+
+                // 继续递归
+                scanForContent(subPath, [...parts, entry.name], depth + 1);
             }
-        }
+        };
+
+        scanForContent(modulePath);
 
         // 排序版本（降序，最新版本在前）
         versions.sort((a, b) => this.compareVersions(b, a));
@@ -192,10 +229,34 @@ class AutoModuleScanner {
 
     /**
      * 判断是否是版本目录
+     * 支持：1.21、1.21.4
      */
     isVersionDir(name) {
-        // 版本格式: 1.18, 1.18.2, 1.19.4, 1.20.4, 1.21, 1.21.4
         return /^\d+\.\d+(\.\d+)?$/.test(name);
+    }
+
+    /**
+     * 从版本目录名解析 MC 版本与可选加载器后缀，用于排序
+     */
+    parseVersionDir(name) {
+        const m = name.match(/^(\d+\.\d+(?:\.\d+)?)(?:-([a-z0-9_-]+))?$/i);
+        if (!m) return { nums: [0, 0, 0], loader: name };
+        const nums = m[1].split('.').map(n => parseInt(n, 10) || 0);
+        while (nums.length < 3) nums.push(0);
+        return { nums, loader: (m[2] || '').toLowerCase() };
+    }
+
+    /**
+     * 从相对路径取 Part 序号与文件夹后缀（Part-2-Rendering/foo.md → 2, Rendering）
+     */
+    extractPartFolderMeta(relativePath) {
+        const norm = String(relativePath).replace(/\\/g, '/');
+        const firstSeg = norm.split('/')[0] || '';
+        const m =
+            firstSeg.match(/^Part-(\d+)(?:-(.+))?$/i) ||
+            firstSeg.match(/^part-(\d+)(?:-(.+))?$/i);
+        if (!m) return { part: 'Other', partSuffix: null };
+        return { part: m[1], partSuffix: m[2] || null };
     }
 
     /**
@@ -207,7 +268,13 @@ class AutoModuleScanner {
         if (versions.length > 0) {
             // 有版本：扫描每个版本的文档
             for (const version of versions) {
-                const typePath = path.join(modulePath, version, docType);
+                // 将版本字符串转回路径：1.21-core-- -> 1.21/core/-
+                const versionParts = version.split('-');
+                const mcVersion = versionParts[0];
+                const loader = versionParts[1] || 'core';
+                const modVersion = versionParts.slice(2).join('-') || '-';
+
+                const typePath = path.join(modulePath, mcVersion, loader, modVersion, docType);
                 if (fs.existsSync(typePath)) {
                     const files = this.scanMarkdownFiles(typePath, version);
                     docs.push(...files);
@@ -244,19 +311,24 @@ class AutoModuleScanner {
                     // 递归扫描子目录（如 Part-X-XXX 文件夹）
                     scanRecursive(fullPath, relativePath);
                 } else if (entry.name.endsWith('.md')) {
-                    // 跳过 README 和 SUMMARY
-                    if (entry.name === 'README.md' || entry.name === 'SUMMARY.md') {
+                    const atTypeRoot = !subPath || subPath === '.' || subPath === '';
+                    const isTopLevelIndex =
+                        atTypeRoot &&
+                        (entry.name === 'README.md' || entry.name === 'SUMMARY.md');
+                    if (
+                        (entry.name === 'README.md' || entry.name === 'SUMMARY.md') &&
+                        !isTopLevelIndex
+                    ) {
                         continue;
                     }
 
                     // 读取文件获取标题
                     const title = this.extractTitle(fullPath, entry.name);
 
-                    // 提取 Part 信息（与 converter.js getActualDocFiles 一致：用数字字符串 '0'..'n'，便于分组与排序）
-                    const partMatch = relativePath.match(/[Pp]art[-_]?(\d+)/);
-                    const part = partMatch ? partMatch[1] : 'Other';
+                    // Part 与文件夹后缀
+                    const { part, partSuffix } = this.extractPartFolderMeta(relativePath);
 
-                    // 相对 tutorials|analysis 的路径（不含 .md），与生成 HTML 路径一致，含 Part-* / part-* 子目录
+                    // 相对路径（不含 .md）
                     const fileKey = relativePath.replace(/\.md$/i, '').replace(/\\/g, '/');
                     const htmlPath = `${fileKey}.html`;
 
@@ -265,6 +337,7 @@ class AutoModuleScanner {
                         htmlPath: htmlPath,
                         title: title,
                         part: part,
+                        partSuffix: partSuffix,
                         version: version,
                         fullPath: fullPath
                     });
@@ -309,8 +382,8 @@ class AutoModuleScanner {
      * 检测模块图标
      */
     detectIcon(slug, tutorials, analysis) {
-        if (iconMap[slug]) {
-            return iconMap[slug];
+        if (iconMap[slug.toLowerCase()]) {
+            return iconMap[slug.toLowerCase()];
         }
 
         // 基于文档内容推测
@@ -336,11 +409,13 @@ class AutoModuleScanner {
             'lithium': 'Lithium 优化',
             'forge': 'Forge 模组',
             'fabric': 'Fabric 模组',
-            'neoforge': 'NeoForge 模组'
+            'neoforge': 'NeoForge 模组',
+            'immersionportalsmod': 'Immersive Portals'
         };
 
-        if (nameMap[slug]) {
-            return nameMap[slug];
+        const key = slug.toLowerCase();
+        if (nameMap[key]) {
+            return nameMap[key];
         }
 
         // 将 slug 转换为可读名称
@@ -354,13 +429,15 @@ class AutoModuleScanner {
      * 比较版本号
      */
     compareVersions(a, b) {
-        const partsA = a.split('.').map(Number);
-        const partsB = b.split('.').map(Number);
-
-        for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-            const numA = partsA[i] || 0;
-            const numB = partsB[i] || 0;
-            if (numA !== numB) return numA - numB;
+        const pa = this.parseVersionDir(a);
+        const pb = this.parseVersionDir(b);
+        for (let i = 0; i < 3; i++) {
+            const na = pa.nums[i] || 0;
+            const nb = pb.nums[i] || 0;
+            if (na !== nb) return na - nb;
+        }
+        if (pa.loader !== pb.loader) {
+            return pa.loader.localeCompare(pb.loader);
         }
         return 0;
     }

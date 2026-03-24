@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Sodium 着色器系统 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+<a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Sodium 着色器系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Sodium 着色器系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 25 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="目录">目录</h2>
+
+
+<a href="#着色器概述">着色器概述</a>
+<a href="#着色器资源结构">着色器资源结构</a>
+<a href="#顶点着色器">顶点着色器</a>
+<a href="#片段着色器">片段着色器</a>
+<a href="#雾函数实现">雾函数实现</a>
+<a href="#顶点格式">顶点格式</a>
+<a href="#着色器管理">着色器管理</a>
+<a href="#着色器常量">着色器常量</a>
+<a href="#性能优化特性">性能优化特性</a>
+<a href="#opengl-要求">OpenGL 要求</a>
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="着色器概述">着色器概述</h2>
+
+
+Sodium 使用自定义 GLSL 着色器实现高级渲染效果，包括抗锯齿、雾渲染优化和顶点压缩。与原版 Minecraft 相比，Sodium 的着色器系统提供了更高效的渲染路径和更好的性能表现。
+
+<strong>核心组件</strong>：
+
+| 组件 | 职责 |
+|------|------|
+| <code>ChunkShader</code> | 区块着色器封装，管理程序对象和 Uniform |
+| <code>ShaderLoader</code> | 着色器资源加载与预处理 |
+| <code>ShaderParser</code> | GLSL 源码解析与 #include 处理 |
+| <code>GlShader</code> | OpenGL 着色器对象封装 |
+| <code>ShaderAware</code> | 着色器感知接口，提供统一绑定接口 |
+
+<blockquote><p><strong>Uniform</strong>：一种着色器变量类型，在绘制调用之间保持不变，用于传递矩阵、光照参数等全局数据。</p></blockquote>
+
+<hr>
+
+<h2 id="着色器资源结构">着色器资源结构</h2>
+
+
+<h3>资源路径</h3>
+
+
+Sodium 的着色器源码存放在 <code>common/src/main/resources/assets/sodium/shaders/</code> 目录，采用模块化组织：
+</p>
+<p><pre class="code-block"><code class="language-text">assets/sodium/shaders/
+├── include/              # 共享代码片段
+│   ├── common.glsl      # 通用函数（矩阵变换、辅助函数）
+│   ├── fog.glsl         # 雾效果计算函数
+│   ├── vertex_attribute.glsl  # 顶点属性定义与解码
+│   └── noise.glsl        # 噪声函数（用于程序化纹理）
+├── blocks/              # 方块渲染着色器
+│   ├── rendertype_solid.vsh   # 实体方块顶点着色器
+│   ├── rendertype_solid.fsh   # 实体方块片段着色器
+│   ├── rendertype_cutout.vsh  # 半透明裁剪着色器
+│   ├── rendertype_cutout.fsh
+│   ├── rendertype_translucent.vsh  # 半透明着色器
+│   └── rendertype_translucent.fsh
+└── environment/         # 环境着色器
+    ├── sky.glsl         # 天空渲染
+    └── clouds.glsl      # 云朵渲染</code></pre>
+
+
+<h3>编译流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["GLSL 源码<br/>.vsh / .fsh"] --> B["ShaderLoader<br/>加载资源"]
+    B --> C["#include 预处理<br/>替换共享代码"]
+    C --> D["ShaderParser<br/>解析语法"]
+    D --> E{"平台检测"}
+    E -->|OpenGL 4.5+| F["直接编译<br/>GLSL 源码"]
+    E -->|OpenGL 3.3| G["语法转换<br/>GLSL 300 es → GLSL 110"]
+    F --> H["GlShader<br/>创建着色器对象"]
+    G --> H
+    H --> I["着色器程序<br/>Program Linking"]
+    I --> J["ChunkShader<br/>Uniform 缓存"]</div>
+</div>
+
+
+<hr>
+
+<h2 id="顶点着色器">顶点着色器</h2>
+
+
+顶点着色器负责处理每个顶点的数据转换，是渲染管线的第一阶段。
+
+<h3>Solid 顶点着色器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 450
+
+// 包含顶点属性定义
+#include &lt;vertex_attribute.glsl&gt;
+
+// 包含雾函数
+#include &lt;fog.glsl&gt;
+
+// Uniform 块 - 使用 std140 布局优化Uniform访问
+layout(std140) uniform Uniforms {
+    mat4 u_ModelViewMatrix;              // 模型视图矩阵
+    mat4 u_ProjectionMatrix;              // 投影矩阵
+    mat4 u_ModelViewProjectionMatrix;    // MVP 组合矩阵
+    vec4 u_FogColor;                     // 雾颜色 RGBA
+    vec2 u_FogScale;                     // 雾缩放参数
+    float u_FogStart;                    // 雾起始距离
+    float u_FogEnd;                      // 雾结束距离
+    float u_FogShape;                    // 雾形状参数 [0,1]
+    vec4 u_AmbientLight;                 // 环境光颜色
+    vec4 u_BlockLight;                   // 方块光照颜色
+    
+    #ifdef USE_RGSS
+    vec4 u_RGSSSamples[4];               // RGSS 抗锯齿采样点
+    float u_RGSSKernel[16];              // RGSS 核权重
+    #endif
+};
+
+// 实例数据 - 使用整数属性传递压缩数据
+layout(location = 5) in ivec4 a_Flags;
+
+// 顶点输出到片段着色器
+out float v_ao;           // 环境光遮蔽
+out float v_Light;        // 混合光照值
+out vec2 v_Uv;            // 纹理坐标
+out vec4 v_Color;         // 顶点颜色
+out vec3 v_Pos;           // 视图空间位置
+out vec3 v_Normal;        // 法线向量
+
+// 雾参数输出
+out float v_FogStart;
+out float v_FogEnd;
+out float v_FogColor;
+out float v_FogShape;
+
+void main() {
+    // ============ 位置解码 ============
+    // 顶点位置使用 26bit 紧凑编码
+    // 高16位: X坐标, 低10位: Y坐标
+    ivec2 packedPos = ivec2(a_Pos &gt;&gt; 16, a_Pos &amp; 0xFFFF);
+    // 将编码值转换为实际坐标（每单位 = 1/4096 方块）
+    vec3 position = vec3(packedPos, a_Pos_Mid) * (1.0 / 4096.0);
+    
+    // 视图空间变换
+    vec4 pos = u_ModelViewMatrix * vec4(position, 1.0);
+    gl_Position = u_ProjectionMatrix * pos;
+    
+    // ============ 法线解码 ============
+    vec3 normal = decodeNormalizedNormal(a_Normal);
+    
+    // ============ 光照计算 ============
+    // 从 4bit 压缩光照值解压到 [0,1]
+    float blockLight = unpackUnorm(a_Light, 0) * 15.0 / 16.0;
+    float skyLight = unpackUnorm(a_Light, 4) * 15.0 / 16.0;
+    // 混合环境光和方块光
+    v_Light = mix(u_BlockLight, u_AmbientLight, skyLight) * (0.8 + blockLight * 0.2);
+    
+    // ============ AO 解码 ============
+    // 从顶点标志位提取 AO 值
+    v_ao = float((a_Flags.x &gt;&gt; 16) &amp; 0xFF) / 255.0;
+    
+    // ============ 纹理坐标 ============
+    // UV 以 1/16 增量存储（对应原版纹理贴图格式）
+    v_Uv = a_Uv * (1.0 / 16.0);
+    
+    // ============ 顶点颜色 ============
+    // 有符号 4 字节打包为 [-1, 1] 范围
+    v_Color = unpackSnorm4x8(a_Color) * (1.0 / 127.0);
+    
+    // 输出法线和位置
+    v_Normal = normal;
+    v_Pos = pos.xyz;
+    
+    // 雾参数传递到片段着色器
+    v_FogStart = u_FogStart;
+    v_FogEnd = u_FogEnd;
+    v_FogColor = u_FogColor;
+    v_FogShape = u_FogShape;
+}</code></pre>
+
+
+<strong>关键优化点</strong>：
+<ul><li>使用整数打包编码减少顶点数据大小</li></ul>
+<ul><li>矩阵预乘减少片段着色器计算</li></ul>
+<ul><li>法线和位置使用共享解码函数</li></ul>
+
+<hr>
+
+<h2 id="片段着色器">片段着色器</h2>
+
+
+片段着色器计算每个像素的最终颜色，是渲染管线的最后阶段。
+
+<h3>Solid 片段着色器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 450
+
+// 雾函数库
+#include &lt;fog.glsl&gt;
+
+// Uniform 块 - 与顶点着色器共享
+layout(std140) uniform Uniforms {
+    mat4 u_ModelViewMatrix;
+    mat4 u_ProjectionMatrix;
+    mat4 u_ModelViewProjectionMatrix;
+    vec4 u_FogColor;
+    vec2 u_FogScale;
+    float u_FogStart;
+    float u_FogEnd;
+    float u_FogShape;
+    vec4 u_AmbientLight;
+    vec4 u_BlockLight;
+    
+    #ifdef USE_RGSS
+    vec4 u_RGSSSamples[4];
+    float u_RGSSKernel[16];
+    #endif
+};
+
+// 顶点输出输入
+in float v_ao;
+in float v_Light;
+in vec2 v_Uv;
+in vec4 v_Color;
+in vec3 v_Pos;
+in vec3 v_Normal;
+
+// 雾输入
+in float v_FogStart;
+in float v_FogEnd;
+in float v_FogColor;
+in float v_FogShape;
+
+// 纹理采样器
+uniform sampler2D u_Texture;
+
+// 片段输出到帧缓冲
+layout(location = 0) out vec4 out_Color;
+
+void main() {
+    // ============ 纹理采样 ============
+    vec4 color = texture(u_Texture, v_Uv);
+    
+    // ============ Alpha 测试 ============
+    // 透明像素丢弃，减少Overdraw
+    if (color.a &lt; 0.1) {
+        discard;
+    }
+    
+    // ============ 光照应用 ============
+    // 根据天空光/方块光混合计算最终光照
+    color.rgb *= v_Light;
+    
+    // ============ AO 应用 ============
+    // 环境光遮蔽混合（65% 强度）
+    color.rgb *= mix(1.0, v_ao, 0.65);
+    
+    // ============ 顶点颜色 ============
+    // 允许方块有基础色调变化
+    color *= v_Color;
+    
+    // ============ 雾效应用 ============
+    // 使用视图深度计算雾混合因子
+    color = applyFog(color, v_Pos.z, v_FogStart, v_FogEnd, v_FogColor, v_FogShape);
+    
+    out_Color = color;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="雾函数实现">雾函数实现</h2>
+
+
+雾效是 Minecraft 渲染的重要组成部分，用于隐藏远处区块边界并增加大气感。
+
+<h3>Fog.glsl 核心函数</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl"> * 应用雾效果
+ * @param color    原始颜色
+ * @param viewDepth 视图空间深度（负值表示距离）
+ * @param fogStart  雾开始距离
+ * @param fogEnd    雾结束距离
+ * @param fogColor  雾颜色
+ * @param fogShape  雾形状参数 [0,1]
+ *                  - 0: 线性雾
+ *                  - 0.5: 指数雾
+ *                  - 1: 平方指数雾
+ */
+vec4 applyFog(vec4 color, float viewDepth, 
+              float fogStart, float fogEnd, 
+              vec4 fogColor, float fogShape) {
+    
+    // 根据形状参数调整雾的计算范围
+    // fogShape 控制雾的浓度分布曲线
+    float fogSize = mix(fogEnd, fogStart, fogShape);
+    
+    // 计算基础雾因子 [0, 1]
+    float fogFactor = clamp((viewDepth - fogSize) / (fogEnd - fogSize), 0.0, 1.0);
+    
+    // 应用平滑过渡（Hermite 插值）
+    // 这使得雾边缘更加自然
+    fogFactor = fogFactor * fogFactor * (3.0 - 2.0 * fogFactor);
+    
+    // 颜色线性混合
+    return mix(color, fogColor, fogFactor);
+}
+
+/**
+ * 计算雾缩放参数
+ * 用于顶点着色器预计算，减少片段着色器计算
+ */
+vec2 calculateFogScale(float fogEnd, float fogStart, float fogShape) {
+    float fogRange = max(fogEnd - fogStart, 1e-5);
+    return vec2(1.0 / fogRange, -fogStart / fogRange);
+}</code></pre>
+
+
+<strong>雾效类型对比</strong>：
+
+| 雾类型 | fogShape | 视觉效果 | 性能 |
+|--------|----------|----------|------|
+| 线性雾 | 0.0 | 距离均匀过渡 | 最快 |
+| 指数雾 | 0.5 | 近处浓、远处稀 | 中等 |
+| 平方指数 | 1.0 | 更陡峭的过渡曲线 | 最慢 |
+
+<hr>
+
+<h2 id="顶点格式">顶点格式</h2>
+
+
+顶点格式定义了 GPU 如何解释缓冲区中的二进制数据。Sodium 支持多种顶点格式以适应不同硬件。
+
+<h3>格式对比</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Vanilla["Vanilla 格式 (24 bytes)"]
+        V1["X: float32<br/>4B"]
+        V2["Y: float32<br/>4B"]
+        V3["Z: float32<br/>4B"]
+        V4["Color: int32<br/>4B"]
+        V5["U: float32<br/>4B"]
+        V6["V: float32<br/>4B"]
+    end
+    
+    subgraph IMMIX["IMMIX 格式 (16 bytes)"]
+        I1["Position: half16 × 3<br/>6B"]
+        I2["Color+AO: int32<br/>4B"]
+        I3["UV+Light: int32<br/>4B"]
+        I4["Normal: int16<br/>2B"]
+    end
+    
+    V1 --> |节省 33%| I1</div>
+</div>
+
+
+<h3>Vanilla 格式 (24 bytes)</h3>
+
+
+原版 Minecraft 使用的格式，每个顶点使用 24 字节：
+</p>
+<p><pre class="code-block"><code class="language-java">VANILLA(24) {
+    @Override
+    public ChunkVertexEncoder createEncoder() {
+        return (ptr, materialBits, vertices, sectionIndex) -&gt; {
+            for (Vertex vertex : vertices) {
+                // 位置: 3 × float32 = 12 bytes
+                memPutFloat(ptr + 0, vertex.x);  // X
+                memPutFloat(ptr + 4, vertex.y);  // Y
+                memPutFloat(ptr + 8, vertex.z);  // Z
+                
+                // 颜色: 4 bytes (ARGB 打包)
+                memPutInt(ptr + 12, vertex.color);
+                
+                // UV: 2 × float32 = 8 bytes
+                memPutFloat(ptr + 16, vertex.u);  // U
+                memPutFloat(ptr + 20, vertex.v);  // V
+                
+                ptr += 24;  // 步进到下一顶点
+            }
+        };
+    }
+}</code></pre>
+
+
+<h3>IMMIX 格式 (16 bytes)</h3>
+
+
+Sodium 优化的格式，节省 33% 带宽：
+</p>
+<p><pre class="code-block"><code class="language-java">IMMIX(16) {
+    @Override
+    public ChunkVertexEncoder createEncoder() {
+        return (ptr, materialBits, vertices, sectionIndex) -&gt; {
+            for (Vertex vertex : vertices) {
+                // 位置: 3 × float16 = 6 bytes
+                memPutShort(ptr + 0, floatToHalf(vertex.x));
+                memPutShort(ptr + 2, floatToHalf(vertex.y));
+                memPutShort(ptr + 4, floatToHalf(vertex.z));
+                
+                // 颜色 + AO: 4 bytes
+                // [AO 8bit][Color 24bit]
+                int colorAo = packColorAo(vertex.color, vertex.ao);
+                memPutInt(ptr + 6, colorAo);
+                
+                // UV + 光照: 4 bytes
+                // [U 16bit][V 16bit]
+                int uvLight = packUvLight(vertex.u, vertex.v, vertex.light);
+                memPutInt(ptr + 10, uvLight);
+                
+                // 法线: 2 bytes
+                memPutShort(ptr + 14, encodeNormal(vertex.normal));
+                
+                ptr += 16;  // 步进到下一顶点
+            }
+        };
+    }
+}</code></pre>
+
+
+<h3>顶点编码工具函数</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">class Vertex {
+    public float x, y, z;        // 世界坐标
+    public int color;             // ARGB 颜色值
+    public float ao;              // 环境光遮蔽 [0, 1]
+    public float u, v;            // 纹理坐标
+    public int light;             // 光照值（天空光 + 方块光）
+    public Vec3f normal;          // 法线向量
+}
+
+/**
+ * 打包颜色和 AO 到 32 位整数
+ */
+static int packColorAo(int color, float ao) {
+    int aoByte = (int)(ao * 255.0f);  // AO 量化为 8 位
+    return (aoByte &lt;&lt; 24) | (color &amp; 0x00FFFFFF);
+}
+
+/**
+ * 打包 UV 坐标到 32 位整数
+ */
+static int packUvLight(float u, float v, int light) {
+    // 纹理坐标量化为 16 位精度
+    int uByte = (int)(u * 65535.0f);
+    int vByte = (int)(v * 65535.0f);
+    return ((uByte &amp; 0xFFFF) &lt;&lt; 16) | (vByte &amp; 0xFFFF);
+}
+
+/**
+ * Float32 → Float16 转换
+ * 用于顶点位置压缩
+ */
+static short floatToHalf(float value) {
+    int bits = Float.floatToIntBits(value);
+    int sign = (bits &gt;&gt; 16) &amp; 0x8000;
+    int exponent = ((bits &gt;&gt; 23) &amp; 0xFF) - 127 + 15;
+    int mantissa = (bits &gt;&gt; 13) &amp; 0x3FF;
+    
+    if (exponent &lt;= 0) return (short)sign;
+    if (exponent &gt; 30) return (short)(sign | 0x7C00);
+    
+    return (short)(sign | (exponent &lt;&lt; 10) | mantissa);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="着色器管理">着色器管理</h2>
+
+
+<h3>ChunkShader 类</h3>
+
+
+<code>ChunkShader</code> 是 Sodium 着色器系统的核心封装类：
+</p>
+<p><pre class="code-block"><code class="language-java">public class ChunkShader implements ShaderAware {
+    private final GlShader vertexShader;    // 顶点着色器对象
+    private final GlShader fragmentShader;   // 片段着色器对象
+    private final GlProgram program;          // 链接后的程序对象
+    
+    // Uniform 位置缓存 - 避免运行时查询开销
+    private final int u_ModelViewMatrix;
+    private final int u_ProjectionMatrix;
+    private final int u_ModelViewProjectionMatrix;
+    private final int u_FogColor;
+    private final int u_FogScale;
+    private final int u_Texture;
+    
+    public ChunkShader(ShaderLoader loader) {
+        // 加载顶点着色器
+        this.vertexShader = loader.loadVertexShader(&quot;rendertype_solid.vsh&quot;);
+        // 加载片段着色器
+        this.fragmentShader = loader.loadFragmentShader(&quot;rendertype_solid.fsh&quot;);
+        // 链接为程序对象
+        this.program = GlProgram.create(&quot;rendertype_solid&quot;, 
+                                        vertexShader, fragmentShader);
+        
+        // 预缓存 Uniform 位置
+        this.u_ModelViewMatrix = program.getUniform(&quot;u_ModelViewMatrix&quot;);
+        this.u_ProjectionMatrix = program.getUniform(&quot;u_ProjectionMatrix&quot;);
+        this.u_ModelViewProjectionMatrix = program.getUniform(&quot;u_ModelViewProjectionMatrix&quot;);
+        this.u_FogColor = program.getUniform(&quot;u_FogColor&quot;);
+        this.u_FogScale = program.getUniform(&quot;u_FogScale&quot;);
+        this.u_Texture = program.getUniform(&quot;u_Texture&quot;);
+    }
+    
+    /**
+     * 绑定着色器程序
+     */
+    public void bind(CommandList commandList) {
+        commandList.bindShader(program);
+    }
+    
+    /**
+     * 解绑着色器
+     */
+    public void unbind(CommandList commandList) {
+        commandList.unbindShader();
+    }
+    
+    /**
+     * 上传 Uniform 数据到 GPU
+     */
+    public void uploadUniforms(CommandList commandList, UniformData data) {
+        commandList.setUniform(u_ModelViewMatrix, data.modelViewMatrix);
+        commandList.setUniform(u_ProjectionMatrix, data.projectionMatrix);
+        commandList.setUniform(u_FogColor, data.fogColor);
+        commandList.setUniform(u_FogScale, data.fogScale);
+    }
+}</code></pre>
+
+
+<h3>ShaderLoader 类</h3>
+
+
+着色器资源加载与预处理：
+</p>
+<p><pre class="code-block"><code class="language-java">public class ShaderLoader {
+    private static final String SHADER_PATH = &quot;assets/sodium/shaders&quot;;
+    
+    /**
+     * 加载顶点着色器
+     */
+    public GlShader loadVertexShader(String name) {
+        String source = loadShaderSource(&quot;blocks/&quot; + name);
+        return GlShader.create(GL_VERTEX_SHADER, name, preprocess(source));
+    }
+    
+    /**
+     * 加载片段着色器
+     */
+    public GlShader loadFragmentShader(String name) {
+        String source = loadShaderSource(&quot;blocks/&quot; + name);
+        return GlShader.create(GL_FRAGMENT_SHADER, name, preprocess(source));
+    }
+    
+    /**
+     * 从 classpath 加载着色器源码
+     */
+    private String loadShaderSource(String path) {
+        InputStream stream = getClass().getResourceAsStream(&quot;/&quot; + SHADER_PATH + &quot;/&quot; + path);
+        return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    
+    /**
+     * 预处理 GLSL 源码
+     * 处理 #include 指令
+     */
+    private String preprocess(String source) {
+        // 正则匹配 #include &quot;filename.glsl&quot;
+        return source.replaceAll(&quot;#include\\s+\&quot;([^\&quot;]+)\&quot;&quot;, 
+                                 match -&gt; loadInclude(match.group(1)));
+    }
+    
+    /**
+     * 加载 include 文件内容
+     */
+    private String loadInclude(String filename) {
+        return loadShaderSource(&quot;include/&quot; + filename);
+    }
+}</code></pre>
+
+
+<h3>ShaderAware 接口</h3>
+
+
+统一的着色器绑定接口：
+</p>
+<p><pre class="code-block"><code class="language-java">public interface ShaderAware {
+    /**
+     * 绑定着色器程序
+     */
+    void bind(CommandList commandList);
+    
+    /**
+     * 解绑着色器
+     */
+    void unbind(CommandList commandList);
+    
+    /**
+     * 上传 Uniform 数据
+     */
+    void uploadUniforms(CommandList commandList, UniformData data);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="着色器常量">着色器常量</h2>
+
+
+<h3>编译宏定义</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ShaderConstants {
+    // 功能宏 - 启用特定渲染特性
+    public static final String USE_FOG = &quot;USE_FOG&quot;;
+    public static final String USE_FRAGMENT_DISCARD = &quot;USE_FRAGMENT_DISCARD&quot;;
+    public static final String USE_VERTEX_COMPRESSION = &quot;USE_VERTEX_COMPRESSION&quot;;
+    public static final String USE_RGSS = &quot;USE_RGSS&quot;;              // 抗锯齿
+    public static final String USE_ENTITY_CLOUD = &quot;USE_ENTITY_CLOUD&quot;;  // 云朵渲染
+    
+    /**
+     * 抗锯齿模式枚举
+     */
+    public enum AntiAliasing {
+        NONE(0),        // 无抗锯齿
+        MSAA4X(4),      // 4x 多重采样
+        MSAA8X(8),      // 8x 多重采样
+        RGSS(4);        // 旋转网格超级采样
+        
+        public final int samples;  // 采样点数量
+        
+        AntiAliasing(int samples) {
+            this.samples = samples;
+        }
+    }
+}</code></pre>
+
+
+<h3>Uniform 块布局</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">layout(std140) uniform Uniforms {
+    // 变换矩阵
+    mat4 u_ModelViewMatrix;            // 模型 → 视图空间
+    mat4 u_ProjectionMatrix;          // 视图 → 裁剪空间
+    mat4 u_ModelViewProjectionMatrix; // MVP 组合（预乘优化）
+    
+    // 雾参数
+    vec4 u_FogColor;                  // RGBA 雾颜色
+    vec2 u_FogScale;                  // 雾缩放 (1/range, -start/range)
+    float u_FogStart;                 // 雾起始距离
+    float u_FogEnd;                   // 雾结束距离
+    float u_FogShape;                // 雾形状参数 [0,1]
+    
+    // 光照
+    vec4 u_AmbientLight;              // 环境光 RGBA
+    vec4 u_BlockLight;                // 方块光 RGBA
+    
+    // 抗锯齿（条件编译）
+    #ifdef USE_RGSS
+    vec4 u_RGSSSamples[4];            // 采样偏移
+    float u_RGSSKernel[16];           // 核权重
+    #endif
+};</code></pre>
+
+
+<hr>
+
+<h2 id="性能优化特性">性能优化特性</h2>
+
+
+| 优化技术 | 实现方式 | 性能收益 |
+|----------|----------|----------|
+| <strong>顶点压缩</strong> | Float16 替代 Float32 | 减少 33% 带宽占用 |
+| <strong>Include 复用</strong> | 共享 GLSL 代码 | 减少重复代码，便于维护 |
+| <strong>Uniform 缓存</strong> | 预缓存位置 ID | 避免运行时查询开销 |
+| <strong>std140 布局</strong> | 固定布局规整数据 | 减少 Uniform 设置调用 |
+| <strong>矩阵预乘</strong> | MVP 组合矩阵 | 顶点着色器减少 1 次矩阵乘法 |
+| <strong>RGSS 抗锯齿</strong> | 着色器内多次采样 | 更好的边缘质量 |
+| <strong>Early-Z 优化</strong> | 雾效前裁剪 | 减少 Overdraw |
+
+<h3>顶点压缩详解</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["原始顶点数据<br/>24 bytes"] --> B["位置压缩<br/>float32 → float16"]
+    B --> C["颜色+AO 打包<br/>4 + 1 = 4 bytes"]
+    C --> D["UV+光照打包<br/>4 + 1 = 4 bytes"]
+    D --> E["法线压缩<br/>vec3 → int16"]
+    E --> F["最终格式<br/>16 bytes"]
+    
+    G["节省"] --> H["8 bytes / 顶点"]
+    H --> I["区块 ~65,000 顶点"]
+    I --> J["节省 ~520KB / 区块"]
+    
+    style F fill:#90EE90
+    style J fill:#98FB98</div>
+</div>
+
+
+<hr>
+
+<h2 id="opengl-要求">OpenGL 要求</h2>
+
+
+<h3>版本要求</h3>
+
+
+| 要求级别 | 版本 | 特性支持 |
+|----------|------|----------|
+| <strong>最低</strong> | OpenGL 3.3 | 基础顶点属性、着色器程序 |
+| <strong>推荐</strong> | OpenGL 4.5 | SPIR-V、GLSL 450 |
+| <strong>可选扩展</strong> | GL<em>ARB</em>gl_spirv | SPIR-V 着色器（需要着色器编译器） |
+| <strong>可选扩展</strong> | GL<em>ARB</em>vertex<em>attrib</em>64bit | 64 位顶点属性 |
+
+<h3>平台差异处理</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["检测 OpenGL 版本"] --> B{版本 >= 4.5?}
+    B -->|是| C["使用 GLSL 450<br/>直接编译"]
+    B -->|否| D{版本 >= 3.3?}
+    D -->|是| E["GLSL 110 兼容模式"]
+    D -->|否| F["错误: 不支持的 GPU"]
+    
+    C --> G["完整特性支持"]
+    E --> H["基础特性支持"]
+    
+    style G fill:#90EE90
+    style H fill:#FFFACD
+    style F fill:#FFB6C1</div>
+</div>
+
+
+<h3>GLSL 版本对照</h3>
+
+
+| OpenGL 版本 | GLSL 版本 | 特性 |
+|-------------|-----------|------|
+| 4.5 | 450 | 布局限定符、算术运算 |
+| 4.3 | 430 | 整数位操作、原子操作 |
+| 4.0 | 400 | 几何着色器、模板纹理 |
+| 3.3 | 330 | 稳健性扩展 |
+| 3.2 | 150 | 顶点 ID、实例化 |
+| 3.1 | 140 | 纹理查询、UBO |
+| 3.0 | 130 | 纹理查询、精确类型 |
+| 2.1 | 120 | 顶点纹理 |
+| 2.0 | 110 | 基础着色器 |
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章节学习后，请确认你能够：
+
+<ul><li>[ ] <strong>理解着色器编译流程</strong>：能够描述从 GLSL 源码到 GPU 程序的完整转换过程</li></ul>
+<ul><li>[ ] <strong>解释顶点格式差异</strong>：说明 Vanilla (24B) 和 IMMIX (16B) 格式的区别及性能收益</li></ul>
+<ul><li>[ ] <strong>分析 Uniform 管理</strong>：理解 std140 布局的优势以及 Uniform 缓存的作用</li></ul>
+<ul><li>[ ] <strong>描述雾效实现</strong>：能够解释线性雾和指数雾的计算方式及参数含义</li></ul>
+<ul><li>[ ] <strong>识别性能优化点</strong>：列举 Sodium 着色器系统的 3 个以上性能优化技术</li></ul>
+<ul><li>[ ] <strong>理解平台兼容性</strong>：了解不同 OpenGL 版本对功能支持的影响</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+<ul><li><a href="01-architecture-overview.html">01-架构概览</a> - Sodium 整体架构设计</li></ul>
+<ul><li><a href="02-chunk-render-system.html">02-区块渲染系统</a> - 区块渲染与网格构建</li></ul>
+<ul><li><a href="03-occlusion-culling.html">03-遮挡剔除系统</a> - 可见性判断算法</li></ul>
+<ul><li><a href="04-render-pipeline.html">04-渲染管线</a> - 渲染 Pass 与多线程架构</li></ul>
+
+<hr>
+
+<em>文档版本: 1.0</em>
+<em>基于 Sodium v0.8.6 源码分析</em>
+<em>更新日期: 2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-render-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Sodium 渲染管线
+        </a><a href="06-platform-integration.html" class="next">
+            Sodium 平台集成 (Platform Integration)
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

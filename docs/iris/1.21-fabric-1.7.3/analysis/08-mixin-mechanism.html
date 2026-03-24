@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Iris Mixin 注入机制分析 - Iris 光影</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 光影 Mod 整体架构分析
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 着色器包系统
+        </a>
+<a href="04-shadow-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 帧缓冲与纹理系统
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Uniform 系统
+        </a>
+<a href="07-sodium-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Sodium 集成系统分析
+        </a>
+<a href="08-mixin-mechanism.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Iris Mixin 注入机制分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Iris Mixin 注入机制分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Iris Mixin 注入机制分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-1.7.3</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris Mixin 注入机制分析</h1>
+
+
+<blockquote><p>基于 Iris v1.7.3 源码的 Mixin 注入深度分析</p></blockquote>
+
+<h2 id="项目信息">项目信息</h2>
+
+
+| 属性 | 值 |
+|------|-----|
+| Mod 版本 | 1.7.3 |
+| Minecraft 版本 | 1.21 |
+| Mixin 版本 | 0.8+ |
+| 分析日期 | 2026-03-23 |
+
+<hr>
+
+<h2 id="文档目录">文档目录</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="01-architecture-overview.html">01-architecture-overview</a> | 整体架构设计模式、模块划分 |
+| <a href="02-rendering-pipeline.html">02-rendering-pipeline</a> | 渲染管线 - GBuffer、Composite Pass |
+| <a href="03-shaderpack-system.html">03-shaderpack-system</a> | 着色器包加载与解析 |
+| <a href="04-shadow-system.html">04-shadow-system</a> | 阴影系统 - 视锥体剔除、阴影渲染 |
+| <a href="05-framebuffer-texture.html">05-framebuffer-texture</a> | 帧缓冲与纹理系统 |
+| <a href="06-uniforms.html">06-uniforms</a> | Uniform 管理 |
+| <a href="07-sodium-integration.html">07-sodium-integration</a> | Sodium 集成系统 |
+| <a href="08-mixin-mechanism.html">08-mixin-mechanism</a> | Mixin 注入机制 |
+| <a href="README.html">README</a> | 模块说明 |
+| <a href="SUMMARY.html">SUMMARY</a> | 总结文档 |
+
+<hr>
+
+<h2 id="1-mixin-配置架构">1. Mixin 配置架构</h2>
+
+
+<h3>1.1 配置文件结构</h3>
+
+
+Iris 使用了多个 Mixin 配置文件来组织不同功能的注入：
+
+| 配置文件 | 用途 |
+|---------|------|
+| <code>mixins.iris.json</code> | 主配置，包含 100+ 个 Mixin 类 |
+| <code>mixins.iris.vertexformat.json</code> | 顶点格式相关注入 |
+| <code>mixins.iris.fantastic.json</code> | 粒子系统相关 |
+| <code>mixins.iris.compat.sodium.json</code> | Sodium 兼容层 |
+| <code>mixins.iris.compat.indium.json</code> | Indium 兼容层 |
+
+<h3>1.2 主配置文件结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;required&quot;: true,
+  &quot;minVersion&quot;: &quot;0.8&quot;,
+  &quot;package&quot;: &quot;net.irisshaders.iris.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_8&quot;,
+  &quot;client&quot;: [
+    &quot;DimensionTypeAccessor&quot;,
+    &quot;GameRendererAccessor&quot;,
+    &quot;MixinGameRenderer&quot;,
+    &quot;MixinGlStateManager&quot;,
+    &quot;MixinLevelRenderer&quot;,
+    &quot;MixinRenderSystem&quot;,
+    &quot;MixinProgram&quot;,
+    ...
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1,
+    &quot;maxShiftBy&quot;: 2
+  }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-mixingamerenderer-游戏渲染钩子">2. MixinGameRenderer - 游戏渲染钩子</h2>
+
+
+<h3>2.1 着色器覆盖注入模式</h3>
+
+
+每个 <code>get*Shader</code> 方法都使用 <code>@Inject</code> 注入到 <strong>HEAD</strong> 位置，并设置 <code>cancellable = true</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;getPositionShader&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+private static void iris$overridePositionShader(CallbackInfoReturnable&lt;ShaderInstance&gt; cir) {
+    if (isSky()) {
+        override(ShaderKey.SKY_BASIC, cir);
+    } else if (ShadowRenderer.ACTIVE) {
+        override(ShaderKey.SHADOW_BASIC, cir);
+    } else if (shouldOverrideShaders()) {
+        override(ShaderKey.BASIC, cir);
+    }
+}</code></pre>
+
+
+<h3>2.2 被拦截的着色器类型（30+ 个）</h3>
+
+
+| 着色器类型 | 注入方法 | 覆盖逻辑 |
+|-----------|---------|---------|
+| 基础着色器 | <code>getPositionShader</code> | Sky/Shadow/Basic |
+| 颜色着色器 | <code>getPositionColorShader</code> | Sky/Shadow/Basic Color |
+| 纹理着色器 | <code>getPositionTexShader</code> | Sky/Shadow/Textured |
+| 粒子着色器 | <code>getParticleShader</code> | Weather/Shadow/Particles |
+| 实体着色器 | <code>getRendertypeEntityCutoutShader</code> | Shadow/Hand/Block Entity |
+| 云朵着色器 | <code>getRendertypeCloudsShader</code> | Shadow/Clouds |
+| 地形着色器 | <code>getRendertypeSolidShader</code> | Shadow/Moving Block/Terrain |
+| 半透明着色器 | <code>getRendertypeTranslucentShader</code> | Shadow/Moving Block/Terrain Trans |
+| 闪烁着色器 | <code>getRendertypeGlintShader</code> | Glint |
+| 文字着色器 | <code>getRendertypeTextShader</code> | Shadow/Hand/Block Entity/Text |
+
+<h3>2.3 渲染阶段判断逻辑</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static boolean isBlockEntities() {
+    WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
+    return pipeline != null &amp;&amp; pipeline.getPhase() == WorldRenderingPhase.BLOCK_ENTITIES;
+}
+
+private static boolean isEntities() {
+    WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
+    return pipeline != null &amp;&amp; pipeline.getPhase() == WorldRenderingPhase.ENTITIES;
+}
+
+private static boolean isSky() {
+    WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
+    if (pipeline != null) {
+        return switch (pipeline.getPhase()) {
+            case CUSTOM_SKY, SKY, SUNSET, SUN, STARS, VOID, MOON -&gt; true;
+            default -&gt; false;
+        };
+    }
+    return false;
+}</code></pre>
+
+
+<h3>2.4 框架级别注入</h3>
+
+
+<strong>帧开始钩子</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;render&quot;, at = @At(&quot;HEAD&quot;))
+private void iris$startFrame(DeltaTracker deltaTracker, boolean bl, boolean bl2, boolean bl3, CallbackInfo ci) {
+    CapturedRenderingState.INSTANCE.setRealTickDelta(deltaTracker.getGameTimeDeltaPartialTick(true));
+    SystemTimeUniforms.COUNTER.beginFrame();
+    SystemTimeUniforms.TIMER.beginFrame(Util.getNanos());
+}</code></pre>
+
+
+<strong>帧结束钩子</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;renderLevel&quot;, at = @At(&quot;TAIL&quot;))
+private void iris$runColorSpace(DeltaTracker deltaTracker, CallbackInfo ci) {
+    Iris.getPipelineManager().getPipeline().ifPresent(WorldRenderingPipeline::finalizeGameRendering);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-mixinlevelrenderer-世界渲染钩子">3. MixinLevelRenderer - 世界渲染钩子</h2>
+
+
+<h3>3.1 渲染管线初始化</h3>
+
+
+<strong>在 <code>renderLevel</code> 方法 HEAD 注入</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;renderLevel&quot;, at = @At(&quot;HEAD&quot;))
+private void iris$setupPipeline(DeltaTracker deltaTracker, boolean renderBlockOutline,
+                           Camera camera, GameRenderer gameRenderer, LightTexture lightTexture,
+                           Matrix4f modelView, Matrix4f projection, CallbackInfo callback) {
+    DHCompat.checkFrame();
+
+    IrisTimeUniforms.updateTime();
+    CapturedRenderingState.INSTANCE.setGbufferModelView(modelView);
+    CapturedRenderingState.INSTANCE.setGbufferProjection(projection);
+    float fakeTickDelta = deltaTracker.getGameTimeDeltaPartialTick(false);
+    CapturedRenderingState.INSTANCE.setTickDelta(fakeTickDelta);
+    CapturedRenderingState.INSTANCE.setCloudTime((ticks + fakeTickDelta) * 0.03F);
+
+    pipeline = Iris.getPipelineManager().preparePipeline(Iris.getCurrentDimension());
+
+    if (pipeline.shouldDisableFrustumCulling()) {
+        this.cullingFrustum = new NonCullingFrustum();
+    }
+
+    Minecraft.getInstance().smartCull = !pipeline.shouldDisableOcclusionCulling();
+}</code></pre>
+
+
+<h3>3.2 天空渲染阶段细分</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;renderSky&quot;, at = @At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/client/renderer/FogRenderer;levelFogColor()V&quot;))
+private void iris$renderSky$beginNormalSky(...) {
+    pipeline.setPhase(WorldRenderingPhase.SKY);
+}
+
+// 设置太阳渲染阶段
+@Inject(method = &quot;renderSky&quot;, at = @At(value = &quot;FIELD&quot;, target = &quot;Lnet/minecraft/client/renderer/LevelRenderer;SUN_LOCATION:Lnet/minecraft/resources/ResourceLocation;&quot;))
+private void iris$setSunRenderStage(...) {
+    pipeline.setPhase(WorldRenderingPhase.SUN);
+}
+
+// 设置日落渲染阶段
+@Inject(method = &quot;renderSky&quot;, at = @At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/client/renderer/DimensionSpecialEffects;getSunriseColor(FF)[F&quot;))
+private void iris$setSunsetRenderStage(...) {
+    pipeline.setPhase(WorldRenderingPhase.SUNSET);
+}
+
+// 设置月亮渲染阶段
+@Inject(method = &quot;renderSky&quot;, at = @At(value = &quot;FIELD&quot;, target = &quot;Lnet/minecraft/client/renderer/LevelRenderer;MOON_LOCATION:Lnet/minecraft/resources/ResourceLocation;&quot;))
+private void iris$setMoonRenderStage(...) {
+    pipeline.setPhase(WorldRenderingPhase.MOON);
+}
+
+// 设置星星渲染阶段
+@Inject(method = &quot;renderSky&quot;, at = @At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/client/multiplayer/ClientLevel;getStarBrightness(F)F&quot;))
+private void iris$setStarRenderStage(...) {
+    pipeline.setPhase(WorldRenderingPhase.STARS);
+}</code></pre>
+
+
+<h3>3.3 地形渲染阶段</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;renderSectionLayer&quot;, at = @At(&quot;HEAD&quot;))
+private void iris$beginTerrainLayer(RenderType renderType, double d, double e, double f, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    pipeline.setPhase(WorldRenderingPhase.fromTerrainRenderType(renderType));
+}
+
+@Inject(method = &quot;renderSectionLayer&quot;, at = @At(&quot;RETURN&quot;))
+private void iris$endTerrainLayer(RenderType renderType, double d, double e, double f, Matrix4f matrix4f, Matrix4f matrix4f2, CallbackInfo ci) {
+    pipeline.setPhase(WorldRenderingPhase.NONE);
+}</code></pre>
+
+
+<h3>3.4 透明渲染特殊处理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;renderLevel&quot;, at = @At(value = &quot;CONSTANT&quot;, args = &quot;stringValue=translucent&quot;))
+private void iris$beginTranslucents(DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f modelMatrix, Matrix4f matrix4f2, CallbackInfo ci) {
+    pipeline.beginHand();
+    HandRenderer.INSTANCE.renderSolid(modelMatrix, deltaTracker.getGameTimeDeltaPartialTick(true), camera, gameRenderer, pipeline);
+    Minecraft.getInstance().getProfiler().popPush(&quot;iris_pre_translucent&quot;);
+    pipeline.beginTranslucents();
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-mixinglstatemanager-opengl-状态管理钩子">4. MixinGlStateManager - OpenGL 状态管理钩子</h2>
+
+
+<h3>4.1 纹理单元数量扩展</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@ModifyConstant(method = &quot;&lt;clinit&gt;&quot;, constant = @Constant(intValue = 12), require = 1)
+private static int iris$increaseMaximumAllowedTextureUnits(int existingValue) {
+    // 将纹理单元数量从 12 扩展到 128
+    return 128;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-其他关键-mixin-类">5. 其他关键 Mixin 类</h2>
+
+
+<h3>5.1 MixinMinecraft_PipelineManagement - 管线生命周期管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;clearClientLevel&quot;, at = @At(&quot;HEAD&quot;))
+public void iris$trackLastDimensionOnLeave(Screen arg, CallbackInfo ci) {
+    Iris.lastDimension = Iris.getCurrentDimension();
+}
+
+@Inject(method = &quot;setLevel&quot;, at = @At(&quot;HEAD&quot;))
+private void iris$trackLastDimensionOnLevelChange(ClientLevel clientLevel, ReceivingLevelScreen.Reason reason, CallbackInfo ci) {
+    Iris.lastDimension = Iris.getCurrentDimension();
+}
+
+@Inject(method = &quot;updateLevelInEngines&quot;, at = @At(&quot;HEAD&quot;))
+private void iris$resetPipeline(@Nullable ClientLevel level, CallbackInfo ci) {
+    if (Iris.getCurrentDimension() != Iris.lastDimension) {
+        Iris.logger.info(&quot;Reloading pipeline on dimension change: &quot; + Iris.lastDimension + &quot; =&gt; &quot; + Iris.getCurrentDimension());
+        Iris.getPipelineManager().destroyPipeline();
+        if (level != null) {
+            Iris.getPipelineManager().preparePipeline(Iris.getCurrentDimension());
+        }
+    }
+}</code></pre>
+
+
+<h3>5.2 MixinRenderSystem - 渲染系统初始化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;initRenderer&quot;, at = @At(&quot;RETURN&quot;), remap = false)
+private static void iris$onRendererInit(int debugVerbosity, boolean alwaysFalse, CallbackInfo ci) {
+    Iris.duringRenderSystemInit();
+    GLDebug.reloadDebugState();
+    IrisRenderSystem.initRenderer();
+    IrisSamplers.initRenderer();
+    Iris.onRenderSystemInit();
+}
+
+@Inject(method = &quot;_setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V&quot;,
+    at = @At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/client/renderer/texture/AbstractTexture;getId()I&quot;, shift = At.Shift.AFTER),
+    locals = LocalCapture.CAPTURE_FAILHARD)
+private static void _setShaderTexture(int unit, ResourceLocation resourceLocation, CallbackInfo ci,
+                                     TextureManager lv, AbstractTexture tex) {
+    TextureTracker.INSTANCE.onSetShaderTexture(unit, tex.getId());
+}</code></pre>
+
+
+<h3>5.3 MixinEntityRenderDispatcher - 实体阴影管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = RENDER_SHADOW, at = @At(&quot;HEAD&quot;), cancellable = true)
+private static void iris$maybeSuppressEntityShadow(PoseStack poseStack, MultiBufferSource bufferSource,
+                                               Entity entity, float opacity, float tickDelta,
+                                               LevelReader level, float radius, CallbackInfo ci) {
+    if (!iris$maybeSuppressShadow(ci)) {
+        Object2IntFunction&lt;NamespacedId&gt; entityIds = WorldRenderingSettings.INSTANCE.getEntityIds();
+        if (entityIds == null) {
+            return;
+        }
+        cachedId = CapturedRenderingState.INSTANCE.getCurrentRenderedEntity();
+        CapturedRenderingState.INSTANCE.setCurrentEntity(entityIds.getInt(shadowId));
+    }
+}
+
+@Inject(method = &quot;renderShadow&quot;, at = @At(&quot;RETURN&quot;))
+private static void restoreShadow(PoseStack pPoseStack0, MultiBufferSource pMultiBufferSource1,
+                                 Entity pEntity2, float pFloat3, float pFloat4,
+                                 LevelReader pLevelReader5, float pFloat6, CallbackInfo ci) {
+    CapturedRenderingState.INSTANCE.setCurrentEntity(cachedId);
+    cachedId = 0;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-渲染管线交互流程">6. 渲染管线交互流程</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">Minecraft.render()
+    │
+    ├─► MixinGameRenderer.iris$startFrame()     [帧开始]
+    │       - 更新 CapturedRenderingState
+    │
+    └─► LevelRenderer.renderLevel()
+            │
+            ├─► HEAD: iris$setupPipeline()     [管线初始化]
+            │       - preparePipeline()
+            │       - 设置剔除模式
+            │
+            ├─► CLEAR after: iris$beginLevelRender()
+            │       - beginLevelRendering()
+            │
+            ├─► renderSky() before: iris$renderTerrainShadows()
+            │       - renderShadows()          [阴影渲染]
+            │
+            ├─► renderSky() inject points
+            │       - setPhase(SKY/SUN/SUNSET/MOON/STARS)
+            │
+            ├─► renderClouds()前后: setPhase(CLOUDS)
+            │
+            ├─► renderSectionLayer() HEAD/RETURN
+            │       - setPhase(TERRAIN_*)      [地形渲染]
+            │
+            ├─► translucent constant: beginTranslucents()
+            │       - beginHand()
+            │       - beginTranslucents()
+            │
+            ├─► renderWeather()前后: setPhase(RAIN_SNOW)
+            │
+            └─► RETURN before: iris$endLevelRender()
+                    - finalizeLevelRendering()
+                    - HandRenderer.renderTranslucent()</code></pre>
+
+
+<hr>
+
+<h2 id="7-注入类型总结">7. 注入类型总结</h2>
+
+
+| 注入类型 | 用途 | 示例 |
+|---------|------|------|
+| <code>@Inject(at = HEAD)</code> | 在方法开始前执行 | 管线初始化、状态重置 |
+| <code>@Inject(at = RETURN)</code> | 在方法返回前执行 | 清理、收尾工作 |
+| <code>@Inject(at = INVOKE)</code> | 在特定调用前后 | 渲染阶段切换 |
+| <code>@Redirect</code> | 替换方法调用 | 手持渲染禁用 |
+| <code>@ModifyConstant</code> | 修改常量值 | 纹理单元数量 |
+| <code>@ModifyArg</code> | 修改方法参数 | 雨雪深度写入 |
+
+<hr>
+
+<h2 id="8-worldrenderingphase-枚举">8. WorldRenderingPhase 枚举</h2>
+
+
+| 阶段 | 说明 | Mixin 注入点 |
+|------|------|-------------|
+| <code>NONE</code> | 无阶段 | 默认 |
+| <code>SKY</code> | 天空渲染 | <code>renderSky</code> 内部 |
+| <code>SUNSET</code> | 日落 | <code>renderSky</code> 内部 |
+| <code>CUSTOM_SKY</code> | 自定义天空 | 特定注入点 |
+| <code>SUN</code> | 太阳 | <code>renderSky</code> 内部 |
+| <code>MOON</code> | 月亮 | <code>renderSky</code> 内部 |
+| <code>STARS</code> | 星星 | <code>renderSky</code> 内部 |
+| <code>VOID</code> | 虚空 | <code>renderSky</code> 内部 |
+| <code>TERRAIN_SOLID</code> | 固体地形 | <code>renderSectionLayer</code> |
+| <code>TERRAIN<em>CUTOUT</em>MIPPED</code> | 裁剪地形(带Mipmap) | <code>renderSectionLayer</code> |
+| <code>TERRAIN_CUTOUT</code> | 裁剪地形 | <code>renderSectionLayer</code> |
+| <code>ENTITIES</code> | 实体 | <code>renderEntities</code> |
+| <code>BLOCK_ENTITIES</code> | 方块实体 | <code>renderBlockEntities</code> |
+| <code>HAND_SOLID</code> | 手部(固体) | <code>renderItemInHand</code> |
+| <code>TERRAIN_TRANSLUCENT</code> | 半透明地形 | <code>renderSectionLayer</code> |
+| <code>TRIPWIRE</code> | 绊线 | <code>renderSectionLayer</code> |
+| <code>PARTICLES</code> | 粒子 | <code>renderSnowAndRain</code> |
+| <code>CLOUDS</code> | 云 | <code>renderClouds</code> |
+| <code>RAIN_SNOW</code> | 雨/雪 | <code>renderWeather</code> |
+| <code>HAND_TRANSLUCENT</code> | 手部(半透明) | <code>renderTranslucent</code> |
+
+<hr>
+
+<h2 id="9-相关文档">9. 相关文档</h2>
+
+
+<ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li></ul>
+<ul><li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线详解</li></ul>
+<ul><li><a href="07-sodium-integration.html">07-sodium-integration</a> - Sodium 集成</li></ul>
+
+<hr>
+
+<em>生成时间: 2026-03-23</em>
+<em>基于 Iris v1.7.3 源码分析</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="07-sodium-integration.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Iris Sodium 集成系统分析
+        </a><a href="README.html" class="next">
+            Iris 源代码分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

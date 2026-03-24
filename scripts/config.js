@@ -52,10 +52,10 @@ const modules = {
         color: '#404040',
         colorGradient: 'linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%)',
         description: 'Shader 加载器与渲染管线深度解析',
-        versions: null,
-        defaultVersion: null,
+        versions: ['1.21-fabric-1.7.3'],
+        defaultVersion: '1.21-fabric-1.7.3',
         docsDir: 'docs/iris',
-        sourceDir: 'D:/Projects/Iris-1.7.3-1.21/analysis',
+        sourceDir: 'content/iris',
         theme: 'iris'
     },
 

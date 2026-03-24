@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>传送门实体初探 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-portal-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="02-portal-entity.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="../Part-2-Rendering/04-portal-rendering.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="../Part-3-Advanced/05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="../Part-3-Advanced/06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="../Part-3-Advanced/07-scaling-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="../Part-4-Development/08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="../Part-4-Development/09-portal-api-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>传送门实体初探</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    传送门实体初探
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1-fabric-6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>传送门实体初探</h1>
+
+</p>
+<p><pre class="code-block"><code class="language-yaml">---
+title: 传送门实体初探
+readingTime: 30
+---</code></pre>
+
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#本章目标">本章目标</a></li></ul>
+<ul><li><a href="#portal-类的继承结构">Portal 类的继承结构</a></li></ul>
+<ul><li><a href="#传送门的四大属性">传送门的四大属性</a></li></ul>
+<ul><li><a href="#变换数学基础">变换数学基础</a></li></ul>
+<ul><li><a href="#代码实战配置传送门属性">代码实战：配置传送门属性</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="本章目标">本章目标</h2>
+
+
+本章我们将深入了解 ImmersivePortalsMod 的核心——<strong>Portal 实体类</strong>。学完本章后，你将能够：
+
+<ul><li>✅ 理解 Portal 类的继承层次结构</li></ul>
+<ul><li>✅ 掌握传送门的四大核心属性（axisW、axisH、destination、rotation）</li></ul>
+<ul><li>✅ 理解传送门变换的数学原理</li></ul>
+<ul><li>✅ 使用代码创建和配置传送门</li></ul>
+
+<hr>
+
+<h2 id="portal-类的继承结构">Portal 类的继承结构</h2>
+
+
+<h3>类层次图</h3>
+
+
+Portal 实体并不是一个简单的类，它有精心设计的继承层次：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class Entity {
+        <<Minecraft 基类>>
+        +tick()
+        +setPos()
+        +getBoundingBox()
+    }
+
+    class PortalLike {
+        <<接口>>
+        +transformPoint()
+        +transformLocalVec()
+        +getOriginPos()
+        +getDestPos()
+    }
+
+    class Portal {
+        +Vec3 axisW
+        +Vec3 axisH
+        +Vec3 destination
+        +DQuaternion rotation
+        +double scaling
+        +transformPoint()
+        +canTeleportEntity()
+    }
+
+    class Mirror {
+        +getMirrored()
+        +transformLocalVecNonScale()
+    }
+
+    class NetherPortalEntity {
+        <<下界传送门专用>>
+    }
+
+    class EndPortalEntity {
+        <<末地传送门专用>>
+    }
+
+    class GlobalTrackedPortal {
+        <<全局传送门>>
+    }
+
+    Entity <|-- Portal : 继承
+    Portal ..|> PortalLike : 实现接口
+    Portal <|-- Mirror : 继承
+    Portal <|-- NetherPortalEntity : 继承
+    Portal <|-- EndPortalEntity : 继承
+    Portal <|-- GlobalTrackedPortal : 继承</div>
+</div>
+
+
+<h3>各类的职责</h3>
+
+
+| 类名 | 职责 | 使用场景 |
+|------|------|----------|
+| <code>Portal</code> | 核心传送门逻辑 | 通用传送门 |
+| <code>Mirror</code> | 镜像/反射效果 | 镜子房间 |
+| <code>NetherPortalEntity</code> | 下界传送门逻辑 | 原版下界传送门兼容 |
+| <code>EndPortalEntity</code> | 末地传送门逻辑 | 原版末地传送门兼容 |
+| <code>GlobalTrackedPortal</code> | 全局传送门 | 持久保存的传送门 |
+
+<h3>实体类型创建</h3>
+
+
+传送门实体的类型创建使用了 Fabric 的构建器模式：
+</p>
+<p><pre class="code-block"><code class="language-java">public class Portal extends Entity implements PortalLike {
+    public static final EntityType&lt;Portal&gt; ENTITY_TYPE = createPortalEntityType(Portal::new);
+
+    private static &lt;T extends Portal&gt; EntityType&lt;T&gt; createPortalEntityType(
+        EntityType.EntityFactory&lt;T&gt; constructor
+    ) {
+        return FabricEntityTypeBuilder.create(
+                MobCategory.MISC,          // 分类为杂项
+                constructor                 // 构造函数引用
+            )
+            .dimensions(EntityDimensions.fixed(0, 0))  // 尺寸为 0（平面）
+            .fireImmune()                  // 火焰免疫
+            .trackRangeBlocks(96)          // 追踪范围 96 格
+            .trackedUpdateRate(20)         // 更新频率
+            .forceTrackedVelocityUpdates(true)  // 强制追踪速度
+            .build();
+    }
+}</code></pre>
+
+
+💡 <strong>为什么尺寸是 (0, 0)</strong>？传送门是一个平面，不需要有体积。碰撞检测通过 <code>getBoundingBox()</code> 方法单独计算。
+
+<hr>
+
+<h2 id="传送门的四大属性">传送门的四大属性</h2>
+
+
+传送门的核心状态由四个关键属性决定，理解它们就理解了传送门的一半。
+
+<h3>属性一览表</h3>
+
+
+| 属性 | 类型 | 说明 | 示例值 |
+|------|------|------|--------|
+| <code>axisW</code> | Vec3 | 水平轴向量，指向传送门的"右"方向 | (1, 0, 0) |
+| <code>axisH</code> | Vec3 | 垂直轴向量，指向传送门的"上"方向 | (0, 1, 0) |
+| <code>destination</code> | Vec3 | 传送目标位置（世界坐标） | (100, 64, 200) |
+| <code>rotation</code> | DQuaternion | 旋转变换（四元数） | 绕 Y 轴旋转 90° |
+
+<h3>1. axisW - 水平轴</h3>
+
+
+<code>axisW</code> 定义了传送门水平方向的"宽度"向量。它指向传送门面朝方向的"右"边。
+</p>
+<p><pre class="code-block"><code class="language-text">        axisH (0, 1, 0)
+           ↑
+           │
+           │
+    ───────●──────→ axisW (1, 0, 0)
+           │
+           │
+           ↓</code></pre>
+
+
+常见取值：
+</p>
+<p><pre class="code-block"><code class="language-java">axisW = new Vec3(1, 0, 0);
+
+// 面朝 -X 方向（西）
+axisW = new Vec3(-1, 0, 0);
+
+// 面朝 +Z 方向（南）
+axisW = new Vec3(0, 0, 1);
+
+// 面朝 -Z 方向（北）
+axisW = new Vec3(0, 0, -1);</code></pre>
+
+
+<h3>2. axisH - 垂直轴</h3>
+
+
+<code>axisH</code> 定义了传送门垂直方向的"高度"向量，通常是 (0, 1, 0)，除非你想创建一个倾斜的传送门。
+</p>
+<p><pre class="code-block"><code class="language-java">axisH = new Vec3(0, 1, 0);
+
+// 倾斜 45 度（用于创意建筑）
+axisH = new Vec3(0.707, 0.707, 0);</code></pre>
+
+
+<h3>3. destination - 目标位置</h3>
+
+
+<code>destination</code> 是玩家传送后的目标坐标。这是一个<strong>三维向量</strong>，包含 x、y、z 三个分量。
+</p>
+<p><pre class="code-block"><code class="language-java">Vec3 destination = new Vec3(100, 64, 200);
+
+// 传送到某个方块的上方（眼睛高度 +1.6）
+Vec3 destination = new Vec3(x, y + 1.6, z);</code></pre>
+
+
+<h3>4. rotation - 旋转变换</h3>
+
+
+<code>rotation</code> 是一个四元数（Quaternion），用于在传送时旋转玩家的视角。这比欧拉角更稳定，可以避免万向锁问题。
+</p>
+<p><pre class="code-block"><code class="language-java">rotation = null;
+
+// 旋转 90 度（绕 Y 轴）
+DQuaternion rotation = DQuaternion.fromAxisAngle(
+    new Vec3(0, 1, 0),    // 旋转轴
+    Math.PI / 2            // 旋转角度（弧度）
+);
+
+// 旋转 180 度
+DQuaternion rotation = DQuaternion.fromAxisAngle(
+    new Vec3(0, 1, 0),
+    Math.PI
+);</code></pre>
+
+
+<h3>完整属性配置示例</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static void configurePortal(Portal portal) {
+    // 设置位置（在世界的某个地方）
+    portal.setPos(100, 64, 200);
+
+    // 设置方向（面朝 +Z 方向）
+    portal.setAxisW(new Vec3(0, 0, 1));
+    portal.setAxisH(new Vec3(0, 1, 0));
+
+    // 设置尺寸（宽 4 格，高 4 格）
+    portal.setWidth(4.0);
+    portal.setHeight(4.0);
+
+    // 设置目的地
+    portal.setDestDim(Level.NETHER);              // 目标维度
+    portal.setDestination(new Vec3(12.5, 64, 25)); // 目标位置
+
+    // 设置旋转（可选）
+    portal.setRotationTransformation(
+        DQuaternion.fromAxisAngle(new Vec3(0, 1, 0), Math.PI / 2)
+    );
+}</code></pre>
+
+
+<hr>
+
+<h2 id="变换数学基础">变换数学基础</h2>
+
+
+<h3>点变换原理</h3>
+
+
+传送门的核心功能是<strong>变换</strong>：将原位置的一个点，变换到目标位置。公式如下：
+</p>
+<p><pre class="code-block"><code class="language-text">P&#39; = T(P) = R(S(P - O)) + D</code></pre>
+
+
+其中：
+<ul><li><code>O</code> = 传送门原点（origin）</li></ul>
+<ul><li><code>D</code> = 目的地坐标（destination）</li></ul>
+<ul><li><code>S</code> = 缩放因子（scaling）</li></ul>
+<ul><li><code>R</code> = 旋转变换（rotation）</li></ul>
+<ul><li><code>P</code> = 输入点</li></ul>
+<ul><li><code>P'</code> = 输出点</li></ul>
+
+<h3>变换流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    A["输入点 P<br/>(x, y, z)"] --> B["减去原点<br/>P - O"]
+    B --> C{"有旋转?"}
+    C -->|是| D["旋转变换<br/>R * localVec"]
+    C -->|否| E["直接使用"]
+    D --> F["缩放变换<br/>scaling * vec"]
+    E --> F
+    F --> G["加上目的地<br/>+ D"]
+    G --> H["输出点 P'<br/>(x', y', z')"]
+
+    style A fill:#e3f2fd
+    style H fill:#c8e6c9</div>
+</div>
+
+
+<h3>代码实现</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * 变换一个点的位置
+ * @param pos 原位置
+ * @return 变换后的新位置
+ */
+public Vec3 transformPoint(Vec3 pos) {
+    // 第一步：减去原点，得到相对于传送门的局部坐标
+    Vec3 localPos = pos.subtract(getOriginPos());
+
+    // 第二步：进行旋转变换（如果有）
+    Vec3 rotated = transformLocalVecNonScale(localPos);
+
+    // 第三步：进行缩放变换
+    Vec3 scaled = rotated.scale(scaling);
+
+    // 第四步：加上目的地坐标
+    return scaled.add(getDestPos());
+}
+
+/**
+ * 旋转变换（使用四元数）
+ * @param localVec 局部坐标向量
+ * @return 旋转变换后的向量
+ */
+public Vec3 transformLocalVecNonScale(Vec3 localVec) {
+    if (rotation == null) {
+        return localVec;  // 没有旋转，直接返回
+    }
+    return rotation.rotate(localVec);  // 四元数旋转
+}</code></pre>
+
+
+<h3>四元数入门</h3>
+
+
+四元数是一种避免欧拉角万向锁问题的旋转表示方式。在 ImmersivePortalsMod 中，传送门使用四元数进行旋转变换。
+</p>
+<p><pre class="code-block"><code class="language-text">普通旋转（欧拉角）：有万向锁风险
+四元数旋转：任意旋转轴，任意角度，无万向锁</code></pre>
+
+
+💡 <strong>实用技巧</strong>：如果你不熟悉四元数，可以记住以下常用转换：
+</p>
+<p><pre class="code-block"><code class="language-java">public static DQuaternion fromAngleAxis(double angle, Vec3 axis) {
+    double halfAngle = angle / 2;
+    double sin = Math.sin(halfAngle);
+    double cos = Math.cos(halfAngle);
+    return new DQuaternion(
+        axis.x * sin,  // x
+        axis.y * sin,  // y
+        axis.z * sin,  // z
+        cos            // w
+    );
+}</code></pre>
+
+
+<hr>
+
+<h2 id="代码实战配置传送门属性">代码实战：配置传送门属性</h2>
+
+
+<h3>完整创建传送门的步骤</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">import qouteall.imm_ptl.core.portal.Portal;
+import qouteall.imm_ptl.core.portal.PortalAPI;
+import qouteall.imm_ptl.core.McHelper;
+
+// 创建一个完整的传送门
+public Portal createPortal(
+    ServerLevel world,
+    BlockPos position,
+    Direction facing,  // NORTH, SOUTH, EAST, WEST
+    ResourceKey&lt;Level&gt; destDim,
+    Vec3 destPos
+) {
+    // 1. 创建传送门实体
+    Portal portal = Portal.ENTITY_TYPE.create(world);
+
+    // 2. 计算轴向量
+    Vec3 axisW = switch (facing) {
+        case NORTH -&gt; new Vec3(1, 0, 0);   // 朝北时，宽度沿 X 轴
+        case SOUTH -&gt; new Vec3(-1, 0, 0); // 朝南时，宽度沿 -X 轴
+        case EAST  -&gt; new Vec3(0, 0, 1);   // 朝东时，宽度沿 Z 轴
+        case WEST  -&gt; new Vec3(0, 0, -1);  // 朝西时，宽度沿 -Z 轴
+        default    -&gt; new Vec3(1, 0, 0);
+    };
+    Vec3 axisH = new Vec3(0, 1, 0);  // 垂直向上
+
+    // 3. 使用 PortalAPI 设置属性（推荐方式）
+    PortalAPI.setPortalPositionOrientationAndSize(
+        portal,
+        Vec3.atCenterOf(position),  // 传送门中心位置
+        facing,                     // 朝向
+        4.0,                        // 宽度
+        4.0                         // 高度
+    );
+
+    // 4. 设置目的地
+    PortalAPI.setPortalTransformation(
+        portal,
+        destDim,                    // 目标维度
+        destPos,                    // 目标位置
+        null,                       // 不旋转（设为四元数可旋转）
+        1.0                         // 不缩放（设为其他数值可缩放）
+    );
+
+    // 5. 添加到世界
+    world.addFreshEntity(portal);
+
+    // 6. 同步到客户端
+    portal.reloadAndSyncToClient();
+
+    return portal;
+}</code></pre>
+
+
+<h3>创建带缩放的传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public Portal createGiantPortal(ServerLevel world, BlockPos pos) {
+    Portal portal = Portal.ENTITY_TYPE.create(world);
+
+    PortalAPI.setPortalPositionOrientationAndSize(
+        portal,
+        Vec3.atCenterOf(pos),
+        Direction.SOUTH,
+        5.0,   // 宽 5 格
+        5.0    // 高 5 格
+    );
+
+    // 缩放设置为 3.0（穿过的人会变成原来的 3 倍大）
+    PortalAPI.setPortalTransformation(
+        portal,
+        Level.NETHER,              // 去下界
+        new Vec3(50, 64, 50),      // 下界位置
+        null,                       // 不旋转
+        3.0                         // 3 倍缩放！
+    );
+
+    world.addFreshEntity(portal);
+    portal.reloadAndSyncToClient();
+
+    return portal;
+}</code></pre>
+
+
+<h3>创建带旋转的传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public Portal createRotatedPortal(ServerLevel world, BlockPos pos) {
+    Portal portal = Portal.ENTITY_TYPE.create(world);
+
+    PortalAPI.setPortalPositionOrientationAndSize(
+        portal,
+        Vec3.atCenterOf(pos),
+        Direction.SOUTH,
+        4.0,
+        4.0
+    );
+
+    // 旋转 90 度（绕 Y 轴）
+    DQuaternion rotation = DQuaternion.fromAxisAngle(
+        new Vec3(0, 1, 0),      // Y 轴
+        Math.PI / 2             // 90 度
+    );
+
+    PortalAPI.setPortalTransformation(
+        portal,
+        Level.NETHER,
+        new Vec3(50, 64, 50),
+        rotation,               // 添加旋转变换！
+        1.0
+    );
+
+    world.addFreshEntity(portal);
+    portal.reloadAndSyncToClient();
+
+    return portal;
+}</code></pre>
+
+
+<h3>镜像传送门（Mirror）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public Mirror createMirror(ServerLevel world, BlockPos pos, Direction facing) {
+    Mirror mirror = Mirror.ENTITY_TYPE.create(world);
+
+    // 设置镜子位置
+    mirror.setPos(Vec3.atCenterOf(pos).x, Vec3.atCenterOf(pos).y, Vec3.atCenterOf(pos).z);
+
+    // 设置方向
+    Vec3 axisW = switch (facing) {
+        case NORTH -&gt; new Vec3(1, 0, 0);
+        case SOUTH -&gt; new Vec3(-1, 0, 0);
+        case EAST  -&gt; new Vec3(0, 0, 1);
+        case WEST  -&gt; new Vec3(0, 0, -1);
+        default    -&gt; new Vec3(1, 0, 0);
+    };
+    mirror.setAxisW(axisW);
+    mirror.setAxisH(new Vec3(0, 1, 0));
+
+    // 设置镜子尺寸
+    mirror.setWidth(4.0);
+    mirror.setHeight(4.0);
+
+    world.addFreshEntity(mirror);
+    mirror.reloadAndSyncToClient();
+
+    return mirror;
+}</code></pre>
+
+
+💡 <strong>镜子和普通传送门的区别</strong>：镜子不传送实体，而是将穿过它的实体镜像反射到原位置。
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，请确认你能回答以下问题：
+
+<ul><li>[ ] <strong>1. 继承结构</strong>：Portal 类的父类是什么？它实现了哪些接口？</li></ul>
+<ul><li>[ ] <strong>2. 四大属性</strong>：传送门的 axisW、axisH、destination、rotation 分别控制什么？</li></ul>
+<ul><li>[ ] <strong>3. 轴向量理解</strong>：如果传送门面朝北方（-Z），axisW 应该是什么值？</li></ul>
+<ul><li>[ ] <strong>4. 四元数</strong>：四元数比欧拉角的优点是什么？</li></ul>
+<ul><li>[ ] <strong>5. API 使用</strong>：使用 PortalAPI 创建传送门的标准流程是什么？</li></ul>
+
+<hr>
+
+<h2 id="下章预告">下章预告</h2>
+
+
+在下一章 <a href="03-teleportation-basics.html">传送机制基础</a> 中，我们将学习：
+
+<ul><li>玩家是如何被传送的</li></ul>
+<ul><li>客户端预测传送 vs 服务端验证</li></ul>
+<ul><li>碰撞检测如何触发传送</li></ul>
+<ul><li>双向传送的原理</li></ul>
+
+准备好深入了解传送的内部机制了吗？让我们继续！
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../Part-0-Prerequisites/01-portal-intro.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            传送门基础概念入门
+        </a><a href="03-teleportation-basics.html" class="next">
+            传送机制基础
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Mixin 注入基础 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+<a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../Part-1/01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="../Part-1/01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="../Part-1/02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="../Part-1/02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="../Part-1/03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="../Part-1/03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="../Part-1/04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+<a href="../Part-1/04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="01-mixin-basics.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="01-mixin-basics.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+<a href="02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Mixin 注入基础</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    Mixin 注入基础
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Mixin 注入基础</h1>
+
+
+<blockquote><p>💡 <strong>什么是 Mixin？</strong> 想象你有一本书（游戏代码），你想在不撕书的情况下添加注释。Mixin 就像给你的书贴上"便签"，在不修改原书的情况下添加新功能。</p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>什么是 Mixin</strong> - 一种在不修改原代码的情况下修改游戏行为的技术</li></ul>
+<ul><li><strong>Mixin 能做什么</strong> - 修改方块渲染、优化性能、添加新功能</li></ul>
+<ul><li><strong>Mixin 配置文件</strong> - 如何告诉游戏哪些类需要被修改</li></ul>
+<ul><li><strong>注入点类型</strong> - 在方法的什么位置插入代码</li></ul>
+<ul><li><strong>回调方法</strong> - 如何接收和操作被修改方法的参数</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Java 基础（类、继承、注解）</li></ul>
+<ul><li>知道什么是 <code>Minecraft</code> 和 <code>Mod</code></li></ul>
+<ul><li>了解 JSON 配置文件的格式</li></ul>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<a href="#什么是-mixin">什么是 Mixin？</a>
+<a href="#mixin-能做什么">Mixin 能做什么？</a>
+<a href="#mixin-配置文件">Mixin 配置文件</a>
+<a href="#注入点类型">注入点类型</a>
+<a href="#回调方法">回调方法</a>
+<a href="#实战写一个简单的-mixin">实战：写一个简单的 Mixin</a>
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="什么是-mixin">什么是 Mixin？</h2>
+
+
+<h3>生活比喻：给书贴便签</h3>
+
+
+想象你有一本很厚的书（就像 Minecraft 的代码），你不能在书上直接写字，但你想添加一些注释。
+
+<strong>Mixin 的解决方案</strong>：
+<ul><li>拿一张便签纸（Mixin 类）</li></ul>
+<ul><li>在便签上写你的注释（你的代码）</li></ul>
+<ul><li>把便签贴在书里指定的页码（注入点）</li></ul>
+<ul><li>当别人读这本书时，会同时读到你的注释</li></ul>
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 原书["原书 = Minecraft 代码"]
+        P1["第1页"]
+        P2["第2页 - render方法"]
+        P3["第3页"]
+    end
+    
+    subgraph 便签["便签 = Mixin"]
+        NOTE["Mixin 注释代码"]
+    end
+    
+    P2 -->|"贴在|"| NOTE
+    
+    subgraph 结果["修改后的书"]
+        R1["第1页"]
+        R2["第2页 + 便签"]
+        R3["第3页"]
+    end
+    
+    NOTE -->|"合并"| R2</div>
+</div>
+
+
+<h3>技术解释</h3>
+
+
+<strong>Mixin</strong> 是 SpongePowered 开发的一个 Java 库，它允许你在<strong>运行时</strong>（游戏启动时）修改任何 Java 类的字节码，而不需要修改原始源代码。
+
+| 概念 | 解释 |
+|------|------|
+| <strong>Target Class</strong> | 被修改的目标类（如 <code>LevelRenderer</code>） |
+| <strong>Mixin Class</strong> | 包含注入代码的类（继承目标类） |
+| <strong>Injection Point</strong> | 注入点，指定在目标方法的何处插入代码 |
+| <strong>Callback</strong> | 回调方法，在注入点执行的代码 |
+
+<hr>
+
+<h2 id="mixin-能做什么">Mixin 能做什么？</h2>
+
+
+<h3>Sodium 中的实际例子</h3>
+
+
+Sodium 使用 Mixin 做了大量性能优化：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph Minecraft原版["Minecraft 原版渲染"]
+        M1["每次渲染都调用<br/>glVertexPointer"]
+        M2["区块重新上传<br/>所有顶点数据"]
+        M3["视锥剔除<br/>逐个检查方块"]
+    end
+    
+    subgraph Sodium优化["Sodium Mixin 优化"]
+        S1["顶点数据缓存<br/>减少 OpenGL 调用"]
+        S2["增量更新<br/>只上传变化部分"]
+        S3["批量剔除<br/>一次检查整个区块"]
+    end
+    
+    M1 -.->|"@Inject"| S1
+    M2 -.->|"@Inject"| S2
+    M3 -.->|"@Overwrite"| S3</div>
+</div>
+
+
+<h3>常见用途</h3>
+
+
+| 用途 | 说明 | 示例 |
+|------|------|------|
+| 修改渲染 | 改变物体如何显示 | 让树叶透明、添加阴影 |
+| 优化性能 | 改进游戏运行效率 | Sodium 的渲染优化 |
+| 添加功能 | 在原方法中插入新逻辑 | 统计信息、调试信息 |
+| 拦截事件 | 在特定时机执行代码 | 区块加载/卸载时通知 |
+
+<hr>
+
+<h2 id="mixin-配置文件">Mixin 配置文件</h2>
+
+
+<h3>JSON 配置文件</h3>
+
+
+每个 Mod 都有一个 Mixin 配置文件，告诉游戏需要修改哪些类。
+</p>
+<p><pre class="code-block"><code class="language-1">{
+  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;required&quot;: true,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_17&quot;,
+  &quot;plugin&quot;: &quot;net.caffeinemc.mods.sodium.mixin.SodiumMixinPlugin&quot;,
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  },
+  &quot;client&quot;: [
+    &quot;core.MinecraftMixin&quot;,
+    &quot;core.WindowMixin&quot;,
+    &quot;core.render.world.LevelRendererMixin&quot;
+  ]
+}</code></pre>
+
+
+<h3>配置项说明</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 配置结构["sodium-common.mixins.json"]
+        PKG["package<br/>Mixin 类的包名"]
+        REQ["required<br/>是否必须应用"]
+        COMP["compatibilityLevel<br/>Java 版本"]
+        PLUGIN["plugin<br/>自定义插件类"]
+        CLIENT["client<br/>客户端 Mixin 列表"]
+    end
+    
+    PKG --> |"示例"| PKG_EX["net.caffeinemc.mods.sodium.mixin"]
+    CLIENT --> |"示例"| CLIENT_EX["core.MinecraftMixin..."]</div>
+</div>
+
+
+| 配置项 | 作用 | 示例值 |
+|--------|------|--------|
+| <code>package</code> | Mixin 类的包名前缀 | <code>net.caffeinemc.mods.sodium.mixin</code> |
+| <code>required</code> | 设为 <code>true</code> 表示必须成功应用 | <code>true</code> / <code>false</code> |
+| <code>compatibilityLevel</code> | Java 版本兼容性要求 | <code>JAVA_17</code> |
+| <code>plugin</code> | 自定义插件类，用于条件性应用 Mixin | <code>...SodiumMixinPlugin</code> |
+| <code>client</code> | 客户端专用的 Mixin 类列表 | <code>["MixinA", "MixinB"]</code> |
+
+<h3>在 mod.json 中注册</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mod.EventBusSubscriber(modid = &quot;mymod&quot;, bus = Mod.EventBusSubscriber.Bus.FML)
+public class MyMod {
+    // Mixin 配置文件会被自动加载
+}</code></pre>
+
+
+或者在 <code>fabric.mod.json</code> 中：
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;mixins&quot;: [
+    &quot;mymod.mixins.json&quot;
+  ]
+}</code></pre>
+
+
+<hr>
+
+<h2 id="注入点类型">注入点类型</h2>
+
+
+<h3>比喻：包裹快递</h3>
+
+
+想象你要在快递的<strong>不同位置</strong>添加追踪标签：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 快递["方法执行 = 送快递"]
+        START["📦 出发<br/>HEAD"]
+        MIDDLE["🏠 送到门口<br/>INVOKE"]
+        END["✅ 签收<br/>RETURN/TAIL"]
+    end
+    
+    subgraph 追踪标签["注入点类型"]
+        H["HEAD - 方法开头"]
+        R["RETURN - 返回前"]
+        T["TAIL - 方法末尾"]
+        I["INVOKE - 指定调用处"]
+    end
+    
+    START --> H
+    MIDDLE --> I
+    END --> R
+    END --> T</div>
+</div>
+
+
+<h3>常用注入点详解</h3>
+
+
+| 注入点 | 说明 | 使用场景 |
+|--------|------|----------|
+| <code>HEAD</code> | 方法的<strong>最开始</strong> | 初始化变量、前置检查 |
+| <code>RETURN</code> | 方法<strong>返回之前</strong> | 后置处理、结果修改 |
+| <code>TAIL</code> | 方法的<strong>最后</strong> | 与 RETURN 类似 |
+| <code>INVOKE</code> | <strong>特定方法调用</strong>处 | 修改某个方法的行为 |
+| <code>NEW</code> | <strong>对象创建</strong>处 | 替换对象构造方式 |
+
+<h3>INVOKE 注入的精确控制</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(
+    method = &quot;renderLevel&quot;,
+    at = @At(
+        value = &quot;INVOKE&quot;,                          // 注入类型
+        target = &quot;Lnet/minecraft/client/renderer/LevelRenderer;cullTerrain()V&quot;,  // 目标方法
+        shift = At.Shift.AFTER                     // 在目标方法之后
+    )
+)
+private void afterCullTerrain(CallbackInfo ci) {
+    // 在地形剔除完成后执行这里
+}</code></pre>
+
+
+<code>shift</code> 参数可以调整注入时机：
+
+| Shift 值 | 说明 |
+|----------|------|
+| <code>BEFORE</code> | 在目标方法调用<strong>之前</strong> |
+| <code>AFTER</code> | 在目标方法调用<strong>之后</strong> |
+| <code>by = X</code> | 在目标方法调用后偏移 X 行 |
+
+<hr>
+
+<h2 id="回调方法">回调方法</h2>
+
+
+<h3>CallbackInfo - 基本回调</h3>
+
+
+当你不关心原方法的参数和返回值时使用：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;runTick&quot;, at = @At(&quot;HEAD&quot;))
+private void preTick(CallbackInfo ci) {
+    // 方法执行前会调用这里
+    // ci 可以用来取消原方法的执行
+}</code></pre>
+
+
+<h3>CallbackInfoReturnable - 可修改返回值</h3>
+
+
+当你想<strong>修改</strong>原方法的返回值时使用：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;getRenderDistance&quot;, at = @At(&quot;HEAD&quot;))
+private void onGetRenderDistance(CallbackInfoReturnable&lt;Integer&gt; cir) {
+    // 把渲染距离改成 32
+    cir.setReturnValue(32);
+}</code></pre>
+
+
+<h3>捕获方法参数</h3>
+
+
+Mixin 可以接收原方法的参数：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;onBlockClicked&quot;, at = @At(&quot;HEAD&quot;))
+private void onBlockClicked(
+    BlockPos pos,           // 原方法的第一个参数
+    CallbackInfo ci
+) {
+    System.out.println(&quot;玩家点击了方块：&quot; + pos);
+}</code></pre>
+
+
+<h3>取消方法执行</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;shouldRender&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+private void shouldRender(CallbackInfoReturnable&lt;Boolean&gt; cir) {
+    if (/* 某些条件 */) {
+        cir.cancel();  // 取消原方法，返回 false
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="实战写一个简单的-mixin">实战：写一个简单的 Mixin</h2>
+
+
+<h3>场景：统计玩家放置的方块数量</h3>
+
+
+假设你想在玩家放置方块时统计数量，用 Mixin 实现：
+
+<h3>Step 1：创建 Mixin 配置文件</h3>
+
+
+<code>src/main/resources/mymod.mixins.json</code>:
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;package&quot;: &quot;com.mymod.mixin&quot;,
+  &quot;mixins&quot;: [],
+  &quot;client&quot;: [
+    &quot;client.PlayerPlacementMixin&quot;
+  ]
+}</code></pre>
+
+
+<h3>Step 2：创建 Mixin 类</h3>
+
+
+<code>src/main/java/com/mymod/mixin/PlayerPlacementMixin.java</code>:
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod.mixin;
+
+import com.mymod.MyMod;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+@Mixin(Minecraft.class)  // 目标类：Minecraft
+public class PlayerPlacementMixin {
+    
+    // 注入到 useItem 方法的开头
+    @Inject(
+        method = &quot;useItem&quot;,  // 目标方法
+        at = @At(&quot;HEAD&quot;)      // 在方法开头注入
+    )
+    private void onItemUse(CallbackInfo ci) {
+        MyMod.LOGGER.info(&quot;玩家正在使用物品！&quot;);
+    }
+}</code></pre>
+
+
+<h3>Step 3：完整示例 - 监听方块放置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod.mixin;
+
+import com.mymod.MyMod;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+@Mixin(Minecraft.class)
+public class PlayerPlacementMixin {
+
+    // 使用 LocalCapture 来捕获局部变量
+    @Inject(
+        method = &quot;handleBlockBreakProgress&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/world/level/Level;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z&quot;
+        ),
+        locals = LocalCapture.CAPTURE_FAILSOFT
+    )
+    private void onBlockPlaced(
+        BlockPos pos,
+        CallbackInfo ci,
+        Level level,
+        BlockState state
+    ) {
+        // 统计放置的方块
+        MyMod.blocksPlaced++;
+        MyMod.LOGGER.info(&quot;方块被放置了！当前数量：&quot; + MyMod.blocksPlaced);
+    }
+}</code></pre>
+
+
+<h3>Mixin 注入流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph 启动阶段["游戏启动"]
+        A["加载 mixins.json"] --> B["找到 Mixin 类"]
+        B --> C["找到目标类"]
+        C --> D["分析字节码"]
+        D --> E["定位注入点"]
+        E --> F["生成注入代码"]
+    end
+    
+    subgraph 运行阶段["游戏运行时"]
+        F --> G["ClassLoader 加载"]
+        G --> H{"调用方法"}
+        H -->|是| I["执行 Mixin 代码"]
+        I --> J["执行原方法"]
+        J --> K["返回结果"]
+    end
+    
+    style 启动阶段 fill:#ffd93d,color:#000
+    style 运行阶段 fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，检查你是否理解以下内容：
+
+<h3>✅ 基本概念</h3>
+
+
+<ul><li>[ ] 能用自己的话解释什么是 Mixin</li></ul>
+<ul><li>[ ] 知道 Target Class 和 Mixin Class 的区别</li></ul>
+<ul><li>[ ] 理解为什么需要 Mixin 配置文件</li></ul>
+
+<h3>✅ 注入点</h3>
+
+
+<ul><li>[ ] 能说出 HEAD、RETURN、INVOKE 三种注入点的区别</li></ul>
+<ul><li>[ ] 知道什么情况下需要使用 <code>cancellable = true</code></li></ul>
+<ul><li>[ ] 理解 <code>shift = At.Shift.AFTER</code> 的作用</li></ul>
+
+<h3>✅ 回调方法</h3>
+
+
+<ul><li>[ ] 知道何时使用 <code>CallbackInfo</code> vs <code>CallbackInfoReturnable</code></li></ul>
+<ul><li>[ ] 能从方法签名中捕获参数</li></ul>
+<ul><li>[ ] 知道如何调用 <code>ci.cancel()</code> 取消方法执行</li></ul>
+
+<h3>✅ 实践</h3>
+
+
+<ul><li>[ ] 能写一个简单的 Mixin 配置文件</li></ul>
+<ul><li>[ ] 能创建继承目标类的 Mixin 类</li></ul>
+<ul><li>[ ] 知道如何访问目标类的私有字段（使用 <code>@Shadow</code>）</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="../01-architecture-overview.html">01-architecture-overview</a> | Sodium 整体架构 |
+| <a href="../../analysis/07-mixin-injection.html">07-mixin-injection</a> | Mixin 注入机制详解 |
+
+<hr>
+
+<em>文档版本：v1.0</em>
+<em>学习时间：约 25 分钟</em>
+<em>基于 Sodium v0.8.6 源码</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../Part-1/04-render-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第四章：渲染管线与批处理
+        </a><a href="01-mixin-basics.html" class="next">
+            Mixin 注入基础
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>⚡ 事件系统 —— 让游戏"活"起来！ - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../part-0-prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="../part-0-prerequisites/02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="../part-0-prerequisites/03-minecraft-mod-concepts.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="../part-0-prerequisites/04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="03-event-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-world-gen/01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="../part-4-world-gen/02-custom-biome.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="../part-4-world-gen/03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-rendering/01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="../part-5-rendering/02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="../part-5-rendering/03-particles.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-advanced/01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="../part-7-advanced/02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="../part-7-advanced/03-recipes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="../part-7-advanced/04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="../part-8-projects/02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="../part-8-projects/03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="../part-8-projects/04-magic-creature.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Fabric Mod 开发完全指南</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    ⚡ 事件系统 —— 让游戏"活"起来！
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>⚡ 事件系统 —— 让游戏"活"起来！</h1>
+
+
+<blockquote><p><strong>TL;DR</strong> 事件系统让你响应游戏中的任何变化，就像在游戏中埋下"监听器"！</p></blockquote>
+
+<hr>
+
+<h2 id="目录">📖 目录</h2>
+
+
+<ul><li><a href="#1-什么是事件">🎯 什么是事件？</a></li></ul>
+<ul><li><a href="#2-如何使用事件">🛠️ 如何使用事件？</a></li></ul>
+<ul><li><a href="#3-常用事件一览">📚 常用事件一览</a></li></ul>
+<ul><li><a href="#4-实战示例">💡 实战示例</a></li></ul>
+<ul><li><a href="#5-事件优先级">🎯 事件优先级</a></li></ul>
+<ul><li><a href="#6-自定义事件">🚀 自定义事件</a></li></ul>
+
+<hr>
+
+<h2 id="1-什么是事件">1. 什么是事件？</h2>
+
+
+<h3>1.1 一句话解释</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">🎮 游戏 = 一个不断发生&quot;事情&quot;的世界
+📡 事件 = 这些&quot;事情&quot;的通知
+🧏 你 = 订阅这些通知的人</code></pre>
+
+
+当你"订阅"了某个事件，游戏就会在那个事情发生时通知你！
+
+<h3>1.2 现实类比</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph "🏪 餐厅场景"
+        A1["🍽️ 服务员上菜"] --> B1["👤 你开始吃"]
+        A2["📱 手机响了"] --> B2["👤 你接电话"]
+        A3["🔥 餐厅着火"] --> B3["👤 你逃跑"]
+    end
+
+    subgraph "🎮 Minecraft 对应"
+        A4["👤 玩家加入"] --> B4["💬 显示欢迎语"]
+        A5["🧱 方块被放置"] --> B5["✨ 触发特效"]
+        A6["💀 实体死亡"] --> B6["📦 掉落物品"]
+    end</div>
+</div>
+
+
+<h3>1.3 事件工作原理</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "🎮 Minecraft 游戏核心"
+        CORE["⚙️ 游戏引擎"]
+    end
+
+    subgraph "📡 事件总线 EventBus"
+        BUS["🚌 事件总线"]
+        BUS --> E1["PlayerJoin 事件"]
+        BUS --> E2["BlockBreak 事件"]
+        BUS --> E3["EntityDeath 事件"]
+    end
+
+    subgraph "📨 你的监听器"
+        L1["👤 监听器 A<br/>显示欢迎语"]
+        L2["👤 监听器 B<br/>播放音效"]
+        L3["👤 监听器 C<br/>记录日志"]
+    end
+
+    CORE -->|"触发事件"| BUS
+    E1 --> L1
+    E2 --> L2
+    E3 --> L3
+
+    style BUS fill:#f6ad55,color:#000
+    style CORE fill:#4a5568,color:#fff</div>
+</div>
+
+
+<h3>1.4 事件三要素</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "📬 事件 ="
+        E1["🎯 事件源<br/>谁触发的？"]
+        E2["📋 事件类型<br/>发生了什么？"]
+        E3["🎧 监听器<br/>你怎么办？"]
+    end
+
+    E1 -->|"组合"| EVENT["📬 完整事件"]
+    E2 --> EVENT
+    E3 --> EVENT</div>
+</div>
+
+
+<h3>1.5 事件执行流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant M as 🎮 Minecraft
+    participant B as 🚌 事件总线
+    participant L1 as 👤 监听器A
+    participant L2 as 👤 监听器B
+
+    M->>B: 玩家点击了方块！
+    B->>L1: 触发 BlockInteract 事件
+    L1-->>B: 我处理完了 ✓
+    B->>L2: 触发 BlockInteract 事件
+    L2-->>B: 我也处理完了 ✓
+    B-->>M: 所有监听器处理完毕</div>
+</div>
+
+
+<hr>
+
+<h2 id="2-如何使用事件">2. 如何使用事件？</h2>
+
+
+<h3>2.1 三步走策略</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    A["🔍 第一步<br/>找到事件"] --> B["📝 第二步<br/>注册监听"]
+    B --> C["💻 第三步<br/>写处理逻辑"]
+
+    style A fill:#4ecdc4
+    style B fill:#ffe66d
+    style C fill:#ff6b6b</div>
+</div>
+
+
+<h3>2.2 代码模板</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph "📋 事件注册模板"
+        T1["1️⃣ 导入事件类"]
+        T2["2️⃣ 获取事件"]
+        T3["3️⃣ 注册监听器"]
+    end
+
+    T1 --> T2 --> T3</div>
+</div>
+
+
+<strong>实际代码</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+
+// 2️⃣ 获取事件
+ServerPlayerEvents.JOIN
+
+// 3️⃣ 注册监听器（用 Lambda 简洁写法）
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    // 你的代码写在这里！
+    player.sendMessage(Text.literal(&quot;欢迎回来！&quot;));
+});</code></pre>
+
+
+<h3>2.3 对比：传统写法 vs Lambda</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    subgraph "❌ 传统写法（繁琐）"
+        C1["new Listener()"]
+        C2["重写方法"]
+        C3["写 10 行"]
+    end
+
+    subgraph "✅ Lambda 写法（简洁）"
+        L1["register()"]
+        L2["箭头函数"]
+        L3["写 3 行"]
+    end
+
+    C1 & L1</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ServerPlayerEvents.JOIN.register(new ServerPlayerEvents.Join() {
+    @Override
+    public void onJoin(ServerPlayerEntity player) {
+        player.sendMessage(Text.literal(&quot;欢迎！&quot;));
+    }
+});
+
+// ✅ Lambda 写法 - 简洁
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    player.sendMessage(Text.literal(&quot;欢迎！&quot;));
+});</code></pre>
+
+
+<h3>2.4 注册时机</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "❌ 错误做法"
+        E1["在 onInitialize() 之外注册"]
+        E2["动态注册"]
+    end
+
+    subgraph "✅ 正确做法"
+        O1["必须在 ModInitializer"]
+        O2["onInitialize() 方法内"]
+        O3["游戏启动时注册"]
+    end
+
+    style E1 fill:#fc8181
+    style E2 fill:#fc8181
+    style O1 fill:#68d391
+    style O2 fill:#68d391
+    style O3 fill:#68d391</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyMod implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        // ✅ 正确：在这里注册
+        ServerPlayerEvents.JOIN.register(player -&gt; {
+            // ...
+        });
+    }
+
+    // ❌ 错误：不要这样！
+    // public void someMethod() {
+    //     ServerPlayerEvents.JOIN.register(...); // 太晚了！
+    // }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-常用事件一览">3. 常用事件一览</h2>
+
+
+<h3>3.1 事件分类图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">mindmap
+  root((⚡ Fabric 事件))
+    👤 玩家事件
+      JOIN 加入
+      LEAVE 离开
+      DEATH 死亡
+      RESPAWN 重生
+    🌍 世界事件
+      SERVER_START 服务器启停
+      CHUNK_LOAD 区块加载
+      CHUNK_UNLOAD 区块卸载
+      TICK 刻事件
+    🧱 方块事件
+      BLOCK_PLACE 放置
+      BLOCK_BREAK 破坏
+      BLOCK_INTERACT 交互
+    👾 实体事件
+      ENTITY_SPAWN 生成
+      ENTITY_DEATH 死亡
+      ENTITY_DAMAGE 受伤
+    📦 物品事件
+      ITEM_USE 使用
+      ITEM_CRAFTED 合成
+      ITEM_DROPPED 丢弃</div>
+</div>
+
+
+<h3>3.2 事件速查表</h3>
+
+
+| 你想监听... | 使用这个事件 | 模块 |
+|------------|------------|------|
+| 玩家加入 | <code>ServerPlayerEvents.JOIN</code> | entity-events |
+| 玩家离开 | <code>ServerPlayerEvents.LEAVE</code> | entity-events |
+| 玩家死亡 | <code>ServerLivingEntityEvents.AFTER_DEATH</code> | entity-events |
+| 服务器启动 | <code>ServerLifecycleEvents.SERVER_STARTED</code> | lifecycle |
+| 方块放置 | <code>UseBlockCallback.EVENT</code> | interaction |
+| 方块破坏 | <code>PlayerBlockBreakEvents.AFTER</code> | interaction |
+| 实体生成 | <code>EntitySpawnCallback.EVENT</code> | entity |
+| 每刻执行 | <code>ServerTickEvents.END<em>SERVER</em>TICK</code> | lifecycle |
+
+<h3>3.3 事件来源模块</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "fabric-entity-events-v1"
+        EE1["ServerPlayerEvents"]
+        EE2["ServerLivingEntityEvents"]
+    end
+
+    subgraph "fabric-lifecycle-events-v1"
+        LE1["ServerLifecycleEvents"]
+        LE2["ServerTickEvents"]
+        LE3["ServerChunkEvents"]
+    end
+
+    subgraph "fabric-events-interaction-v0"
+        IE1["UseBlockCallback"]
+        IE2["AttackBlockCallback"]
+        IE3["PlayerBlockBreakEvents"]
+    end</div>
+</div>
+
+
+<hr>
+
+<h2 id="4-实战示例">4. 实战示例</h2>
+
+
+<h3>4.1 示例 1：欢迎玩家 🎉</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant P as 👤 玩家
+    participant S as 🏠 服务器
+    participant M as 📝 你的代码
+
+    P->>S: 加入服务器
+    S->>M: 触发 JOIN 事件
+    M-->>P: 发送欢迎消息
+    P-->>S: 看到 "欢迎回来！"</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ServerPlayerEvents.JOIN.register(player -&gt; {
+    player.sendMessage(
+        Text.literal(&quot;欢迎回来，&quot;)
+            .append(player.getName())
+            .append(&quot;！&quot;)
+    );
+});</code></pre>
+
+
+<h3>4.2 示例 2：死亡播报 💀</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[💀 实体死亡] --> B{是玩家？}
+    B -->|是| C[广播死亡消息]
+    B -->|否| D[不做处理]
+    C --> E["\"Steve 被 Creeper 炸死了\""]</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -&gt; {
+    if (entity instanceof ServerPlayerEntity player) {
+        String killer = source.getAttacker() != null
+            ? source.getAttacker().getName().getString()
+            : &quot;意外&quot;;
+
+        player.getServer().getPlayerManager().broadcast(
+            Text.literal(player.getName().getString() + &quot; 被 &quot; + killer + &quot; 杀死了！&quot;),
+            false
+        );
+    }
+});</code></pre>
+
+
+<h3>4.3 示例 3：每刻检查 ⏰</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart
+    A["⏰ 每刻（20次/秒）"] --> B["检查条件"]
+    B --> C{"满足条件？"}
+    C -->|是| D[执行操作]
+    C -->|否| E[跳过]
+    D --> F["🔄 继续"]
+    E --> F</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ServerTickEvents.END_SERVER_TICK.register(server -&gt; {
+    // ⚠️ 注意：这个会频繁执行，不要写耗时操作！
+    // 适合做：状态检查、定时任务
+});</code></pre>
+
+
+<h3>4.4 示例 4：自定义方块交互 🖱️</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    A["👤 玩家右键点击"] --> B["触发 UseBlockCallback"]
+    B --> C{"是我们的方块？"}
+    C -->|是| D["执行自定义逻辑"]
+    C -->|否| E["交给游戏处理"]
+    D --> F["✅ 消耗物品/播放音效"]</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">UseBlockCallback.EVENT.register((player, world, hand, hitResult) -&gt; {
+    if (world.isClient) return ActionResult.PASS;
+
+    BlockPos pos = hitResult.getBlockPos();
+    BlockState state = world.getBlockState(pos);
+
+    // 检查是否是我们的方块
+    if (state.isOf(ModBlocks.MY_MAGIC_BLOCK)) {
+        player.sendMessage(Text.literal(&quot;你点击了魔法方块！✨&quot;));
+        return ActionResult.SUCCESS; // 阻止默认行为
+    }
+
+    return ActionResult.PASS; // 交给游戏处理
+});</code></pre>
+
+
+<hr>
+
+<h2 id="5-事件优先级">5. 事件优先级</h2>
+
+
+<h3>5.1 优先级概念</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "📊 执行顺序"
+        P1["🔴 优先级 100<br/>（先执行）"] --> P2["🟡 优先级 200"]
+        P2 --> P3["🟢 优先级 300<br/>（后执行）"]
+    end</div>
+</div>
+
+
+<h3>5.2 注册顺序</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ServerPlayerEvents.JOIN.register(player -&gt; {
+    LOGGER.info(&quot;第一个监听器&quot;); // 先输出
+});
+
+ServerPlayerEvents.JOIN.register(player -&gt; {
+    LOGGER.info(&quot;第二个监听器&quot;); // 后输出
+});</code></pre>
+
+
+<h3>5.3 实际应用场景</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    A["🎮 游戏事件"] --> B["🔴 Mod A 优先级100"]
+    A --> C["🟡 Mod B 优先级200"]
+    A --> D["🟢 Mod C 优先级300"]
+
+    B -->|"可以阻止"| E["执行结果"]
+    C --> E
+    D --> E</div>
+</div>
+
+
+<hr>
+
+<h2 id="6-自定义事件">6. 自定义事件</h2>
+
+
+<h3>6.1 为什么需要？</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph "🎯 场景"
+        A["你的 Mod"] -->|"物品被使用"| B["触发自定义事件"]
+    end
+
+    subgraph "🤝 其他 Mod"
+        C["监听你的事件"]
+        D["响应物品使用"]
+    end
+
+    B --> C
+    C --> D</div>
+</div>
+
+
+<h3>6.2 定义事件</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    A["📝 定义接口"] --> B["🔧 创建事件"]
+    B --> C["⚡ 注册事件"]
+    C --> D["🎮 触发事件"]
+    D --> E["📡 其他 Mod 响应"]</div>
+</div>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyEvents {
+    // 定义事件
+    public static final Event&lt;MyItemUsed&gt; MY_ITEM_USED = EventFactory.createArrayBacked(
+        MyItemUsed.class,
+        (listeners) -&gt; (player, itemStack) -&gt; {
+            for (MyItemUsed listener : listeners) {
+                listener.onItemUsed(player, itemStack);
+            }
+        }
+    );
+
+    // 定义监听器接口
+    @FunctionalInterface
+    public interface MyItemUsed {
+        void onItemUsed(ServerPlayerEntity player, ItemStack itemStack);
+    }
+}</code></pre>
+
+
+<h3>6.3 触发事件</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MagicItem implements Item {
+    @Override
+    public boolean use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient &amp;&amp; player instanceof ServerPlayerEntity serverPlayer) {
+            // ✨ 触发自定义事件！
+            MyEvents.MY_ITEM_USED.invoker().onItemUsed(
+                serverPlayer,
+                player.getStackInHand(hand)
+            );
+        }
+        return super.use(world, player, hand);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="总结">🎯 总结</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    START["🎯 事件系统核心"] --> A["1️⃣ 找到事件"]
+    A --> B["2️⃣ 注册监听"]
+    B --> C["3️⃣ Lambda 写法"]
+    C --> D["4️⃣ 在 onInitialize 里注册"]
+    D --> E["5️⃣ 注意服务端/客户端区别"]
+
+    START2["⚠️ 常见坑"] --> P1["❌ 耗时操作"]
+    START2 --> P2["❌ 注册时机错误"]
+    START2 --> P3["❌ 服务端/客户端混用"]</div>
+</div>
+
+
+<h3>记住这三点：</h3>
+
+
+<ul><li><strong>事件 = 游戏的通知</strong></li></ul>
+<ul><li><strong>注册 = 订阅通知</strong></li></ul>
+<ul><li><strong>Lambda = 简洁的订阅方式</strong></li></ul>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+<ul><li><a href="04-registry-system.html">📦 注册系统</a> - 注册你的第一个游戏对象</li></ul>
+<ul><li><a href="../part-2-blocks-items/01-creating-blocks.html">🧱 创建方块</a> - 用事件响应方块交互</li></ul>
+
+<hr>
+
+<em>💡 提示：事件是 Fabric 开发的核心，多练习就能掌握！</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-mod-structure.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：Mod 项目结构
+        </a><a href="04-registry-system.html" class="next">
+            🔖 注册系统 —— 给你的 Mod 对象发"身份证"！
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

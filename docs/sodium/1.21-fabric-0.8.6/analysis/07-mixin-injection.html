@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Sodium Mixin 注入机制分析 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+<a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 架构概述
+        </a>
+<a href="02-chunk-render-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 区块渲染系统 (Chunk Render System)
+        </a>
+<a href="03-occlusion-culling.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 遮挡剔除系统 (Occlusion Culling)
+        </a>
+<a href="04-render-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 渲染管线
+        </a>
+<a href="05-shader-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 着色器系统
+        </a>
+<a href="06-platform-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Sodium Mixin 注入机制分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Sodium Mixin 注入机制分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Sodium Mixin 注入机制分析</h1>
+
+
+<blockquote><p>深入分析 Sodium 的 Mixin 注入机制、配置管理和字节码修改策略</p></blockquote>
+
+<h2 id="文档信息">文档信息</h2>
+
+
+| 属性 | 值 |
+|------|-----|
+| 分析版本 | Sodium v0.8.6 |
+| Minecraft 版本 | 1.21.11 |
+| 文档类型 | 架构分析 |
+| 依赖框架 | SpongePowered Mixin |
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<a href="#mixin-概述">Mixin 概述</a>
+<a href="#配置结构">配置结构</a>
+<a href="#插件机制">插件机制</a>
+<a href="#注入点类型">注入点类型</a>
+<a href="#回调方法">回调方法</a>
+<a href="#方法覆写">方法覆写</a>
+<a href="#优先级与顺序">优先级与顺序</a>
+<a href="#原子性保证">原子性保证</a>
+<a href="#冲突处理">冲突处理</a>
+<a href="#实战示例">实战示例</a>
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="mixin-概述">Mixin 概述</h2>
+
+
+<strong>Mixin</strong> 是一种运行时字节码修改框架，允许在不修改原源码的情况下对目标类进行扩展和修改。Sodium 使用 Mixin 框架对 Minecraft 的渲染系统进行深度优化。
+
+<h3>核心概念速查</h3>
+
+
+| 概念 | 说明 |
+|------|------|
+| <strong>Target Class</strong> | 被修改的目标类（如 <code>LevelRenderer</code>） |
+| <strong>Mixin Class</strong> | 包含注入代码的类（继承目标类） |
+| <strong>Injection Point</strong> | 注入点，指定在目标方法的何处插入代码 |
+| <strong>Callback</strong> | 回调方法，在注入点执行的代码 |
+| <strong>Shadow</strong> | 影子字段，访问目标类私有成员的机制 |
+
+<hr>
+
+<h2 id="配置结构">配置结构</h2>
+
+
+<h3>Mixin 配置文件</h3>
+
+
+Sodium 的 Mixin 配置位于 <code>sodium-common.mixins.json</code>：
+</p>
+<p><pre class="code-block"><code class="language-json">  &quot;package&quot;: &quot;net.caffeinemc.mods.sodium.mixin&quot;,
+  &quot;required&quot;: true,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_17&quot;,
+  &quot;plugin&quot;: &quot;net.caffeinemc.mods.sodium.mixin.SodiumMixinPlugin&quot;,
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  },
+  &quot;overwrites&quot;: {
+    &quot;conformVisibility&quot;: true
+  },
+  &quot;client&quot;: [
+    &quot;core.GlCommandEncoderAccessor&quot;,
+    &quot;core.MinecraftMixin&quot;,
+    &quot;core.WindowMixin&quot;,
+    // ... 80+ Mixin 类
+  ]
+}</code></pre>
+
+
+<h3>配置项说明</h3>
+
+
+| 配置项 | 作用 |
+|--------|------|
+| <code>package</code> | Mixin 类的包名前缀 |
+| <code>required</code> | 设为 <code>true</code> 表示必须成功应用 |
+| <code>compatibilityLevel</code> | Java 版本兼容性要求 |
+| <code>plugin</code> | 自定义插件类，用于条件性应用 Mixin |
+| <code>defaultRequire</code> | 默认注入点必须满足的条件数 |
+| <code>overwrites.conformVisibility</code> | 自动调整方法可见性 |
+
+<h3>Mixin 类分组结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">sodium/mixin/
+├── core/                    # 核心渲染 Mixin（不可禁用）
+│   ├── MinecraftMixin.java
+│   ├── render/
+│   │   └── world/
+│   │       └── LevelRendererMixin.java
+│   └── world/
+│       └── chunk/
+│           ├── PalettedContainerMixin.java
+│           ├── SimpleBitStorageMixin.java
+│           └── ZeroBitStorageMixin.java
+├── features/               # 功能性 Mixin（可配置）
+│   ├── render/
+│   │   ├── immediate/
+│   │   │   └── buffer_builder/
+│   │   │       └── intrinsics/
+│   │   │           └── BufferBuilderMixin.java
+│   │   └── world/
+│   │       └── clouds/
+│   │           └── CloudRendererMixin.java
+│   └── textures/
+│       └── animations/
+│           └── tracking/
+│               └── SpriteContentsMixin.java
+└── workarounds/            # 平台兼容性修复
+    ├── context_creation/
+    ├── event_loop/
+    └── window_minimized_state/</code></pre>
+
+
+<hr>
+
+<h2 id="插件机制">插件机制</h2>
+
+
+<h3>SodiumMixinPlugin</h3>
+
+
+Sodium 实现了 <code>IMixinConfigPlugin</code> 接口，提供精细的 Mixin 应用控制：
+</p>
+<p><pre class="code-block"><code class="language-java">    private static final String MIXIN_PACKAGE_ROOT = &quot;net.caffeinemc.mods.sodium.mixin.&quot;;
+
+    private final Logger logger = LogManager.getLogger(&quot;Sodium&quot;);
+    private MixinConfig config;
+    private boolean dependencyResolutionFailed;
+
+    @Override
+    public void onLoad(String mixinPackage) {
+        try {
+            this.config = MixinConfig.load(new File(&quot;./config/sodium-mixins.properties&quot;));
+        } catch (Exception e) {
+            throw new RuntimeException(&quot;Could not load configuration file for Sodium&quot;, e);
+        }
+
+        this.dependencyResolutionFailed = PlatformRuntimeInformation.getInstance().isModInLoadingList(&quot;embeddium&quot;);
+
+        if (dependencyResolutionFailed) {
+            this.logger.error(&quot;Not applying any Sodium mixins; dependency resolution has failed.&quot;);
+        }
+
+        this.logger.info(&quot;Loaded configuration file for Sodium: {} options available, {} override(s) found&quot;,
+                this.config.getOptionCount(), this.config.getOptionOverrideCount());
+    }
+
+    @Override
+    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (dependencyResolutionFailed) {
+            return false;
+        }
+
+        if (!mixinClassName.startsWith(MIXIN_PACKAGE_ROOT)) {
+            this.logger.error(&quot;Expected mixin &#39;{}&#39; to start with package root &#39;{}&#39;, treating as foreign and &quot; +
+                    &quot;disabling!&quot;, mixinClassName, MIXIN_PACKAGE_ROOT);
+
+            return false;
+        }
+
+        String mixin = mixinClassName.substring(MIXIN_PACKAGE_ROOT.length());
+        MixinOption option = this.config.getEffectiveOptionForMixin(mixin);
+
+        if (option == null) {
+            this.logger.error(&quot;No rules matched mixin &#39;{}&#39;, treating as foreign and disabling!&quot;, mixin);
+
+            return false;
+        }
+
+        if (option.isOverridden()) {
+            String source = &quot;[unknown]&quot;;
+
+            if (option.isUserDefined()) {
+                source = &quot;user configuration&quot;;
+            } else if (option.isModDefined()) {
+                source = &quot;mods [&quot; + String.join(&quot;, &quot;, option.getDefiningMods()) + &quot;]&quot;;
+            }
+
+            if (option.isEnabled()) {
+                this.logger.warn(&quot;Force-enabling mixin &#39;{}&#39; as rule &#39;{}&#39; (added by {}) enables it&quot;, mixin,
+                        option.getName(), source);
+            } else {
+                this.logger.warn(&quot;Force-disabling mixin &#39;{}&#39; as rule &#39;{}&#39; (added by {}) disables it and children&quot;, mixin,
+                        option.getName(), source);
+            }
+        }
+
+        return option.isEnabled();
+    }
+}</code></pre>
+
+
+<h3>插件核心职责</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[Minecraft 启动] --> B[Mixin 框架加载]
+    B --> C[调用 onLoad]
+    C --> D[加载 sodium-mixins.properties]
+    D --> E{依赖解析成功?}
+    E -->|否| F[禁用所有 Mixin]
+    E -->|是| G[遍历每个 Mixin]
+    G --> H[调用 shouldApplyMixin]
+    H --> I{配置检查}
+    I -->|包名匹配| J{Mixin 启用?}
+    I -->|无匹配规则| K[禁用 Mixin]
+    J -->|是| L[应用 Mixin]
+    J -->|否| M[跳过 Mixin]
+    L --> N[字节码注入完成]
+    M --> N
+    K --> N</div>
+</div>
+
+
+<h3>MixinConfig 配置系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">    private final Map&lt;String, MixinOption&gt; options = new HashMap&lt;&gt;();
+
+    protected MixinConfig() {
+        // 核心包默认启用
+        this.addMixinRule(&quot;core&quot;, true);
+
+        // 功能包默认启用
+        this.addMixinRule(&quot;features&quot;, true);
+
+        // 子包配置
+        this.addMixinRule(&quot;features.gui&quot;, true);
+        this.addMixinRule(&quot;features.gui.hooks&quot;, true);
+        this.addMixinRule(&quot;features.gui.hooks.console&quot;, true);
+        this.addMixinRule(&quot;features.gui.hooks.debug&quot;, true);
+        this.addMixinRule(&quot;features.gui.hooks.settings&quot;, true);
+
+        // 渲染相关
+        this.addMixinRule(&quot;features.render&quot;, true);
+        this.addMixinRule(&quot;features.render.entity&quot;, true);
+        this.addMixinRule(&quot;features.render.entity.cull&quot;, true);
+        this.addMixinRule(&quot;features.render.entity.shadow&quot;, true);
+
+        // 纹理动画
+        this.addMixinRule(&quot;features.textures&quot;, true);
+        this.addMixinRule(&quot;features.textures.animations&quot;, true);
+
+        // 兼容性修复
+        this.addMixinRule(&quot;workarounds&quot;, true);
+        this.addMixinRule(&quot;workarounds.context_creation&quot;, true);
+        this.addMixinRule(&quot;workarounds.event_loop&quot;, true);
+        this.addMixinRule(&quot;workarounds.window_minimized_state&quot;, true);
+    }</code></pre>
+
+
+<h3>配置继承规则</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">    int lastSplit = 0;
+    int nextSplit;
+
+    MixinOption rule = null;
+
+    // 从包路径逐层向上查找配置规则
+    while ((nextSplit = mixinClassName.indexOf(&#39;.&#39;, lastSplit)) != -1) {
+        String key = getMixinRuleName(mixinClassName.substring(0, nextSplit));
+
+        MixinOption candidate = this.options.get(key);
+
+        if (candidate != null) {
+            rule = candidate;
+
+            // 如果找到禁用规则，立即返回
+            if (!rule.isEnabled()) {
+                return rule;
+            }
+        }
+
+        lastSplit = nextSplit + 1;
+    }
+
+    return rule;
+}</code></pre>
+
+
+配置继承规则：
+<ul><li>从包路径根部开始逐层向下查找</li></ul>
+<ul><li>遇到 <code>false</code> 配置立即禁用</li></ul>
+<ul><li>子包配置优先于父包配置</li></ul>
+
+<hr>
+
+<h2 id="注入点类型">注入点类型</h2>
+
+
+<h3>常用注入点</h3>
+
+
+| 注入点类型 | 说明 | 使用场景 |
+|-----------|------|---------|
+| <code>HEAD</code> | 方法开头 | 初始化、资源分配 |
+| <code>RETURN</code> | 方法返回前 | 后置处理、清理 |
+| <code>TAIL</code> | 方法末尾 | 与 RETURN 类似 |
+| <code>INVOKE</code> | 指定方法调用处 | 修改方法行为 |
+| <code>FIELD</code> | 字段访问处 | 拦截字段读写 |
+| <code>NEW</code> | 对象创建处 | 替换对象构造 |
+
+<h3>@Inject 注入</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void init(Minecraft client, EntityRenderDispatcher entityRenderDispatcher, 
+                  BlockEntityRenderDispatcher blockEntityRenderDispatcher, 
+                  RenderBuffers renderBuffers, LevelRenderState levelRenderState, 
+                  FeatureRenderDispatcher featureRenderDispatcher, CallbackInfo ci) {
+    this.renderer = new SodiumWorldRenderer(client);
+}</code></pre>
+
+
+<h3>带条件的 INVOKE 注入</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">        at = @At(value = &quot;INVOKE&quot;, 
+                 target = &quot;Lnet/minecraft/client/renderer/LevelRenderer;cullTerrain(...)V&quot;))
+private void sodium$setMatrices(GraphicsResourceAllocator graphicsResourceAllocator, 
+                                 DeltaTracker deltaTracker, boolean bl, Camera camera, 
+                                 Matrix4f matrix4f, Matrix4f matrix4f2, Matrix4f matrix4f3, 
+                                 GpuBufferSlice gpuBufferSlice, Vector4f vector4f, 
+                                 boolean bl2, CallbackInfo ci) {
+    matrices = new ChunkRenderMatrices(matrix4f2, matrix4f);
+}</code></pre>
+
+
+<h3>带 Shift 的注入</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">    method = &quot;drop&quot;,
+    at = @At(
+        value = &quot;INVOKE&quot;,
+        target = &quot;Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;drop(ILnet/minecraft/world/level/chunk/LevelChunk;)V&quot;,
+        shift = At.Shift.AFTER  // 在目标方法调用之后注入
+    )
+)
+private void onChunkUnloaded(ChunkPos pos, CallbackInfo ci) {
+    ChunkTrackerHolder.get(this.level)
+            .onChunkStatusRemoved(pos.x, pos.z, ChunkStatus.FLAG_HAS_BLOCK_DATA);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="回调方法">回调方法</h2>
+
+
+<h3>CallbackInfo - 无返回值回调</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void preRender(boolean tick, CallbackInfo ci) {
+    ProfilerFiller profiler = Profiler.get();
+    profiler.push(&quot;wait_for_gpu&quot;);
+
+    while (this.fences.size() &gt; SodiumClientMod.options().advanced.cpuRenderAheadLimit) {
+        var fence = this.fences.dequeueLong();
+        // GPU 同步处理
+        GL32C.glClientWaitSync(fence, GL32C.GL_SYNC_FLUSH_COMMANDS_BIT, Long.MAX_VALUE);
+        GL32C.glDeleteSync(fence);
+    }
+
+    profiler.pop();
+}</code></pre>
+
+
+<h3>CallbackInfoReturnable - 可修改返回值</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void captureSeed(ClientPacketListener packetListener,
+                         ClientLevel.ClientLevelData levelData,
+                         ResourceKey&lt;Level&gt; dimension,
+                         Holder&lt;DimensionType&gt; dimensionType,
+                         int loadDistance,
+                         int simulationDistance,
+                         LevelRenderer renderer,
+                         boolean isDebug,
+                         long biomeZoomSeed, int k,
+                         CallbackInfo ci) {
+    this.biomeZoomSeed = biomeZoomSeed;  // 捕获生物群系缩放种子
+}</code></pre>
+
+
+<h3>带参数捕获</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void preRegisterColorProvider(BlockColor provider, Block[] blocks, CallbackInfo ci) {
+    for (Block block : blocks) {
+        // 检测是否被其他 mod 替换
+        if (this.blocksToColor.put(block, provider) != null) {
+            this.overridenBlocks.add(block);
+            SodiumClientMod.logger().info(&quot;Block {} had its color provider replaced&quot;, 
+                BuiltInRegistries.BLOCK.getKey(block));
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="方法覆写">方法覆写</h2>
+
+
+<h3>@Overwrite 完全替换</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * @reason Redirect to our renderer
+ * @author JellySquid
+ */
+@Overwrite
+public int countRenderedSections() {
+    return this.renderer.getVisibleChunkCount();
+}</code></pre>
+
+
+<h3>@Overwrite 示例：地形剔除</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java"> * @reason Redirect the terrain setup phase to our renderer
+ * @author JellySquid
+ */
+@Overwrite
+private void cullTerrain(Camera camera, Frustum frustum, boolean spectator) {
+    var viewport = ((ViewportProvider) frustum).sodium$createViewport();
+    var updateChunksImmediately = FlawlessFrames.isActive();
+
+    int sectionX = SectionPos.posToSectionCoord(camera.position().x());
+    int sectionY = SectionPos.posToSectionCoord(camera.position().y());
+    int sectionZ = SectionPos.posToSectionCoord(camera.position().z());
+
+    if (this.lastCameraSectionX != sectionX || this.lastCameraSectionY != sectionY 
+        || this.lastCameraSectionZ != sectionZ) {
+        this.lastCameraSectionX = sectionX;
+        this.lastCameraSectionY = sectionY;
+        this.lastCameraSectionZ = sectionZ;
+        this.worldBorderRenderer.invalidate();
+    }
+
+    RenderDevice.enterManagedCode();
+
+    try {
+        this.renderer.setupTerrain(camera, viewport, 
+            ((FogStorage) this.minecraft.gameRenderer).sodium$getFogParameters(), 
+            spectator, updateChunksImmediately, matrices);
+    } finally {
+        RenderDevice.exitManagedCode();
+    }
+}</code></pre>
+
+
+<h3>@Overwrite 使用注意事项</h3>
+
+
+<blockquote><p><strong>警告</strong>：<code>@Overwrite</code> 会完全替换目标方法，可能与其他 Mixin 冲突。仅在需要完全重写方法逻辑时使用。</p></blockquote>
+
+<hr>
+
+<h2 id="优先级与顺序">优先级与顺序</h2>
+
+
+<h3>Injector 配置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+
+
+| 配置项 | 说明 |
+|--------|------|
+| <code>defaultRequire</code> | 每个注入点需要的最小 Mixin 数量 |
+
+<h3>Require 参数</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">        at = @At(&quot;HEAD&quot;), 
+        cancellable = true, 
+        require = 1)  // 必须成功注入
+private void extractVisibleBlockEntities(Camera camera, float f, 
+                                         LevelRenderState levelRenderState, CallbackInfo ci) {
+    ci.cancel();  // 取消原方法执行
+    this.renderer.extractBlockEntities(camera, f, this.destructionProgress, levelRenderState);
+}</code></pre>
+
+
+<h3>Require vs Optional</h3>
+
+
+| 参数 | 含义 |
+|------|------|
+| <code>require = 1</code> | 至少 1 个 Mixin 必须成功注入，否则报错 |
+| <code>optional = true</code> | 即使注入失败也继续执行 |
+
+<hr>
+
+<h2 id="原子性保证">原子性保证</h2>
+
+
+<h3>RenderDevice 上下文管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void onWorldChanged(ClientLevel level, CallbackInfo ci) {
+    RenderDevice.enterManagedCode();
+
+    try {
+        this.renderer.setLevel(level);
+    } finally {
+        RenderDevice.exitManagedCode();
+    }
+}</code></pre>
+
+
+<h3>异常安全模式</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Target as 目标方法
+    participant Inject as Mixin Callback
+    participant Device as RenderDevice
+    participant Finally as finally 块
+
+    Target->>Inject: 执行回调
+    Inject->>Device: enterManagedCode()
+    Note over Inject: try 块开始
+    Inject->>Inject: 执行业务逻辑
+    alt 发生异常
+        Inject->>Device: exitManagedCode()
+        Inject-->>Target: 抛出异常
+    else 正常完成
+        Note over Inject: finally 块执行
+        Inject->>Finally: 清理资源
+        Finally->>Device: exitManagedCode()
+        Inject-->>Target: 返回
+    end</div>
+</div>
+
+
+<hr>
+
+<h2 id="冲突处理">冲突处理</h2>
+
+
+<h3>Shadow 字段访问</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class SimpleBitStorageMixin implements BitStorageExtension {
+    @Shadow
+    @Final
+    private long[] data;
+
+    @Shadow
+    @Final
+    private int valuesPerLong;
+
+    @Shadow
+    @Final
+    private long mask;
+
+    @Shadow
+    @Final
+    private int bits;
+
+    @Shadow
+    @Final
+    private int size;
+
+    @Override
+    public &lt;T&gt; void sodium$unpack(T[] out, Palette&lt;T&gt; palette) {
+        int idx = 0;
+
+        for (long word : this.data) {  // 访问 @Shadow 字段
+            long l = word;
+
+            for (int j = 0; j &lt; this.valuesPerLong; ++j) {
+                out[idx] = Objects.requireNonNull(palette.valueFor((int) (l &amp; this.mask)),
+                        &quot;Palette does not contain entry for value in storage&quot;);
+                l &gt;&gt;= this.bits;
+
+                if (++idx &gt;= this.size) {
+                    return;
+                }
+            }
+        }
+    }
+}</code></pre>
+
+
+<h3>Unique 扩展方法</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static final EnumMap&lt;ChunkSectionLayer, List&lt;RenderPass.Draw&lt;GpuBufferSlice[]&gt;&gt;&gt; STATIC_MAP = new EnumMap&lt;&gt;(ChunkSectionLayer.class);
+
+@Unique
+private SodiumWorldRenderer renderer;
+
+@Unique
+private ChunkRenderMatrices matrices;</code></pre>
+
+
+<h3>接口实现扩展</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class LevelRendererMixin implements LevelRendererExtension {
+    // 通过实现接口添加新方法
+    @Override
+    public SodiumWorldRenderer sodium$getWorldRenderer() {
+        return this.renderer;
+    }
+}</code></pre>
+
+
+<h3>多 Mixin 协同时段</h3>
+
+
+当多个 Mixin 需要修改同一方法时，Mixin 框架保证：
+
+<ul><li><strong>按优先级顺序执行</strong>：优先级高的 Mixin 先执行</li></ul>
+<ul><li><strong>独立的 CallbackInfo</strong>：每个 Mixin 有独立的回调信息</li></ul>
+<ul><li><strong>cancellable 控制</strong>：可通过 <code>ci.cancel()</code> 取消后续执行</li></ul>
+
+<hr>
+
+<h2 id="实战示例">实战示例</h2>
+
+
+<h3>示例 1：区块状态追踪</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ClientChunkCacheMixin {
+    @Shadow
+    @Final
+    ClientLevel level;
+
+    // 区块卸载时触发
+    @Inject(
+        method = &quot;drop&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;drop(ILnet/minecraft/world/level/chunk/LevelChunk;)V&quot;,
+            shift = At.Shift.AFTER
+        )
+    )
+    private void onChunkUnloaded(ChunkPos pos, CallbackInfo ci) {
+        ChunkTrackerHolder.get(this.level)
+            .onChunkStatusRemoved(pos.x, pos.z, ChunkStatus.FLAG_HAS_BLOCK_DATA);
+    }
+
+    // 区块加载时触发
+    @Inject(
+        method = &quot;replaceWithPacketData&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/client/multiplayer/ClientLevel;onChunkLoaded(Lnet/minecraft/world/level/ChunkPos;)V&quot;,
+            shift = At.Shift.AFTER
+        )
+    )
+    private void onChunkLoaded(int chunkX, int chunkZ, FriendlyByteBuf friendlyByteBuf, 
+                               Map&lt;Heightmap.Types, long[]&gt; map, 
+                               Consumer&lt;ClientboundLevelChunkPacketData.BlockEntityTagOutput&gt; consumer, 
+                               CallbackInfoReturnable&lt;LevelChunk&gt; cir) {
+        ChunkTrackerHolder.get(this.level)
+            .onChunkStatusAdded(chunkX, chunkZ, ChunkStatus.FLAG_HAS_BLOCK_DATA);
+    }
+}</code></pre>
+
+
+<h3>示例 2：快速顶点写入</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class BufferBuilderMixin implements VertexConsumer {
+    @Shadow
+    @Final
+    private boolean fastFormat;
+
+    @Override
+    public void putBulkData(PoseStack.Pose matrices, BakedQuad bakedQuad, 
+                            float r, float g, float b, float a, int light, int overlay) {
+        // 检测快速格式模式
+        if (!this.fastFormat) {
+            // 回退到原始实现
+            VertexConsumer.super.putBulkData(matrices, bakedQuad, r, g, b, a, light, overlay);
+
+            if (bakedQuad.sprite() != null) {
+                SpriteUtil.INSTANCE.markSpriteActive(bakedQuad.sprite());
+            }
+
+            return;
+        }
+
+        // 使用优化的写入路径
+        VertexBufferWriter writer = VertexBufferWriter.of(this);
+        ModelQuadView quad = (ModelQuadView) (Object) bakedQuad;
+
+        int color = ColorABGR.pack(r, g, b, a);
+        BakedModelEncoder.writeQuadVertices(writer, matrices, quad, color, light, overlay, false);
+
+        if (quad.getSprite() != null) {
+            SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
+        }
+    }
+}</code></pre>
+
+
+<h3>示例 3：资源释放追踪</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void postRender(boolean tick, CallbackInfo ci) {
+    var fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    if (fence == 0) {
+        throw new RuntimeException(&quot;Failed to create fence object&quot;);
+    }
+
+    this.fences.enqueue(fence);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="mixin-注入流程图">Mixin 注入流程图</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph Mixin框架层
+        A[sodium-common.mixins.json] --> B[SodiumMixinPlugin]
+        B --> C{shouldApplyMixin?}
+        C -->|是| D[应用 Mixin]
+        C -->|否| E[跳过]
+    end
+
+    subgraph 字节码转换
+        D --> F[解析目标类]
+        F --> G[定位注入点]
+        G --> H[生成 Callback 代码]
+        H --> I[修改字节码]
+    end
+
+    subgraph 运行时
+        I --> J[ClassLoader 加载]
+        J --> K[方法调用时触发]
+        K --> L{Mixin 类型}
+        L -->|@Inject| M[执行 Callback]
+        L -->|@Overwrite| N[完全替换方法]
+        L -->|@Redirect| O[重定向调用]
+    end
+
+    M --> P[调用原方法]
+    O --> Q[返回修改结果]
+    N --> R[直接返回新实现]</div>
+</div>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+<h3>自查清单</h3>
+
+
+<ul><li><strong>配置加载流程</strong></li></ul>
+   - [ ] 了解 <code>SodiumMixinPlugin.onLoad()</code> 的执行时机
+   - [ ] 理解 <code>MixinConfig.getEffectiveOptionForMixin()</code> 的继承规则
+
+<ul><li><strong>注入点类型</strong></li></ul>
+   - [ ] 能区分 <code>HEAD</code>、<code>RETURN</code>、<code>TAIL</code> 的区别
+   - [ ] 理解 <code>At.Shift.BEFORE</code>、<code>AFTER</code>、<code>by</code> 的作用
+
+<ul><li><strong>回调方法</strong></li></ul>
+   - [ ] 知道何时使用 <code>CallbackInfo</code> vs <code>CallbackInfoReturnable</code>
+   - [ ] 理解 <code>ci.cancel()</code> 的效果
+
+<ul><li><strong>原子性保证</strong></li></ul>
+   - [ ] 能在 Mixin 中正确使用 try-finally
+   - [ ] 理解 <code>RenderDevice.enterManagedCode()</code> 的必要性
+
+<ul><li><strong>冲突处理</strong></li></ul>
+   - [ ] 掌握 <code>@Shadow</code> 访问私有字段
+   - [ ] 理解 <code>@Unique</code> 添加新成员的机制
+   - [ ] 知道如何通过接口扩展添加新方法
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="01-architecture-overview.html">01-architecture-overview</a> | Sodium 整体架构 |
+| <a href="02-chunk-render-system.html">02-chunk-render-system</a> | 区块渲染系统 |
+| <a href="04-render-pipeline.html">04-render-pipeline</a> | 渲染管线 |
+
+<hr>
+
+<em>文档版本: v1.0</em>
+<em>分析时间: 2026-03-24</em>
+<em>基于 Sodium v0.8.6 源码</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="06-platform-integration.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Sodium 平台集成 (Platform Integration)
+        </a><a href="08-configuration-system.html" class="next">
+            Sodium 配置系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

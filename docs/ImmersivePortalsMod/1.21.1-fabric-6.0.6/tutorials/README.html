@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>ImmersivePortalsMod 教程系列 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="Part-0-Prerequisites/01-portal-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="Part-1-Foundation/02-portal-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="Part-1-Foundation/03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="Part-2-Rendering/04-portal-rendering.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="Part-3-Advanced/05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="Part-3-Advanced/06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="Part-3-Advanced/07-scaling-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="Part-4-Development/08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="Part-4-Development/09-portal-api-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="README.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>ImmersivePortalsMod 教程系列</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    ImmersivePortalsMod 教程系列
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1-fabric-6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 10 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>ImmersivePortalsMod 教程系列</h1>
+
+
+<blockquote><p>从入门到精通，手把手教你掌握跨维度传送门开发！</p></blockquote>
+
+<hr>
+
+<h2 id="课程介绍">课程介绍</h2>
+
+
+欢迎来到 <strong>ImmersivePortalsMod 教程系列</strong>！本系列教程将带你从零开始，深入理解并掌握 ImmersivePortalsMod 的开发技能。
+
+<h3>你将学到什么？</h3>
+
+
+| 能力 | 描述 |
+|------|------|
+| <strong>传送门创建</strong> | 使用 PortalAPI 动态创建和管理传送门 |
+| <strong>位置与方向控制</strong> | 掌握四元数、轴向向量设置传送门朝向 |
+| <strong>维度变换</strong> | 实现跨维度传送、缩放传送、旋转传送 |
+| <strong>嵌套传送门</strong> | 理解多层传送门的递归渲染机制 |
+| <strong>镜像与缩放</strong> | 掌握反射变换和大小缩放 |
+| <strong>实体行为控制</strong> | 使用 ImmPtlEntityExtension 控制实体传送逻辑 |
+| <strong>模组集成</strong> | 将传送门功能集成到你的 Mod 中 |
+
+<h3>学习路线图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 前置知识
+        A[第一章：传送门基础概念]
+    end
+
+    subgraph 基础知识
+        A --> B[第二章：传送门实体]
+        B --> C[第三章：传送机制]
+    end
+
+    subgraph 进阶
+        C --> D[第四章：渲染原理]
+        D --> E[第五章：嵌套传送门]
+        E --> F[第六章：镜像系统]
+        F --> G[第七章：缩放传送]
+    end
+
+    subgraph 开发
+        G --> H[第八章：API 基础]
+        H --> I[第九章：API 高级]
+    end
+
+    H --> J[总结]
+    I --> J
+
+    style A fill:#90EE90
+    style B fill:#90EE90
+    style C fill:#87CEEB
+    style D fill:#87CEEB
+    style E fill:#DDA0DD
+    style F fill:#DDA0DD
+    style G fill:#DDA0DD
+    style H fill:#FFD700
+    style I fill:#FFD700
+    style J fill:#FF6B6B</div>
+</div>
+
+
+<hr>
+
+<h2 id="课程大纲">课程大纲</h2>
+
+
+| 章节 | 标题 | 主要内容 | 难度 |
+|------|------|----------|------|
+| 第一章 | 传送门基础概念 | ImmersivePortalsMod 简介、与原版对比、核心能力 | ⭐ |
+| 第二章 | 传送门实体 | Portal 类结构、四大属性、变换数学 | ⭐ |
+| 第三章 | 传送机制 | 服务端/客户端传送管理器、碰撞检测、双向传送 | ⭐⭐ |
+| 第四章 | 渲染原理 | PortalRenderer、Stencil、帧缓冲区、嵌套渲染 | ⭐⭐ |
+| 第五章 | 嵌套传送门 | 递归渲染、层数限制、应用场景 | ⭐⭐ |
+| 第六章 | 镜像系统 | Mirror 类、反射变换、应用示例 | ⭐⭐ |
+| 第七章 | 缩放传送 | 巨型/微型传送门、缩放数学 | ⭐⭐ |
+| 第八章 | API 基础 | PortalAPI、创建传送门、配置属性 | ⭐⭐⭐ |
+| 第九章 | API 高级 | ImmPtlEntityExtension、自定义生成器、集成示例 | ⭐⭐⭐⭐ |
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<h3>第一部分：前置知识</h3>
+
+
+<ul><li><a href="Part-0-Prerequisites/01-portal-intro.html">第一章：传送门基础概念</a></li></ul>
+
+<h3>第二部分：基础知识</h3>
+
+
+<ul><li><a href="Part-1-Foundation/02-portal-entity.html">第二章：传送门实体</a></li></ul>
+<ul><li><a href="Part-1-Foundation/03-teleportation-basics.html">第三章：传送机制</a></li></ul>
+
+<h3>第三部分：进阶</h3>
+
+
+<ul><li><a href="Part-2-Rendering/04-portal-rendering.html">第四章：渲染原理</a></li></ul>
+<ul><li><a href="Part-3-Advanced/05-nested-portals.html">第五章：嵌套传送门</a></li></ul>
+<ul><li><a href="Part-3-Advanced/06-mirror-system.html">第六章：镜像系统</a></li></ul>
+<ul><li><a href="Part-3-Advanced/07-scaling-portals.html">第七章：缩放传送</a></li></ul>
+
+<h3>第四部分：开发</h3>
+
+
+<ul><li><a href="Part-4-Development/08-portal-api-basics.html">第八章：API 基础</a></li></ul>
+<ul><li><a href="Part-4-Development/09-portal-api-advanced.html">第九章：API 高级</a></li></ul>
+
+<h3>总结</h3>
+
+
+<ul><li><a href="SUMMARY.html">教程总结</a></li></ul>
+
+<hr>
+
+<h2 id="第一章传送门基础概念">第一章：传送门基础概念</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解 ImmersivePortalsMod 的核心能力，与原版传送门进行对比</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>ImmersivePortalsMod 是什么</li></ul>
+<ul><li>与原版传送门的对比（加载屏幕 vs 无缝）</li></ul>
+<ul><li>核心能力：无加载屏幕、嵌套渲染、缩放传送</li></ul>
+<ul><li>关键术语解释</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-0-Prerequisites/01-portal-intro.html">01-portal-intro</a>
+
+<hr>
+
+<h2 id="第二章传送门实体">第二章：传送门实体</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解传送门作为实体的运作方式，掌握 Portal 类的核心属性</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>Portal 类继承结构</li></ul>
+<ul><li>传送门的四大属性：axisW、axisH、destination、rotation</li></ul>
+<ul><li>变换数学基础简介</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-1-Foundation/02-portal-entity.html">02-portal-entity</a>
+
+<hr>
+
+<h2 id="第三章传送机制">第三章：传送机制</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解玩家如何被传送到目标位置</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>传送流程图（服务端/客户端协作）</li></ul>
+<ul><li>ServerTeleportationManager vs ClientTeleportationManager</li></ul>
+<ul><li>碰撞检测触发传送</li></ul>
+<ul><li>双向传送原理</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-1-Foundation/03-teleportation-basics.html">03-teleportation-basics</a>
+
+<hr>
+
+<h2 id="第四章渲染原理">第四章：渲染原理</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解传送门如何渲染目标世界</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>PortalRenderer 架构</li></ul>
+<ul><li>Stencil 模板缓冲原理</li></ul>
+<ul><li>帧缓冲区切换</li></ul>
+<ul><li>嵌套渲染层简介</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-2-Rendering/04-portal-rendering.html">04-portal-rendering</a>
+
+<hr>
+
+<h2 id="第五章嵌套传送门">第五章：嵌套传送门</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解多层传送门的递归渲染机制</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>嵌套层数限制（最多 6 层）</li></ul>
+<ul><li>递归渲染机制</li></ul>
+<ul><li>嵌套传送门应用场景</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-3-Advanced/05-nested-portals.html">05-nested-portals</a>
+
+<hr>
+
+<h2 id="第六章镜像系统">第六章：镜像系统</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解镜像实体的反射变换</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>Mirror 类继承自 Portal</li></ul>
+<ul><li>反射变换数学</li></ul>
+<ul><li>镜像创建示例</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-3-Advanced/06-mirror-system.html">06-mirror-system</a>
+
+<hr>
+
+<h2 id="第七章缩放传送">第七章：缩放传送</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：理解大小缩放传送门</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>scaleTransformation 属性</li></ul>
+<ul><li>巨型传送门（scale > 1）</li></ul>
+<ul><li>微型传送门（scale < 1）</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-3-Advanced/07-scaling-portals.html">07-scaling-portals</a>
+
+<hr>
+
+<h2 id="第八章api-基础">第八章：API 基础</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：学会使用 PortalAPI 创建传送门</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>PortalAPI 主要方法</li></ul>
+<ul><li>创建传送门完整示例</li></ul>
+<ul><li>设置传送门位置和方向</li></ul>
+<ul><li>开发者第一个实验</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-4-Development/08-portal-api-basics.html">08-portal-api-basics</a>
+
+<hr>
+
+<h2 id="第九章api-高级">第九章：API 高级</h2>
+
+
+<blockquote><p><strong>学习目标</strong>：使用 ImmPtlEntityExtension 控制实体行为</p></blockquote>
+
+<strong>核心内容</strong>：
+<ul><li>ImmPtlEntityExtension 接口</li></ul>
+<ul><li>自定义传送门生成器</li></ul>
+<ul><li>完整模组集成示例</li></ul>
+
+<strong>快速链接</strong>：<a href="Part-4-Development/09-portal-api-advanced.html">09-portal-api-advanced</a>
+
+<hr>
+
+<h2 id="前置要求">前置要求</h2>
+
+
+在开始本系列教程之前，你需要具备以下知识：
+
+| 要求 | 说明 | 资源 |
+|------|------|------|
+| <strong>Java 基础</strong> | 熟悉类、接口、继承等概念 | Minecraft 1.21 教程 |
+| <strong>Fabric Mod 开发</strong> | 了解 Mod 结构、注册机制 | Fabric 教程系列 |
+| <strong>Minecraft 实体系统</strong> | Entity、ServerLevel 等基础 | 实体系统教程 |
+| <strong>三维数学基础</strong> | 了解向量、四元数的概念 | 可选补充 |
+
+<h3>推荐学习顺序</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">1. Fabric 基础教程
+2. Minecraft 实体系统
+3. ImmersivePortalsMod 第一章 ~ 第三章（基础）
+4. ImmersivePortalsMod 第四章 ~ 第七章（进阶）
+5. ImmersivePortalsMod 第八章 ~ 第九章（开发）</code></pre>
+
+
+<hr>
+
+<h2 id="常见问题">常见问题</h2>
+
+
+<h3>Q1: 如何获取 PortalAPI？</h3>
+
+
+<strong>A</strong>: PortalAPI 是一个工具类，直接使用其静态方法即可：
+</p>
+<p><pre class="code-block"><code class="language-java">import qouteall.imm_ptl.core.api.PortalAPI;</code></pre>
+
+
+<h3>Q2: 传送门创建后需要同步吗？</h3>
+
+
+<strong>A</strong>: 是的！修改传送门属性后必须调用 <code>reloadAndSyncToClient()</code> 同步到客户端。
+
+<h3>Q3: 可以在客户端创建传送门吗？</h3>
+
+
+<strong>A</strong>: <code>PortalAPI</code> 的大部分方法只能在服务器端调用。客户端可以使用 Mixin 或事件来间接创建。
+
+<h3>Q4: 如何调试传送门问题？</h3>
+
+
+<strong>A</strong>:
+<ul><li>使用 <code>/portal_debug</code> 命令查看传送门状态</li></ul>
+<ul><li>检查 <code>isPortalValid()</code> 返回值</li></ul>
+<ul><li>确认目标维度和位置是否有效</li></ul>
+
+<hr>
+
+<h2 id="相关资源">相关资源</h2>
+
+
+<h3>分析文档</h3>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="../analysis/08-public-api.html">08-public-api</a> | 公共 API 详细分析 |
+| <a href="../analysis/02-portal-entity.html">02-portal-entity</a> | 传送门实体系统 |
+| <a href="../analysis/03-teleportation-system.html">03-teleportation-system</a> | 传送系统 |
+| <a href="../analysis/04-rendering-system.html">04-rendering-system</a> | 渲染系统 |
+
+<h3>源码路径</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\
+├── Portal.java                      # 核心传送门实体
+├── api/
+│   ├── PortalAPI.java               # 核心 API
+│   └── ImmPtlEntityExtension.java   # 实体扩展接口
+├── teleportation/
+│   └── ServerTeleportationManager.java  # 传送管理
+└── render/
+    └── PortalRenderer.java          # 渲染器</code></pre>
+
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+准备好开始学习了吗？
+
+<ul><li><a href="Part-0-Prerequisites/01-portal-intro.html">第一章：传送门基础概念</a> →</li></ul>
+<ul><li><a href="../analysis/SUMMARY.html">查看架构总结</a></li></ul>
+
+<hr>
+
+<strong>提示</strong>：建议按照教程顺序学习，每章都有配套的代码示例，可以直接在游戏中测试！
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="Part-4-Development/09-portal-api-advanced.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            API 高级应用
+        </a><a href="SUMMARY.html" class="next">
+            ImmersivePortalsMod 教程总结
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

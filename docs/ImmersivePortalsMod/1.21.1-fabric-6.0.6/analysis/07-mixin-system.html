@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Mixin Injection System - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Architecture Summary
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Mixin Injection System</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Mixin Injection System
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1-fabric-6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 40 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="table-of-contents">Table of Contents</h2>
+
+
+<ul><li><a href="#overview">Overview</a></li></ul>
+<ul><li><a href="#mixin-configuration-files">Mixin Configuration Files</a></li></ul>
+  - <a href="#main-mixin-configuration-imm&lt;/em>ptlmixinsjson">Main Mixin Configuration (imm&lt;em>ptl.mixins.json)</a>
+  - <a href="#compatibility-mixin-configuration-imm&lt;em>ptl&lt;/em>compatmixinsjson">Compatibility Mixin Configuration (imm&lt;em>ptl&lt;/em>compat.mixins.json)</a>
+<ul><li><a href="#mixin-plugin-system">Mixin Plugin System</a></li></ul>
+  - <a href="#ipmixinplugin">IPMixinPlugin</a>
+  - <a href="#ipcompatibilitymixinplugin">IPCompatMixinPlugin</a>
+<ul><li><a href="#duck-interface-design">Duck Interface Design</a></li></ul>
+  - <a href="#duck-interface-overview">Duck Interface Overview</a>
+  - <a href="#key-duck-interfaces">Key Duck Interfaces</a>
+<ul><li><a href="#key-mixin-implementations">Key Mixin Implementations</a></li></ul>
+  - <a href="#entity-collision-system">Entity Collision System</a>
+  - <a href="#rendering-system">Rendering System</a>
+  - <a href="#networking-and-packet-handling">Networking and Packet Handling</a>
+  - <a href="#chunk-loading-system">Chunk Loading System</a>
+  - <a href="#position-synchronization">Position Synchronization</a>
+<ul><li><a href="#mixin-categories-by-system">Mixin Categories by System</a></li></ul>
+<ul><li><a href="#mixin-directory-structure">Mixin Directory Structure</a></li></ul>
+<ul><li><a href="#injection-techniques-summary">Injection Techniques Summary</a></li></ul>
+
+<h2 id="overview">Overview</h2>
+
+
+ImmersivePortalsMod (IPMod) 是一个功能强大的 Minecraft 模组，它通过 Mixin 注入系统对游戏核心进行深度改造，实现跨维度传送、门户渲染、多世界加载等复杂功能。该模组的 Mixin 系统设计精良，采用了多种业界最佳实践：
+
+<ul><li><strong>双配置文件架构</strong>：主配置负责核心功能，兼容性配置负责第三方模组集成</li></ul>
+<ul><li><strong>智能条件注入</strong>：通过 Mixin Plugin 动态控制哪些 Mixin 需要应用</li></ul>
+<ul><li><strong>Duck 接口模式</strong>：提供类型安全的扩展接口访问</li></ul>
+<ul><li><strong>多样化注入技术</strong>：结合 <code>@Inject</code>、<code>@Redirect</code>、<code>@ModifyVariable</code>、<code>@Overwrite</code> 等注解</li></ul>
+
+Mixin 是 SpongePowered 开发的一个轻量级字节码注入框架，允许模组在不修改原版源码的情况下，通过注入点（Injection Point）对目标类进行改造。
+
+<h2 id="mixin-configuration-files">Mixin Configuration Files</h2>
+
+
+<h3>Main Mixin Configuration (imm_ptl.mixins.json)</h3>
+
+
+主配置文件定义了 ImmersivePortalsMod 的核心 Mixin 类，文件位于 <code>src/main/resources/imm_ptl.mixins.json</code>。
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;qouteall.imm_ptl.core.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_17&quot;,
+  &quot;plugin&quot;: &quot;qouteall.imm_ptl.core.IPMixinPlugin&quot;,
+  &quot;mixins&quot;: [
+    &quot;common.MixinClipContext&quot;,
+    &quot;common.MixinConnection_Debug&quot;,
+    &quot;common.MixinDedicatedServer&quot;,
+    &quot;common.MixinLevel&quot;,
+    &quot;common.MixinLivingEntity&quot;,
+    &quot;common.MixinMinecraftServer&quot;,
+    &quot;common.MixinServerChunkCache&quot;,
+    &quot;common.MixinServerLevel&quot;,
+    // ... 共 80 个公共端 Mixin
+  ],
+  &quot;client&quot;: [
+    &quot;client.MixinAbstractClientPlayer&quot;,
+    &quot;client.MixinClientConnection&quot;,
+    &quot;client.MixinClientLevel&quot;,
+    // ... 共 60 个客户端 Mixin
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+
+
+配置参数说明：
+
+| 参数 | 说明 | 值 |
+|------|------|-----|
+| <code>required</code> | 是否强制要求该配置被加载 | <code>true</code> |
+| <code>package</code> | Mixin 类的包名前缀 | <code>qouteall.imm_ptl.core.mixin</code> |
+| <code>compatibilityLevel</code> | Java 兼容性级别 | <code>JAVA_17</code> |
+| <code>plugin</code> | Mixin Plugin 类的全限定名 | <code>qouteall.imm_ptl.core.IPMixinPlugin</code> |
+| <code>mixins</code> | 服务端和通用 Mixin 列表 | 80 个类 |
+| <code>client</code> | 仅客户端加载的 Mixin 列表 | 60 个类 |
+| <code>injectors.defaultRequire</code> | 默认的注入要求等级 | <code>1</code> |
+
+<h3>Compatibility Mixin Configuration (imm<em>ptl</em>compat.mixins.json)</h3>
+
+
+兼容性配置文件专门用于与第三方模组的集成，位于 <code>src/main/resources/imm<em>ptl</em>compat.mixins.json</code>。
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;required&quot;: true,
+  &quot;package&quot;: &quot;qouteall.imm_ptl.core.compat.mixin&quot;,
+  &quot;compatibilityLevel&quot;: &quot;JAVA_17&quot;,
+  &quot;plugin&quot;: &quot;qouteall.imm_ptl.core.compat.IPCompatMixinPlugin&quot;,
+  &quot;mixins&quot;: [
+    &quot;cardinal_comp.MixinCardinalCompComponentKey&quot;,
+    &quot;flywheel.MixinFlywheelCrumblingRenderer&quot;,
+    &quot;flywheel.MixinFlywheelProgramCompiler&quot;,
+    &quot;flywheel.MixinFlywheelQuadConverter&quot;,
+    &quot;iris.MixinIrisClearPass&quot;,
+    &quot;iris.MixinIrisFinalPassRenderer&quot;,
+    &quot;iris.MixinIrisIris&quot;,
+    &quot;iris.MixinIrisRenderingPipeline&quot;,
+    &quot;iris.MixinIrisShadowRenderTargets&quot;,
+    &quot;iris.MixinIrisSodiumShader&quot;,
+    &quot;iris.MixinIrisTransformPatcher&quot;,
+    &quot;sodium.MixinSodiumDefaultShaderInterface&quot;,
+    &quot;sodium.MixinSodiumFlawlessFrames&quot;,
+    &quot;sodium.MixinSodiumOcclusionCuller&quot;,
+    &quot;sodium.MixinSodiumRenderRegion&quot;,
+    &quot;sodium.MixinSodiumRenderSectionManager&quot;,
+    &quot;sodium.MixinSodiumShaderLoader&quot;,
+    &quot;sodium.MixinSodiumViewport&quot;,
+    &quot;sodium.MixinSodiumWorldRenderer&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+
+
+这个配置展示了 IPMod 对以下第三方模组的支持：
+
+<ul><li><strong>Iris</strong>（着色器兼容性）</li></ul>
+<ul><li><strong>Sodium</strong>（渲染优化兼容性）</li></ul>
+<ul><li><strong>Flywheel</strong>（Flywheel 渲染引擎兼容性）</li></ul>
+<ul><li><strong>Cardinal Components</strong>（实体组件系统兼容性）</li></ul>
+
+<h2 id="mixin-plugin-system">Mixin Plugin System</h2>
+
+
+Mixin Plugin 是 Mixin 框架的核心扩展点，允许在注入过程中执行自定义逻辑。IPMod 实现了两个 Plugin 类：
+
+<h3>IPMixinPlugin</h3>
+
+
+主 Plugin 负责核心 Mixin 的加载控制：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core;
+
+import net.fabricmc.loader.api.FabricLoader;
+import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+
+import java.util.List;
+import java.util.Set;
+
+public class IPMixinPlugin implements IMixinConfigPlugin {
+    @Override
+    public void onLoad(String mixinPackage) {
+    
+    }
+    
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+    
+    @Override
+    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (FabricLoader.getInstance().isModLoaded(&quot;porting_lib&quot;)) {
+            if (mixinClassName.contains(&quot;MixinRenderTarget&quot;) || mixinClassName.contains(&quot;MixinMainTarget&quot;)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    @Override
+    public void acceptTargets(Set&lt;String&gt; myTargets, Set&lt;String&gt; otherTargets) {
+    
+    }
+    
+    @Override
+    public List&lt;String&gt; getMixins() {
+        return null;
+    }
+    
+    @Override
+    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+    
+    }
+    
+    @Override
+    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+    
+    }
+}</code></pre>
+
+
+<strong>关键方法解析</strong>：
+
+<ul><li><code>shouldApplyMixin()</code>：动态判断是否应用某个 Mixin，当 PortingLib 模组存在时，跳过 <code>MixinRenderTarget</code> 和 <code>MixinMainTarget</code>，避免冲突</li></ul>
+
+<h3>IPCompatMixinPlugin</h3>
+
+
+兼容性 Plugin 负责第三方模组的条件加载：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.compat;
+
+import net.fabricmc.loader.api.FabricLoader;
+import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+
+import java.util.List;
+import java.util.Set;
+
+public class IPCompatMixinPlugin implements IMixinConfigPlugin {
+    @Override
+    public void onLoad(String mixinPackage) {
+    
+    }
+    
+    @Override
+    public String getRefMapperConfig() {
+        return null;
+    }
+    
+    @Override
+    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        
+        
+        FabricLoader fabricLoader = FabricLoader.getInstance();
+        if (mixinClassName.contains(&quot;IrisSodium&quot;)) {
+            boolean sodiumLoaded = fabricLoader.isModLoaded(&quot;sodium&quot;);
+            boolean irisLoaded = fabricLoader.isModLoaded(&quot;iris&quot;);
+            return sodiumLoaded &amp;&amp; irisLoaded;
+        }
+        
+        if (mixinClassName.contains(&quot;Iris&quot;)) {
+            boolean irisLoaded = fabricLoader.isModLoaded(&quot;iris&quot;);
+            return irisLoaded;
+        }
+        
+        if (mixinClassName.contains(&quot;Sodium&quot;)) {
+            boolean sodiumLoaded = fabricLoader.isModLoaded(&quot;sodium&quot;);
+            return sodiumLoaded;
+        }
+        
+        if (mixinClassName.contains(&quot;Flywheel&quot;)) {
+            boolean flywheelLoaded = fabricLoader.isModLoaded(&quot;flywheel&quot;);
+            return flywheelLoaded;
+        }
+        
+        if (mixinClassName.contains(&quot;CardinalComp&quot;)) {
+            boolean cardinalCompLoaded = fabricLoader.isModLoaded(&quot;cardinal-components-base&quot;);
+            return cardinalCompLoaded;
+        }
+        
+        return false;
+    }</code></pre>
+
+
+兼容性 Plugin 的条件加载逻辑：
+
+| 模组名称 | Mixin 模式 | 加载条件 |
+|----------|------------|----------|
+| Iris + Sodium | <code>IrisSodium</code> | Sodium 和 Iris 都已加载 |
+| Iris | <code>Iris</code> | Iris 已加载 |
+| Sodium | <code>Sodium</code> | Sodium 已加载 |
+| Flywheel | <code>Flywheel</code> | Flywheel 已加载 |
+| Cardinal Components | <code>CardinalComp</code> | cardinal-components-base 已加载 |
+
+<h2 id="duck-interface-design">Duck Interface Design</h2>
+
+
+Duck Interface（鸭式接口）是 Mixin 框架的核心概念，允许通过接口方法扩展目标类的功能。IPMod 定义了丰富的 Duck 接口。
+
+<h3>Duck Interface Overview</h3>
+
+
+IPMod 的 Duck 接口按照功能模块分类：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph "Duck Interfaces by Category"
+        subgraph "Entity"
+            IEEntity["IEEntity"]
+            IEPlayerEntity["IEPlayerEntity"]
+        end
+        
+        subgraph "World"
+            IEWorld["IEWorld"]
+            IEServerWorld["IEServerWorld"]
+            IEClientWorld["IEClientWorld"]
+        end
+        
+        subgraph "Rendering"
+            IEWorldRenderer["IEWorldRenderer"]
+            IECamera["IECamera"]
+            IEFrustum["IEFrustum"]
+        end
+        
+        subgraph "Networking"
+            IECustomPayloadPacket["IECustomPayloadPacket"]
+            IEServerPlayNetworkHandler["IEServerPlayNetworkHandler"]
+            IEClientPlayNetworkHandler["IEClientPlayNetworkHandler"]
+        end
+        
+        subgraph "Chunk"
+            IEChunkMap["IEChunkMap"]
+            IEChunkHolder["IEChunkHolder"]
+            IEDistanceManager["IEDistanceManager"]
+        end
+    end</div>
+</div>
+
+
+<h3>Key Duck Interfaces</h3>
+
+
+<h4>IEEntity</h4>
+
+
+<code>IEEntity</code> 是最重要的 Duck 接口之一，为所有实体添加了门户碰撞相关的功能：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.ducks;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import qouteall.imm_ptl.core.collision.PortalCollisionHandler;
+import qouteall.imm_ptl.core.portal.Portal;
+
+public interface IEEntity {
+    void ip_notifyCollidingWithPortal(Entity portal);
+    
+    @Nullable
+    PortalCollisionHandler ip_getPortalCollisionHandler();
+    
+    PortalCollisionHandler ip_getOrCreatePortalCollisionHandler();
+    
+    void ip_setPortalCollisionHandler(@Nullable PortalCollisionHandler handler);
+    
+    @Nullable
+    @Deprecated
+    Portal ip_getCollidingPortal();
+    
+    void ip_tickCollidingPortal();
+    
+    boolean ip_isCollidingWithPortal();
+    
+    boolean ip_isRecentlyCollidingWithPortal();
+    
+    void ip_clearCollidingPortal();
+    
+    void ip_unsetRemoved();
+    
+    @Nullable AABB ip_getActiveCollisionBox(AABB originalBox);
+    
+    void ip_setPositionWithoutTriggeringCallback(Vec3 newPos);
+    
+    void ip_setWorld(Level world);
+}</code></pre>
+
+
+<h4>IEWorldRenderer</h4>
+
+
+<code>IEWorldRenderer</code> 提供了对 <code>LevelRenderer</code> 的扩展访问：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.ducks;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.ViewArea;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.world.entity.Entity;
+
+public interface IEWorldRenderer {
+    EntityRenderDispatcher ip_getEntityRenderDispatcher();
+    
+    ViewArea ip_getBuiltChunkStorage();
+    
+    void ip_myRenderEntity(
+        Entity entity,
+        double cameraX,
+        double cameraY,
+        double cameraZ,
+        float partialTick,
+        PoseStack matrixStack,
+        MultiBufferSource vertexConsumerProvider
+    );
+    
+    PostChain portal_getTransparencyShader();
+    
+    void portal_setTransparencyShader(PostChain arg);
+    
+    RenderBuffers ip_getRenderBuffers();
+    
+    void ip_setRenderBuffers(RenderBuffers arg);
+    
+    Frustum portal_getFrustum();
+    
+    void portal_setFrustum(Frustum arg);
+    
+    void portal_fullyDispose();
+    
+    void portal_setChunkInfoList(ObjectArrayList&lt;SectionRenderDispatcher.RenderSection&gt; arg);
+    
+    ObjectArrayList&lt;SectionRenderDispatcher.RenderSection&gt; portal_getChunkInfoList();
+}</code></pre>
+
+
+<h4>IEChunkMap_Accessor</h4>
+
+
+用于访问 <code>ChunkMap</code> 的私有方法：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.chunk_sync;
+
+import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ChunkMap;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+@Mixin(ChunkMap.class)
+public interface IEChunkMap_Accessor {
+    @Invoker(&quot;getChunks&quot;)
+    Iterable&lt;ChunkHolder&gt; ip_getChunks();
+}</code></pre>
+
+
+<h2 id="key-mixin-implementations">Key Mixin Implementations</h2>
+
+
+<h3>Entity Collision System</h3>
+
+
+<code>MixinEntity</code> 是实体碰撞系统的核心 Mixin，它实现了跨门户碰撞检测和响应：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.collision;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import qouteall.imm_ptl.core.IPGlobal;
+import qouteall.imm_ptl.core.IPMcHelper;
+import qouteall.imm_ptl.core.api.ImmPtlEntityExtension;
+import qouteall.imm_ptl.core.collision.PortalCollisionHandler;
+import qouteall.imm_ptl.core.ducks.IEEntity;
+import qouteall.imm_ptl.core.miscellaneous.IPVanillaCopy;
+import qouteall.imm_ptl.core.portal.EndPortalEntity;
+import qouteall.imm_ptl.core.portal.Portal;
+import qouteall.q_misc_util.Helper;
+import qouteall.q_misc_util.my_util.CountDownInt;
+
+@Mixin(Entity.class)
+public abstract class MixinEntity implements IEEntity, ImmPtlEntityExtension {
+    
+    @Nullable
+    @Unique
+    private PortalCollisionHandler ip_portalCollisionHandler;
+    
+    // ... shadows ...
+    
+    @Redirect(
+        method = &quot;Lnet/minecraft/world/entity/Entity;move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/world/entity/Entity;collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;&quot;
+        )
+    )
+    private Vec3 redirectHandleCollisions(Entity entity, Vec3 attemptedMove) {
+        if (!IPGlobal.enableServerCollision) {
+            if (!entity.level().isClientSide()) {
+                if (entity instanceof Player) {
+                    return attemptedMove;
+                }
+                else {
+                    return Vec3.ZERO;
+                }
+            }
+        }
+        
+        if (attemptedMove.lengthSqr() &gt; 60 * 60) {
+            // avoid loading too many chunks in collision calculation and lag the server
+            if (IMM_PTL_LOG_COUNTER.tryDecrement()) {
+                LOGGER.error(
+                    &quot;[ImmPtl] Skipping collision calculation because entity moves too fast {} {} {}&quot;,
+                    entity, attemptedMove, entity.level().getGameTime(),
+                    new Throwable()
+                );
+            }
+            
+            return Vec3.ZERO;
+        }
+        
+        if (!IPGlobal.crossPortalCollision
+            || ip_portalCollisionHandler == null
+            || !ip_portalCollisionHandler.hasCollisionEntry()
+        ) {
+            Vec3 normalCollisionResult = collide(attemptedMove);
+            return normalCollisionResult;
+        }
+        
+        Vec3 result = ip_portalCollisionHandler.handleCollision(
+            (Entity) (Object) this, attemptedMove
+        );
+        
+        if (result.lengthSqr() &gt; 20 * 20) {
+            if (IMM_PTL_LOG_COUNTER.tryDecrement()) {
+                LOGGER.error(
+                    &quot;[ImmPtl] cross portal collision result too large {} {} {}&quot;,
+                    this, attemptedMove, result
+                );
+            }
+            return Vec3.ZERO;
+        }
+        
+        return result;
+    }</code></pre>
+
+
+<strong>碰撞系统 Mixin 的核心功能</strong>：
+
+<ul><li><strong>@Redirect 碰撞处理</strong>：重定向 <code>Entity.move()</code> 方法中的 <code>collide()</code> 调用，实现跨门户碰撞</li></ul>
+<ul><li><strong>@Inject 火抗性检查</strong>：当实体在末地传送门中时，返回 <code>fireImmune = true</code></li></ul>
+<ul><li><strong>@Redirect 碰撞盒获取</strong>：修改 <code>checkInsideBlocks()</code> 中的碰撞盒计算</li></ul>
+<ul><li><strong>@Inject 穿墙检测</strong>：修改 <code>isInWall()</code> 返回值，避免在门户碰撞时误判</li></ul>
+
+<h4>MixinPlayer_Collision</h4>
+
+
+玩家特有的碰撞逻辑使用 <code>@Overwrite</code> 注解完全替换方法：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.collision;
+
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import qouteall.imm_ptl.core.ducks.IEEntity;
+
+@SuppressWarnings(&quot;resource&quot;)
+@Mixin(Player.class)
+public abstract class MixinPlayer_Collision {
+    
+    /**
+     * @author qouteall
+     * @reason mixin does not allow cancel in redirect
+     */
+    @Overwrite
+    public boolean canPlayerFitWithinBlocksAndEntitiesWhen(Pose pose) {
+        LivingEntity this_ = (LivingEntity) (Object) this;
+        
+        AABB box = this_.getDimensions(pose).makeBoundingBox(this_.position());
+        AABB activeCollisionBox = ((IEEntity) this_).ip_getActiveCollisionBox(box);
+        if (activeCollisionBox == null) {
+            return true;
+        }
+        return this_.level().noCollision(
+            this_, activeCollisionBox.deflate(1.0E-7)
+        );
+    }
+}</code></pre>
+
+
+<h3>Rendering System</h3>
+
+
+<code>MixinLevelRenderer</code> 是渲染系统的核心 Mixin，文件超过 670 行，处理跨门户渲染的所有细节：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.client.render;
+
+import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+// ... imports ...
+
+@Mixin(value = LevelRenderer.class)
+public abstract class MixinLevelRenderer implements IEWorldRenderer {
+    
+    @Shadow
+    private ClientLevel level;
+    
+    @Shadow
+    @Final
+    private EntityRenderDispatcher entityRenderDispatcher;
+    
+    @Shadow
+    @Final
+    private Minecraft minecraft;
+    
+    // ... more shadows ...
+    
+    @Inject(
+        method = &quot;renderLevel&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/client/renderer/DimensionSpecialEffects;constantAmbientLight()Z&quot;
+        )
+    )
+    private void onAfterCutoutRendering(
+        DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f modelView, Matrix4f matrix4f2, CallbackInfo ci
+    ) {
+        CrossPortalEntityRenderer.onBeginRenderingEntitiesAndBlockEntities(modelView);
+    }
+    
+    @Inject(
+        method = &quot;renderLevel&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/client/renderer/Sheets;translucentCullBlockSheet()Lnet/minecraft/client/renderer/RenderType;&quot;
+        )
+    )
+    private void onMyBeforeTranslucentRendering(
+        DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f modelView, Matrix4f matrix4f2, CallbackInfo ci
+    ) {
+        IPCGlobal.renderer.onBeforeTranslucentRendering(modelView);
+        
+        MyGameRenderer.updateFogColor();
+        MyGameRenderer.resetFogState();
+        
+        MyGameRenderer.resetDiffuseLighting();
+        
+        FrontClipping.disableClipping();
+    }
+    
+    @IPVanillaCopy
+    @Inject(
+        method = &quot;renderLevel&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            target = &quot;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endLastBatch()V&quot;,
+            ordinal = 1, // the second occurrence
+            shift = At.Shift.AFTER
+        )
+    )
+    private void onEndRenderingEntities(
+        DeltaTracker deltaTracker, boolean bl, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f modelView, Matrix4f matrix4f, Callback4f2, CallbackInfo ci, @Local PoseStack poseStack
+    ) {
+        CrossPortalEntityRenderer.onEndRenderingEntitiesAndBlockEntities(poseStack);
+    }</code></pre>
+
+
+渲染系统 Mixin 的关键注入点：
+
+| 注入点 | 触发时机 | 功能 |
+|--------|----------|------|
+| <code>constantAmbientLight()</code> | 切出渲染完成后 | 开始跨门户实体渲染 |
+| <code>translucentCullBlockSheet()</code> | 半透明渲染前 | 准备渲染状态 |
+| <code>endLastBatch()</code> (ordinal=1) | 实体渲染结束 | 结束跨门户渲染 |
+| <code>RETURN</code> | 渲染完全结束 | 恢复渲染状态 |
+| <code>renderSectionLayer()</code> | 每个区块层渲染前后 | 设置/取消裁剪平面 |
+
+<h3>Networking and Packet Handling</h3>
+
+
+网络包处理 Mixin 负责跨维度通信：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.networking;
+
+import net.minecraft.network.protocol.common.ClientCommonPacketListener;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import qouteall.imm_ptl.core.ducks.IECustomPayloadPacket;
+import qouteall.imm_ptl.core.network.PacketRedirection;
+
+@Mixin(ClientboundCustomPayloadPacket.class)
+public class MixinClientboundCustomPayloadPacket implements IECustomPayloadPacket {
+    
+    @Shadow
+    @Final
+    private CustomPacketPayload payload;
+    
+    // this is run before Fabric API try to handle the packet
+    @Inject(
+        method = &quot;handle(Lnet/minecraft/network/protocol/common/ClientCommonPacketListener;)V&quot;,
+        at = @At(&quot;HEAD&quot;),
+        cancellable = true
+    )
+    private void onHandle(ClientCommonPacketListener clientCommonPacketListener, CallbackInfo ci) {
+        if (payload instanceof PacketRedirection.Payload redirectPayload) {
+            if (clientCommonPacketListener instanceof ClientGamePacketListener clientGamePacketListener) {
+                redirectPayload.handle(clientGamePacketListener);
+            }
+            
+            ci.cancel();
+        }
+    }
+}</code></pre>
+
+
+<strong>网络包处理的独特设计</strong>：
+
+<ul><li>使用 <code>@Inject</code> 在 <code>HEAD</code> 位置拦截 <code>handle()</code> 方法</li></ul>
+<ul><li>通过 <code>@Cancellable</code> 取消原始处理，防止 Fabric API 再次处理</li></ul>
+<ul><li>动态检查 <code>payload</code> 类型，转发到 <code>PacketRedirection.Payload</code> 的处理器</li></ul>
+
+<h3>Chunk Loading System</h3>
+
+
+区块加载系统通过多个 Mixin 协调工作：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.chunk_sync;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.Ticket;
+import net.minecraft.util.SortedArraySet;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import qouteall.imm_ptl.core.chunk_loading.ImmPtlChunkTickets;
+import qouteall.imm_ptl.core.ducks.IEChunkMap;
+import qouteall.imm_ptl.core.ducks.IEDistanceManager;
+import qouteall.imm_ptl.core.platform_specific.IPConfig;
+
+@Mixin(DistanceManager.class)
+public abstract class MixinDistanceManager implements IEDistanceManager {
+    
+    @Shadow
+    @Final
+    private Long2ObjectMap&lt;ObjectSet&lt;ServerPlayer&gt;&gt; playersPerChunk;
+    
+    @Shadow
+    protected abstract SortedArraySet&lt;Ticket&lt;?&gt;&gt; getTickets(long position);
+    
+    // avoid NPE
+    @Inject(method = &quot;Lnet/minecraft/server/level/DistanceManager;removePlayer(Lnet/minecraft/core/SectionPos;Lnet/minecraft/server/level/ServerPlayer;)V&quot;, at = @At(&quot;HEAD&quot;))
+    private void onHandleChunkLeave(
+        SectionPos sectionPos,
+        ServerPlayer serverPlayer,
+        CallbackInfo ci
+    ) {
+        long chunkPos = sectionPos.chunk().toLong();
+        playersPerChunk.computeIfAbsent(chunkPos, k -&gt; new ObjectOpenHashSet&lt;&gt;());
+    }
+    
+    @Inject(
+        method = &quot;runAllUpdates&quot;,
+        at = @At(&quot;RETURN&quot;)
+    )
+    private void onRunAllUpdates(ChunkMap chunkManager, CallbackInfoReturnable&lt;Boolean&gt; cir) {
+        if (IPConfig.getConfig().enableImmPtlChunkLoading) {
+            ServerLevel world = ((IEChunkMap) chunkManager).ip_getWorld();
+            ImmPtlChunkTickets.get(world).flushThrottling(world);
+        }
+    }
+    
+    @Override
+    public SortedArraySet&lt;Ticket&lt;?&gt;&gt; portal_getTicketSet(long chunkPos) {
+        return getTickets(chunkPos);
+    }
+}</code></pre>
+
+
+<h3>Position Synchronization</h3>
+
+
+位置同步 Mixin 处理跨维度的玩家位置同步：
+</p>
+<p><pre class="code-block"><code class="language-java">package qouteall.imm_ptl.core.mixin.common.position_sync;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import qouteall.imm_ptl.core.IPGlobal;
+import qouteall.imm_ptl.core.ducks.IEEntity;
+import qouteall.imm_ptl.core.ducks.IEPlayerMoveC2SPacket;
+import qouteall.imm_ptl.core.ducks.IEPlayerPositionLookS2CPacket;
+import qouteall.imm_ptl.core.ducks.IEServerPlayNetworkHandler;
+import qouteall.imm_ptl.core.mc_utils.ServerTaskList;
+import qouteall.imm_ptl.core.miscellaneous.IPVanillaCopy;
+import qouteall.imm_ptl.core.platform_specific.IPConfig;
+import qouteall.imm_ptl.core.teleportation.ServerTeleportationManager;
+import qouteall.q_misc_util.my_util.CountDownInt;
+
+import java.util.Set;
+
+@Mixin(value = ServerGamePacketListenerImpl.class, priority = 900)
+public abstract class MixinServerGamePacketListenerImpl implements IEServerPlayNetworkHandler {
+    // ... shadows ...
+    
+    /**
+     * Attach the dimension information to
+     * {@link ServerGamePacketListenerImpl#awaitingPositionFromClient}
+     *
+     * The teleport system: when server wants to teleport a player,
+     * the server will send the {@link ClientboundPlayerPositionPacket}, then
+     * set {@link ServerGamePacketListenerImpl#awaitingPositionFromClient}
+     * and {@link ServerGamePacketListenerImpl#awaitingTeleport} counter.
+     *
+     * Before the client sending {@link ServerboundAcceptTeleportationPacket},
+     * the position packets are ignored, and some of the item using packets are ignored.
+     *
+     * Attach the dimension information to the position, to avoid messing up coordinates
+     * of different dimensions.
+     */
+    @SuppressWarnings(&quot;JavadocReference&quot;)
+    @Unique
+    private @Nullable ResourceKey&lt;Level&gt; ip_dimOfAwaitingPosition;
+    
+    //do not process move packet when client dimension and server dimension are not synced
+    @Inject(
+        method = &quot;Lnet/minecraft/server/network/ServerGamePacketListenerImpl;handleMovePlayer(Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;)V&quot;,
+        at = @At(
+            value = &quot;INVOKE&quot;,
+            shift = At.Shift.AFTER,
+            target = &quot;Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V&quot;
+        ),
+        cancellable = true
+    )
+    private void onProcessMovePacket(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
+        ResourceKey&lt;Level&gt; packetDimension = ((IEPlayerMoveC2SPacket) packet).ip_getPlayerDimension();
+        
+        if (packetDimension == null) {
+            LOGGER.error(&quot;Player move packet is missing dimension info. Maybe the player client doesn&#39;t install iPortal&quot;);
+            ServerTaskList.of(player.server).addTask(() -&gt; {
+                player.connection.disconnect(Component.literal(
+                    &quot;The client does not have Immersive Portals mod&quot;
+                ));
+                return true;
+            });
+            return;
+        }
+        
+        if (player.level().dimension() != packetDimension) {
+            if (LOG_LIMIT.tryDecrement()) {
+                LOGGER.info(
+                    &quot;[ImmPtl] Ignoring player move packet. Player: {} Packet: {} {} {} {}&quot;,
+                    player, packetDimension.location(),
+                    packet.getX(player.getX()),
+                    packet.getY(player.getY()),
+                    packet.getZ(player.getZ())
+                );
+            }
+            
+            ip_wrongMovePacketCount += 1;
+            
+            if (ip_wrongMovePacketCount &gt; 10) {
+                LOGGER.info(
+                    &quot;[ImmPtl] Force move player {} {} {}&quot;,
+                    player, player.level().dimension().location(), player.position()
+                );
+                ServerTeleportationManager.of(player.server).forceTeleportPlayer(
+                    player, player.level().dimension(), player.position()
+                );
+                ip_wrongMovePacketCount = 0;
+            }
+            
+            ci.cancel();
+        }
+        else {
+            ip_wrongMovePacketCount = 0;
+        }
+    }
+    
+    /**
+     * @reason make PlayerPositionLookS2CPacket contain dimension data and do some special handling
+     * @author qouteall
+     */
+    @Overwrite
+    @IPVanillaCopy
+    public void teleport(
+        double x, double y, double z, float yaw, float pitch,
+        Set&lt;RelativeMovement&gt; relativeAttrs
+    ) {
+        // it may request teleport while this.player is marked removed during respawn
+        
+        if (player.getRemovalReason() != null) {
+            LOGGER.error(
+                &quot;[ImmPtl] Tries to send player pos packet to a removed player {}&quot;,
+                player, new Throwable()
+            );
+            return;
+        }
+        
+        if (IPConfig.getConfig().serverTeleportLogging) {
+            LOGGER.info(
+                &quot;Teleporting player {} to {} {} {} {}&quot;,
+                player, player.level().dimension().location(), x, y, z
+            );
+        }
+        
+        // ... rest of teleport implementation ...
+        
+        ((IEPlayerPositionLookS2CPacket) lookPacket).ip_setPlayerDimension(player.level().dimension());
+        
+        this.player.connection.send(lookPacket);
+    }</code></pre>
+
+
+<strong>位置同步系统的关键特性</strong>：
+
+<ul><li><strong>维度信息附加</strong>：在位置同步包中添加维度信息</li></ul>
+<ul><li><strong>包验证</strong>：检查客户端和服务端的维度是否同步</li></ul>
+<ul><li><strong>错误恢复</strong>：当检测到位置同步异常时，强制传送玩家</li></ul>
+<ul><li><strong>@Overwrite 完整替换</strong>：使用 <code>@Overwrite</code> 完全替换 <code>teleport()</code> 方法以添加维度支持</li></ul>
+
+<h2 id="mixin-categories-by-system">Mixin Categories by System</h2>
+
+
+以下表格展示了 IPMod Mixin 按功能系统的分类：
+
+| 系统分类 | Mixin 数量 | 主要功能 |
+|----------|------------|----------|
+| <strong>碰撞系统 (collision)</strong> | 12 | 跨门户碰撞检测、碰撞盒变换 |
+| <strong>区块同步 (chunk_sync)</strong> | 10 | 跨维度区块加载、实体同步 |
+| <strong>实体同步 (entity_sync)</strong> | 6 | 服务器实体同步管理 |
+| <strong>位置同步 (position_sync)</strong> | 7 | 玩家位置同步、维度信息附加 |
+| <strong>网络通信 (networking)</strong> | 1 | 自定义数据包处理 |
+| <strong>渲染系统 (render)</strong> | 30+ | 跨门户渲染、裁剪平面管理 |
+| <strong>交互系统 (interaction)</strong> | 5 | 桶、物品交互的门户感知 |
+| <strong>工具函数 (mc_util)</strong> | 4 | 实体事件监听、位置更新 |
+| <strong>其他同步 (other_sync)</strong> | 4 | 玩家姿态、数据存储同步 |
+| <strong>门户生成 (portal_generation)</strong> | 4 | 物品、玩家列表的门户关联 |
+| <strong>杂项 (miscellaneous)</strong> | 5 | 龙战、钓鱼钩、拴绳等特殊处理 |
+| <strong>调试 (debug)</strong> | 10 | 调试信息和日志记录 |
+| <strong>兼容性 (compat)</strong> | 18 | Iris、Sodium、Flywheel 兼容性 |
+
+<h2 id="mixin-directory-structure">Mixin Directory Structure</h2>
+
+
+IPMod 的 Mixin 按照清晰的目录结构组织：
+</p>
+<p><pre class="code-block"><code class="language-text">src/main/java/qouteall/imm_ptl/core/
+├── mixin/
+│   ├── common/                    # 通用 Mixin（服务端和客户端都加载）
+│   │   ├── MixinClipContext.java
+│   │   ├── MixinLevel.java
+│   │   ├── MixinLivingEntity.java
+│   │   ├── MixinServerLevel.java
+│   │   ├── MixinMinecraftServer.java
+│   │   ├── MixinDedicatedServer.java
+│   │   │
+│   │   ├── chunk_sync/           # 区块同步
+│   │   │   ├── IEChunkMap_Accessor.java
+│   │   │   ├── IEDistanceManager.java
+│   │   │   ├── IEServerCommonPacketListenerImpl.java
+│   │   │   ├── MixinChunkHolder.java
+│   │   │   ├── MixinChunkMap_C.java
+│   │   │   ├── MixinDistanceManager.java
+│   │   │   ├── MixinPlayerChunkSender.java
+│   │   │   ├── MixinPlayerTicketTracker.java
+│   │   │   ├── MixinServerGamePacketListenerImpl_ChunkSync.java
+│   │   │   └── IEChunkTaskPriorityQueueSorter.java
+│   │   │
+│   │   ├── collision/            # 碰撞系统
+│   │   │   ├── IEEntity_Collision.java
+│   │   │   ├── MixinEntity.java
+│   │   │   ├── MixinPlayer_Collision.java
+│   │   │   ├── MixinProjectile.java
+│   │   │   ├── MixinAbstractArrow.java
+│   │   │   ├── MixinAbstractMinecartEntity.java
+│   │   │   ├── MixinThrowableProjectile.java
+│   │   │   └── MixinThrownEnderPearl.java
+│   │   │
+│   │   ├── entity_sync/          # 实体同步
+│   │   │   ├── MixinChunkMap_E.java
+│   │   │   ├── MixinPersistentEntitySectionManager.java
+│   │   │   ├── MixinServerEntity.java
+│   │   │   ├── MixinServerGamePacketListenerImpl_Redirect.java
+│   │   │   ├── MixinServerPlayer.java
+│   │   │   └── MixinTrackedEntity.java
+│   │   │
+│   │   ├── networking/           # 网络通信
+│   │   │   └── MixinClientboundCustomPayloadPacket.java
+│   │   │
+│   │   ├── position_sync/        # 位置同步
+│   │   │   ├── MixinPlayerPositionLookS2CPacket.java
+│   │   │   ├── MixinServerGamePacketListenerImpl.java
+│   │   │   ├── MixinServerboundMovePlayerPacket_S.java
+│   │   │   ├── MixinServerboundMovePlayerPacketPos.java
+│   │   │   ├── MixinServerboundMovePlayerPacketPosRot.java
+│   │   │   ├── MixinServerboundMovePlayerPacketRot.java
+│   │   │   └── MixinServerboundMovePlayerPacketStatusOnly.java
+│   │   │
+│   │   ├── render/               # 渲染（客户端）
+│   │   │   └── (see client/render/)
+│   │   │
+│   │   └── [其他子目录...]
+│   │
+│   └── client/                   # 客户端专用 Mixin
+│       ├── MixinMinecraft.java
+│       ├── MixinClientConnection.java
+│       ├── MixinClientLevel.java
+│       ├── MixinCamera.java
+│       ├── MixinDebugScreenOverlay.java
+│       ├── MixinGlDebug.java
+│       │
+│       ├── accessor/             # 访问器
+│       │   ├── IEClientLevel_Accessor.java
+│       │   └── IEClientLevelData.java
+│       │
+│       ├── collisions/           # 客户端碰撞
+│       │   └── MixinLocalPlayer.java
+│       │
+│       ├── interaction/          # 客户端交互
+│       │   ├── MixinGameRenderer_B.java
+│       │   ├── MixinItem_Interaction_Client.java
+│       │   ├── MixinMinecraft_B.java
+│       │   └── MixinMultiPlayerGameMode.java
+│       │
+│       ├── multiworld_awareness/ # 多世界感知
+│       │   ├── MixinBiomeAmbientSoundPlayer.java
+│       │   └── MixinFogRenderer.java
+│       │
+│       ├── particle/             # 粒子
+│       │   ├── IEParticle.java
+│       │   └── MixinParticleEngine.java
+│       │
+│       ├── render/               # 渲染核心
+│       │   ├── IERenderSystem.java
+│       │   ├── IESectionRenderDispatcher.java
+│       │   ├── MixinBlockEntityRenderDispatcher.java
+│       │   ├── MixinCamera.java
+│       │   ├── MixinEntityRenderDispatcher.java
+│       │   ├── MixinFrustum_FixDeadLoop.java
+│       │   ├── MixinGameRenderer.java
+│       │   ├── MixinGlStateManager.java
+│       │   ├── MixinLevelRenderer.java
+│       │   ├── MixinLevelRenderer_BeforeIris.java
+│       │   ├── MixinLevelRenderer_ForceMainThreadRebuild.java
+│       │   ├── MixinLevelRenderer_Optional.java
+│       │   ├── MixinMultiBufferSourceBufferSource.java
+│       │   ├── MixinRenderSection.java
+│       │   ├── MixinRenderSystem_Clipping.java
+│       │   ├── MixinRenderSystem_Fog.java
+│       │   ├── MixinScreenEffectRenderer.java
+│       │   ├── MixinSectionRenderDispatcher.java
+│       │   ├── MixinShaderInstanceForIris.java
+│       │   │
+│       │   ├── framebuffer/
+│       │   │   ├── MixinMainTarget.java
+│       │   │   └── MixinRenderTarget.java
+│       │   │
+│       │   ├── isometric/
+│       │   │   └── MixinGameRenderer_Isometric.java
+│       │   │
+│       │   ├── optimization/
+│       │   │   ├── IEChunkCompileTask.java
+│       │   │   ├── MixinFrustum.java
+│       │   │   ├── MixinLevelRenderer_Clouds.java
+│       │   │   └── MixinSectionBufferBuilderPack.java
+│       │   │
+│       │   └── shader/
+│       │       ├── MixinGameRenderer_Shaders.java
+│       │       ├── MixinProgram.java
+│       │       └── MixinShaderInstance.java
+│       │
+│       ├── sound/                # 声音
+│       │   └── MixinClientLevel_Sound.java
+│       │
+│       └── sync/                 # 客户端同步
+│           ├── IEBlockStatePredictionHandler.java
+│           ├── MixinBlockStatePredictionHandler.java
+│           ├── MixinClientboundPlayerPositionPacket.java
+│           ├── MixinClientPacketListener.java
+│           ├── MixinMinecraft_RedirectedPacket.java
+│           ├── MixinReceivingLevelScreen.java
+│           ├── MixinServerBoundMovePlayerPacket.java
+│           ├── MixinServerboundMovePlayerPacketPos.java
+│           ├── MixinServerBoundMovePlayerPacketPosRot.java
+│           ├── MixinServerboundMovePlayerPacketRot.java
+│           └── MixinServerboundMovePlayerPacketStatusOnly.java
+│
+└── compat/
+    └── mixin/                    # 兼容性 Mixin
+        ├── cardinal_comp/
+        │   └── MixinCardinalCompComponentKey.java
+        │
+        ├── flywheel/
+        │   ├── MixinFlywheelCrumblingRenderer.java
+        │   ├── MixinFlywheelProgramCompiler.java
+        │   └── MixinFlywheelQuadConverter.java
+        │
+        ├── iris/
+        │   ├── MixinIrisClearPass.java
+        │   ├── MixinIrisFinalPassRenderer.java
+        │   ├── MixinIrisIris.java
+        │   ├── MixinIrisRenderingPipeline.java
+        │   ├── MixinIrisShadowRenderTargets.java
+        │   ├── MixinIrisSodiumShader.java
+        │   └── MixinIrisTransformPatcher.java
+        │
+        └── sodium/
+            ├── IESodiumWorldRenderer.java
+            ├── MixinSodiumDefaultShaderInterface.java
+            ├── MixinSodiumFlawlessFrames.java
+            ├── MixinSodiumOcclusionCuller.java
+            ├── MixinSodiumRenderRegion.java
+            ├── MixinSodiumRenderSectionManager.java
+            ├── MixinSodiumShaderLoader.java
+            ├── MixinSodiumViewport.java
+            └── MixinSodiumWorldRenderer.java</code></pre>
+
+
+<h2 id="injection-techniques-summary">Injection Techniques Summary</h2>
+
+
+IPMod 综合运用了多种 Mixin 注入技术：
+
+| 技术 | 注解 | 使用场景 | 示例文件 |
+|------|------|----------|----------|
+| <strong>方法注入</strong> | <code>@Inject</code> | 在方法特定位置添加逻辑 | <code>MixinLevelRenderer.java</code> |
+| <strong>方法重定向</strong> | <code>@Redirect</code> | 替换方法调用目标 | <code>MixinEntity.java</code> |
+| <strong>变量修改</strong> | <code>@ModifyVariable</code> | 修改方法参数或返回值 | <code>MixinLevelRenderer.java</code> |
+| <strong>完全覆盖</strong> | <code>@Overwrite</code> | 完全替换目标方法 | <code>MixinPlayer_Collision.java</code> |
+| <strong>访问器</strong> | <code>@Accessor</code> / <code>@Invoker</code> | 访问私有字段或方法 | <code>IEChunkMap_Accessor.java</code> |
+| <strong>本地变量捕获</strong> | <code>@Local</code> | 获取方法内的局部变量 | <code>MixinBucketItem.java</code> |
+| <strong>私有 Shadow</strong> | <code>@Shadow</code> | 引用目标类的私有成员 | <code>MixinServerLevel.java</code> |
+
+<h3>注入点定位模式</h3>
+
+
+IPMod 使用多种精确定位注入点的方式：
+</p>
+<p><pre class="code-block"><code class="language-java">@At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/world/entity/Entity;collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;&quot;)
+
+// 2. 字段访问定位
+@At(value = &quot;FIELD&quot;, target = &quot;Lnet/minecraft/server/network/ServerGamePacketListenerImpl;awaitingPositionFromClient:Lnet/minecraft/world/phys/Vec3;&quot;, opcode = Opcodes.PUTFIELD)
+
+// 3. 跳转标签定位
+@At(value = &quot;JUMP&quot;, opcode = Opcodes.IFEQ)
+
+// 4. 构造器调用定位
+@At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/server/level/ServerLevel;&lt;init&gt;(...)V&quot;)
+
+// 5. 静态方法定位
+@At(value = &quot;INVOKE&quot;, target = &quot;Lnet/minecraft/client/Minecraft;currentStep()J&quot;)</code></pre>
+
+
+<h3>Mixin 执行优先级</h3>
+
+
+Mixin 可以设置优先级来控制执行顺序：
+
+<ul><li><code>priority = 900</code> 在 <code>MixinServerGamePacketListenerImpl</code> 中用于确保在 Fabric API 之前执行</li></ul>
+<ul><li><code>defaultRequire = 1</code> 在配置文件中设置所有 Mixin 的默认最低要求等级</li></ul>
+
+<hr>
+
+<h2 id="summary">Summary</h2>
+
+
+ImmersivePortalsMod 的 Mixin 注入系统是一个精心设计的复杂工程：
+
+<ul><li><strong>双配置架构</strong>：核心功能与第三方兼容性分离管理</li></ul>
+<ul><li><strong>智能条件加载</strong>：通过 Plugin 动态控制 Mixin 应用</li></ul>
+<ul><li><strong>丰富的 Duck 接口</strong>：提供类型安全的扩展访问</li></ul>
+<ul><li><strong>多样化注入技术</strong>：根据不同需求选择最合适的注入方式</li></ul>
+<ul><li><strong>清晰的目录结构</strong>：按功能和平台分类组织</li></ul>
+<ul><li><strong>完善的兼容性支持</strong>：支持 Iris、Sodium、Flywheel 等主流优化模组</li></ul>
+
+这套 Mixin 系统使得 IPMod 能够无缝集成到 Minecraft 的核心渲染、物理和网络系统中，同时保持与第三方模组的良好兼容性，是现代 Minecraft 模组开发的优秀范例。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="06-compatibility.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a><a href="08-public-api.html" class="next">
+            Public API
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

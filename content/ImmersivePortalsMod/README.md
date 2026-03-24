@@ -1,14 +1,22 @@
 ---
-title: ImmersivePortalsMod Documentation
+title: ImmersivePortalsMod 文档
 readingTime: 10
+originalAuthor: qouteall
+sourceUrl: https://github.com/qouteall/ImmersivePortals
+modVersion: 6.0.6
+minecraftVersion: 1.21.1
+loader: Fabric
 ---
 
 # ImmersivePortalsMod
 
-ImmersivePortalsMod (qouteall) is a sophisticated Minecraft mod that provides cross-dimensional portal system with advanced features like nested portals, mirrors, scaling teleportation, and dynamic portals.
+**ImmersivePortalsMod** 由 **qouteall** 开发，提供跨维度无缝传送门、嵌套传送门、镜像、缩放传送与动态传送门等能力。本仓库文档为学习笔记，**致谢原作者**；源码与授权以官方仓库为准。
 
-**Version**: 6.0.6-mc1.21.1
-**Source**: [assets/ImmersivePortalsMod-6.0.6-mc1.21.1](https://github.com/qouteall/ImmersivePortals)
+- **模组版本**：6.0.6  
+- **对应 Minecraft**：1.21.1  
+- **加载器**：Fabric  
+- **官方仓库**：[ImmersivePortals](https://github.com/qouteall/ImmersivePortals)  
+- **本地源码参考**：`D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\...`
 
 ## Table of Contents
 

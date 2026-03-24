@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第二章：性能优化实战 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+<a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../Part-1/01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="../Part-1/01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="../Part-1/02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="../Part-1/02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="../Part-1/03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="../Part-1/03-occlusion-culling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="../Part-1/04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+<a href="../Part-1/04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="02-performance-practice.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+<a href="02-performance-practice.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第二章：性能优化实战</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第二章：性能优化实战
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第二章：性能优化实战</h1>
+
+
+<blockquote><p>⭐ <strong>学完这章，你将深入理解 Sodium 如何让 Minecraft 跑得飞快！</strong></p></blockquote>
+
+<blockquote><p>💡 <strong>前置知识</strong>：了解 Java 基础（线程、内存）、知道 Minecraft 渲染大概是什么</p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>为什么 Minecraft 原版很卡</strong> - 找到性能瓶颈的根本原因</li></ul>
+<ul><li><strong>Sodium 的四大优化方向</strong> - 多线程、渲染、内存、算法</li></ul>
+<ul><li><strong>核心优化技术的原理</strong> - 理解 MultiDraw、对象池、遮挡剔除</li></ul>
+<ul><li><strong>如何对比性能数据</strong> - 学会看帧率、Draw Calls 等指标</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Java 的基本语法（类、接口、线程概念）</li></ul>
+<ul><li>知道什么是 <strong>Draw Call</strong>（绘制命令）</li></ul>
+<ul><li>知道 CPU 和 GPU 的大概区别</li></ul>
+
+<hr>
+
+<h2 id="性能问题的根源">性能问题的根源</h2>
+
+
+<h3>Minecraft 原版有多慢？</h3>
+
+
+想象一下这个场景：你在平坦的草原上，视野范围内有 ~100 个区块。
+
+原版 Minecraft 每帧要做什么？
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                    原版 Minecraft                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  1. 主线程构建所有区块网格  ← 消耗 40-50ms               │
+│  2. 主线程提交所有 Draw Calls  ← 消耗 10-15ms           │
+│  3. 其他游戏逻辑  ← 消耗 5-10ms                         │
+│                                                         │
+│  总计：55-75ms  →  约 14-18 FPS  ← 卡爆了！             │
+│                                                         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+
+<strong>问题核心</strong>：
+
+| 问题 | 说明 | 影响 |
+|------|------|------|
+| 单线程瓶颈 | 所有计算都在主线程 | CPU 只有 1 个核在干活 |
+| 大量 Draw Calls | 每个区块一次调用 | GPU 总在等待 CPU |
+| 频繁 GC | 大量临时对象 | 帧时间不稳定 |
+| 无优化算法 | 渲染所有区块 | 做无用功 |
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<a href="#sodium-优化体系总览">Sodium 优化体系总览</a>  
+<a href="#多线程优化为什么有效">多线程优化：为什么有效？</a>  
+<a href="#渲染优化减少-draw-calls">渲染优化：减少 Draw Calls</a>  
+<a href="#内存优化对象池的好处">内存优化：对象池的好处</a>  
+<a href="#算法优化遮挡剔除的威力">算法优化：遮挡剔除的威力</a>  
+<a href="#性能数据对比">性能数据对比</a>  
+<a href="#sodium-的设计思想">Sodium 的设计思想</a>  
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="sodium-优化体系总览">Sodium 优化体系总览</h2>
+
+
+Sodium 的优化不是修修补补，而是从<strong>四个维度</strong>全面重构：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 优化体系["Sodium 四大优化方向"]
+        A[多线程优化] --> A1[ChunkBuilder 线程池]
+        A --> A2[帧预算控制]
+        A --> A3[无锁数据结构]
+        
+        B[渲染优化] --> B1[MultiDraw 批处理]
+        B --> B2[顶点数据压缩]
+        B --> B3[渲染列表排序]
+        
+        C[内存优化] --> C1[对象池复用]
+        C --> C2[直接内存访问]
+        C --> C3[缓存友好设计]
+        
+        D[算法优化] --> D1[遮挡剔除算法]
+        D --> D2[增量更新机制]
+        D --> D3[空间分区策略]
+    end
+    
+    A1 --> Z[帧率提升 帧时间稳定]
+    A2 --> Z
+    B1 --> Z
+    B2 --> Z
+    C1 --> Z
+    D1 --> Z</div>
+</div>
+
+
+<h3>优化技术一览表</h3>
+
+
+| 类别 | 具体技术 | 效果 |
+|------|---------|------|
+| 多线程 | ChunkBuilder 线程池 | CPU 利用率提升 ~300% |
+| 多线程 | 帧预算控制 | 避免帧时间暴涨 |
+| 多线程 | 无锁队列 | 减少锁竞争 |
+| 渲染 | MultiDraw 批处理 | Draw Calls 减少 90% |
+| 渲染 | 顶点压缩 | 显存占用减少 33% |
+| 内存 | 对象池 | GC 压力降低 60% |
+| 算法 | 遮挡剔除 | 减少无效渲染 |
+
+<hr>
+
+<h2 id="多线程优化为什么有效">多线程优化：为什么有效？</h2>
+
+
+<h3>什么是多线程？</h3>
+
+
+<strong>比喻</strong>：就像餐厅厨房
+</p>
+<p><pre class="code-block"><code class="language-text">单线程 = 1 个厨师做所有菜（洗菜→切菜→炒菜→装盘）
+多线程 = 多个厨师分工（有人洗菜、有人切菜、有人炒菜）
+
+结果：多线程让所有厨师同时干活，上菜更快！</code></pre>
+
+
+<h3>问题：原版 Minecraft 的区块构建</h3>
+
+
+当你走路或打开门时，相关区块需要<strong>重新计算网格</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">原版流程：
+┌────────────────────────────────────────────────┐
+│  主线程：                                        │
+│                                                │
+│  区块变化 → 构建网格 → 渲染                      │
+│      ↓          ↓          ↓                   │
+│    1ms       45ms       15ms  ← 全在主线程！   │
+│                                                │
+│  结果：主线程被阻塞 → 游戏卡顿                   │
+└────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>解决方案：ChunkBuilder 工作线程池</h3>
+
+
+Sodium 创建专门的<strong>工作线程池</strong>来处理网格构建：
+</p>
+<p><pre class="code-block"><code class="language-java">public class ChunkBuilder {
+    public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
+        // 根据 CPU 核心数决定线程数
+        int count = getOptimalThreadCount();
+        
+        for (int i = 0; i &lt; count; i++) {
+            Thread thread = new Thread(worker, 
+                &quot;Chunk Render Task Executor #&quot; + i);
+            // 线程优先级稍低，确保渲染优先
+            thread.setPriority(Math.max(0, Thread.NORM_PRIORITY - 2));
+        }
+    }
+    
+    private static int getOptimalThreadCount() {
+        int processors = Runtime.getRuntime().availableProcessors();
+        // 留 2 个核心给主线程和系统
+        return Math.max(1, Math.min(processors - 2, 10));
+    }
+}</code></pre>
+
+
+<h3>线程数量计算</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">公式：optimalThreads = clamp(1, cpuCores - 2, 10)
+
+┌────────────────────────────────────────────────┐
+│  CPU 核心数  │  工作线程数  │  保留核心         │
+├────────────────────────────────────────────────┤
+│    4 核     │     2       │       2           │
+│    6 核     │     4       │       2           │
+│    8 核     │     6       │       2           │
+│   12+ 核    │    10       │      ≥2          │
+└────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>帧预算控制：避免帧时间过长</h3>
+
+
+即使有多线程，如果一帧内处理太多任务，帧时间还是会变长。
+
+Sodium 用<strong>帧预算</strong>来控制：
+</p>
+<p><pre class="code-block"><code class="language-java">var uploadBudget = new LimitedResourceBudget(
+    Math.max((long)(averageFrameDuration * 0.1f), 
+             MIN_UPLOAD_DURATION_BUDGET),
+    regions.getStagingBuffer().getUploadSizeLimit(averageFrameDuration)
+);
+
+while (!queue.isEmpty() &amp;&amp; workBudget.hasRemaining()) {
+    ChunkJob job = queue.dequeue();
+    processJob(job);
+    workBudget.decrement(job.getEstimatedCost());
+}</code></pre>
+
+
+<strong>帧预算分配图</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                    16.67ms (60 FPS)                      │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   主线程任务     │  构建预算 (10%)  │    GPU 渲染       │
+│   ───────────   │   ─────────────   │   ──────────     │
+│   游戏逻辑       │   1.67ms          │   ~15ms          │
+│   物理计算       │   网格构建        │   绘制命令        │
+│   区块更新       │   顶点上传        │                  │
+│                                                         │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>无锁数据结构：减少等待</h3>
+
+
+多线程最怕的是<strong>锁竞争</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">有锁队列：
+线程A ──→ [加锁] ──→ 写入 ──→ [解锁] ──→ 线程B等待...
+                                                ↑
+                                           线程C也在等
+
+无锁队列：
+线程A ──→ CAS 操作 ──→ 写入 ──→ 完成  (其他线程不用等！)
+线程B ──→ CAS 操作 ──→ 写入 ──→ 完成  (同时进行！)</code></pre>
+
+
+<strong>无锁 vs 有锁性能对比</strong>：
+
+| 操作 | 有锁队列 | 无锁队列 |
+|------|---------|---------|
+| 入队 | 10-50μs | 0.5-2μs |
+| 出队 | 10-50μs | 0.5-2μs |
+| 线程阻塞 | 可能 | 永不 |
+| 死锁风险 | 存在 | 不存在 |
+
+<hr>
+
+<h2 id="渲染优化减少-draw-calls">渲染优化：减少 Draw Calls</h2>
+
+
+<h3>什么是 Draw Call？</h3>
+
+
+<strong>Draw Call</strong> = CPU 告诉 GPU "画这个东西" 的一次命令。
+
+就像点外卖：</p>
+<p><pre class="code-block"><code class="language-text">每道菜 = 一次电话（Draw Call）
+做 100 道菜 = 打 100 次电话
+
+批处理 = 一次电话点 100 道菜 → 效率更高！</code></pre>
+
+
+<h3>问题：原版 Minecraft 的 Draw Calls</h3>
+
+
+每个区块都需要单独绘制：
+</p>
+<p><pre class="code-block"><code class="language-text">传统方式（每区块一次 Draw Call）：
+┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐
+│ 区 │  │ 区 │  │ 区 │  │ 区 │  │ 区 │
+│ 块1│  │ 块2│  │ 块3│  │ 块4│  │ 块5│
+└─┬──┘  └─┬──┘  └─┬──┘  └─┬──┘  └─┬──┘
+  │       │       │       │       │
+  ▼       ▼       ▼       ▼       ▼
+Draw1   Draw2   Draw3   Draw4   Draw5  ← 5 次 Draw Call！
+
+100 个可见区块 = 100 次 Draw Call ← GPU 总在等 CPU</code></pre>
+
+
+<h3>解决方案：MultiDraw 批处理</h3>
+
+
+Sodium 把相邻区块的绘制<strong>合并成一次调用</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">MultiDraw 方式（一次调用渲染所有）：
+┌────┐  ┌────┐  ┌────┐  ┌────┐  ┌────┐
+│ 区 │  │ 区 │  │ 区 │  │ 区 │  │ 区 │
+│ 块1│  │ 块2│  │ 块3│  │ 块4│  │ 块5│
+└─┬──┘  └─┬──┘  └─┬──┘  └─┬──┘  └─┬──┘
+  │       │       │       │       │
+  └───────┴───────┴───────┴───────┘
+                 │
+                 ▼
+        glMultiDrawElements()  ← 1 次 Draw Call！</code></pre>
+
+
+<strong>批处理条件</strong>：
+
+| 条件 | 说明 |
+|------|------|
+| 相同渲染 Pass | Solid / Cutout / Translucent |
+| 相同着色器程序 | 使用同一套 Shader |
+| 相邻区块 | 同一个 Region 区域 |
+| 共享索引缓冲区 | 顶点数据格式一致 |
+
+<h3>顶点数据压缩：省显存</h3>
+
+
+原版 Minecraft 用 32 位浮点数存储顶点坐标，Sodium 用 16 位半精度浮点数：
+</p>
+<p><pre class="code-block"><code class="language-text">┌────────────────────────────────────────────────┐
+│  顶点格式对比                                   │
+├────────────────────────────────────────────────┤
+│  字段      │  原版 (float)  │  Sodium (half)   │
+├────────────────────────────────────────────────┤
+│  X, Y, Z   │    12 字节     │     6 字节       │
+│  UV        │     8 字节     │     4 字节       │
+│  Color     │     4 字节     │     1 字节       │
+├────────────────────────────────────────────────┤
+│  总计/顶点 │    24 字节     │    11 字节       │
+│            │               │  节省 54%！     │
+└────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>渲染列表直方图排序</h3>
+
+
+区块需要按距离排序来正确处理透明效果。Sodium 用 <strong>O(n) 的直方图排序</strong>代替 O(n log n) 的快排：
+</p>
+<p><pre class="code-block"><code class="language-text">排序算法复杂度对比：
+
+┌────────────────────────────────────────────────┐
+│  算法        │  时间复杂度  │  1000 区块      │
+├────────────────────────────────────────────────┤
+│  快速排序     │  O(n log n) │  ~10,000 比较   │
+│  桶排序       │  O(n + k)   │  ~1,064 操作    │
+│  直方图排序   │  O(n)       │  ~1,064 操作    │ ← Sodium
+└────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="内存优化对象池的好处">内存优化：对象池的好处</h2>
+
+
+<h3>GC 是什么？为什么会影响性能？</h3>
+
+
+<strong>GC (Garbage Collection)</strong> = Java 自动清理不再使用的内存。
+</p>
+<p><pre class="code-block"><code class="language-text">问题：
+┌────────────────────────────────────────┐
+│  创建对象 → 使用 → 不再需要             │
+│                    ↓                   │
+│            GC 需要扫描和清理             │
+│                    ↓                   │
+│            游戏短暂卡顿 (50-200ms)       │
+└────────────────────────────────────────┘</code></pre>
+
+
+<h3>解决方案：对象池复用</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">没有对象池：
+每帧创建 1000 个对象 → GC 频繁运行 → 卡顿
+
+有对象池：
+创建 1000 个对象 → 重复使用 → GC 很少运行 → 流畅</code></pre>
+
+
+<strong>比喻</strong>：就像餐厅的盘子
+</p>
+<p><pre class="code-block"><code class="language-text">不用盘子池：每顿饭买新盘子 → 浪费钱（内存）
+用盘子池：洗干净的盘子重复用 → 省钱（内存）</code></pre>
+
+
+<h3>Sodium 的内存池类型</h3>
+
+
+| 池类型 | 用途 | 复用对象 |
+|--------|------|---------|
+| <code>ChunkMeshPool</code> | 区块网格 | <code>ChunkMesh</code> |
+| <code>GlBufferArena</code> | GPU 缓冲区 | <code>ByteBuffer</code> |
+| <code>VertexDataPool</code> | 顶点数据 | <code>float[]</code> |
+| <code>RenderSectionPool</code> | 渲染区块 | <code>RenderSection</code> |
+
+<h3>直接内存访问：绕过 GC</h3>
+
+
+Sodium 使用<strong>堆外内存</strong> (Off-Heap Memory) 传输 GPU 数据：
+</p>
+<p><pre class="code-block"><code class="language-java">ByteBuffer directBuffer = ByteBuffer.allocateDirect(16 * 1024 * 1024)
+    .order(ByteOrder.nativeOrder());
+
+// 优势：
+// 1. 避免 GC 扫描 - 不在 Java 堆里
+// 2. 与 native 代码共享更高效
+// 3. 减少内存复制</code></pre>
+
+
+<h3>缓存友好设计</h3>
+
+
+现代 CPU 有缓存，如果数据访问模式友好，性能会大幅提升：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────┐
+│                   CPU 缓存示意                   │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  缓存行（64 字节）：                              │
+│  ┌──────┬──────┬──────┬──────┬──────┬──────┐    │
+│  │ 64B  │ 64B  │ 64B  │ 64B  │ 64B  │ 64B  │    │
+│  └──────┴──────┴──────┴──────┴──────┴──────┘    │
+│       ↑                                          │
+│  对齐访问：数据起始地址是 8 或 16 的倍数          │
+│  → 一次读取就能获取完整数据                       │
+│  → 缓存命中率高 → 性能好                          │
+│                                                  │
+└─────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="算法优化遮挡剔除的威力">算法优化：遮挡剔除的威力</h2>
+
+
+<h3>什么是遮挡剔除？</h3>
+
+
+<strong>遮挡剔除</strong> = 不渲染被其他物体遮挡住的东西。
+</p>
+<p><pre class="code-block"><code class="language-text">现实例子：
+你站在房间里，只能看到门和窗户
+墙后面的东西 → 根本看不到 → 不需要渲染
+
+Minecraft 例子：
+你站在山脚下，山后面的区块 → 看不到 → 不需要渲染</code></pre>
+
+
+<h3>为什么有用？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">没有遮挡剔除：
+渲染所有可见区块 → 100 个 → 浪费 60% 渲染量
+
+有遮挡剔除：
+只渲染实际可见的区块 → 40 个 → 省 60% 渲染量！</code></pre>
+
+
+<h3>遮挡剔除的工作原理</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    A[相机位置] --> B[获取所在区块]
+    B --> C{该区块是否可见?}
+    C -->|是| D[检查 6 个方向的邻居]
+    C -->|否| Z[跳过]
+    D --> E{邻居是否被遮挡?}
+    E -->|是| F[标记不可见]
+    E -->|否| G{在视锥内?}
+    G -->|是| H[添加到可见列表]
+    G -->|否| I[跳过]
+    H --> J[递归检查邻居]
+    F --> J
+    J --> K{遍历完成?}
+    K -->|否| D
+    K -->|是| L[返回可见列表]</div>
+</div>
+
+
+<h3>增量更新：避免重复计算</h3>
+
+
+相机移动时，不需要重新计算所有区块的可见性：
+
+| 场景 | 增量更新 | 全量更新 |
+|------|---------|---------|
+| 相机缓慢移动 | ✅ 只更新边缘区块 | ❌ 全部重算 |
+| 相机快速传送 | ❌ 失效 | ✅ 全部重算 |
+| 计算量 | O(边缘区块数) | O(所有区块) |
+
+<hr>
+
+<h2 id="性能数据对比">性能数据对比</h2>
+
+
+<h3>综合性能对比</h3>
+
+
+| 指标 | 原版 Minecraft | Sodium | 提升幅度 |
+|------|---------------|--------|---------|
+| 帧率稳定性 | 帧时间波动大 (5-200ms) | 帧时间稳定 (~16ms) | ~90% 稳定 |
+| Draw Calls/帧 | ~500 | ~50 | <strong>减少 90%</strong> |
+| CPU 利用率 | 单核 100% | 多核平均 60% | 多核并行 |
+| 区块变更响应 | 严重卡顿 | 几乎无影响 | ~100% |
+| 显存占用 | 100% | ~67% | 减少 33% |
+| GC 暂停 | 频繁 (50-200ms) | 极少 (<10ms) | 减少 80% |
+
+<h3>帧时间分解对比</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">原版 Minecraft（复杂地形）：
+┌──────────────────────────────────────────────────────┐
+│  总帧时间: 67ms (约 15 FPS)                          │
+├──────────────────────────────────────────────────────┤
+│  ████████████████████████████████                   │
+│  区块构建 (45ms) ← 主要瓶颈！                        │
+├──────────────────────────────────────────────────────┤
+│  ██████████████                                      │
+│  渲染 (12ms)                                         │
+├──────────────────────────────────────────────────────┤
+│  ██████                                               │
+│  其他 (10ms)                                         │
+└──────────────────────────────────────────────────────┘
+
+Sodium 优化后（相同场景）：
+┌──────────────────────────────────────────────────────┐
+│  总帧时间: 16ms (稳定 60 FPS)                        │
+├──────────────────────────────────────────────────────┤
+│  ████                                                 │
+│  游戏逻辑 (3ms)                                       │
+├──────────────────────────────────────────────────────┤
+│                                                       │
+│  (区块构建由工作线程处理，不阻塞渲染)                  │
+├──────────────────────────────────────────────────────┤
+│  ████████████████                                     │
+│  渲染 (10ms)                                         │
+├──────────────────────────────────────────────────────┤
+│  ███                                                   │
+│  其他 (3ms)                                          │
+└──────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>分项性能对比表</h3>
+
+
+| 优化项 | 原版 | Sodium 优化后 | 原理 |
+|--------|------|-------------|------|
+| 多线程构建 | 主线程阻塞 | 异步 1-10 线程 | 负载均衡 |
+| 帧预算 | 无限制 | 每帧 ≤10% 时间 | 避免过载 |
+| MultiDraw | 每区块 1 Call | 每 Region 1 Call | 批处理 |
+| 顶点压缩 | float (24B) | half-float (11B) | 数据压缩 |
+| 直方图排序 | O(n log n) | O(n) | 算法优化 |
+| 遮挡剔除 | 无 | 可视区块 | 减少渲染 |
+| 对象池 | 每帧新建 | 池化复用 | 减少 GC |
+
+<hr>
+
+<h2 id="sodium-的设计思想">Sodium 的设计思想</h2>
+
+
+学完这章，你应该理解 Sodium 的核心设计哲学：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 设计原则["Sodium 的设计原则"]
+        P1["1. 多线程化<br/>不浪费 CPU 核心"]
+        P2["2. 批处理<br/>减少 Draw Calls"]
+        P3["3. 对象池<br/>减少 GC 压力"]
+        P4["4. 算法优化<br/>只做必要的计算"]
+    end
+    
+    subgraph 应用场景["应用场景"]
+        A1["视距拉远<br/>→ 更多区块同时渲染"]
+        A2["快速移动<br/>→ 区块快速变化"]
+        A3["复杂地形<br/>→ 大量 Draw Calls"]
+    end
+    
+    subgraph 效果["最终效果"]
+        E["60 FPS 稳定运行<br/>帧时间波动小"]
+    end
+    
+    P1 --> A1
+    P2 --> A2
+    P3 --> A3
+    P4 --> A2
+    
+    A1 --> E
+    A2 --> E
+    A3 --> E</div>
+</div>
+
+
+<h3>核心思想总结</h3>
+
+
+| 思想 | 解释 | 在 Sodium 中的体现 |
+|------|------|------------------|
+| <strong>并行化</strong> | 充分利用多核 CPU | ChunkBuilder 线程池 |
+| <strong>批处理</strong> | 合并相似操作减少开销 | MultiDraw 批处理 |
+| <strong>池化</strong> | 复用对象避免创建销毁 | 对象池复用 |
+| <strong>懒计算</strong> | 只计算需要的结果 | 遮挡剔除、增量更新 |
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，请确认你理解以下内容：
+
+<ul><li>[ ] <strong>多线程基础</strong>：理解线程与进程的区别，知道 Java 中创建线程的几种方式</li></ul>
+<ul><li>[ ] <strong>线程池原理</strong>：掌握线程池的工作原理，理解为什么需要线程池</li></ul>
+<ul><li>[ ] <strong>帧预算设计</strong>：理解 Sodium 如何通过帧预算控制避免帧时间过长</li></ul>
+<ul><li>[ ] <strong>无锁数据结构</strong>：理解 CAS 操作的原理，知道无锁队列的优势</li></ul>
+<ul><li>[ ] <strong>MultiDraw 批处理</strong>：理解批处理如何减少 Draw Calls</li></ul>
+<ul><li>[ ] <strong>顶点压缩</strong>：理解 Half-Float 编码原理及其在显存优化中的作用</li></ul>
+<ul><li>[ ] <strong>直方图排序</strong>：理解 O(n) 排序的原理，与 O(n log n) 的性能差异</li></ul>
+<ul><li>[ ] <strong>遮挡剔除</strong>：理解基于图的可见性传播算法</li></ul>
+<ul><li>[ ] <strong>对象池模式</strong>：理解对象池如何减少 GC 压力</li></ul>
+<ul><li>[ ] <strong>缓存友好设计</strong>：理解 CPU 缓存机制对性能的影响</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+<h3>进阶阅读</h3>
+
+
+| 文档 | 路径 | 内容 |
+|------|------|------|
+| 架构总览 | <a href="../01-architecture-overview.html">01-architecture-overview</a> | Sodium 整体架构 |
+| 区块渲染系统 | <a href="../02-chunk-render-system.html">02-chunk-render-system</a> | 区块渲染详细解析 |
+| 遮挡剔除 | <a href="../03-occlusion-culling.html">03-occlusion-culling</a> | 遮挡剔除算法详解 |
+
+<h3>源码路径</h3>
+
+
+本章涉及的 Sodium 源码位于：
+</p>
+<p><pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\sodium\src\common\java\net\caffeinemc\mods\sodium\client\render\chunk\</code></pre>
+
+
+<hr>
+
+<em>文档版本：Sodium 0.8.6 / Minecraft 1.21</em>  
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-mixin-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Mixin 注入基础
+        </a><a href="02-performance-practice.html" class="next">
+            第二章：性能优化实战
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

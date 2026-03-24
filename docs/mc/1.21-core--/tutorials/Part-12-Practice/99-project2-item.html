@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>项目2：添加新物品 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="99-project2-item.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>项目2：添加新物品</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    项目2：添加新物品
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>项目2：添加新物品</h1>
+
+
+<blockquote><p>创建一个可以发射火球的"魔法魔杖"！</p></blockquote>
+
+<hr>
+
+<h2 id="项目目标">项目目标</h2>
+
+
+学完这个项目后，你将掌握：
+<ul><li>如何注册一个自定义物品</li></ul>
+<ul><li>如何创建物品类并设置属性</li></ul>
+<ul><li>如何添加使用效果</li></ul>
+<ul><li>如何创建合成配方（JSON）</li></ul>
+<ul><li>如何添加材质</li></ul>
+<ul><li>如何测试物品</li></ul>
+
+<hr>
+
+<h2 id="项目概览">项目概览</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[开始项目] --> B[注册物品]
+    B --> C[创建物品类]
+    C --> D[添加使用效果]
+    D --> E[创建配方JSON]
+    E --> F[添加材质]
+    F --> G[测试游戏]
+    
+    style A fill:#90EE90
+    style G fill:#87CEEB</div>
+</div>
+
+
+<hr>
+
+<h2 id="所需知识">所需知识</h2>
+
+
+<ul><li>注册表基础（Part-1 第4章）</li></ul>
+<ul><li>物品基础（Part-3 第17章）</li></ul>
+<ul><li>配方系统（Part-8 第44章）</li></ul>
+<ul><li>数据包结构（Part-8 第41章）</li></ul>
+
+<hr>
+
+<h2 id="步骤详解">步骤详解</h2>
+
+
+<h3>步骤 1：什么是物品？</h3>
+
+
+<h4>物品 vs 方块</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────┐
+│                                         │
+│    物品 (Item)                          │
+│      │                                  │
+│      ├── 可以吃的 = 食物                  │
+│      │   └── 苹果、金萝卜、蛋糕...      │
+│      │                                  │
+│      ├── 可以用的 = 工具/武器            │
+│      │   └── 镐子、斧头、剑...         │
+│      │                                  │
+│      └── 可以放的 = BlockItem            │
+│          └── 对应一个方块               │
+│                                         │
+└─────────────────────────────────────────┘</code></pre>
+
+
+<h4>生活中的比喻</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">物品就像超市里的商品：
+
+┌─────────────────────────────────────────┐
+│  物品类型        │  超市类比            │
+├─────────────────┼─────────────────────  │
+│  食物           │  食品区（可以吃）     │
+│  工具           │  五金区（可以用）     │
+│  方块物品       │  建材区（可以放）     │
+│  弹药           │  射击区（可以扔）     │
+└─────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h3>步骤 2：注册物品</h3>
+
+
+<h4>核心概念</h4>
+
+
+注册物品和注册方块类似，都是"上户口"：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────┐
+│           Minecraft 注册表               │
+│                                         │
+│  namespace:path = 唯一的&quot;身份证号&quot;       │
+│                                         │
+│  &quot;minecraft:diamond_sword&quot; ← 钻石剑      │
+│  &quot;minecraft:apple&quot;        ← 苹果         │
+│  &quot;mymod:magic_wand&quot;      ← 你的魔法魔杖  │
+│                                         │
+└─────────────────────────────────────────┘</code></pre>
+
+
+<h4>代码实现</h4>
+
+
+在 Mod 主类中添加：
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyMod implements ModInitializer {
+    
+    // 定义一个魔法魔杖物品
+    public static final Item MAGIC_WAND = Registry.register(
+        Registries.ITEM,                            // 1. 注册到物品注册表
+        Identifier.of(&quot;mymod&quot;, &quot;magic_wand&quot;),      // 2. ID = &quot;mymod:magic_wand&quot;
+        new MagicWandItem(new Item.Settings()      // 3. 创建物品实例
+            .maxCount(1)                           // 只能堆叠1个
+            .maxDamage(100)                        // 100点耐久度
+            .rarity(Rarity.RARE)                   // 稀有度：蓝色
+        )
+    );
+    
+    @Override
+    public void onInitialize() {
+        // 物品注册完成！
+    }
+}</code></pre>
+
+
+<strong>三要素口诀</strong>：</p>
+<p><pre class="code-block"><code class="language-text">Registry.register(注册表, Identifier, new 物品)
+         ↓           ↓          ↓
+       放哪柜子     起什么名    什么样子</code></pre>
+
+
+<hr>
+
+<h3>步骤 3：创建物品类</h3>
+
+
+<h4>为什么需要自定义物品类？</h4>
+
+
+普通物品只能设置属性，但如果你想：
+<ul><li>右键使用时发射火球</li></ul>
+<ul><li>持有时发光</li></ul>
+<ul><li>使用时有特殊动画</li></ul>
+
+就需要创建自定义物品类。
+
+<h4>代码实现</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">
+public class MagicWandItem extends Item {
+    
+    public MagicWandItem(Settings settings) {
+        super(settings);
+    }
+    
+    // 右键使用物品
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient) {
+            // 在服务端执行
+            
+            // 创建火球
+            FireballEntity fireball = new FireballEntity(
+                EntityType.FIREBALL,     // 火球类型
+                world                    // 世界
+            );
+            
+            // 设置火球位置（在玩家前方）
+            Vec3d direction = player.getRotationVecClient();
+            fireball.setPosition(
+                player.getX() + direction.x * 1.5,
+                player.getY() + direction.y * 1.5 + 1.5,
+                player.getZ() + direction.z * 1.5
+            );
+            
+            // 设置火球方向
+            fireball.setVelocity(direction.x * 2, direction.y * 2, direction.z * 2);
+            
+            // 生成火球
+            world.spawnEntity(fireball);
+            
+            // 消耗耐久度
+            ItemStack stack = player.getStackInHand(hand);
+            stack.damage(1, player, EquipmentSlot.MAINHAND);
+            
+            // 播放音效
+            world.playSound(
+                null, 
+                player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ENTITY_BLAZE_SHOOT,
+                SoundCategory.PLAYERS,
+                0.5f, 
+                1.5f
+            );
+            
+            return TypedActionResult.success(stack);
+        }
+        
+        return TypedActionResult.pass(player.getStackInHand(hand));
+    }
+}</code></pre>
+
+
+<hr>
+
+<h3>步骤 4：添加使用效果</h3>
+
+
+<h4>常见使用效果</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
+public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+    // 创建箭矢/火球/末影珍珠等
+    ProjectileEntity projectile = new ArrowEntity(world, player);
+    // 设置位置和方向
+    projectile.setPosition(...);
+    projectile.setVelocity(...);
+    world.spawnEntity(projectile);
+    return TypedActionResult.success(stack);
+}
+
+// 2. 给予药水效果
+@Override
+public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+    player.addStatusEffect(new StatusEffectInstance(
+        StatusEffects.STRENGTH,    // 力量效果
+        60 * 20,                   // 持续60秒
+        0                          // 等级0（第一级）
+    ));
+    return TypedActionResult.success(stack);
+}
+
+// 3. 传送玩家
+@Override
+public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+    // 传送到主世界出生点
+    ServerWorld overworld = world.getServer().getWorld(World.OVERWORLD);
+    BlockPos spawn = overworld.getSpawnPos();
+    player.teleport(spawn.getX(), spawn.getY(), spawn.getZ());
+    return TypedActionResult.success(stack);
+}
+
+// 4. 消耗物品并给予新物品
+@Override
+public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
+    // 消耗1个物品
+    stack.decrement(1);
+    
+    // 给予新物品（空瓶子）
+    if (stack.isEmpty()) {
+        return new ItemStack(Items.GLASS_BOTTLE);
+    }
+    
+    return stack;
+}</code></pre>
+
+
+<h4>完整示例：传送魔杖</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class TeleportWandItem extends Item {
+    
+    public TeleportWandItem(Settings settings) {
+        super(settings);
+    }
+    
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient &amp;&amp; world.getServer() != null) {
+            // 获取主世界
+            ServerWorld overworld = world.getServer().getWorld(World.OVERWORLD);
+            if (overworld == null) {
+                return TypedActionResult.fail(player.getStackInHand(hand));
+            }
+            
+            // 传送到100格上方
+            int teleportY = (int) overworld.getTopY();
+            player.teleport(
+                overworld,
+                player.getX(), teleportY, player.getZ(),
+                player.getYaw(), player.getPitch()
+            );
+            
+            // 消耗耐久
+            player.getStackInHand(hand).damage(1, player, EquipmentSlot.MAINHAND);
+            
+            // 粒子效果
+            ((ServerWorld) world).spawnParticles(
+                Particles.PORTAL,
+                player.getX(), player.getY(), player.getZ(),
+                20, 0.5, 1, 0.5, 0.1
+            );
+            
+            return TypedActionResult.success(player.getStackInHand(hand));
+        }
+        
+        return TypedActionResult.pass(player.getStackInHand(hand));
+    }
+}</code></pre>
+
+
+<hr>
+
+<h3>步骤 5：创建合成配方（JSON）</h3>
+
+
+<h4>配方文件结构</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">data/
+└── mymod/
+    └── recipes/
+        └── magic_wand.json</code></pre>
+
+
+<h4>有形状合成配方</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:crafting_shaped&quot;,
+    &quot;category&quot;: &quot;equipment&quot;,
+    &quot;group&quot;: &quot;magic_wands&quot;,
+    &quot;pattern&quot;: [
+        &quot;  E&quot;,
+        &quot; S &quot;,
+        &quot;S  &quot;
+    ],
+    &quot;key&quot;: {
+        &quot;E&quot;: {
+            &quot;item&quot;: &quot;minecraft:ender_eye&quot;
+        },
+        &quot;S&quot;: {
+            &quot;item&quot;: &quot;minecraft:stick&quot;
+        }
+    },
+    &quot;result&quot;: {
+        &quot;item&quot;: &quot;mymod:magic_wand&quot;,
+        &quot;count&quot;: 1
+    }
+}</code></pre>
+
+
+<h4>配方图示</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">合成台预览：
+  [ ] [E] [ ]     E = 末影之眼
+  [S] [ ] [ ]  =  S = 木棍
+  [S] [ ] [ ]
+  
+结果：魔法魔杖 x1</code></pre>
+
+
+<h4>无形状合成配方</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:crafting_shapeless&quot;,
+    &quot;category&quot;: &quot;misc&quot;,
+    &quot;ingredients&quot;: [
+        {&quot;item&quot;: &quot;minecraft:diamond&quot;},
+        {&quot;item&quot;: &quot;minecraft:diamond&quot;},
+        {&quot;item&quot;: &quot;minecraft:blaze_rod&quot;},
+        {&quot;item&quot;: &quot;minecraft:stick&quot;}
+    ],
+    &quot;result&quot;: {
+        &quot;item&quot;: &quot;mymod:magic_wand&quot;,
+        &quot;count&quot;: 1
+    }
+}</code></pre>
+
+
+<hr>
+
+<h3>步骤 6：添加材质</h3>
+
+
+<h4>材质文件结构</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">resources/
+└── assets/
+    └── mymod/
+        └── textures/
+            └── item/
+                └── magic_wand.png    # 物品材质（16x16）</code></pre>
+
+
+<h4>物品模型 JSON</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;parent&quot;: &quot;minecraft:item/handheld&quot;,
+    &quot;textures&quot;: {
+        &quot;layer0&quot;: &quot;mymod:item/magic_wand&quot;
+    }
+}</code></pre>
+
+
+<hr>
+
+<h3>步骤 7：测试</h3>
+
+
+<h4>测试步骤</h4>
+
+
+<ul><li><strong>启动游戏</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   运行你的 Mod 开发环境</code></pre>
+
+
+<ul><li><strong>进入世界</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   创建一个新世界或进入已有世界</code></pre>
+
+
+<ul><li><strong>获取物品</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   /give @s mymod:magic_wand</code></pre>
+
+
+<ul><li><strong>测试功能</strong></li></ul>
+   - 右键使用，观察是否发射火球
+   - 检查耐久度是否减少
+   - 尝试用完耐久度
+
+<ul><li><strong>测试配方</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   /reload
+   打开合成台
+   放置对应材料进行合成</code></pre>
+
+
+<h4>常见问题排查</h4>
+
+
+| 问题 | 原因 | 解决方法 |
+|------|------|----------|
+| 物品不显示 | 物品模型路径错误 | 检查 textures 目录 |
+| 右键无反应 | 客户端/服务端分离 | 确保逻辑在 <code>!world.isClient</code> |
+| 耐久度不减少 | 需要在 <code>use()</code> 中手动调用 | <code>stack.damage(1, player, ...)</code> |
+| 配方找不到 | JSON 格式错误或位置错误 | 检查 data 目录结构 |
+
+<hr>
+
+<h2 id="完整代码">完整代码</h2>
+
+
+<h3>Mod 主类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod;
+
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
+import net.fabricmc.api.ModInitializer;
+import com.mymod.item.MagicWandItem;
+
+public class MyMod implements ModInitializer {
+    
+    // 注册魔法魔杖
+    public static final Item MAGIC_WAND = Registry.register(
+        Registries.ITEM,
+        Identifier.of(&quot;mymod&quot;, &quot;magic_wand&quot;),
+        new MagicWandItem(new Item.Settings()
+            .maxCount(1)
+            .maxDamage(100)
+            .rarity(Rarity.RARE)
+        )
+    );
+    
+    @Override
+    public void onInitialize() {
+        System.out.println(&quot;魔法魔杖 Mod 已加载！&quot;);
+    }
+}</code></pre>
+
+
+<h3>自定义物品类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod.item;
+
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.entity.projectile.FireballEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.world.World;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.component.EquipmentSlot;
+
+public class MagicWandItem extends Item {
+    
+    public MagicWandItem(Settings settings) {
+        super(settings);
+    }
+    
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(World world, PlayerEntity player, Hand hand) {
+        if (!world.isClient) {
+            // 获取玩家朝向
+            Vec3d direction = player.getRotationVecClient();
+            
+            // 创建火球
+            FireballEntity fireball = new FireballEntity(
+                EntityType.FIREBALL,
+                world
+            );
+            
+            // 设置火球位置
+            fireball.setPosition(
+                player.getX() + direction.x * 1.5,
+                player.getY() + direction.y * 1.5 + 1.5,
+                player.getZ() + direction.z * 1.5
+            );
+            
+            // 设置火球速度
+            fireball.setVelocity(direction.x * 2, direction.y * 2, direction.z * 2);
+            
+            // 生成火球
+            world.spawnEntity(fireball);
+            
+            // 消耗耐久
+            ItemStack stack = player.getStackInHand(hand);
+            stack.damage(1, player, EquipmentSlot.MAINHAND);
+            
+            // 播放音效
+            world.playSound(
+                null,
+                player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ENTITY_BLAZE_SHOOT,
+                SoundCategory.PLAYERS,
+                0.5f, 1.5f
+            );
+            
+            return TypedActionResult.success(stack);
+        }
+        
+        return TypedActionResult.pass(player.getStackInHand(hand));
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="遇到问题怎么办">遇到问题怎么办？</h2>
+
+
+<h3>调试技巧</h3>
+
+
+<ul><li><strong>查看日志</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   游戏崩溃时查看终端输出</code></pre>
+
+
+<ul><li><strong>逐步测试</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   先创建最简单的物品
+   → 添加一个功能
+   → 再添加一个功能</code></pre>
+
+
+<ul><li><strong>使用命令测试</strong></li></ul>
+   
+<pre class="code-block"><code class="language-text">   /give @s mymod:magic_wand{Enchantments:[{id:&quot;minecraft:unbreaking&quot;,lvl:10}]}</code></pre>
+
+
+<h3>常见错误</h3>
+
+
+| 错误信息 | 原因 | 解决方法 |
+|----------|------|----------|
+| <code>Registry is frozen</code> | 注册时机错误 | 确保在 <code>onInitialize</code> 中注册 |
+| <code>NullPointerException</code> | world 为 null | 检查 <code>world.isClient</code> 条件 |
+| <code>ConcurrentModificationException</code> | 在遍历中修改集合 | 使用 <code>List</code> 而非直接遍历 |
+
+<hr>
+
+<h2 id="扩展挑战">扩展挑战</h2>
+
+
+完成了基础项目？试试这些挑战：
+
+<h3>挑战 1：创建食物物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MagicAppleItem extends Item {
+    
+    public MagicAppleItem(Settings settings) {
+        super(settings.food(new FoodComponent.Builder()
+            .hunger(10)                    // 恢复10点饥饿
+            .saturationModifier(15f)      // 高饱和度
+            .statusEffect(
+                new StatusEffectInstance(StatusEffects.REGENERATION, 200, 1),
+                1.0f                      // 100%概率
+            )
+            .alwaysEdible()               // 饱腹时也能吃
+            .build()
+        ));
+    }
+}</code></pre>
+
+
+<h3>挑战 2：创建弓类物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class LightningBowItem extends BowItem {
+    
+    @Override
+    public void onStoppedUsing(ItemStack stack, World world, 
+                               LivingEntity user, int remainingUseTicks) {
+        // 发射雷电箭矢
+        // 类似原版弓的逻辑
+    }
+}</code></pre>
+
+
+<h3>挑战 3：创建工具物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MagicPickaxeItem extends PickaxeItem {
+    
+    public MagicPickaxeItem(ToolMaterial material, float attackDamage, 
+                           float attackSpeed, Settings settings) {
+        super(material, attackDamage, attackSpeed, settings);
+    }
+    
+    @Override
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        // 击中时给予力量效果
+        attacker.addStatusEffect(new StatusEffectInstance(
+            StatusEffects.STRENGTH, 60 * 20, 0
+        ));
+        return super.postHit(stack, target, attacker);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="参考资料">参考资料</h2>
+
+
+<h3>相关章节</h3>
+
+
+<ul><li><a href="../Part-1-Foundation/04-registry-system.html">注册表基础</a></li></ul>
+<ul><li><a href="../Part-3-Block-Item/17-item-basics.html">Item 基础</a></li></ul>
+<ul><li><a href="../Part-3-Block-Item/18-item-stack.html">ItemStack</a></li></ul>
+<ul><li><a href="../Part-8-Resource/44-recipe-system.html">配方系统</a></li></ul>
+<ul><li><a href="../Part-8-Resource/41-datapack-intro.html">数据包</a></li></ul>
+
+<h3>源码参考</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">source/net/minecraft/item/Items.java          - 物品定义示例
+source/net/minecraft/item/Item.java           - 物品基类
+source/net/minecraft/item/SwordItem.java      - 剑物品参考
+source/net/minecraft/item/BowItem.java        - 弓物品参考
+source/net/minecraft/item/FoodItem.java       - 食物物品参考</code></pre>
+
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+学会了创建物品？接下来我们学习创建生物实体！
+
+<blockquote><p><a href="100-project3-entity.html">项目3：添加新生物</a></p></blockquote>
+
+<hr>
+
+<em>本教程基于 Minecraft 1.21 源码编写</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="98-project1-block.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            项目1：添加新方块
+        </a><a href="100-project3-entity.html" class="next">
+            项目3：添加新生物
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

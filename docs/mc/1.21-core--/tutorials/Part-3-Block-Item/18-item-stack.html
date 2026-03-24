@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>18 - ItemStack：物品堆叠 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="18-item-stack.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>18 - ItemStack：物品堆叠</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    18 - ItemStack：物品堆叠
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>18 - ItemStack：物品堆叠</h1>
+
+
+<h2 id="目标">目标</h2>
+
+
+学完本章节后，你将理解：
+<ul><li>ItemStack 是什么（带有数量和数据的物品）</li></ul>
+<ul><li>ItemStack 和 Item 的关系</li></ul>
+<ul><li>物品数量限制和耐久度管理</li></ul>
+<ul><li>物品复制和比较</li></ul>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>理解 <a href="17-item-basics.html">Item 基础</a></li></ul>
+<ul><li>了解 Java 基本类型和对象</li></ul>
+
+<h2 id="核心概念用生活比喻">核心概念（用生活比喻）</h2>
+
+
+<h3>ItemStack 是什么？</h3>
+
+
+<strong>ItemStack（物品堆）</strong> = <strong>物品类型</strong> + <strong>数量</strong> + <strong>附加数据</strong>
+
+想象你在背包里放东西：
+<ul><li><strong>Item（物品类型）</strong> = 这是一堆"苹果"</li></ul>
+<ul><li><strong>ItemStack（物品堆）</strong> = 这一堆有 <strong>5个</strong> 苹果</li></ul>
+<ul><li><strong>附加数据</strong> = 这5个苹果是 <strong>附魔附魔金苹果</strong></li></ul>
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────┐
+│                                     │
+│  背包中的一个格子                     │
+│                                     │
+│  ItemStack（物品堆）                 │
+│  ├── Item: 苹果                      │
+│  ├── Count: 5                       │
+│  └── Components:                    │
+│      ├── 附魔: 保护 I              │
+│      └── 自定义名称: &quot;金苹果&quot;        │
+│                                     │
+└─────────────────────────────────────┘</code></pre>
+
+
+<h3>Item vs ItemStack</h3>
+
+
+| 概念 | Item | ItemStack |
+|------|------|-----------|
+| <strong>定义</strong> | 物品的"类型" | 具体的物品"实例" |
+| <strong>数量</strong> | 只有一种 | 有具体数量 |
+| <strong>数据</strong> | 无 | 有附加数据（附魔、自定义名称等） |
+| <strong>比喻</strong> | "苹果"的概念 | "5个苹果" |
+| <strong>全局</strong> | 只有一个实例 | 可以有很多实例 |
+</p>
+<p><pre class="code-block"><code class="language-text">Item（苹果种类 - 只有一个）
+    │
+    └── ItemStack（具体苹果）
+        ├── 1个苹果
+        ├── 5个苹果 ← 不同数量
+        ├── 5个附魔金苹果 ← 有附魔数据
+        └── 1个名为&quot;毒苹果&quot;的苹果 ← 有名称数据</code></pre>
+
+
+<h3>重要特性</h3>
+
+
+<ul><li><strong>最大堆叠数</strong>：大多数物品最多64个</li></ul>
+<ul><li><strong>耐久度</strong>：工具类物品最多1个，有耐久度属性</li></ul>
+<ul><li><strong>不可变比较</strong>：不要用 <code>==</code> 比较 ItemStack，要用 <code>isOf()</code> 或 <code>areEqual()</code></li></ul>
+
+<h2 id="图解mermaid">图解（Mermaid）</h2>
+
+
+<h3>Item 和 ItemStack 的关系图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph Item["Item (物品类型) - 全局唯一"]
+        I1[Apple Item]
+        I2[Sword Item]
+        I3[Diamond Item]
+    end
+    
+    subgraph ItemStacks["ItemStack (物品堆) - 多个实例"]
+        S1["5x Apple"]
+        S2["64x Apple"]
+        S3["1x Diamond Sword + Sharpness V"]
+        S4["10x Apple + 名称数据"]
+    end
+    
+    I1 --> S1
+    I1 --> S2
+    I1 --> S4
+    I2 --> S3</div>
+</div>
+
+
+<h3>ItemStack 生命周期图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 创建
+        A[ItemStack创建] --> B[设置数量]
+        B --> C[设置组件数据]
+    end
+    
+    subgraph 操作
+        C --> D[使用物品]
+        D --> E[数量减少]
+        E -->|数量=0| F[变为空堆]
+        C --> G[合并堆叠]
+        G -->|超过64| H[拆分]
+        C --> I[复制]
+    end</div>
+</div>
+
+
+<h3>物品比较方法图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[比较两个ItemStack] --> B{比较什么?}
+    B -->|物品类型| C[areItemsEqual]
+    B -->|类型+数量| D[areEqual]
+    B -->|类型+数量+数据| E[areItemsAndComponentsEqual]
+    
+    C -->|true| F["物品类型相同"]
+    D -->|true| G["物品类型+数量相同"]
+    E -->|true| H["完全相同"]</div>
+</div>
+
+
+<h2 id="核心代码">核心代码</h2>
+
+
+<h3>创建 ItemStack</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack stack1 = new ItemStack(Items.DIAMOND);
+// 数量为1
+
+// 2. 指定数量
+ItemStack stack2 = new ItemStack(Items.DIAMOND, 16);
+// 16个钻石
+
+// 3. 从 Block 创建
+ItemStack stack3 = new ItemStack(Blocks.STONE);
+// 对应石头的物品
+
+// 4. 从另一个 ItemStack 复制
+ItemStack stack4 = stack1.copy();
+// 完全相同的副本</code></pre>
+
+
+<h3>ItemStack 基本操作</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack stack = new ItemStack(Items.DIAMOND, 32);
+
+stack.getCount();          // 获取数量: 32
+stack.setCount(10);        // 设置数量: 10
+stack.increment(5);        // 增加5个: 15
+stack.decrement(3);        // 减少3个: 12
+
+// 2. 判断是否为空
+stack.isEmpty();           // 是否为空
+!stack.isEmpty()          // 是否有物品
+
+// 3. 获取物品类型
+stack.getItem();          // 获取Item: Diamond Item
+stack.isOf(Items.DIAMOND); // 是否是钻石
+
+// 4. 复制
+ItemStack copy = stack.copy();           // 完整复制
+ItemStack copyCount = stack.copyWithCount(5); // 复制指定数量</code></pre>
+
+
+<h3>耐久度管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack sword = new ItemStack(Items.DIAMOND_SWORD, 1);
+
+// 获取耐久信息
+sword.getMaxDamage();    // 最大耐久度: 1561
+sword.getDamage();       // 当前损坏值
+sword.isDamaged();       // 是否已损坏
+
+// 设置/修改耐久
+sword.setDamage(500);    // 设置损坏值
+sword.getDamage();       // 返回: 500
+
+// 消耗耐久（造成伤害）
+sword.damage(1, player, EquipmentSlot.MAINHAND);
+// 当耐久耗尽，物品会消失
+
+// 检查耐久相关
+sword.isDamageable();     // 是否可损坏
+sword.isDamaged();       // 是否已损坏</code></pre>
+
+
+<h3>物品比较</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack stack1 = new ItemStack(Items.DIAMOND, 10);
+ItemStack stack2 = new ItemStack(Items.DIAMOND, 10);
+ItemStack stack3 = new ItemStack(Items.DIAMOND, 5);
+ItemStack stack4 = new ItemStack(Items.IRON_INGOT, 10);
+
+// 1. 比较物品类型（忽略数量和数据）
+ItemStack.areItemsEqual(stack1, stack2);  // true
+ItemStack.areItemsEqual(stack1, stack3);   // true（类型相同）
+ItemStack.areItemsEqual(stack1, stack4);   // false（类型不同）
+
+// 2. 比较类型+数量（忽略其他数据）
+ItemStack.areEqual(stack1, stack2);        // true
+ItemStack.areEqual(stack1, stack3);        // false（数量不同: 10 vs 5）
+
+// 3. 完全比较（类型+数量+所有组件）
+ItemStack.areItemsAndComponentsEqual(stack1, stack2);  // true
+
+// 4. 使用 isOf（推荐用于检查物品类型）
+stack1.isOf(Items.DIAMOND);                 // true
+stack4.isOf(Items.DIAMOND);                 // false
+
+// ⚠️ 重要：不要用 == 比较！
+stack1 == stack2   // ❌ 错误！比较的是引用，不是内容</code></pre>
+
+
+<h3>物品拆分和合并</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack stack = new ItemStack(Items.DIAMOND, 32);
+
+// 拆分（从原堆移除指定数量，返回新的ItemStack）
+ItemStack split = stack.split(10);
+// stack 现在有 22 个
+// split 有 10 个
+
+// 安全拆分（如果数量不足，只返回实际存在的数量）
+ItemStack safeSplit = stack.split(100);
+// safeSplit 最多有 stack 原有的数量
+
+// 复制清空（复制内容后清空原堆）
+ItemStack transfer = stack.copyAndEmpty();
+// transfer 有原 stack 的内容
+// stack 现在为空
+
+// 合并（需要手动处理）
+ItemStack target = new ItemStack(Items.DIAMOND, 50);
+ItemStack source = new ItemStack(Items.DIAMOND, 20);
+
+// 尝试合并
+int toTransfer = Math.min(source.getCount(), target.getMaxCount() - target.getCount());
+if (toTransfer &gt; 0) {
+    target.increment(toTransfer);
+    source.decrement(toTransfer);
+}</code></pre>
+
+
+<h3>物品组件操作（1.21新版）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
+
+// 设置组件
+stack.set(DataComponentTypes.ENCHANTMENTS, 
+    new ItemEnchantmentsComponent(Map.of(
+        Enchantments.SHARPNESS, 5
+    ))
+);
+
+// 获取组件
+ItemEnchantmentsComponent enchants = stack.get(DataComponentTypes.ENCHANTMENTS);
+
+// 检查组件
+if (stack.contains(DataComponentTypes.ENCHANTMENTS)) {
+    // 有附魔
+}
+
+// 移除组件
+stack.remove(DataComponentTypes.ENCHANTMENTS);
+
+// 自定义名称
+stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(&quot;我的钻石剑&quot;));
+stack.get(DataComponentTypes.CUSTOM_NAME);  // 获取自定义名称</code></pre>
+
+
+<h3>NBT 序列化（存档）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">NbtCompound nbt = new NbtCompound();
+stack.encode(registryLookup, nbt);
+
+// 从 NBT 加载
+RegistryWrapper.WrapperLookup registries = ...;
+Optional&lt;ItemStack&gt; loaded = ItemStack.fromNbt(registries, nbt);
+loaded.ifPresent(s -&gt; {
+    // 使用加载的物品
+});
+
+// 或者使用简便方法
+ItemStack fromNbt = ItemStack.fromNbtOrEmpty(registries, nbt);</code></pre>
+
+
+<h2 id="实战演示">实战演示</h2>
+
+
+<h3>案例：创建物品交易系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class TradeManager {
+    
+    public static boolean trade(PlayerEntity player, ItemStack cost, ItemStack reward) {
+        // 检查玩家背包
+        Inventory inventory = player.getInventory();
+        
+        // 查找是否有足够的支付物品
+        for (int i = 0; i &lt; inventory.size(); i++) {
+            ItemStack slot = inventory.getStack(i);
+            
+            if (ItemStack.areItemsEqual(slot, cost)) {
+                // 找到了匹配物品
+                int haveCount = slot.getCount();
+                int needCount = cost.getCount();
+                
+                if (haveCount &gt;= needCount) {
+                    // 扣除支付物品
+                    slot.decrement(needCount);
+                    
+                    // 添加奖励物品（先尝试合并到已有堆）
+                    ItemStack remaining = inventory.addStack(reward.copy());
+                    
+                    // 如果背包满了，在玩家脚下生成
+                    if (!remaining.isEmpty()) {
+                        Block.dropStack(player.getWorld(), player.getBlockPos(), remaining);
+                    }
+                    
+                    return true;
+                }
+            }
+        }
+        
+        return false; // 物品不足
+    }
+}</code></pre>
+
+
+<h3>案例：耐久度检查和处理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ToolChecker {
+    
+    public static boolean isToolUsable(ItemStack tool, int minDurability) {
+        if (tool.isEmpty() || !tool.isDamageable()) {
+            return false;
+        }
+        
+        int remaining = tool.getMaxDamage() - tool.getDamage();
+        return remaining &gt;= minDurability;
+    }
+    
+    public static void repairTool(ItemStack tool, int amount) {
+        if (!tool.isDamageable()) return;
+        
+        int newDamage = Math.max(0, tool.getDamage() - amount);
+        tool.setDamage(newDamage);
+    }
+    
+    public static ItemStack damageAndBreak(ItemStack tool, int amount, 
+                                          LivingEntity holder, 
+                                          EquipmentSlot slot) {
+        // 造成伤害并检查是否损坏
+        tool.damage(amount, holder, slot);
+        
+        // 如果物品损坏（耐久耗尽），返回空
+        if (tool.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        
+        return tool;
+    }
+}</code></pre>
+
+
+<h2 id="小结">小结</h2>
+
+
+<ul><li><strong>ItemStack</strong> = Item（物品类型）+ Count（数量）+ Components（数据）</li></ul>
+<ul><li>数量通过 <code>getCount()</code>/<code>setCount()</code> 操作</li></ul>
+<ul><li>耐久度通过 <code>getDamage()</code>/<code>setDamage()</code>/<code>damage()</code> 操作</li></ul>
+<ul><li>比较使用 <code>isOf()</code>、<code>areItemsEqual()</code>、<code>areEqual()</code>，<strong>不要用 <code>==</code></strong></li></ul>
+<ul><li>拆分用 <code>split()</code>，复制用 <code>copy()</code></li></ul>
+<ul><li>组件（1.21新）用于存储附魔、名称等数据</li></ul>
+
+<h2 id="练习">练习</h2>
+
+
+<ul><li>创建一个函数，检查玩家背包是否有足够的指定物品</li></ul>
+<ul><li>创建一个函数，自动将两个可堆叠的 ItemStack 合并</li></ul>
+<ul><li>思考：为什么耐久工具最大堆叠是1？</li></ul>
+<ul><li>进阶：创建一个"物品复制"功能，消耗经验等级来复制物品</li></ul>
+
+<h3>源码文件位置</h3>
+
+
+| 文件 | 源码路径 | 说明 |
+|------|----------|------|
+| ItemStack.java | <code>net/minecraft/item/ItemStack.java</code> | 物品堆叠 |
+| DataComponentTypes.java | <code>net/minecraft/component/DataComponentTypes.java</code> | 组件类型(1.21) |
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<ul><li><a href="17-item-basics.html">Item 基础</a></li></ul>
+<ul><li><a href="19-item-component.html">物品组件（1.21新）下一章</a></li></ul>
+<ul><li><a href="16-block-entity.html">BlockEntity 中的物品存储</a></li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="17-item-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            17 - Item 类：物品的基础
+        </a><a href="19-item-component.html" class="next">
+            19 - ComponentMap：1.21新版物品数据系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

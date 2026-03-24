@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织 - Iris 光影</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="00-introduction.html" class="">
+            <i class="fas fa-book"></i>
+            🎮 从零开始的 Shader 冒险！
+        </a>
+<a href="01-shader-basics.html" class="">
+            <i class="fas fa-book"></i>
+            🚀 第一章：Shader 是什么？
+        </a>
+<a href="02-iris-setup.html" class="">
+            <i class="fas fa-book"></i>
+            ⚙️ 第二章：开发环境搭建
+        </a>
+<a href="03-first-color.html" class="">
+            <i class="fas fa-book"></i>
+            🎨 第三章：第一个颜色魔法
+        </a>
+<a href="04-shaderpack-structure.html" class="active">
+            <i class="fas fa-book"></i>
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
+        </a>
+<a href="05-uniform-animation.html" class="">
+            <i class="fas fa-book"></i>
+            ✨ 第五章：Uniform 变量 - 让世界动起来！
+        </a>
+<a href="06-postprocessing.html" class="">
+            <i class="fas fa-book"></i>
+            🔮 第六章：后处理魔法 - 全屏特效！
+        </a>
+<a href="07-create-shaderpack.html" class="">
+            <i class="fas fa-book"></i>
+            🏆 最终章：创造你的第一个光影包！
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-book"></i>
+            🎮 Iris 光影开发教程
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-1.7.3</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织</h1>
+
+
+<blockquote><p>📁 <em>Shader 大楼的蓝图！</em></p></blockquote>
+
+<hr>
+
+<h2 id="本章目标">🎯 本章目标</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">完成本章后，你将能够：
+├── 📂 理解完整的 ShaderPack 目录结构
+├── 📝 知道 shaders.properties 的作用
+├── 🎨 理解不同着色器的用途
+└── 🔧 创建完整的配置</code></pre>
+
+
+<hr>
+
+<h2 id="shaderpack-是什么">🤔 ShaderPack 是什么？</h2>
+
+
+<h3>打个比方：乐高城市 🏙️</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">ShaderPack 就像一个乐高城市套件！
+
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│    📁 ShaderPack = 整个套件盒子                            │
+│                                                             │
+│    ┌─────────┐  ┌─────────┐  ┌─────────┐                 │
+│    │ shaders/ │  │  lang/  │  │ .props  │                 │
+│    │          │  │         │  │         │                 │
+│    │ ┌─────┐ │  │ ┌─────┐ │  │ 配置说明 │                 │
+│    │ │ 地形 │ │  │ │ 中文 │ │  │         │                 │
+│    │ ├─────┤ │  │ ├─────┤ │  │ 阴影    │                 │
+│    │ │ 水   │ │  │ │ 英文 │ │  │ 分辨率  │                 │
+│    │ ├─────┤ │  │ └─────┘ │  │         │                 │
+│    │ │ 实体 │ │  │         │  │ 云朵    │                 │
+│    │ └─────┘ │  └─────────┘  │ 等等... │                 │
+│    └─────────┘                 └─────────┘                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="完整目录结构">📁 完整目录结构</h2>
+
+
+<h3>典型的 ShaderPack 结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">Sildurs-Vibrant/
+│
+├── 📄 shaders.properties          # ⚙️ 核心配置文件
+├── 📄 dimension.properties         # 🌍 维度特殊配置
+├── 📄 block.properties            # 🧱 方块属性映射
+├── 📄 entity.properties           # 🐄 实体 ID 映射
+├── 📄 PART.png                   # 🖼️ 预览图
+├── 📄 LICENSE                   # 📜 许可证
+│
+├── 📁 shaders/                   # 🎨 核心着色器目录
+│   │
+│   ├── ┌─────────────┐
+│   │ │ GBuffer 着色器 │  ← 渲染实际物体
+│   │ ├─────────────┤
+│   │ │ gbuffers_terrain.* │    方块
+│   │ │ gbuffers_water.*     │    水
+│   │ │ gbuffers_entities.* │    生物/玩家
+│   │ │ gbuffers_clouds.*   │    云
+│   │ │ gbuffers_skybasic.* │    天空
+│   │ │ gbuffers_particles.* │  粒子
+│   │ └─────────────┘
+│   │
+│   ├── ┌─────────────┐
+│   │ │ Composite 着色器 │  ← 后处理
+│   │ ├─────────────┤
+│   │ │ composite1.*     │    后处理 1
+│   │ │ composite2.*     │    后处理 2
+│   │ │ final.*          │    最终输出
+│   │ └─────────────┘
+│   │
+│   └── ┌─────────────┐
+│       │ Shadow 着色器 │  ← 阴影渲染
+│       ├─────────────┤
+│       │ shadow.vsh      │
+│       │ shadow.fsh      │
+│       └─────────────┘
+│
+└── 📁 lang/                     # 🌍 多语言文件
+    ├── en_us.json             # 英文
+    ├── zh_cn.json             # 中文
+    └── ja_jp.json             # 日文</code></pre>
+
+
+<hr>
+
+<h2 id="着色器文件类型">🎨 着色器文件类型</h2>
+
+
+<h3>GBuffer 着色器（渲染物体）</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 世界
+        A[地形方块] --> B[gbuffers_terrain]
+        C[水/岩浆] --> D[gbuffers_water]
+        E[实体/玩家] --> F[gbuffers_entities]
+        G[云朵] --> H[gbuffers_clouds]
+        I[天空] --> J[gbuffers_skybasic]
+    end
+
+    B --> K[屏幕]
+    D --> K
+    F --> K
+    H --> K
+    J --> K</div>
+</div>
+
+
+| 文件 | 影响范围 | 常用效果 |
+|------|---------|---------|
+| <code>gbuffers_terrain.*</code> | 所有方块 | 颜色修改、光照 |
+| <code>gbuffers_water.*</code> | 水/岩浆 | 反射、波纹 |
+| <code>gbuffers_entities.*</code> | 实体、玩家 | 卡通渲染 |
+| <code>gbuffers_clouds.*</code> | 云 | 云朵特效 |
+| <code>gbuffers_skybasic.*</code> | 天空 | 天空颜色 |
+| <code>gbuffers_particles.*</code> | 粒子 | 粒子特效 |
+| <code>gbuffers<em>textured</em>lit.*</code> | 发光方块 | 萤石等 |
+
+<h3>Composite 着色器（后处理）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">场景渲染 ──▶ composite1 ──▶ composite2 ──▶ ... ──▶ final ──▶ 屏幕
+
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  composite1: 模糊效果                                      │
+│       ↓                                                    │
+│  composite2: 泛光/发光                                    │
+│       ↓                                                    │
+│  composite3: 色调调整                                     │
+│       ↓                                                    │
+│  final: 晕影 + 伽马校正                                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+| 文件 | 用途 |
+|------|------|
+| <code>composite1-99.*</code> | 后处理 Pass |
+| <code>final.*</code> | 最终输出 |
+
+<h3>Shadow 着色器（阴影渲染）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">主视角渲染                    阴影视角渲染
+┌────────────────┐         ┌────────────────┐
+│                │         │                │
+│    世界场景    │         │   简化场景     │
+│                │         │   (只画阴影)  │
+│                │         │                │
+└────────────────┘         └────────────────┘
+        ↓                            ↓
+   存储颜色                    存储深度
+        ↓                            ↓
+        └────────────┬───────────────┘
+                     ↓
+              shadowtex 纹理
+              (阴影计算用)</code></pre>
+
+
+<hr>
+
+<h2 id="shadersproperties-配置详解">⚙️ shaders.properties 配置详解</h2>
+
+
+<h3>这是 ShaderPack 的"设置面板"</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-properties"># ═══════════════════════════════════════════════════
+#                    阴影配置
+# ═══════════════════════════════════════════════════
+
+shadowMapResolution=2048      # 阴影分辨率 (256-8192)
+shadowDistance=160            # 阴影距离 (16-1024方块)
+shadowDistanceRenderMul=1.0   # 阴影渲染距离倍率
+
+# ═══════════════════════════════════════════════════
+#                    云朵配置
+# ═══════════════════════════════════════════════════
+
+clouds=0                      # 0=原版 1=开启 2=关闭
+cloudHeight=128.0            # 云朵高度
+
+# ═══════════════════════════════════════════════════
+#                    光照配置
+# ═══════════════════════════════════════════════════
+
+oldLighting=0.0               # 旧版光照强度 (0.0-1.0)
+sunPathRotation=0.0          # 太阳旋转角度 (-180 到 180)
+
+# ═══════════════════════════════════════════════════
+#                    其他配置
+# ═══════════════════════════════════════════════════
+
+weatherSpeedTweak=1.0        # 天气速度调整</code></pre>
+
+
+<h3>配置项速查表</h3>
+
+
+| 配置项 | 值范围 | 默认值 | 说明 |
+|--------|--------|--------|------|
+| <code>shadowMapResolution</code> | 256-8192 | 1024 | 阴影贴图大小 |
+| <code>shadowDistance</code> | 16-1024 | 160 | 阴影渲染距离 |
+| <code>clouds</code> | 0/1/2 | 0 | 0=原版 1=开 2=关 |
+| <code>oldLighting</code> | 0.0-1.0 | 0.0 | 0=新光照 1=旧光照 |
+| <code>sunPathRotation</code> | -180~180 | 0 | 太阳旋转角度 |
+
+<hr>
+
+<h2 id="维度配置-dimensionproperties">🌍 维度配置 (dimension.properties)</h2>
+
+
+<h3>为不同世界设置不同参数</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-properties"># ═══════════════════════════════════════════════════
+#                    主世界
+# ═══════════════════════════════════════════════════
+
+dimension.Overworld.ambientLight=1.0
+dimension.Overworld.clouds=true
+
+# ═══════════════════════════════════════════════════
+#                    下界
+# ═══════════════════════════════════════════════════
+
+dimension.TheNether.ambientLight=0.2
+dimension.TheNether.fogDensity=0.1
+dimension.TheNether.fogColor=1.0 0.2 0.1
+
+# ═══════════════════════════════════════════════════
+#                    末地
+# ═══════════════════════════════════════════════════
+
+dimension.TheEnd.ambientLight=0.1
+dimension.TheEnd.skyColor=0x000008</code></pre>
+
+
+<hr>
+
+<h2 id="id-映射文件">🧱 ID 映射文件</h2>
+
+
+<h3>block.properties - 方块属性</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-properties"># 方块ID = 属性
+# 属性：smooth(平滑), rough(粗糙), special(特殊)
+
+# 发光方块 = special + 亮度值
+minecraft:glowstone=special:1.0
+minecraft:sea_lantern=special:1.0
+minecraft:shroomlight=special:1.0
+
+# 透明方块
+minecraft:glass=smooth
+minecraft:ice=smooth
+minecraft:grass_block=rough</code></pre>
+
+
+<h3>entity.properties - 实体 ID</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-properties"># 用于着色器中的 entityColor
+
+minecraft:pig=0
+minecraft:cow=1
+minecraft:sheep=2
+minecraft:creeper=3
+minecraft:skeleton=4
+minecraft:zombie=5
+minecraft:player=100</code></pre>
+
+
+<hr>
+
+<h2 id="最小-shaderpack-vs-完整-shaderpack">📂 最小 ShaderPack vs 完整 ShaderPack</h2>
+
+
+<h3>最小结构（也能工作！）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">minimal-pack/
+└── shaders/
+    └── gbuffers_terrain.fsh     # 只需要一个文件！</code></pre>
+
+
+<h3>完整结构（专业光影包）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">professional-pack/
+├── shaders.properties              # 配置文件
+├── dimension.properties           # 维度配置
+├── block.properties               # 方块映射
+├── PART.png                      # 预览图
+│
+├── shaders/
+│   ├── gbuffers_terrain.vsh
+│   ├── gbuffers_terrain.fsh
+│   ├── gbuffers_water.vsh
+│   ├── gbuffers_water.fsh
+│   ├── gbuffers_entities.vsh
+│   ├── gbuffers_entities.fsh
+│   ├── gbuffers_skybasic.vsh
+│   ├── gbuffers_skybasic.fsh
+│   ├── gbuffers_clouds.vsh
+│   ├── gbuffers_clouds.fsh
+│   ├── gbuffers_particles.vsh
+│   ├── gbuffers_particles.fsh
+│   │
+│   ├── composite1.vsh
+│   ├── composite1.fsh
+│   ├── composite2.vsh
+│   ├── composite2.fsh
+│   ├── composite3.vsh
+│   ├── composite3.fsh
+│   │
+│   ├── final.vsh
+│   ├── final.fsh
+│   │
+│   └── shadow.vsh
+│   └── shadow.fsh
+│
+└── lang/
+    ├── en_us.json
+    └── zh_cn.json</code></pre>
+
+
+<hr>
+
+<h2 id="文件加载流程">🔄 文件加载流程</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant User as 👤 玩家
+    participant Iris as 🎮 Iris Mod
+    participant Loader as 📂 ShaderPack Loader
+    participant Shader as 🎨 Shader Files
+
+    User->>Iris: 选择 ShaderPack
+    Iris->>Loader: 加载文件夹
+    Loader->>Loader: 读取 shaders.properties
+    Loader->>Loader: 解析 dimension.properties
+    Loader->>Loader: 处理 ID 映射文件
+    Loader->>Shader: 编译顶点着色器
+    Loader->>Shader: 编译片元着色器
+    Shader-->>User: ✅ ShaderPack 就绪
+
+    Note over Loader,Shader: 每个 .vsh / .fsh 都会被编译</div>
+</div>
+
+
+<hr>
+
+<h2 id="小挑战">🎯 小挑战</h2>
+
+
+<h3>挑战 1：创建你自己的配置</h3>
+
+
+创建 <code>shaders.properties</code>，设置：
+<ul><li>阴影分辨率：2048</li></ul>
+<ul><li>阴影距离：200</li></ul>
+<ul><li>关闭云朵</li></ul>
+
+<details>
+<summary>👆 答案</summary>
+</p>
+<p><pre class="code-block"><code class="language-properties">shadowMapResolution=2048
+shadowDistance=200
+clouds=2</code></pre>
+
+
+</details>
+
+<h3>挑战 2：识别文件用途</h3>
+
+
+以下文件分别影响什么？
+
+<ul><li><code>gbuffers_water.fsh</code></li></ul>
+<ul><li><code>composite1.fsh</code></li></ul>
+<ul><li><code>shadow.vsh</code></li></ul>
+
+<details>
+<summary>👆 答案</summary>
+
+<ul><li><strong>gbuffers_water.fsh</strong> → 水和岩浆的外观</li></ul>
+<ul><li><strong>composite1.fsh</strong> → 后处理效果（模糊、泛光等）</li></ul>
+<ul><li><strong>shadow.vsh</strong> → 阴影渲染的顶点着色器</li></ul>
+
+</details>
+
+<hr>
+
+<h2 id="本章总结">📊 本章总结</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">mindmap
+  root((第四章))
+    目录结构
+      shaders/核心
+      lang/语言
+      .properties配置
+    着色器类型
+      GBuffer渲染物体
+      Composite后处理
+      Shadow阴影
+    配置文件
+      shaders.properties
+      dimension.properties
+      block.properties
+    文件加载
+      配置文件先行
+      然后编译着色器
+      错误报告</div>
+</div>
+
+
+<hr>
+
+<h2 id="下一步">🚀 下一步</h2>
+
+
+👉 <a href="05-uniform-animation.html">✨ 第五章：Uniform 变量 - 让世界动起来！</a>
+
+<hr>
+
+<em>🎉 恭喜你完成第四章！你已经理解完整的 ShaderPack 结构了！</em>
+
+<em>下一章我们将学习 Uniform 变量，让画面动起来！</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-first-color.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            🎨 第三章：第一个颜色魔法
+        </a><a href="05-uniform-animation.html" class="next">
+            ✨ 第五章：Uniform 变量 - 让世界动起来！
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

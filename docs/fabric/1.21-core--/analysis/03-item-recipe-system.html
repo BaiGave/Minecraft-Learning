@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Fabric API 物品与配方系统分析 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+<a href="06-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 渲染系统分析
+        </a>
+<a href="07-networking-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 网络系统分析
+        </a>
+<a href="08-resource-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 资源加载系统分析
+        </a>
+<a href="09-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 传输/存储系统分析
+        </a>
+<a href="10-command-screen-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 命令与屏幕系统分析
+        </a>
+<a href="11-other-subsystems.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 其他子系统分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 深度分析总览
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Fabric API 物品与配方系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Fabric API 物品与配方系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 物品与配方系统分析</h1>
+
+
+<h2 id="概述">概述</h2>
+
+
+物品与配方系统模块包含三个核心子模块：
+<ul><li><code>fabric-item-api-v1</code> - 物品 API 扩展</li></ul>
+<ul><li><code>fabric-recipe-api-v1</code> - 配方 API 扩展</li></ul>
+<ul><li><code>fabric-item-group-api-v1</code> - 物品栏分组系统</li></ul>
+
+<hr>
+
+<h2 id="1-fabric-item-api-v1-模块">1. fabric-item-api-v1 模块</h2>
+
+
+<h3>1.1 FabricItem 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface FabricItem {
+    // 组件更新动画控制
+    default boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand,
+                                                  ItemStack oldStack, ItemStack newStack);
+
+    // 持续挖掘进度控制
+    default boolean allowContinuingBlockBreaking(PlayerEntity player,
+                                                ItemStack oldStack, ItemStack newStack);
+
+    // 配方剩余物处理
+    default ItemStack getRecipeRemainder(ItemStack stack);
+
+    // 附魔检查
+    default boolean canBeEnchantedWith(ItemStack stack, RegistryEntry&lt;Enchantment&gt; enchantment,
+                                       EnchantingContext context);
+
+    // 获取创建者命名空间
+    default String getCreatorNamespace(ItemStack stack);
+}</code></pre>
+
+
+<h3>1.2 CustomDamageHandler 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@FunctionalInterface
+public interface CustomDamageHandler {
+    int damage(ItemStack stack, int amount, LivingEntity entity,
+                EquipmentSlot slot, Runnable breakCallback);
+}</code></pre>
+
+
+<h3>1.3 EquipmentSlotProvider 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@FunctionalInterface
+public interface EquipmentSlotProvider {
+    EquipmentSlot getPreferredEquipmentSlot(LivingEntity entity, ItemStack stack);
+}</code></pre>
+
+
+<h3>1.4 使用示例 - 自定义伤害处理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final CustomDamageHandler WEIRD_DAMAGE_HANDLER =
+    (stack, amount, entity, slot, breakCallback) -&gt; {
+        if (entity.isSneaking()) {
+            return amount;
+        } else {
+            stack.set(WEIRD, Math.max(0, stack.getOrDefault(WEIRD, 0) + 1));
+            return 0;
+        }
+    };
+
+public static class WeirdPick extends PickaxeItem {
+    protected WeirdPick() {
+        super(ToolMaterials.GOLD,
+              new Item.Settings().customDamage(WEIRD_DAMAGE_HANDLER));
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-fabric-recipe-api-v1-模块">2. fabric-recipe-api-v1 模块</h2>
+
+
+<h3>2.1 CustomIngredient 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface CustomIngredient {
+    // 测试物品堆栈是否匹配
+    boolean test(ItemStack stack);
+
+    // 获取匹配的物品堆栈列表（用于显示）
+    List&lt;ItemStack&gt; getMatchingStacks();
+
+    // 是否需要直接测试（NBT 检查）
+    boolean requiresTesting();
+
+    // 获取序列化器
+    CustomIngredientSerializer&lt;?&gt; getSerializer();
+
+    // 转换为原生 Ingredient
+    default Ingredient toVanilla() {
+        return new CustomIngredientImpl(this);
+    }
+}</code></pre>
+
+
+<h3>2.2 内置自定义成分</h3>
+
+
+| 成分类型 | 标识符 | 用途 |
+|---------|--------|------|
+| <code>AllIngredient</code> | <code>fabric:all</code> | 所有子成分都必须匹配 |
+| <code>AnyIngredient</code> | <code>fabric:any</code> | 任一子成分匹配即可 |
+| <code>DifferenceIngredient</code> | <code>fabric:difference</code> | 基础减去排除部分 |
+| <code>CustomDataIngredient</code> | <code>fabric:custom_data</code> | 带有自定义 NBT 的物品 |
+| <code>ComponentsIngredient</code> | <code>fabric:components</code> | 带有特定组件的物品 |
+
+<h3>2.3 JSON 数据包格式</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;fabric:type&quot;: &quot;fabric:all&quot;,
+    &quot;ingredients&quot;: [
+        {&quot;item&quot;: &quot;minecraft:diamond&quot;},
+        {&quot;tag&quot;: &quot;minecraft:wool&quot;}
+    ]
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-fabric-item-group-api-v1-模块">3. fabric-item-group-api-v1 模块</h2>
+
+
+<h3>3.1 创建自定义物品栏</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">Registry.register(Registries.ITEM_GROUP, ITEM_GROUP,
+    FabricItemGroup.builder()
+        .displayName(Text.literal(&quot;Test Item Group&quot;))
+        .icon(() -&gt; new ItemStack(Items.DIAMOND))
+        .entries((context, entries) -&gt; {
+            entries.addAll(Registries.ITEM.stream()
+                    .map(ItemStack::new)
+                    .filter(input -&gt; !input.isEmpty())
+                    .toList());
+        })
+        .build());</code></pre>
+
+
+<h3>3.2 FabricItemGroupEntries API</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">void add(ItemStack stack, ItemGroup.StackVisibility visibility);
+void add(ItemConvertible item);
+void prepend(ItemStack stack, ItemGroup.StackVisibility visibility);
+void addAfter(ItemConvertible afterLast, Collection&lt;ItemStack&gt; newStacks);
+void addBefore(ItemConvertible beforeFirst, Collection&lt;ItemStack&gt; newStacks);</code></pre>
+
+
+<h3>3.3 ItemGroupEvents 事件系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final Event&lt;ModifyEntriesAll&gt; MODIFY_ENTRIES_ALL;
+
+// 获取特定物品栏的事件
+public static Event&lt;ModifyEntries&gt; modifyEntriesEvent(RegistryKey&lt;ItemGroup&gt; registryKey);</code></pre>
+
+
+<h3>3.4 使用示例</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS)
+    .register((content) -&gt; {
+        content.add(TEST_ITEM);
+        content.addBefore(Blocks.OAK_FENCE, Items.DIAMOND);
+    });
+
+// 全局修改所有物品栏
+ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, content) -&gt; {
+    if (group.getIcon() == ItemStack.EMPTY) return;
+    content.prepend(new ItemStack(Items.DIAMOND_PICKAXE));
+});</code></pre>
+
+
+<hr>
+
+<h2 id="4-mixin-注入点">4. Mixin 注入点</h2>
+
+
+| Mixin 类 | 注入目标 | 目的 |
+|----------|----------|------|
+| <code>ItemMixin</code> | <code>Item</code> | 实现 <code>FabricItem</code> 接口 |
+| <code>ItemStackMixin</code> | <code>ItemStack</code> | 拦截 damage 方法 |
+| <code>ItemSettingsMixin</code> | <code>Item.Settings</code> | 实现 <code>FabricItem.Settings</code> 接口 |
+| <code>EnchantmentHelperMixin</code> | <code>EnchantmentHelper</code> | 重定向附魔检查方法 |
+| <code>ComponentMapBuilderMixin</code> | <code>ComponentMap.Builder</code> | 实现 <code>FabricComponentMapBuilder</code> 接口 |
+| <code>ItemGroupMixin</code> | <code>ItemGroup</code> | 在 <code>updateEntries</code> 末尾触发事件 |
+| <code>ItemGroupsMixin</code> | <code>ItemGroups</code> | 实现分页和冲突检测 |
+| <code>IngredientMixin</code> | <code>Ingredient</code> | 注入自定义编解码器 |
+
+<hr>
+
+<h2 id="5-完整使用示例">5. 完整使用示例</h2>
+
+
+<h3>5.1 创建带自定义伤害处理的物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class BatterySword extends SwordItem {
+    private static final ComponentType&lt;Integer&gt; ENERGY = ...;
+    private static final CustomDamageHandler HANDLER =
+        (stack, amount, entity, slot, breakCallback) -&gt; {
+            int currentEnergy = stack.getOrDefault(ENERGY, 0);
+            int damageFromEnergy = Math.min(currentEnergy, amount);
+            int remainingDamage = amount - damageFromEnergy;
+
+            stack.set(ENERGY, currentEnergy - damageFromEnergy);
+
+            if (remainingDamage &gt; 0 &amp;&amp; stack.getDamage() + remainingDamage &gt;= stack.getMaxDamage()) {
+                breakCallback.run();
+                return 0;
+            }
+
+            return remainingDamage;
+        };
+
+    public BatterySword() {
+        super(ToolMaterials.GOLD,
+              new Item.Settings().customDamage(HANDLER)
+                                 .equipmentSlot((entity, stack) -&gt; EquipmentSlot.MAINHAND));
+    }
+}</code></pre>
+
+
+<h3>5.2 创建自定义物品栏并添加物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static final RegistryKey&lt;ItemGroup&gt; MY_GROUP = RegistryKey.of(
+    RegistryKeys.ITEM_GROUP, Identifier.of(MOD_ID, &quot;my_group&quot;));
+
+@Override
+public void onInitialize() {
+    Registry.register(Registries.ITEM_GROUP, MY_GROUP,
+        FabricItemGroup.builder()
+            .displayName(Text.translatable(&quot;itemgroup.my_mod.my_group&quot;))
+            .icon(() -&gt; new ItemStack(MyMod.MY_ITEM))
+            .entries((context, entries) -&gt; {
+                entries.add(MyMod.MY_ITEM);
+                entries.add(MyMod.MY_BLOCK);
+            })
+            .build());
+}</code></pre>
+
+
+<hr>
+
+<em>源码位置: <code>fabric-item-api-v1/</code>, <code>fabric-recipe-api-v1/</code>, <code>fabric-item-group-api-v1/</code></em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-block-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 方块系统模块分析
+        </a><a href="04-biome-dimension-system.html" class="next">
+            Fabric API 生物群系与维度系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

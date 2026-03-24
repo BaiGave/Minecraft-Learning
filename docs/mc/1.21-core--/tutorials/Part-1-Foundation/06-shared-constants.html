@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第六章：共享常量（Shared Constants） - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="06-shared-constants.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第六章：共享常量（Shared Constants）</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第六章：共享常量（Shared Constants）
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第六章：共享常量（Shared Constants）</h1>
+
+
+<blockquote><p>⭐ <strong>理解这章，你就能知道 Minecraft 的"游戏规则"藏在哪里！</strong></p></blockquote>
+
+<blockquote><p>⚠️ <strong>注意</strong>：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。部分代码经过简化以便于理解。</p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>SharedConstants 包含什么</strong></li></ul>
+<ul><li><strong>关键常量：TICKS<em>PER</em>SECOND、CHUNK_WIDTH 等</strong></li></ul>
+<ul><li><strong>版本号和协议版本在哪里定义</strong></li></ul>
+<ul><li><strong>这些常量如何影响游戏行为</strong></li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Java 的基本常量定义（<code>public static final</code>）</li></ul>
+<ul><li>知道 Minecraft 的注册表系统（第四章）</li></ul>
+
+<hr>
+
+<h2 id="核心概念用比喻理解共享常量">核心概念：用比喻理解共享常量</h2>
+
+
+<h3>比喻：宪法和法律</h3>
+
+
+想象 Minecraft 是一个<strong>国家</strong>，SharedConstants 就是这个国家的<strong>宪法</strong>：
+
+| 国家概念 | Minecraft 对应 |
+|---------|---------------|
+| 宪法 | <code>SharedConstants.java</code> |
+| 规定国家名字 | <code>VERSION_NAME = "1.21"</code> |
+| 规定一票否决权 | <code>TICKS<em>PER</em>SECOND = 20</code> |
+| 规定国土面积 | <code>CHUNK_WIDTH = 16</code> |
+| 宪法修订 | 游戏版本更新 |
+
+<h3>为什么叫"共享"常量？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">因为这些常量在【客户端】和【服务端】都需要知道！
+
+比如：
+- 客户端需要知道一秒多少tick，才能正确播放动画
+- 服务端需要知道一秒多少tick，才能正确计时
+
+如果两边数值不一致，就会出现：
+- 客户端看到的水流动画和实际速度不一样
+- 玩家移动速度和服务器验证不一致</code></pre>
+
+
+<hr>
+
+<h2 id="图解常量分类">图解：常量分类</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph SharedConstants["SharedConstants.java"]
+        direction TB
+        
+        subgraph 版本信息["版本相关"]
+            V1["VERSION_NAME = '1.21'"]
+            V2["WORLD_VERSION = 3953"]
+            V3["PROTOCOL_VERSION = 767"]
+        end
+        
+        subgraph 游戏规则["游戏规则"]
+            G1["TICKS_PER_SECOND = 20"]
+            G2["CHUNK_WIDTH = 16"]
+            G3["DEFAULT_WORLD_HEIGHT = 256"]
+            G4["TICKS_PER_IN_GAME_DAY = 24000"]
+        end
+        
+        subgraph 网络配置["网络相关"]
+            N1["DEFAULT_PORT = 25565"]
+            N2["COMMAND_MAX_LENGTH = 32500"]
+        end
+        
+        subgraph 功能开关["开发调试"]
+            D1["DEBUG_BIOME_SOURCE"]
+            D2["DEBUG_NOISE"]
+        end
+    end
+    
+    style SharedConstants fill:#9b59b6,color:#fff
+    style V1 fill:#ffd93d,color:#000
+    style G1 fill:#ff6b6b,color:#fff
+    style N1 fill:#4d96ff,color:#fff
+    style D1 fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<hr>
+
+<h2 id="版本相关常量">版本相关常量</h2>
+
+
+<h3>核心版本常量</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 版本体系["Minecraft 版本体系"]
+        direction TB
+        V["VERSION_NAME<br/>'1.21'"]
+        P["PROTOCOL_VERSION<br/>767"]
+        W["WORLD_VERSION<br/>3953"]
+    end
+    
+    V -->|"对应"| P
+    V -->|"对应"| W
+    
+    style V fill:#ffd93d,color:#000
+    style P fill:#4d96ff,color:#fff
+    style W fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<h3>源码解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-15">public class SharedConstants {
+    // 版本名称 - 你在主菜单看到的
+    public static final String VERSION_NAME = &quot;1.21&quot;;
+    
+    // 世界版本 - 用于检测存档兼容性
+    public static final int WORLD_VERSION = 3953;
+    
+    // 网络协议版本 - 多人游戏通信协议
+    public static final int RELEASE_TARGET_PROTOCOL_VERSION = 767;
+    
+    // 数据包版本
+    public static final int RESOURCE_PACK_VERSION = 34;
+    public static final int DATA_PACK_VERSION = 48;
+}</code></pre>
+
+
+<h3>这些版本号有什么用？</h3>
+
+
+| 常量 | 用途 | 例子 |
+|------|------|------|
+| <code>VERSION_NAME</code> | 显示给玩家 | "1.21" |
+| <code>WORLD_VERSION</code> | 存档兼容性 | 1.20的存档不能在1.21打开 |
+| <code>PROTOCOL_VERSION</code> | 网络通信 | 版本不同无法连接 |
+| <code>DATA<em>PACK</em>VERSION</code> | 数据包兼容性 | 影响数据包加载 |
+
+<hr>
+
+<h2 id="游戏规则常量">游戏规则常量</h2>
+
+
+<h3>最重要的游戏常量</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 游戏常量["游戏核心常量"]
+        direction TB
+        
+        T1["TICKS_PER_SECOND = 20<br/>每秒20个游戏刻"]
+        T2["TICKS_PER_MINUTE = 1200<br/>每分钟1200刻"]
+        T3["TICKS_PER_IN_GAME_DAY = 24000<br/>一天=24000刻=20分钟"]
+        C["CHUNK_WIDTH = 16<br/>区块宽度16格"]
+        H["DEFAULT_WORLD_HEIGHT = 256<br/>世界高度256"]
+    end
+    
+    T1 -->|"计算基础"| T2
+    T2 -->|"倍数"| T3
+    C -->|"构成"| H
+    
+    style T1 fill:#ff6b6b,color:#fff
+    style T3 fill:#6bcb77,color:#fff
+    style C fill:#ffd93d,color:#000</div>
+</div>
+
+
+<h3>源码解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-129">public class SharedConstants {
+    // 区块大小 - 永远是16！
+    public static final int CHUNK_WIDTH = 16;
+    
+    // 世界高度 - 256格（之前版本是128）
+    public static final int DEFAULT_WORLD_HEIGHT = 256;
+    
+    // 时间系统 - 非常重要的常量
+    public static final int TICKS_PER_SECOND = 20;       // 1秒 = 20tick
+    public static final int TICKS_PER_MINUTE = 1200;     // 1分钟 = 1200tick
+    public static final int TICKS_PER_IN_GAME_DAY = 24000; // 游戏内一天 = 24000tick = 20分钟
+}</code></pre>
+
+
+<h3>为什么是 20tick/秒？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">原因：
+1. 20是 50ms 的倍数，方便计算
+2. 20Hz 的更新频率足够平滑
+3. 早期硬件性能有限
+
+计算公式：
+- 1 tick = 50ms
+- 1 秒 = 1000ms / 50ms = 20 tick
+- 1 游戏日 = 20分钟 = 20 * 60 * 20 = 24000 tick</code></pre>
+
+
+<h3>游戏日和现实时间的转换</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 时间换算["时间换算表"]
+        direction TB
+        A["现实1秒"] -->|"×20"| B["20 tick"]
+        B -->|"×1200"| C["1游戏分钟"]
+        C -->|"×24"| D["1游戏小时"]
+        D -->|"×24"| E["1游戏日<br/>(20现实分钟)"]
+    end
+    
+    style A fill:#ffd93d,color:#000
+    style B fill:#4d96ff,color:#fff
+    style C fill:#6bcb77,color:#fff
+    style E fill:#ff6b6b,color:#fff</div>
+</div>
+
+
+<hr>
+
+<h2 id="网络相关常量">网络相关常量</h2>
+
+
+<h3>端口和命令限制</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 网络常量["网络相关常量"]
+        direction TB
+        P1["DEFAULT_PORT = 25565<br/>默认服务器端口"]
+        P2["COMMAND_MAX_LENGTH = 32500<br/>命令最大长度"]
+        P3["EXPANDED_MACRO_COMMAND_MAX_LENGTH = 2000000<br/>宏命令最大长度"]
+    end
+    
+    subgraph 字符限制["世界名称限制"]
+        direction TB
+        C1["INVALID_CHARS_LEVEL_NAME<br/>禁止的字符列表"]
+    end
+    
+    style P1 fill:#4d96ff,color:#fff
+    style P2 fill:#6bcb77,color:#fff
+    style P3 fill:#ff6b6b,color:#fff</div>
+</div>
+
+
+<h3>源码解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-107">public class SharedConstants {
+    // 默认端口 - 你在路由器看到的
+    public static final int DEFAULT_PORT = 25565;
+    
+    // 命令长度限制
+    public static final int COMMAND_MAX_LENGTH = 32500;
+    public static final int EXPANDED_MACRO_COMMAND_MAX_LENGTH = 2000000;
+    
+    // 世界名称禁止字符
+    public static final char[] INVALID_CHARS_LEVEL_NAME = 
+        new char[]{&#39;/&#39;, &#39;\n&#39;, &#39;\r&#39;, &#39;\t&#39;, &#39;\u0000&#39;, &#39;\f&#39;, &#39;`&#39;, &#39;?&#39;, 
+                   &#39;*&#39;, &#39;\\&#39;, &#39;&lt;&#39;, &#39;&gt;&#39;, &#39;|&#39;, &#39;&quot;&#39;, &#39;:&#39;};
+}</code></pre>
+
+
+<hr>
+
+<h2 id="区块系统常量">区块系统常量</h2>
+
+
+<h3>CHUNK_WIDTH = 16 的意义</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 区块系统["区块系统"]
+        direction TB
+        
+        C1["CHUNK_WIDTH = 16"]
+        C2["16 × 16 × 256 = 65536 格"]
+        C3["每个区块最多65536个方块"]
+        C4["为什么是16？<br/>历史原因 + 性能平衡"]
+    end
+    
+    C1 --> C2 --> C3 --> C4
+    
+    style C1 fill:#ffd93d,color:#000
+    style C3 fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<h3>区块大小计算</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">区块大小 = 16 × 16 × 高度
+
+Minecraft 1.21 区块大小：
+- 主世界：16 × 16 × 320 = 81,920 格
+- 下界：16 × 16 × 128 = 32,768 格
+- 末地：16 × 16 × 256 = 65,536 格</code></pre>
+
+
+<hr>
+
+<h2 id="命令系统常量">命令系统常量</h2>
+
+
+<h3>命令长度限制</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 命令长度["命令长度限制"]
+        direction TB
+        
+        N1["普通命令<br/>32,500 字符"]
+        N2["宏命令<br/>2,000,000 字符"]
+        N3["聊天消息<br/>256 字符"]
+    end
+    
+    N1 -->|"扩展"| N2
+    N1 -->|"限制"| N3
+    
+    style N1 fill:#4d96ff,color:#fff
+    style N2 fill:#ff6b6b,color:#fff
+    style N3 fill:#6bcb77,color:#fff</div>
+</div>
+
+
+<hr>
+
+<h2 id="版本号查询系统">版本号查询系统</h2>
+
+
+<h3>游戏版本创建</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant G as Game
+    participant S as SharedConstants
+    participant V as MinecraftVersion
+    
+    G->>S: createGameVersion()
+    Note over S: 检查版本是否已创建
+    S->>V: MinecraftVersion.create()
+    Note over V: 读取 VERSION_NAME = "1.21"
+    V-->>S: GameVersion 对象
+    S-->>G: setGameVersion(version)
+    
+    Note over G: 版本号固定下来了！</div>
+</div>
+
+
+<h3>源码解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-148">public class SharedConstants {
+    // 游戏版本单例
+    private static GameVersion gameVersion;
+    
+    // 创建版本（只执行一次）
+    public static void createGameVersion() {
+        if (gameVersion == null) {
+            gameVersion = MinecraftVersion.create();
+        }
+    }
+    
+    // 获取协议版本（用于网络通信）
+    public static int getProtocolVersion() {
+        return 767;  // 硬编码返回
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="常量查找实战">常量查找实战</h2>
+
+
+<h3>如何找到某个常量</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">查找步骤：
+1. 打开 SharedConstants.java
+2. 使用 Ctrl+F 搜索常量名
+3. 阅读常量周围的注释
+4. 追踪常量的使用位置</code></pre>
+
+
+<h3>常用常量速查表</h3>
+
+
+| 常量名 | 值 | 用途 |
+|--------|-----|------|
+| <code>TICKS<em>PER</em>SECOND</code> | 20 | 每秒游戏刻 |
+| <code>TICKS<em>PER</em>IN<em>GAME</em>DAY</code> | 24000 | 游戏内一天 |
+| <code>CHUNK_WIDTH</code> | 16 | 区块宽度 |
+| <code>DEFAULT<em>WORLD</em>HEIGHT</code> | 256 | 默认世界高度 |
+| <code>DEFAULT_PORT</code> | 25565 | 服务器端口 |
+| <code>COMMAND<em>MAX</em>LENGTH</code> | 32500 | 命令最大长度 |
+
+<hr>
+
+<h2 id="实战计算游戏时间">实战：计算游戏时间</h2>
+
+
+<h3>将tick转换为现实时间</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class TimeCalculator {
+    // 将游戏tick转换为现实秒数
+    public static double ticksToSeconds(int ticks) {
+        return ticks / 20.0;  // 因为每秒20tick
+    }
+    
+    // 将游戏tick转换为游戏内天数
+    public static double ticksToDays(int ticks) {
+        return ticks / 24000.0;  // 因为每天24000tick
+    }
+    
+    // 例子：太阳升起需要多少tick？
+    public static void main(String[] args) {
+        // 游戏内日出是 tick 0
+        // 游戏内日落是 tick 12000
+        // 游戏内午夜是 tick 18000
+        
+        System.out.println(&quot;日出: 0 tick&quot;);
+        System.out.println(&quot;日落: &quot; + 12000 + &quot; tick = &quot; + ticksToSeconds(12000) + &quot; 秒&quot;);
+        System.out.println(&quot;午夜: &quot; + 18000 + &quot; tick = &quot; + ticksToSeconds(18000) + &quot; 秒&quot;);
+        System.out.println(&quot;完整一天: &quot; + ticksToDays(24000) + &quot; 天&quot;);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 核心要点["本章核心要点"]
+        E1["1. SharedConstants 包含游戏的核心数值"]
+        E2["2. TICKS_PER_SECOND = 20 是最重要的常量"]
+        E3["3. VERSION_NAME = '1.21' 版本号"]
+        E4["4. PROTOCOL_VERSION = 767 决定能否联机"]
+        E5["5. CHUNK_WIDTH = 16 决定区块大小"]
+        E6["6. 这些常量在客户端和服务端必须一致"]
+    end
+    
+    style E1 fill:#ffd93d,color:#000
+    style E2 fill:#ff6b6b,color:#fff
+    style E3 fill:#4d96ff,color:#fff
+    style E4 fill:#6bcb77,color:#fff
+    style E5 fill:#9b59b6,color:#fff
+    style E6 fill:#ff6b6b,color:#fff</div>
+</div>
+
+
+<h3>记住这些数字</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">重要常数：
+- 20 = 每秒tick数
+- 24000 = 每天tick数（20分钟）
+- 16 = 区块宽度
+- 256 = 世界高度
+- 767 = 协议版本
+- 3953 = 世界版本
+- 25565 = 默认端口</code></pre>
+
+
+<hr>
+
+<h2 id="练习">练习</h2>
+
+
+<h3>练习1：计算时间</h3>
+
+
+一个红石中继器的延迟是 2 tick，请问：
+<ul><li>等于多少现实时间？</li></ul>
+<ul><li>等于多少游戏时间？</li></ul>
+
+<h3>练习2：理解版本兼容性</h3>
+
+
+为什么 Minecraft 1.20.4 的玩家无法连接到 1.21 的服务器？
+
+<h3>练习3：查找区块数量</h3>
+
+
+如果世界是 1000×1000 格，需要多少个区块？
+
+<h3>练习4：阅读源码</h3>
+
+
+在源码中找到 <code>TICKS<em>PER</em>SECOND</code> 的所有使用位置，理解它如何影响游戏逻辑。
+
+<hr>
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<h3>源码文件</h3>
+
+
+| 文件 | 路径 | 作用 |
+|------|------|------|
+| <code>SharedConstants.java</code> | <code>net/minecraft/SharedConstants.java</code> | 所有共享常量定义 |
+| <code>MinecraftVersion.java</code> | <code>net/minecraft/MinecraftVersion.java</code> | 版本信息获取 |
+| <code>GameVersion.java</code> | <code>net/minecraft/GameVersion.java</code> | 版本类定义 |
+
+<h3>进阶阅读</h3>
+
+
+<blockquote><p>⚠️ <strong>注意</strong>：以下链接指向的文档可能尚未完成或位置可能变化</p></blockquote>
+<ul><li>下一章：<a href="07-bootstrap-flow.html">第七章：启动流程</a> - 了解游戏启动时发生了什么</li></ul>
+<ul><li>深入了解：区块系统 - 理解区块如何工作</li></ul>
+<ul><li>网络相关：协议版本 - 理解网络协议</li></ul>
+
+<hr>
+
+<blockquote><p>💡 <strong>提示</strong>：SharedConstants 虽然看起来只是一些数字，但它们决定了 Minecraft 的基本运行规则。记住这些关键常量，对理解整个游戏系统非常重要！</p></blockquote>
+
+<hr>
+
+<em>文档版本：Minecraft 1.21, Protocol 767, World Version 3953</em>
+<em>最后更新：2026-03-19</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-client-server-arch.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第五章：客户端-服务端架构（Client-Server Architecture）
+        </a><a href="07-bootstrap-flow.html" class="next">
+            第七章：启动流程（Bootstrap Flow）
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

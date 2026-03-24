@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>ImmersivePortalsMod Core Architecture Analysis - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="active">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Architecture Summary
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>ImmersivePortalsMod Core Architecture Analysis</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    ImmersivePortalsMod Core Architecture Analysis
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>ImmersivePortalsMod Core Architecture Analysis</h1>
+
+</p>
+<p><pre class="code-block"><code class="language-yaml">---
+title: Core Architecture Analysis
+readingTime: 45
+---</code></pre>
+
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+
+<ul><li><a href="#overview">Overview</a></li></ul>
+<ul><li><a href="#package-structure-and-core-classes">Package Structure and Core Classes</a></li></ul>
+<ul><li><a href="#ipmodmain-entry-point">IPModMain Entry Point</a></li></ul>
+<ul><li><a href="#global-configuration-ipglobal--ipcglobal">Global Configuration (IPGlobal &amp; IPCGlobal)</a></li></ul>
+<ul><li><a href="#helper-classes-mchelper-chelper-ipmchelper">Helper Classes (McHelper, CHelper, IPMcHelper)</a></li></ul>
+<ul><li><a href="#clientworldloader-multi-world-management">ClientWorldLoader Multi-World Management</a></li></ul>
+<ul><li><a href="#event-system">Event System</a></li></ul>
+<ul><li><a href="#data-flow-diagram">Data Flow Diagram</a></li></ul>
+<ul><li><a href="#key-design-patterns">Key Design Patterns</a></li></ul>
+
+<hr>
+
+<h2 id="overview">Overview</h2>
+
+
+ImmersivePortalsMod (IPCM) is a sophisticated Minecraft mod that enables seamless cross-dimensional portal experiences. Unlike vanilla portals that display loading screens during dimension transitions, this mod renders portal destinations in real-time and supports complex portal hierarchies (nested portals). The architecture follows a <strong>client-server separation</strong> pattern with shared core logic, heavily leveraging Fabric's event system and Mixin for bytecode injection.
+
+The mod consists of approximately 375+ Java files organized into multiple subsystems:
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph "Core Layer"
+        IPModMain["IPModMain<br/>(Entry Point)"]
+        IPGlobal["IPGlobal<br/>(Server Config)"]
+        IPCGlobal["IPCGlobal<br/>(Client Config)"]
+    end
+    
+    subgraph "Helper Layer"
+        McHelper["McHelper<br/>(Server Utils)"]
+        CHelper["CHelper<br/>(Client Utils)"]
+        IPMcHelper["IPMcHelper<br/>(Shared Portal Utils)"]
+    end
+    
+    subgraph "World Management"
+        ClientWorldLoader["ClientWorldLoader<br/>(Multi-World)"]
+        IPPerServerInfo["IPPerServerInfo<br/>(Server State)"]
+    end
+    
+    subgraph "Subsystems"
+        Network["Network Layer"]
+        Rendering["Rendering Layer"]
+        Teleportation["Teleportation"]
+        ChunkLoading["Chunk Loading"]
+    end
+    
+    IPModMain --> IPGlobal
+    IPModMain --> IPCGlobal
+    IPModMain --> McHelper
+    IPModMain --> CHelper
+    IPModMain --> ClientWorldLoader
+    
+    ClientWorldLoader --> CHelper
+    IPPerServerInfo --> McHelper
+    IPMcHelper --> McHelper
+    IPMcHelper --> ClientWorldLoader</div>
+</div>
+
+
+<hr>
+
+<h2 id="package-structure-and-core-classes">Package Structure and Core Classes</h2>
+
+
+The <code>qouteall.imm_ptl.core</code> package serves as the central hub for the mod. Here's the directory structure:
+</p>
+<p><pre class="code-block"><code class="language-text">qouteall/imm_ptl/core/
+├── IPModMain.java              # Main entry point
+├── IPGlobal.java               # Server-side global state
+├── IPCGlobal.java              # Client-side global state
+├── McHelper.java               # Minecraft server utilities
+├── CHelper.java                # Minecraft client utilities  
+├── IPMcHelper.java             # Cross-side portal utilities
+├── ClientWorldLoader.java      # Multi-world management
+├── IPPerServerInfo.java        # Per-server state storage
+├── ScaleUtils.java             # Scaling portal utilities
+│
+├── block_manipulation/         # Block interaction handlers
+├── chunk_loading/              # Chunk management &amp; entity sync
+├── collision/                  # Portal collision system
+├── commands/                   # Command registration
+├── compat/                     # Third-party mod compatibility
+├──ducks/                       # Mixin interface definitions
+├── misc_utils/                 # Utilities (ServerTaskList, etc.)
+├── network/                   # Packet handling
+├── platform_specific/          # Platform-dependent code
+├── portal/                    # Portal entity definitions
+├── render/                     # Rendering pipeline
+├── teleportation/              # Teleport mechanics
+└── mixin/                      # Bytecode injection
+    ├── client/                 # Client-side mixins
+    └── common/                 # Shared mixins</code></pre>
+
+
+<h3>Core Class Responsibilities</h3>
+
+
+| Class | Responsibility | Side |
+|-------|---------------|------|
+| <code>IPModMain</code> | Mod initialization, registry | Common |
+| <code>IPGlobal</code> | Configuration, server events | Server |
+| <code>IPCGlobal</code> | Client renderer, client events | Client |
+| <code>McHelper</code> | Server-side Minecraft utilities | Server |
+| <code>CHelper</code> | Client-side Minecraft utilities | Client |
+| <code>IPMcHelper</code> | Portal-aware operations | Common |
+| <code>ClientWorldLoader</code> | Multi-world simulation | Client |
+| <code>IPPerServerInfo</code> | Server-per-instance state | Server |
+
+<hr>
+
+<h2 id="ipmodmain-entry-point">IPModMain Entry Point</h2>
+
+
+<code>IPModMain</code> is the central initialization hub, following Fabric's mod initialization pattern.
+
+<h3>Initialization Sequence</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static void init() {
+    loadConfig();
+    
+    Helper.LOGGER.info(&quot;Immersive Portals Mod Initializing&quot;);
+    
+    ImmPtlNetworking.init();
+    ImmPtlNetworkConfig.init();
+    PacketRedirection.init();
+    
+    // Register event-driven task processors
+    IPGlobal.POST_CLIENT_TICK_EVENT.register(IPGlobal.CLIENT_TASK_LIST::processTasks);
+    IPGlobal.PRE_GAME_RENDER_EVENT.register(IPGlobal.PRE_GAME_RENDER_TASK_LIST::processTasks);
+    
+    // Initialize portal shape handlers
+    RectangularPortalShape.init();
+    SpecialFlatPortalShape.init();
+    BoxPortalShape.init();
+    
+    // Chunk and world management
+    ImmPtlChunkTracking.init();
+    WorldInfoSender.init();
+    GlobalPortalStorage.init();
+    EntitySync.init();
+    
+    // Core systems
+    ServerTeleportationManager.init();
+    CollisionHelper.init();
+    PortalExtension.init();
+    
+    // Performance monitoring
+    GcMonitor.initCommon();
+    ServerPerformanceMonitor.init();
+    ImmPtlChunkTickets.init();
+    
+    // Compatibility and commands
+    IPPortingLibCompat.init();
+    BlockManipulationServer.init();
+    
+    CommandRegistrationCallback.EVENT.register(
+        (dispatcher, ctx, environment) -&gt; PortalCommand.register(dispatcher, ctx)
+    );
+    
+    // Debug and utilities
+    DebugUtil.init();
+    ServerTaskList.init();
+    CustomPortalGenManager.init();
+    
+    // Animation drivers
+    RotationAnimation.init();
+    NormalAnimation.init();
+}</code></pre>
+
+
+<h3>Configuration Loading</h3>
+
+
+The mod uses <strong> Cloth Config</strong> for configuration management:
+</p>
+<p><pre class="code-block"><code class="language-java">private static void loadConfig() {
+    // Upgrade old config file format
+    Path gameDir = O_O.getGameDir();
+    File oldConfigFile = gameDir.resolve(&quot;config&quot;)
+        .resolve(&quot;immersive_portals_fabric.json&quot;).toFile();
+    if (oldConfigFile.exists()) {
+        File dest = gameDir.resolve(&quot;config&quot;)
+            .resolve(&quot;immersive_portals.json&quot;).toFile();
+        boolean succeeded = oldConfigFile.renameTo(dest);
+        // ... handle migration
+    }
+    
+    // Register AutoConfig with save listener
+    IPGlobal.configHolder = AutoConfig.register(
+        IPConfig.class, 
+        GsonConfigSerializer::new
+    );
+    IPGlobal.configHolder.registerSaveListener((configHolder, ipConfig) -&gt; {
+        ipConfig.onConfigChanged();
+        return InteractionResult.SUCCESS;
+    });
+    
+    IPConfig ipConfig = IPConfig.getConfig();
+    ipConfig.onConfigChanged();
+}</code></pre>
+
+
+<h3>Entity Registration</h3>
+
+
+The mod registers <strong>9 custom entity types</strong>:
+</p>
+<p><pre class="code-block"><code class="language-java">public static void registerEntityTypes(BiConsumer&lt;ResourceLocation, EntityType&lt;?&gt;&gt; regFunc) {
+    // Portal variants
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;portal&quot;), Portal.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;nether_portal_new&quot;), NetherPortalEntity.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;end_portal&quot;), EndPortalEntity.ENTITY_TYPE);
+    
+    // Mirror variants
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;mirror&quot;), Mirror.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;breakable_mirror&quot;), BreakableMirror.ENTITY_TYPE);
+    
+    // Global portals
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;global_tracked_portal&quot;), GlobalTrackedPortal.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;border_portal&quot;), WorldWrappingPortal.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;end_floor_portal&quot;), VerticalConnectingPortal.ENTITY_TYPE);
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;general_breakable_portal&quot;), GeneralBreakablePortal.ENTITY_TYPE);
+    
+    // UI element
+    regFunc.accept(McHelper.newResourceLocation(&quot;immersive_portals&quot;, &quot;loading_indicator&quot;), LoadingIndicatorEntity.entityType);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="global-configuration-ipglobal-ipcglobal">Global Configuration (IPGlobal & IPCGlobal)</h2>
+
+
+<h3>IPGlobal - Server-Side Configuration</h3>
+
+
+<code>IPGlobal</code> holds <strong>static configuration fields</strong> that are synchronized between server and client, plus server-specific events and state.
+</p>
+<p><pre class="code-block"><code class="language-java">public class IPGlobal {
+    
+    public static ConfigHolder&lt;IPConfig&gt; configHolder;
+    
+    // Portal limits
+    public static int maxNormalPortalRadius = 32;
+    public static int maxPortalLayer = 5;
+    public static int indirectLoadingRadiusCap = 8;
+    
+    // Performance flags
+    public static boolean lagAttackProof = true;
+    public static boolean tickOnlyIfChunkLoaded = true;
+    public static boolean enableClientPerformanceAdjustment = true;
+    public static boolean enableServerPerformanceAdjustment = true;
+    
+    // Rendering options
+    public static RenderMode renderMode = RenderMode.normal;
+    public static boolean doCheckGlError = true;
+    public static boolean renderYourselfInPortal = true;
+    public static boolean correctCrossPortalEntityRendering = true;
+    public static boolean enableClippingMechanism = true;
+    
+    // Teleportation
+    public static boolean disableTeleportation = false;
+    public static boolean teleportationDebugEnabled = false;
+    
+    // Portal modes
+    public static NetherPortalMode netherPortalMode = NetherPortalMode.adaptive;
+    public static EndPortalMode endPortalMode = EndPortalMode.normal;
+    
+    // Task lists for deferred execution
+    public static final MyTaskList CLIENT_TASK_LIST = new MyTaskList();
+    public static final MyTaskList PRE_GAME_RENDER_TASK_LIST = new MyTaskList();
+    public static final MyTaskList PRE_TOTAL_RENDER_TASK_LIST = new MyTaskList();
+    
+    // Server events
+    public static final Event&lt;Consumer&lt;MinecraftServer&gt;&gt; SERVER_CLEANUP_EVENT =
+        Helper.createConsumerEvent();
+    
+    // Enums
+    public static enum RenderMode { normal, compatibility, debug, none }
+    public static enum NetherPortalMode { normal, vanilla, adaptive, disabled }
+    public static enum EndPortalMode { normal, toObsidianPlatform, scaledView, scaledViewRotating, vanilla }
+}</code></pre>
+
+
+<h3>IPCGlobal - Client-Side Configuration</h3>
+
+
+<code>IPCGlobal</code> is client-only (<code>@Environment(EnvType.CLIENT)</code>) and manages renderer instances and client-specific state.
+</p>
+<p><pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
+public class IPCGlobal {
+    
+    // Renderer instances
+    public static PortalRenderer renderer;
+    public static RendererUsingStencil rendererUsingStencil;
+    public static RendererUsingFrameBuffer rendererUsingFrameBuffer;
+    public static RendererDummy rendererDummy = new RendererDummy();
+    public static RendererDebug rendererDebug = new RendererDebug();
+    
+    // Performance tuning
+    public static int maxIdleChunkRendererNum = 500;
+    public static boolean doUseAdvancedFrustumCulling = true;
+    public static boolean useHackedChunkRenderDispatcher = true;
+    public static boolean useFrontClipping = true;
+    public static boolean earlyFrustumCullingPortal = true;
+    
+    // Stencil and compatibility
+    public static boolean useSeparatedStencilFormat = false;
+    public static boolean experimentalIrisPortalRenderer = false;
+    
+    // Client lifecycle events
+    public static final Event&lt;Runnable&gt; CLIENT_CLEANUP_EVENT = Helper.createRunnableEvent();
+    public static final Event&lt;Runnable&gt; CLIENT_EXIT_EVENT = Helper.createRunnableEvent();
+}</code></pre>
+
+
+<h3>Configuration Synchronization</h3>
+
+
+The mod uses a <strong>dual-layer config system</strong>:
+
+<ul><li><strong>IPConfig</strong> - Cloth Config GUI managed settings</li></ul>
+<ul><li><strong>IPGlobal/IPCGlobal</strong> - Runtime-reflected fields updated via <code>onConfigChanged()</code></li></ul>
+</p>
+<p><pre class="code-block"><code class="language-java">public void onConfigChanged() {
+    IPGlobal.netherPortalMode = this.netherPortalMode;
+    IPGlobal.endPortalMode = this.endPortalMode;
+    IPGlobal.maxNormalPortalRadius = this.maxNormalPortalRadius;
+    IPCGlobal.maxIdleChunkRendererNum = this.maxIdleChunkRendererNum;
+    // ... etc
+}</code></pre>
+
+
+<hr>
+
+<h2 id="helper-classes-mchelper-chelper-ipmchelper">Helper Classes (McHelper, CHelper, IPMcHelper)</h2>
+
+
+<h3>McHelper - Server Minecraft Utilities</h3>
+
+
+<code>McHelper</code> provides a comprehensive set of <strong>server-side</strong> Minecraft utility methods, acting as a facade over Minecraft's server APIs.
+
+<strong>Entity Finding and Manipulation:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">public static &lt;ENTITY extends Entity&gt; List&lt;ENTITY&gt; getEntitiesNearby(
+    Level world,
+    Vec3 center,
+    Class&lt;ENTITY&gt; entityClass,
+    double range
+) {
+    return findEntitiesRough(
+        entityClass, world, center,
+        (int) (range / 16 + 1),
+        e -&gt; true
+    );
+}
+
+// 610:639:assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\McHelper.java
+public static &lt;T extends Entity&gt; List&lt;T&gt; findEntitiesRough(
+    Class&lt;T&gt; entityClass,
+    Level world,
+    Vec3 center,
+    int radiusChunks,
+    Predicate&lt;T&gt; predicate
+) {
+    if (radiusChunks &lt;= 0) radiusChunks = 1;
+    if (radiusChunks &gt; 32) radiusChunks = 32;  // Cap at 32 chunks
+    
+    SectionPos sectionPos = SectionPos.of(center);
+    
+    return findEntities(
+        entityClass,
+        ((IEWorld) world).portal_getEntityLookup(),
+        sectionPos.x() - radiusChunks, sectionPos.x() + radiusChunks,
+        sectionPos.y() - radiusChunks, sectionPos.y() + radiusChunks,
+        sectionPos.z() - radiusChunks, sectionPos.z() + radiusChunks,
+        predicate
+    );
+}</code></pre>
+
+
+<strong>Multi-threaded Task Processing:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">public static &lt;T&gt; void performMultiThreadedFindingTaskOnServer(
+    MinecraftServer server,
+    Stream&lt;T&gt; stream,
+    Predicate&lt;T&gt; predicate,
+    IntPredicate taskWatcher,
+    Consumer&lt;T&gt; onFound,
+    Runnable onNotFound,
+    Runnable finalizer
+) {
+    int[] progress = new int[1];
+    Helper.SimpleBox&lt;Boolean&gt; isAborted = new Helper.SimpleBox&lt;&gt;(false);
+    
+    CompletableFuture&lt;Void&gt; future = CompletableFuture.runAsync(
+        () -&gt; {
+            T result = stream.peek(obj -&gt; progress[0] += 1)
+                .filter(predicate)
+                .findFirst()
+                .orElse(null);
+            // ... handle result
+        },
+        Util.backgroundExecutor()
+    );
+    
+    // Poll on server thread
+    ServerTaskList.of(server).addTask(() -&gt; {
+        if (future.isDone()) { /* handle completion */ }
+        if (future.isCancelled()) { /* handle abort */ }
+        boolean shouldContinue = taskWatcher.test(progress[0]);
+        if (!shouldContinue) {
+            isAborted.obj = true;
+            future.cancel(true);
+            return true;  // Task complete
+        }
+        return false;  // Continue polling
+    });
+}</code></pre>
+
+
+<h3>CHelper - Client Minecraft Utilities</h3>
+
+
+<code>CHelper</code> is client-only (<code>@Environment(EnvType.CLIENT)</code>) and provides client-side rendering and interaction utilities.
+</p>
+<p><pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
+public class CHelper {
+    
+    public static PlayerInfo getClientPlayerListEntry() {
+        return Minecraft.getInstance().getConnection().getPlayerInfo(
+            Minecraft.getInstance().player.getGameProfile().getId()
+        );
+    }
+    
+    public static Level getClientWorld(ResourceKey&lt;Level&gt; dimension) {
+        return ClientWorldLoader.getWorld(dimension);
+    }
+    
+    public static Vec3 getCurrentCameraPos() {
+        return Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+    }
+    
+    // OpenGL error checking
+    public static void checkGlError() {
+        if (!IPGlobal.doCheckGlError) return;
+        if (reportedErrorNum &gt; 100) return;
+        doCheckGlError();
+    }
+    
+    // Depth clamp control for portal clipping
+    public static void disableDepthClamp() {
+        if (IPGlobal.enableClippingMechanism) {
+            GL11.glDisable(GL32.GL_DEPTH_CLAMP);
+        }
+    }
+    
+    public static void enableDepthClamp() {
+        if (IPGlobal.enableClippingMechanism) {
+            GL11.glEnable(GL32.GL_DEPTH_CLAMP);
+        }
+    }
+    
+    // Dimension icon loading with fallback
+    public static ResourceLocation getDimensionIconPath(ResourceKey&lt;Level&gt; dimension) {
+        ResourceLocation dimIconPath = ResourceLocation.fromNamespaceAndPath(
+            dimensionId.getNamespace(),
+            &quot;textures/dimension/&quot; + dimensionId.getPath() + &quot;.png&quot;
+        );
+        // Falls back to mod icon if dimension-specific icon not found
+        // ...
+    }
+}</code></pre>
+
+
+<h3>IPMcHelper - Cross-Side Portal Utilities</h3>
+
+
+<code>IPMcHelper</code> provides <strong>portal-specific operations</strong> that work on both client and server sides, making heavy use of context switching.
+</p>
+<p><pre class="code-block"><code class="language-java">public class IPMcHelper {
+    public static final LimitedLogger limitedLogger = new LimitedLogger(20);
+    
+    // Include global portals in search
+    public static void foreachNearbyPortals(
+        Level world, Vec3 pos, int range, Consumer&lt;Portal&gt; func
+    ) {
+        // Check global portals first
+        List&lt;Portal&gt; globalPortals = GlobalPortalStorage.getGlobalPortals(world);
+        for (Portal globalPortal : globalPortals) {
+            if (globalPortal.getDistanceToNearestPointInPortal(pos) &lt; range * 2) {
+                func.accept(globalPortal);
+            }
+        }
+        
+        // Then check nearby entity portals
+        McHelper.foreachEntitiesByPointAndRoughRadius(
+            Portal.class, world, pos, range, func
+        );
+    }</code></pre>
+
+
+<strong>Portal Ray Tracing:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">public static List&lt;Tuple&lt;Portal, Vec3&gt;&gt; rayTracePortals(
+    Level world,
+    Vec3 start,
+    Vec3 end,
+    boolean includeGlobalPortals,
+    Predicate&lt;Portal&gt; filter
+) {
+    // Calculate search radius based on ray length
+    Vec3 middle = start.scale(0.5).add(end.scale(0.5));
+    int chunkRadius = (int) Math.ceil(Math.abs(start.distanceTo(end) / 2) / 16);
+    
+    // Get nearby portals
+    List&lt;Portal&gt; nearby = McHelper.getEntitiesNearby(world, middle, Portal.class, chunkRadius * 16);
+    if (includeGlobalPortals) {
+        nearby.addAll(GlobalPortalStorage.getGlobalPortals(world));
+    }
+    
+    // Find portals intersecting the ray
+    List&lt;Tuple&lt;Portal, Vec3&gt;&gt; hits = new ArrayList&lt;&gt;();
+    nearby.forEach(portal -&gt; {
+        if (filter == null || filter.test(portal)) {
+            Vec3 intersection = portal.rayTrace(start, end);
+            if (intersection != null) {
+                hits.add(new Tuple&lt;&gt;(portal, intersection));
+            }
+        }
+    });
+    
+    // Sort by distance
+    hits.sort((pair1, pair2) -&gt; {
+        Vec3 intersection1 = pair1.getB();
+        Vec3 intersection2 = pair2.getB();
+        return (int) Math.signum(
+            intersection1.distanceToSqr(start) - intersection2.distanceToSqr(start)
+        );
+    });
+    
+    return hits;
+}</code></pre>
+
+
+<strong>Recursive Cross-Portal Ray Tracing:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">private static Tuple&lt;BlockHitResult, List&lt;Portal&gt;&gt; rayTrace(
+    Level world,
+    ClipContext context,
+    boolean includeGlobalPortals,
+    List&lt;Portal&gt; portals
+) {
+    Vec3 start = context.getFrom();
+    Vec3 end = context.getTo();
+    
+    // Limit portal layer depth
+    if (portals.size() &gt; IPGlobal.maxPortalLayer) {
+        return new Tuple&lt;&gt;(BlockHitResult.miss(end, ...), portals);
+    }
+    
+    // Normal block ray trace
+    BlockHitResult hitResult = world.clip(context);
+    
+    // Find portal intersections
+    List&lt;Tuple&lt;Portal, Vec3&gt;&gt; rayTracedPortals =
+        rayTracePortals(world, start, end, includeGlobalPortals, Portal::isInteractable);
+    
+    if (rayTracedPortals.isEmpty()) {
+        return new Tuple&lt;&gt;(hitResult, portals);
+    }
+    
+    // Transform ray through portal and recurse into destination world
+    Portal portal = rayTracedPortals.get(0).getA();
+    IERayTraceContext betterContext = (IERayTraceContext) context;
+    
+    betterContext.ip_setStart(portal.transformPoint(intersection))
+                 .ip_setEnd(portal.transformPoint(end));
+    
+    portals.add(portal);
+    Level destWorld = portal.getDestinationWorld();
+    
+    return withSwitchedContext(destWorld, 
+        () -&gt; rayTrace(destWorld, context, includeGlobalPortals, portals)
+    );
+}</code></pre>
+
+
+<hr>
+
+<h2 id="clientworldloader-multi-world-management">ClientWorldLoader Multi-World Management</h2>
+
+
+<code>ClientWorldLoader</code> is the <strong>heart of multi-world rendering</strong>, enabling the client to maintain and render multiple dimensions simultaneously without loading screens.
+
+<h3>Core Data Structures</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
+public class ClientWorldLoader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientWorldLoader.class);
+    
+    // Dimension -&gt; ClientLevel mapping
+    private static final Map&lt;ResourceKey&lt;Level&gt;, ClientLevel&gt; CLIENT_WORLD_MAP =
+        new Object2ObjectOpenHashMap&lt;&gt;();
+    
+    // Dimension -&gt; LevelRenderer mapping (for rendering each dimension)
+    public static final Map&lt;ResourceKey&lt;Level&gt;, LevelRenderer&gt; WORLD_RENDERER_MAP =
+        new Object2ObjectOpenHashMap&lt;&gt;();
+    
+    // Dimension -&gt; RenderHelper mapping (lights, fog, etc.)
+    public static final Map&lt;ResourceKey&lt;Level&gt;, DimensionRenderHelper&gt; RENDER_HELPER_MAP =
+        new Object2ObjectOpenHashMap&lt;&gt;();
+    
+    // Dimension type mapping from server
+    public static @Nullable Map&lt;ResourceKey&lt;Level&gt;, ResourceKey&lt;DimensionType&gt;&gt; dimIdToDimTypeId;
+    
+    public static boolean isClientRemoteTicking = false;
+    public static boolean isWorldSwitched = false;</code></pre>
+
+
+<h3>World Tick Management</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static void tick() {
+    if (IPCGlobal.isClientRemoteTickingEnabled) {
+        isClientRemoteTicking = true;
+        
+        // Tick all non-primary worlds
+        CLIENT_WORLD_MAP.values().forEach(world -&gt; {
+            if (CLIENT.level != world) {
+                tickRemoteWorld(world);
+            }
+        });
+        
+        // Tick all secondary world renderers
+        WORLD_RENDERER_MAP.values().forEach(worldRenderer -&gt; {
+            if (worldRenderer != CLIENT.levelRenderer) {
+                worldRenderer.tick();
+            }
+        });
+        isClientRemoteTicking = false;
+    }
+    
+    // Update render helpers (lightmaps, etc.)
+    for (DimensionRenderHelper helper : RENDER_HELPER_MAP.values()) {
+        helper.tick();
+        // Check for lightmap texture conflicts
+    }
+}
+
+private static void tickRemoteWorld(ClientLevel newWorld) {
+    List&lt;Portal&gt; nearbyPortals = CHelper.getClientNearbyPortals(10).collect(Collectors.toList());
+    
+    withSwitchedWorld(newWorld, () -&gt; {
+        newWorld.tickEntities();
+        newWorld.tick(() -&gt; true);
+        
+        if (!CLIENT.isPaused()) {
+            tickRemoteWorldRandomTicksClient(newWorld, nearbyPortals);
+        }
+        
+        newWorld.pollLightUpdates();
+    });
+}</code></pre>
+
+
+<h3>World Creation and Context Switching</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static ClientLevel createSecondaryClientWorld(ResourceKey&lt;Level&gt; dimension) {
+    isCreatingClientWorld = true;
+    
+    CLIENT.getProfiler().push(&quot;create_world&quot;);
+    
+    int chunkLoadDistance = 3;
+    
+    // Create dedicated LevelRenderer for this world
+    LevelRenderer worldRenderer = new LevelRenderer(
+        CLIENT,
+        CLIENT.getEntityRenderDispatcher(),
+        CLIENT.getBlockEntityRenderDispatcher(),
+        CLIENT.renderBuffers()
+    );
+    
+    ClientLevel newWorld;
+    try {
+        ClientPacketListener mainNetHandler = CLIENT.player.connection;
+        ResourceKey&lt;DimensionType&gt; dimensionTypeKey = dimIdToDimTypeId.get(dimension);
+        
+        Holder&lt;DimensionType&gt; dimensionType = registryManager
+            .registryOrThrow(Registries.DIMENSION_TYPE)
+            .getHolderOrThrow(dimensionTypeKey);
+        
+        // Create level data (day time not shared between worlds)
+        ClientLevel.ClientLevelData properties = new ClientLevel.ClientLevelData(
+            currentProperty.getDifficulty(),
+            currentProperty.isHardcore(),
+            ((IEClientLevelData) currentProperty).ip_getIsFlat()
+        );
+        
+        newWorld = new ClientLevel(
+            mainNetHandler,
+            properties,
+            dimension,
+            dimensionType,
+            chunkLoadDistance,
+            simulationDistance,
+            CLIENT::getProfiler,
+            worldRenderer,
+            CLIENT.level.isDebug(),
+            CLIENT.level.getBiomeManager().biomeZoomSeed
+        );
+        
+        // Share map data and tick rate manager across worlds
+        ((IEClientLevel_Accessor) newWorld).ip_setMapData(mapData);
+        ((IEClientWorld) newWorld).ip_setTickRateManager(CLIENT.level.tickRateManager());
+        
+        worldRenderer.setLevel(newWorld);
+        
+        CLIENT_WORLD_MAP.put(dimension, newWorld);
+        WORLD_RENDERER_MAP.put(dimension, worldRenderer);
+        
+        CLIENT_WORLD_LOAD_EVENT.invoker().accept(newWorld);
+    }
+    finally {
+        isCreatingClientWorld = false;
+    }
+    
+    return newWorld;
+}</code></pre>
+
+
+<h3>Context Switching Pattern</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static &lt;T&gt; T withSwitchedWorld(ClientLevel newWorld, Supplier&lt;T&gt; supplier) {
+    Validate.isTrue(CLIENT.isSameThread(), &quot;not on client thread&quot;);
+    Validate.isTrue(CLIENT.player != null, &quot;player is null&quot;);
+    
+    ClientPacketListener networkHandler = CLIENT.getConnection();
+    
+    // Save original state
+    ClientLevel originalWorld = CLIENT.level;
+    LevelRenderer originalWorldRenderer = CLIENT.levelRenderer;
+    ClientLevel originalNetHandlerWorld = networkHandler.getLevel();
+    boolean originalIsWorldSwitched = isWorldSwitched;
+    
+    // Switch context
+    CLIENT.level = newWorld;
+    ((IEParticleManager) CLIENT.particleEngine).ip_setWorld(newWorld);
+    ((IEMinecraftClient) CLIENT).ip_setWorldRenderer(getWorldRenderer(newWorld.dimension()));
+    ((IEClientPlayNetworkHandler) networkHandler).ip_setWorld(newWorld);
+    isWorldSwitched = true;
+    
+    try {
+        return supplier.get();
+    }
+    finally {
+        // Restore original state
+        CLIENT.level = originalWorld;
+        ((IEMinecraftClient) CLIENT).ip_setWorldRenderer(originalWorldRenderer);
+        ((IEParticleManager) CLIENT.particleEngine).ip_setWorld(originalWorld);
+        ((IEClientPlayNetworkHandler) networkHandler).ip_setWorld(originalNetHandlerWorld);
+        isWorldSwitched = originalIsWorldSwitched;
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="event-system">Event System</h2>
+
+
+The mod uses a <strong>dual event system</strong> combining Fabric's event infrastructure with custom task lists.
+
+<h3>Fabric Event Integration</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph "Server Events"
+        STE["ServerTickEvents<br/>END_SERVER_TICK"]
+        SC["SERVER_CLEANUP_EVENT"]
+    end
+    
+    subgraph "Client Events"
+        CTE["ClientTickEvents<br/>POST_CLIENT_TICK"]
+        CPE["PRE_GAME_RENDER_EVENT"]
+        CC["CLIENT_CLEANUP_EVENT"]
+        CE["CLIENT_EXIT_EVENT"]
+    end
+    
+    subgraph "Task Processing"
+        STL["ServerTaskList"]
+        CTL["CLIENT_TASK_LIST"]
+        PRTL["PRE_GAME_RENDER_TASK_LIST"]
+    end
+    
+    STE --> STL
+    SC --> STL
+    STL --> |processTasks| ServerLogic
+    
+    CTE --> CTL
+    CPE --> PRTL
+    CTL --> |processTasks| ClientLogic
+    PRTL --> |processTasks| RenderPrep
+    
+    CC --> Cleanup
+    CE --> ExitCleanup</div>
+</div>
+
+
+<h3>Event Definitions</h3>
+
+
+<strong>IPGlobal Events:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">// Fires right after ticking client world (earlier than Fabric&#39;s END_CLIENT_TICK)
+public static final Event&lt;Runnable&gt; POST_CLIENT_TICK_EVENT = Helper.createRunnableEvent();
+
+// Fires before game rendering
+public static final Event&lt;Runnable&gt; PRE_GAME_RENDER_EVENT = Helper.createRunnableEvent();
+
+// Fires when server is shutting down
+public static final Event&lt;Consumer&lt;MinecraftServer&gt;&gt; SERVER_CLEANUP_EVENT =
+    Helper.createConsumerEvent();</code></pre>
+
+
+<strong>IPCGlobal Events:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">// Fires when client exits world OR during conventional dimension travel
+public static final Event&lt;Runnable&gt; CLIENT_CLEANUP_EVENT = Helper.createRunnableEvent();
+
+// Fires only when client exits world (not during dimension travel)
+public static final Event&lt;Runnable&gt; CLIENT_EXIT_EVENT = Helper.createRunnableEvent();</code></pre>
+
+
+<strong>ClientWorldLoader Events:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">// Fires when a dimension is dynamically removed
+public static final Event&lt;Consumer&lt;ResourceKey&lt;Level&gt;&gt;&gt; CLIENT_DIMENSION_DYNAMIC_REMOVE_EVENT =
+    Helper.createConsumerEvent();
+
+// Fires when a new client world is created
+public static final Event&lt;Consumer&lt;ClientLevel&gt;&gt; CLIENT_WORLD_LOAD_EVENT =
+    Helper.createConsumerEvent();</code></pre>
+
+
+<h3>Task List Processing</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ServerTaskList {
+    public static void init() {
+        ServerTickEvents.END_SERVER_TICK.register(server -&gt; {
+            of(server).processTasks();
+        });
+        
+        IPGlobal.SERVER_CLEANUP_EVENT.register(server -&gt; {
+            of(server).forceClearTasks();
+        });
+    }
+    
+    public static MyTaskList of(MinecraftServer server) {
+        return IPPerServerInfo.of(server).taskList;
+    }
+}</code></pre>
+
+
+<strong>Event Registration in IPModMain:</strong>
+</p>
+<p><pre class="code-block"><code class="language-java">IPGlobal.POST_CLIENT_TICK_EVENT.register(IPGlobal.CLIENT_TASK_LIST::processTasks);
+IPGlobal.PRE_GAME_RENDER_EVENT.register(IPGlobal.PRE_GAME_RENDER_TASK_LIST::processTasks);</code></pre>
+
+
+<hr>
+
+<h2 id="data-flow-diagram">Data Flow Diagram</h2>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "Player Action"
+        P["Player<br/>Entity"]
+        PA["Portal<br/>Interaction"]
+    end
+    
+    subgraph "Client Side"
+        C["Minecraft Client"]
+        CL["ClientWorldLoader"]
+        CR["Portal<br/>Renderer"]
+        CT["Tick<br/>Processing"]
+        
+        P -->|ticks| CT
+        CT -->|processes| CL
+        CL -->|renders| CR
+    end
+    
+    subgraph "Network"
+        NP["Network<br/>Packet"]
+        PR["Packet<br/>Redirection"]
+    end
+    
+    subgraph "Server Side"
+        S["Minecraft Server"]
+        ST["ServerTick"]
+        SSI["IPPerServerInfo"]
+        TT["Teleportation<br/>Manager"]
+        CS["Chunk<br/>Loading"]
+        GL["Global<br/>Portal Storage"]
+        
+        P -->|moves| PA
+        PA -->|triggers| TT
+        TT -->|teleports| ST
+        ST -->|syncs| CS
+        CS -->|manages| GL
+    end
+    
+    C -->|sends| NP
+    NP -->|redirects| PR
+    PR -->|processes| S
+    S -->|updates| SSI
+    SSI -->|tracks| TT
+    
+    CL -->|creates| NP
+    NP -->|loads chunks| CS</div>
+</div>
+
+
+<h3>Teleportation Flow</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Player
+    participant Portal
+    participant Client as ClientWorldLoader
+    participant Network
+    participant Server as ServerTeleportationManager
+    participant Chunk as ChunkLoading
+    participant Destination as Destination World
+
+    Player->>Portal: Enter portal bounds
+    Portal->>Client: Request world switch
+    Client->>Client: withSwitchedWorld()
+    Client->>Network: Request chunk data
+    Network->>Server: TeleportRequest packet
+    Server->>Server: Validate teleport
+    Server->>Chunk: Load destination chunks
+    Chunk-->>Server: Chunk data
+    Server->>Destination: Create/teleport player
+    Server-->>Network: TeleportConfirm packet
+    Network-->>Client: Update player position
+    Client->>Client: Render destination world
+    Client->>Portal: Start portal rendering</div>
+</div>
+
+
+<hr>
+
+<h2 id="key-design-patterns">Key Design Patterns</h2>
+
+
+<h3>1. <strong>Singleton Global State Pattern</strong></h3>
+
+
+Both <code>IPGlobal</code> and <code>IPCGlobal</code> use static fields as lightweight singletons, avoiding the overhead of true singleton instances while providing global access.
+</p>
+<p><pre class="code-block"><code class="language-java">IPGlobal.maxPortalLayer = 5;
+IPCGlobal.rendererUsingStencil = new RendererUsingStencil();</code></pre>
+
+
+<h3>2. <strong>Context Switching Pattern</strong></h3>
+
+
+Used extensively for multi-world operations on the client:
+</p>
+<p><pre class="code-block"><code class="language-java">T withSwitchedContext(Level world, Supplier&lt;T&gt; func) {
+    // Save current world context
+    ClientLevel original = CLIENT.level;
+    try {
+        // Switch to new context
+        CLIENT.level = (ClientLevel) world;
+        return func.get();  // Execute in new context
+    }
+    finally {
+        CLIENT.level = original;  // Always restore
+    }
+}</code></pre>
+
+
+<h3>3. <strong>Event-Driven Task Processing</strong></h3>
+
+
+Tasks are queued and processed during specific game phases:
+</p>
+<p><pre class="code-block"><code class="language-java">ServerTaskList.of(server).addTask(() -&gt; {
+    if (condition) return true;  // Task complete
+    return false;  // Continue next tick
+});
+
+// Deferred client task
+IPGlobal.CLIENT_TASK_LIST.addTask(() -&gt; {
+    doSomething();
+    return true;
+});</code></pre>
+
+
+<h3>4. <strong>Duck Typing via Mixin Interfaces</strong></h3>
+
+
+Custom interfaces (<code>IE*</code>) expose internal Minecraft state:
+</p>
+<p><pre class="code-block"><code class="language-java">public interface IEWorld {
+    LevelEntityGetter&lt;Entity&gt; portal_getEntityLookup();
+}
+
+// Usage
+LevelEntityGetter&lt;Entity&gt; lookup = ((IEWorld) world).portal_getEntityLookup();</code></pre>
+
+
+<h3>5. <strong>Builder Pattern for Portal Shapes</strong></h3>
+
+
+Portal shapes use initialization builders:
+</p>
+<p><pre class="code-block"><code class="language-java">RectangularPortalShape.init();
+SpecialFlatPortalShape.init();
+BoxPortalShape.init();</code></pre>
+
+
+<h3>6. <strong>Per-Server State Storage</strong></h3>
+
+
+<code>IPPerServerInfo</code> provides per-server-instance state without static pollution:
+</p>
+<p><pre class="code-block"><code class="language-java">public class IPPerServerInfo {
+    public final MyTaskList taskList = new MyTaskList();
+    public @Nullable DimIntIdMap dimIntIdMap;
+    public @Nullable CustomPortalGenManager customPortalGenManager;
+    public final ServerTeleportationManager teleportationManager = new ServerTeleportationManager();
+    public final PortalWandInteraction portalWandInteraction = new PortalWandInteraction();
+    
+    public static IPPerServerInfo of(MinecraftServer server) {
+        return ((IEMinecraftServer) server).ip_getPerServerInfo();
+    }
+}</code></pre>
+
+
+<h3>7. <strong>Multi-World Renderer Management</strong></h3>
+
+
+The client maintains parallel renderers for all loaded dimensions:
+</p>
+<p><pre class="code-block"><code class="language-java">Map&lt;ResourceKey&lt;Level&gt;, LevelRenderer&gt; WORLD_RENDERER_MAP;
+Map&lt;ResourceKey&lt;Level&gt;, DimensionRenderHelper&gt; RENDER_HELPER_MAP;
+Map&lt;ResourceKey&lt;Level&gt;, ClientLevel&gt; CLIENT_WORLD_MAP;</code></pre>
+
+
+<h3>8. <strong>Compatibility Layer Pattern</strong></h3>
+
+
+Third-party mod compatibility via interface injection:
+</p>
+<p><pre class="code-block"><code class="language-java">public static final GravityChangerInterface INSTANCE = ...;
+public static Interface&lt;GravityChangerInterface&gt; invoker = 
+    () -&gt; GravityChangerInterface.INSTANCE;
+
+// Usage works whether mod is present or not
+Vec3 eyeOffset = GravityChangerInterface.invoker.getEyeOffset(entity);</code></pre>
+
+
+<hr>
+
+<h2 id="summary">Summary</h2>
+
+
+The ImmersivePortalsMod core architecture demonstrates sophisticated Minecraft modding patterns:
+
+| Aspect | Implementation |
+|--------|---------------|
+| <strong>Entry Point</strong> | <code>IPModMain.init()</code> orchestrates all subsystems |
+| <strong>Config</strong> | Dual-layer: Cloth Config GUI + static field reflection |
+| <strong>Client State</strong> | <code>IPCGlobal</code> + <code>ClientWorldLoader</code> for multi-world |
+| <strong>Server State</strong> | <code>IPGlobal</code> + <code>IPPerServerInfo</code> for per-server data |
+| <strong>Events</strong> | Fabric events + custom task lists |
+| <strong>Context</strong> | <code>withSwitchedWorld()</code> for safe cross-world operations |
+| <strong>Entities</strong> | 9 custom entity types + extensive Mixin duck interfaces |
+| <strong>Rendering</strong> | Per-dimension LevelRenderer + portal-specific renderers |
+
+The architecture enables seamless portal experiences by maintaining synchronized state across dimensions on both client and server, with careful attention to thread safety and context management.
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="02-portal-entity.html" class="next">
+            Portal Entity System
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

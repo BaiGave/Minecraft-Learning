@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Fabric API 深度分析总览 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+<a href="06-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 渲染系统分析
+        </a>
+<a href="07-networking-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 网络系统分析
+        </a>
+<a href="08-resource-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 资源加载系统分析
+        </a>
+<a href="09-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 传输/存储系统分析
+        </a>
+<a href="10-command-screen-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 命令与屏幕系统分析
+        </a>
+<a href="11-other-subsystems.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 其他子系统分析
+        </a>
+<a href="README.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 深度分析总览
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Fabric API 深度分析总览</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Fabric API 深度分析总览
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 深度分析总览</h1>
+
+
+<blockquote><p>本文档是对 Fabric API 0.116.9-1.21.1 版本的全面系统分析</p></blockquote>
+
+<h2 id="目录">目录</h2>
+
+
+<h3>核心模块</h3>
+
+<ul><li><a href="01-fabric-api-base.html">01-fabric-api-base</a> - 核心基础模块（事件系统、拓扑排序、工具类）</li></ul>
+<ul><li><a href="02-block-system.html">02-block-system</a> - 方块系统（方块API、方块视图、渲染层）</li></ul>
+<ul><li><a href="03-item-recipe-system.html">03-item-recipe-system</a> - 物品与配方系统（物品API、物品栏、配方扩展）</li></ul>
+<ul><li><a href="04-biome-dimension-system.html">04-biome-dimension-system</a> - 生物群系与维度系统</li></ul>
+<ul><li><a href="05-entity-event-system.html">05-entity-event-system</a> - 实体与事件系统</li></ul>
+<ul><li><a href="06-rendering-system.html">06-rendering-system</a> - 渲染系统（渲染器API、粒子、流体渲染）</li></ul>
+<ul><li><a href="07-networking-system.html">07-networking-system</a> - 网络系统</li></ul>
+<ul><li><a href="08-resource-system.html">08-resource-system</a> - 资源加载系统</li></ul>
+<ul><li><a href="09-transfer-system.html">09-transfer-system</a> - 传输/存储系统（流体、物品存储）</li></ul>
+<ul><li><a href="10-command-screen-system.html">10-command-screen-system</a> - 命令与屏幕系统</li></ul>
+<ul><li><a href="11-other-subsystems.html">11-other-subsystems</a> - 其他子系统</li></ul>
+
+<h2 id="模块架构总览">模块架构总览</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
+│                          Fabric API                                     │
+├─────────────────────────────────────────────────────────────────────────┤
+│  核心层                                                                 │
+│  ├── fabric-api-base          事件系统、拓扑排序、工具类                    │
+│  ├── fabric-convention-tags-v2  约定标签系统                             │
+│  └── fabric-api-lookup-api-v1  跨模组API查找                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│  世界生成层                                                              │
+│  ├── fabric-biome-api-v1      生物群系添加/修改                          │
+│  └── fabric-dimensions-v1      维度数据处理                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  实体/物品层                                                            │
+│  ├── fabric-entity-events-v1   实体事件                                 │
+│  ├── fabric-item-api-v1        物品扩展                                 │
+│  ├── fabric-item-group-api-v1   物品栏系统                              │
+│  ├── fabric-recipe-api-v1      配方API                                 │
+│  └── fabric-object-builder-api-v1 对象构建器                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│  渲染层                                                                 │
+│  ├── fabric-renderer-api-v1    渲染器API                               │
+│  ├── fabric-renderer-indigo    默认Indigo渲染器                          │
+│  ├── fabric-rendering-v1       渲染事件                                 │
+│  ├── fabric-rendering-fluids-v1 流体渲染                               │
+│  ├── fabric-particles-v1       粒子系统                                │
+│  └── fabric-client-tags-api-v1  客户端标签                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│  交互层                                                                 │
+│  ├── fabric-events-interaction-v0 交互事件                              │
+│  ├── fabric-command-api-v2     命令API                                 │
+│  ├── fabric-screen-api-v1       屏幕API                                │
+│  ├── fabric-screen-handler-api-v1 屏幕处理器                           │
+│  └── fabric-key-binding-api-v1  按键绑定                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│  网络层                                                                 │
+│  ├── fabric-networking-api-v1  通用网络API                             │
+│  └── fabric-message-api-v1     消息API                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│  数据层                                                                 │
+│  ├── fabric-transfer-api-v1    流体/物品传输                            │
+│  ├── fabric-data-attachment-api-v1 数据附件                           │
+│  ├── fabric-loot-api-v3        战利品表                                │
+│  └── fabric-registry-sync-v0   注册表同步                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  资源层                                                                 │
+│  ├── fabric-resource-loader-v0 资源加载                                │
+│  └── fabric-resource-conditions-api-v1 资源条件                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│  其他模块                                                               │
+│  ├── fabric-gametest-api-v1    游戏测试                                 │
+│  ├── fabric-sound-api-v1       声音API                                 │
+│  └── fabric-transitive-access-wideners-v1 访问扩展                      │
+└─────────────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h2 id="核心技术分析">核心技术分析</h2>
+
+
+<h3>1. Mixin 注入机制</h3>
+
+
+Fabric API 大量使用 Mixin 框架实现无侵入式修改：
+
+| 注入类型 | 说明 | 示例 |
+|----------|------|------|
+| 接口注入 | 为目标类添加接口实现 | <code>BlockMixin implements FabricBlock</code> |
+| 方法注入 | 在指定位置插入代码 | <code>@Inject(at = @At("HEAD"))</code> |
+| 方法重定向 | 替换方法调用 | <code>@Redirect</code> |
+| 方法包装 | 包裹原有方法调用 | <code>@WrapOperation</code> |
+| 字段注入 | 添加新字段 | <code>@Unique</code> |
+
+<h3>2. 事件系统</h3>
+
+
+所有事件使用统一的工厂模式创建：
+</p>
+<p><pre class="code-block"><code class="language-java">Event&lt;T&gt; EVENT = EventFactory.createArrayBacked(
+    T.class,
+    callbacks -&gt; (param1, param2) -&gt; {
+        for (T callback : callbacks) {
+            callback.method(param1, param2);
+        }
+    }
+);</code></pre>
+
+
+<h3>3. API Lookup 模式</h3>
+
+
+使用查找器实现跨模组解耦通信：
+</p>
+<p><pre class="code-block"><code class="language-java">BlockApiLookup&lt;FluidContainer, Direction&gt; FLUID_CONTAINER = 
+    BlockApiLookup.get(Identifier.of(&quot;mymod&quot;, &quot;fluid_container&quot;), ...);
+
+// 注册提供者
+FLUID_CONTAINER.registerSelf(TANK_BLOCK_ENTITY_TYPE);
+
+// 查询
+FluidContainer container = FLUID_CONTAINER.find(world, pos, direction);</code></pre>
+
+
+<h3>4. 事务管理</h3>
+
+
+Transfer API 使用快照机制确保原子性：
+</p>
+<p><pre class="code-block"><code class="language-java">try (Transaction tx = Transaction.openOuter()) {
+    storage.insert(resource, amount, tx);
+    tx.commit();  // 提交
+}  // 未提交则自动回滚</code></pre>
+
+
+<h2 id="设计模式总结">设计模式总结</h2>
+
+
+| 模式 | 应用场景 |
+|------|----------|
+| 工厂模式 | <code>EventFactory.createArrayBacked()</code> |
+| 建造者模式 | <code>FabricItemGroup.builder()</code> |
+| 观察者模式 | 所有事件系统 |
+| 策略模式 | <code>invokerFactory</code> 参数化 |
+| 适配器模式 | <code>InventoryStorage</code> 包装原版库存 |
+| 注册表模式 | <code>BlockApiLookup</code> 全局注册表 |
+| 快照模式 | <code>SnapshotParticipant</code> 事务支持 |
+
+<h2 id="文档维护">文档维护</h2>
+
+
+<ul><li><strong>源版本</strong>: Fabric API 0.116.9-1.21.1</li></ul>
+<ul><li><strong>分析日期</strong>: 2026-03-23</li></ul>
+<ul><li><strong>源码位置</strong>: <code>assets/fabric-api-0.116.9-1.21.1/</code></li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="11-other-subsystems.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 其他子系统分析
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

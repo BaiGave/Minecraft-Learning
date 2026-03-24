@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Iris 源代码分析 - Iris 光影</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 光影 Mod 整体架构分析
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 着色器包系统
+        </a>
+<a href="04-shadow-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 帧缓冲与纹理系统
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Uniform 系统
+        </a>
+<a href="07-sodium-integration.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Sodium 集成系统分析
+        </a>
+<a href="08-mixin-mechanism.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Mixin 注入机制分析
+        </a>
+<a href="README.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Iris 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Iris 源代码分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Iris 源代码分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-1.7.3</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris 源代码分析</h1>
+
+
+<blockquote><p>基于 v1.7.3 源码的完整分析报告</p></blockquote>
+
+<h2 id="项目信息">项目信息</h2>
+
+
+| 属性 | 值 |
+|------|-----|
+| Mod 名称 | Iris |
+| 当前版本 | 1.7.3 |
+| 支持 Minecraft | 1.21 |
+| 支持平台 | Fabric |
+| Java 版本 | JDK 21 |
+| 构建工具 | Gradle 8.10.x |
+| GitHub | IrisShaders/Iris |
+| 代码文件 | ~620 个 Java 文件 |
+
+<h2 id="文档目录">文档目录</h2>
+
+
+<h3>架构分析</h3>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="01-architecture-overview.html">01-architecture-overview</a> | 整体架构设计模式、模块划分 |
+| <a href="SUMMARY.html">SUMMARY</a> | 整体总结 - 核心要点、架构图 |
+
+<h3>系统分析</h3>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="02-rendering-pipeline.html">02-rendering-pipeline</a> | 渲染管线 - GBuffer、Composite Pass |
+| <a href="03-shaderpack-system.html">03-shaderpack-system</a> | 着色器包加载与解析 |
+| <a href="04-shadow-system.html">04-shadow-system</a> | 阴影系统 - 视锥体剔除、阴影渲染 |
+| <a href="05-framebuffer-texture.html">05-framebuffer-texture</a> | 帧缓冲与纹理系统 |
+| <a href="06-uniforms.html">06-uniforms</a> | Uniform 管理 |
+| <a href="07-sodium-integration.html">07-sodium-integration</a> | Sodium 集成系统 |
+| <a href="08-mixin-mechanism.html">08-mixin-mechanism</a> | Mixin 注入机制 |
+
+<hr>
+
+<h2 id="架构总览">架构总览</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                        Iris 1.7.3                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                   渲染管线 (Pipeline)                       │ │
+│  │  • IrisRenderingPipeline                                    │ │
+│  │  • CompositeRenderer                                       │ │
+│  │  • FinalPassRenderer                                      │ │
+│  │  • SodiumTerrainPipeline                                  │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────┐  ┌─────────────────────┐                │
+│  │   着色器包系统     │  │      阴影系统       │                │
+│  │  ShaderPack       │  │   ShadowRenderer    │                │
+│  │  ProgramSet       │  │   Frustum Culling  │                │
+│  │  TransformPatcher │  │   Shadow Matrices   │                │
+│  └─────────────────────┘  └─────────────────────┘                │
+│                                                                 │
+│  ┌─────────────────────┐  ┌─────────────────────┐                │
+│  │   帧缓冲系统       │  │    Uniform 系统     │                │
+│  │   RenderTargets    │  │   CommonUniforms    │                │
+│  │   GlFramebuffer   │  │   CameraUniforms    │                │
+│  │   DepthTexture    │  │   BiomeUniforms     │                │
+│  └─────────────────────┘  └─────────────────────┘                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="核心优化技术">核心优化技术</h2>
+
+
+| 技术 | 说明 | 效果 |
+|------|------|------|
+| <strong>高级视锥体剔除</strong> | 基于光源方向的智能剔除 | 阴影渲染加速 |
+| <strong>GBuffer 多目标</strong> | 延迟渲染架构 | 高质量后期处理 |
+| <strong>Uniform 缓存</strong> | 脏值检测优化 | 减少 GPU 传输 |
+| <strong>深度复制优化</strong> | 智能选择复制策略 | 减少带宽占用 |
+| <strong>Buffer 翻转</strong> | 主/备用纹理切换 | 支持 Ping-Pong 渲染 |
+| <strong>计算着色器</strong> | 异步后处理 | 性能提升 |
+
+<hr>
+
+<h2 id="源码统计">源码统计</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">D:/Projects/Iris-1.7.3-1.21/src/main/java/net/irisshaders/iris/
+├── pipeline/                    # 渲染管线 (~20 文件)
+├── shaderpack/                  # 着色器包 (~80 文件)
+├── shadows/                     # 阴影系统 (~15 文件)
+├── targets/                     # 帧缓冲 (~10 文件)
+├── uniforms/                    # Uniform (~30 文件)
+├── gl/                          # OpenGL 封装 (~50 文件)
+│   ├── program/                 # 程序管理
+│   ├── shader/                  # 着色器编译
+│   ├── buffer/                  # 缓冲区
+│   └── texture/                 # 纹理
+├── mixin/                        # Mixin 注入 (~100 文件)
+└── [其他]                       # GUI、兼容层等 (~50 文件)</code></pre>
+
+
+<hr>
+
+<h2 id="关键版本信息">关键版本信息</h2>
+
+
+| 组件 | 版本 |
+|------|------|
+| Minecraft | 1.21 |
+| Sodium | 0.5.9 |
+| Fabric Loader | 0.15.11 |
+| Fabric API | 0.100.1 |
+
+<hr>
+
+<h2 id="技术栈">技术栈</h2>
+
+
+| 组件 | 技术 |
+|------|------|
+| 语言 | Java 21 |
+| 字节码注入 | Mixin |
+| 平台支持 | Fabric |
+| 图形 API | OpenGL 3.3+ |
+| 构建工具 | Gradle 8.10.x |
+| GLSL 工具 | glsl-transformer, jcpp |
+| 图形界面 | Swing (原生) |
+
+<hr>
+
+<h2 id="opengl-要求">OpenGL 要求</h2>
+
+
+| 要求 | 版本 | 说明 |
+|------|------|------|
+| <strong>最低版本</strong> | OpenGL 3.3 | 基本功能 |
+| <strong>推荐版本</strong> | OpenGL 4.5 | 全部功能 |
+| <strong>可选扩展</strong> | GL<em>ARB</em>shader<em>storage</em>buffer_object | SSBO 支持 |
+| <strong>可选扩展</strong> | GL<em>ARB</em>compute_shader | 计算着色器 |
+
+<hr>
+
+<h2 id="第三方依赖">第三方依赖</h2>
+
+
+| 库 | 用途 |
+|------|------|
+| <strong>glsl-transformer</strong> | GLSL 代码转换 |
+| <strong>jcpp</strong> | GLSL 预处理器 |
+| <strong>ANTLR4</strong> | 属性文件解析 |
+| <strong>fastutil</strong> | 高性能集合 |
+| <strong>JOML</strong> | 矩阵/向量数学 |
+
+<hr>
+
+<h2 id="与-sodium-的关系">与 Sodium 的关系</h2>
+
+
+| 方面 | Sodium | Iris |
+|------|--------|------|
+| <strong>目标</strong> | 帧率优化 | 光影支持 |
+| <strong>核心</strong> | 多线程构建 | 延迟渲染 |
+| <strong>集成</strong> | SodiumTerrainPipeline | - |
+| <strong>可独立</strong> | 是 | 否 (依赖 Sodium) |
+
+<hr>
+
+<h2 id="相关项目">相关项目</h2>
+
+
+| 项目 | 说明 |
+|------|------|
+| <a href="https://github.com/CaffeineMC/sodium" target="_blank" rel="noopener noreferrer">Sodium</a> | 高性能渲染优化 Mod |
+| <a href="https://github.com/comp500/Indium" target="_blank" rel="noopener noreferrer">Indium</a> | Fabric 渲染 API |
+| <a href="https://github.com/sparticuzz/DistantHorizons" target="_blank" rel="noopener noreferrer">Distant Horizons</a> | 远距离渲染 |
+
+<hr>
+
+<h2 id="使用说明">使用说明</h2>
+
+
+这些文档旨在帮助理解 Iris 的内部工作原理，包括：
+<ul><li>延迟渲染架构的实现细节</li></ul>
+<ul><li>光影包加载和解析机制</li></ul>
+<ul><li>高级视锥体剔除算法</li></ul>
+<ul><li>与 Minecraft/Sodium 的交互方式</li></ul>
+
+<hr>
+
+<em>生成时间: 2026-03-19</em>
+<em>基于 Iris v1.7.3 源码分析</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-mixin-mechanism.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Iris Mixin 注入机制分析
+        </a><a href="SUMMARY.html" class="next">
+            Iris 分析总结
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

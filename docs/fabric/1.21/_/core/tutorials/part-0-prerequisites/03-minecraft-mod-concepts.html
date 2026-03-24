@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第三章：Minecraft Mod 开发概念 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="03-minecraft-mod-concepts.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../part-1-basics/01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="../part-1-basics/02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="../part-1-basics/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="../part-1-basics/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-world-gen/01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="../part-4-world-gen/02-custom-biome.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="../part-4-world-gen/03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-rendering/01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="../part-5-rendering/02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="../part-5-rendering/03-particles.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-advanced/01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="../part-7-advanced/02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="../part-7-advanced/03-recipes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="../part-7-advanced/04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="../part-8-projects/02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="../part-8-projects/03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="../part-8-projects/04-magic-creature.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Fabric Mod 开发完全指南</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第三章：Minecraft Mod 开发概念</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第三章：Minecraft Mod 开发概念
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第三章：Minecraft Mod 开发概念</h1>
+
+
+<blockquote><p>在开始写代码之前，先来了解一下 Mod 开发的基本概念。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-什么是-mod">什么是 Mod？</a></li></ul>
+<ul><li><a href="#2-fabric-是什么">Fabric 是什么？</a></li></ul>
+<ul><li><a href="#3-mod-loader-的作用">Mod Loader 的作用</a></li></ul>
+<ul><li><a href="#4-api-和-mixin-是什么">API 和 Mixin 是什么？</a></li></ul>
+<ul><li><a href="#5-服务端-vs-客户端-mod">服务端 vs 客户端 Mod</a></li></ul>
+<ul><li><a href="#6-数据包和资源包">数据包和资源包</a></li></ul>
+<ul><li><a href="#7-理解-mod-结构">理解 Mod 结构</a></li></ul>
+
+<hr>
+
+<h2 id="1-什么是-mod">1. 什么是 Mod？</h2>
+
+
+<h3>1.1 Mod = Modification（修改）</h3>
+
+
+Mod 就是对 Minecraft 游戏的"修改"或"扩展"：
+</p>
+<p><pre class="code-block"><code class="language-text">原版 Minecraft                    添加 Mod 后
+┌─────────────────┐              ┌─────────────────┐
+│  石头就是石头    │      →       │  石头可以发光    │
+│  只能砍树       │              │  可以自动砍树    │
+│  只有 10 种矿石 │              │  有 100 种新矿石 │
+└─────────────────┘              └─────────────────┘</code></pre>
+
+
+<h3>1.2 Mod 能做什么？</h3>
+
+
+| 类别 | 示例 | 说明 |
+|------|------|------|
+| <strong>新方块/物品</strong> | 各种新方块、新装备 | 最常见的 Mod 类型 |
+| <strong>新生物</strong> | 史莱姆少女、合成生物 | 增加游戏趣味性 |
+| <strong>新维度</strong> | 魔法世界、太空 | 全新游戏体验 |
+| <strong>性能优化</strong> | Sodium、Iris | 让游戏更快更好 |
+| <strong>工具/管理</strong> | REI、WTHIT | 提供游戏辅助信息 |
+
+<hr>
+
+<h2 id="2-fabric-是什么">2. Fabric 是什么？</h2>
+
+
+<h3>2.1 Mod Loader 家族</h3>
+
+
+Minecraft Mod 开发有两大主流框架：
+
+| 框架 | 特点 | 生态 |
+|------|------|------|
+| <strong>Fabric</strong> | 轻量、现代化、Mod 兼容性高 | Sodium、Iris、REI |
+| <strong>Forge</strong> | 功能强大、历史悠久、Mod 数量多 | JEI、AE2、Thaumcraft |
+
+<h3>2.2 为什么选择 Fabric？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">选择 Fabric 的理由：
+
+✅ 轻量级 - 对游戏性能影响小
+✅ 现代化 - 使用最新 Java 版本
+✅ 兼容性好 - 容易和其他 Mod 共存
+✅ 开发简单 - API 设计清晰易用
+✅ 社区活跃 - 文档丰富，帮助多</code></pre>
+
+
+<h3>2.3 Fabric 生态系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────┐
+│              Minecraft 游戏                │
+├─────────────────────────────────────────┤
+│  ┌─────────────────────────────────┐    │
+│  │         Fabric Loader           │    │
+│  │    (负责加载和初始化 Mod)        │    │
+│  ├─────────────────────────────────┤    │
+│  │         Fabric API              │    │
+│  │    (提供开发用的各种工具)         │    │
+│  ├─────────────────────────────────┤    │
+│  │        Mixin                    │    │
+│  │    (修改游戏原有代码)            │    │
+│  └─────────────────────────────────┘    │
+└─────────────────────────────────────────┘
+                  ↑
+         ┌────────┴────────┐
+         │     你的 Mod      │
+         │   (使用 Fabric)   │
+         └──────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="3-mod-loader-的作用">3. Mod Loader 的作用</h2>
+
+
+<h3>3.1 Mod Loader 做什么？</h3>
+
+
+Mod Loader 就像一个"管理员"，负责：
+</p>
+<p><pre class="code-block"><code class="language-text">1. 发现 Mod        → 扫描 mods 文件夹，找到所有 Mod
+2. 加载 Mod         → 读取 Mod 的代码和配置
+3. 初始化 Mod       → 执行 Mod 的初始化代码
+4. 处理依赖         → 确保 Mod 加载顺序正确
+5. 协调 Mod         → 处理 Mod 之间的交互</code></pre>
+
+
+<h3>3.2 游戏启动流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">普通启动                              有 Mod 时
+────────────────────────────────────────────────
+1. 启动游戏                           1. 启动游戏
+2. 加载原版代码                       2. Fabric Loader 启动
+3. 进入主菜单                         3. 发现并加载 Mod
+                                     4. Mod 初始化
+                                     5. 进入主菜单</code></pre>
+
+
+<hr>
+
+<h2 id="4-api-和-mixin-是什么">4. API 和 Mixin 是什么？</h2>
+
+
+<h3>4.1 API = Application Programming Interface（应用程序接口）</h3>
+
+
+API 就是 Mod 开发者使用的"工具箱"：
+</p>
+<p><pre class="code-block"><code class="language-text">Fabric API 提供的工具箱包含：
+
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│   方块 API    │  │   物品 API    │  │   实体 API    │
+│  创建新方块   │  │  创建新物品   │  │  创建新生物   │
+├──────────────┤  ├──────────────┤  ├──────────────┤
+│   事件 API    │  │   命令 API    │  │   网络 API    │
+│  监听游戏事件 │  │  创建新命令   │  │  多人联机通信 │
+└──────────────┘  └──────────────┘  └──────────────┘</code></pre>
+
+
+<h3>4.2 Mixin 是什么？</h3>
+
+
+Mixin 是一种"代码注入"技术，可以修改游戏的原有代码：
+</p>
+<p><pre class="code-block"><code class="language-text">原版代码（不能直接修改）：
+┌─────────────────────────┐
+│ void 攻击() {            │
+│   造成 5 点伤害;        │  ← 这段代码是原版
+│   播放音效;              │
+│ }                        │
+└─────────────────────────┘
+
+使用 Mixin 注入：
+┌─────────────────────────┐
+│ void 攻击() {            │
+│   造成 5 点伤害;        │  ← 原版代码
+│   [新代码：爆炸效果]     │  ← Mixin 添加的新代码
+│   播放音效;              │
+│ }                        │
+└─────────────────────────┘</code></pre>
+
+
+<h3>4.3 API 和 Mixin 的区别</h3>
+
+
+| | API | Mixin |
+|---|-----|-------|
+| <strong>用途</strong> | 提供新功能 | 修改现有功能 |
+| <strong>安全性</strong> | 高，不会破坏原版 | 中，需要小心 |
+| <strong>难度</strong> | 简单易用 | 较复杂 |
+| <strong>示例</strong> | <code>register()</code> 创建物品 | 修改方块放置逻辑 |
+
+<hr>
+
+<h2 id="5-服务端-vs-客户端-mod">5. 服务端 vs 客户端 Mod</h2>
+
+
+<h3>5.1 两者的区别</h3>
+
+
+| 特性 | 服务端 Mod | 客户端 Mod |
+|------|-----------|------------|
+| <strong>运行环境</strong> | 专用服务器 | 单人/多人客户端 |
+| <strong>是否必须</strong> | 所有人必须安装 | 可以不装 |
+| <strong>对其他人影响</strong> | 影响所有玩家 | 只影响自己 |
+| <strong>典型用途</strong> | 新物品、新系统 | 着色器、UI 增强 |
+
+<h3>5.2 常见误区</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">❌ 误区：我加了一个新方块，所有人都能看到
+✅ 正确：只有安装了 Mod 的玩家能看到
+
+❌ 误区：在服务端加 Mod，所有人必须玩
+✅ 正确：服务端 Mod 需要所有玩家都安装
+
+❌ 误区：客户端 Mod 可以加到服务器上
+✅ 正确：大多数客户端 Mod 只能装在客户端</code></pre>
+
+
+<h3>5.3 开发选择</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">初学者建议：
+├── 从客户端 Mod 开始
+│   └── 可以单人测试，不需要服务器
+│
+└── 进阶后尝试
+    └── 服务端 + 客户端协同开发
+        └── 需要架设测试服务器</code></pre>
+
+
+<hr>
+
+<h2 id="6-数据包和资源包">6. 数据包和资源包</h2>
+
+
+<h3>6.1 什么是数据包？</h3>
+
+
+数据包（Data Pack）用于定义游戏数据，不需要写 Java 代码：
+</p>
+<p><pre class="code-block"><code class="language-text">数据包可以定义：
+├── 配方         →  工作台配方
+├── 战利品表     →  击杀生物掉落什么
+├── 标签         →  哪些方块算&quot;木头&quot;
+├── 生物生成     →  生物在哪里生成
+└── 进度         →  成就系统</code></pre>
+
+
+<h3>6.2 什么是资源包？</h3>
+
+
+资源包（Resource Pack）用于定义游戏外观和声音：
+</p>
+<p><pre class="code-block"><code class="language-text">资源包可以定义：
+├── 模型         →  方块/物品长什么样
+├── 纹理         →  方块/物品的图片
+├── 语言         →  显示的文字
+├── 声音         →  音效和音乐
+└── 着色器       →  特殊视觉效果</code></pre>
+
+
+<h3>6.3 在 Mod 中的位置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">你的 Mod
+├── Java 代码
+│   ├── 注册方块/物品逻辑
+│   ├── 事件处理
+│   └── 游戏机制
+│
+├── 数据包 (src/main/resources/data/)
+│   ├── recipes/           配方
+│   ├── loot_tables/       战利品表
+│   └── tags/              标签
+│
+└── 资源包 (src/main/resources/assets/)
+    ├── models/            模型
+    ├── textures/          纹理
+    └── lang/              语言文件</code></pre>
+
+
+<hr>
+
+<h2 id="7-理解-mod-结构">7. 理解 Mod 结构</h2>
+
+
+<h3>7.1 最小 Mod 需要什么？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">一个最简单的 Mod 需要：
+
+1. fabric.mod.json          Mod 描述文件
+2. 一个 Mod 主类             初始化代码
+
+其他都是可选的！</code></pre>
+
+
+<h3>7.2 fabric.mod.json 示例</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;schemaVersion&quot;: 1,
+    &quot;id&quot;: &quot;my-first-mod&quot;,           // Mod 的唯一 ID
+    &quot;version&quot;: &quot;1.0.0&quot;,               // 版本号
+    &quot;name&quot;: &quot;My First Mod&quot;,          // 显示名称
+    &quot;description&quot;: &quot;这是我做的第一个 Mod！&quot;,
+    &quot;authors&quot;: [&quot;YourName&quot;],         // 作者
+    &quot;contact&quot;: {
+        &quot;homepage&quot;: &quot;https://example.com&quot;
+    },
+    &quot;license&quot;: &quot;MIT&quot;,
+    &quot;icon&quot;: &quot;assets/my-first-mod/icon.png&quot;,  // 图标
+    &quot;environment&quot;: &quot;*&quot;,              // 环境：* 表示所有环境
+    &quot;entrypoints&quot;: {
+        &quot;main&quot;: [
+            &quot;net.example.mymod.MyMod&quot;    // 主类入口
+        ]
+    },
+    &quot;depends&quot;: {
+        &quot;fabricloader&quot;: &quot;&gt;=0.15.0&quot;,  // 依赖
+        &quot;minecraft&quot;: &quot;~1.21&quot;,
+        &quot;java&quot;: &quot;&gt;=21&quot;
+    }
+}</code></pre>
+
+
+<h3>7.3 Mod 主类示例</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyMod implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        // 这个方法在 Mod 加载时会被调用
+        // 写在这里的代码会在游戏启动时执行
+
+        System.out.println(&quot;我的 Mod 加载成功了！&quot;);
+    }
+}</code></pre>
+
+
+<h3>7.4 完整项目结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">my-first-mod/
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── net/
+│       │       └── example/
+│       │           └── mymod/
+│       │               ├── MyMod.java              ← Mod 主类
+│       │               ├── block/                  ← 方块相关
+│       │               ├── item/                   ← 物品相关
+│       │               └── event/                  ← 事件处理
+│       │
+│       └── resources/
+│           ├── fabric.mod.json               ← Mod 配置
+│           └── assets/                        ← 资源文件
+│               └── my-first-mod/
+│                   ├── lang/                   ← 语言文件
+│                   ├── models/                  ← 模型文件
+│                   └── textures/               ← 纹理图片
+│
+├── build.gradle                     ← 构建配置
+└── gradle.properties               ← Gradle 配置</code></pre>
+
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+现在你理解了基本概念！可以开始学习了：
+<ul><li><a href="../part-1-basics/04-first-mod.html">创建你的第一个 Mod</a> - 动手写代码！</li></ul>
+
+或者继续深入：
+<ul><li><a href="../part-1-basics/01-fabric-intro.html">Fabric 简介</a> - 了解更多 Fabric 细节</li></ul>
+
+<hr>
+
+<em>有问题？去 <a href="https://discord.gg/fabricmc" target="_blank" rel="noopener noreferrer">Fabric Discord</a> 提问！</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-environment-setup.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：开发环境搭建
+        </a><a href="04-first-mod.html" class="next">
+            第四章：创建你的第一个 Mod
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../../script.js"></script>
+    <script src="../../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Fabric API 渲染系统分析 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-fabric-api-base.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API Base 模块深度分析
+        </a>
+<a href="02-block-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 方块系统模块分析
+        </a>
+<a href="03-item-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 物品与配方系统分析
+        </a>
+<a href="04-biome-dimension-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 生物群系与维度系统分析
+        </a>
+<a href="05-entity-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 实体与事件系统分析
+        </a>
+<a href="06-rendering-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Fabric API 渲染系统分析
+        </a>
+<a href="07-networking-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 网络系统分析
+        </a>
+<a href="08-resource-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 资源加载系统分析
+        </a>
+<a href="09-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 传输/存储系统分析
+        </a>
+<a href="10-command-screen-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 命令与屏幕系统分析
+        </a>
+<a href="11-other-subsystems.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 其他子系统分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Fabric API 深度分析总览
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Fabric API 渲染系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Fabric API 渲染系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Fabric API 渲染系统分析</h1>
+
+
+<h2 id="概述">概述</h2>
+
+
+渲染系统包含多个核心模块：
+<ul><li><code>fabric-renderer-api-v1</code> - 渲染器 API 核心</li></ul>
+<ul><li><code>fabric-renderer-indigo</code> - Indigo 默认渲染器实现</li></ul>
+<ul><li><code>fabric-rendering-v1</code> - 渲染事件</li></ul>
+<ul><li><code>fabric-rendering-fluids-v1</code> - 流体渲染</li></ul>
+<ul><li><code>fabric-particles-v1</code> - 粒子系统</li></ul>
+<ul><li><code>fabric-client-tags-api-v1</code> - 客户端标签</li></ul>
+
+<hr>
+
+<h2 id="1-fabric-renderer-api-v1-模块">1. fabric-renderer-api-v1 模块</h2>
+
+
+<h3>1.1 核心接口关系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">Renderer (主接口)
+    ├── meshBuilder() → MeshBuilder
+    ├── materialFinder() → MaterialFinder
+    └── materialById(Identifier) → RenderMaterial
+
+RendererAccess (渲染器访问入口)
+    ├── INSTANCE (单例)
+    ├── registerRenderer(Renderer)
+    └── getRenderer()
+
+RenderContext (渲染上下文)
+    ├── getEmitter() → QuadEmitter
+    ├── pushTransform(QuadTransform)
+    └── isFaceCulled(Direction)</code></pre>
+
+
+<h3>1.2 渲染材质系统 (RenderMaterial)</h3>
+
+
+材质使用位编码存储渲染属性：
+</p>
+<p><pre class="code-block"><code class="language-java">public interface RenderMaterial {
+    // 混合模式
+    BlendMode blendMode();           // SOLID/CUTOUT/CUTOUT_MIPPED/TRANSLUCENT
+
+    // 环境光遮蔽
+    TriState ambientOcclusion();     // TRUE/FALSE/DEFAULT
+
+    // 其他属性...
+}</code></pre>
+
+
+<h3>1.3 Mesh 系统</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface Mesh {
+    // 遍历所有四边形
+    void forEach(Consumer&lt;QuadView&gt; consumer);
+
+    // 输出到 QuadEmitter
+    void outputTo(QuadEmitter emitter);
+}
+
+public interface MeshBuilder {
+    QuadEmitter getEmitter();  // 获取发射器添加四边形
+    Mesh build();              // 构建 Mesh 并重置 Builder
+}</code></pre>
+
+
+<h3>1.4 四边形数据结构 (QuadView)</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface QuadView {
+    // 顶点属性
+    float x(int vertexIndex);
+    float y(int vertexIndex);
+    float z(int vertexIndex);
+    int color(int vertexIndex);      // ARGB 格式
+    float u(int vertexIndex);        // 纹理 U 坐标
+    float v(int vertexIndex);        // 纹理 V 坐标
+
+    // 面信息
+    Direction cullFace();           // 裁剪面
+    Direction lightFace();         // 光照面
+
+    // 材质和标签
+    RenderMaterial material();
+    int tag();                       // 用户自定义标签
+}</code></pre>
+
+
+<h3>1.5 FabricBakedModel 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface FabricBakedModel {
+    default boolean isVanillaAdapter() {
+        return true;
+    }
+
+    default void emitBlockQuads(BlockRenderView blockView, BlockState state,
+                               BlockPos pos, Supplier&lt;Random&gt; randomSupplier,
+                               RenderContext context);
+
+    default void emitItemQuads(ItemStack stack, Supplier&lt;Random&gt; randomSupplier,
+                              RenderContext context);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-fabric-renderer-indigo-模块">2. fabric-renderer-indigo 模块</h2>
+
+
+<h3>2.1 IndigoRenderer 实现</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class IndigoRenderer implements Renderer {
+    public static final IndigoRenderer INSTANCE = new IndigoRenderer();
+
+    @Override
+    public MeshBuilder meshBuilder() {
+        return new MeshBuilderImpl();
+    }
+
+    @Override
+    public MaterialFinder materialFinder() {
+        return new MaterialFinderImpl();
+    }
+}</code></pre>
+
+
+<h3>2.2 四边形编码格式</h3>
+
+
+Indigo 使用紧凑的整数数组编码四边形数据：
+</p>
+<p><pre class="code-block"><code class="language-java">HEADER_BITS = 0;        // 裁剪面、法线标志
+HEADER_FACE_NORMAL = 1;
+HEADER_COLOR_INDEX = 2;
+HEADER_TAG = 3;
+HEADER_STRIDE = 4;
+
+// 顶点数据 (每个顶点 8 个 int)
+VERTEX_X = HEADER_STRIDE + 0;
+VERTEX_Y = HEADER_STRIDE + 1;
+// ... 共 8 个 int</code></pre>
+
+
+<hr>
+
+<h2 id="3-fabric-particles-v1-模块">3. fabric-particles-v1 模块</h2>
+
+
+<h3>3.1 粒子类型创建</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class FabricParticleTypes {
+    // 创建简单粒子类型
+    public static SimpleParticleType simple() {
+        return simple(false);
+    }
+
+    // 创建带自定义 Codec 的复杂粒子类型
+    public static &lt;T extends ParticleEffect&gt; ParticleType&lt;T&gt; complex(
+            final MapCodec&lt;T&gt; codec,
+            final PacketCodec&lt;? super RegistryByteBuf, T&gt; packetCodec);
+}</code></pre>
+
+
+<h3>3.2 粒子工厂注册</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface ParticleFactoryRegistry {
+    // 注册直接工厂
+    &lt;T extends ParticleEffect&gt; void register(ParticleType&lt;T&gt; type,
+                                             ParticleFactory&lt;T&gt; factory);
+
+    // 注册延迟工厂（带 Sprite 加载）
+    &lt;T extends ParticleEffect&gt; void register(ParticleType&lt;T&gt; type,
+                                             PendingParticleFactory&lt;T&gt; constructor);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-fabric-rendering-fluids-v1-模块">4. fabric-rendering-fluids-v1 模块</h2>
+
+
+<h3>4.1 FluidRenderHandler 接口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface FluidRenderHandler {
+    // 获取流体精灵图
+    Sprite[] getFluidSprites(@Nullable BlockRenderView view,
+                              @Nullable BlockPos pos,
+                              FluidState state);
+
+    // 获取流体着色颜色
+    default int getFluidColor(@Nullable BlockRenderView view,
+                              @Nullable BlockPos pos,
+                              FluidState state) {
+        return -1;  // 返回 -1 表示使用默认
+    }
+
+    // 渲染流体
+    default void renderFluid(BlockPos pos, BlockRenderView world,
+                           VertexConsumer vertexConsumer,
+                           BlockState blockState,
+                           FluidState fluidState);
+}</code></pre>
+
+
+<h3>4.2 SimpleFluidRenderHandler</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class SimpleFluidRenderHandler implements FluidRenderHandler {
+    protected final Identifier stillTexture;
+    protected final Identifier flowingTexture;
+    protected final Identifier overlayTexture;
+    protected final Sprite[] sprites;
+    protected final int tint;
+
+    // 创建带颜色的水渲染器
+    public static SimpleFluidRenderHandler coloredWater(int tint) {
+        return new SimpleFluidRenderHandler(
+            WATER_STILL, WATER_FLOWING, WATER_OVERLAY, tint);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-使用示例">5. 使用示例</h2>
+
+
+<h3>5.1 创建自定义粒子类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static final SimpleParticleType CUSTOM_PARTICLE = FabricParticleTypes.simple();
+
+// 注册粒子类型
+Registry.register(Registry.PARTICLE_TYPE,
+    Identifier.of(&quot;mymod&quot;, &quot;custom_particle&quot;),
+    CUSTOM_PARTICLE);
+
+// 在客户端初始化时注册工厂
+ParticleFactoryRegistry.getInstance().register(
+    CUSTOM_PARTICLE,
+    provider -&gt; new SpriteTexturedParticle.Factory(provider)
+);</code></pre>
+
+
+<h3>5.2 创建自定义流体渲染</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyFluidRenderHandler extends SimpleFluidRenderHandler {
+    public MyFluidRenderHandler() {
+        super(
+            Identifier.of(&quot;mymod&quot;, &quot;block/my_fluid&quot;),
+            Identifier.of(&quot;mymod&quot;, &quot;block/my_fluid_flow&quot;),
+            Identifier.of(&quot;mymod&quot;, &quot;block/my_fluid_overlay&quot;),
+            0xRRGGBB
+        );
+    }
+}
+
+// 注册处理器
+FluidRenderHandlerRegistry.INSTANCE.register(
+    MY_FLUID_STILL, MY_FLUID_FLOWING,
+    new MyFluidRenderHandler()
+);</code></pre>
+
+
+<h3>5.3 创建增强烘焙模型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyBakedModel implements BakedModel, FabricBakedModel {
+    private final Mesh mesh;
+
+    @Override
+    public boolean isVanillaAdapter() {
+        return false;  // 声明为增强模型
+    }
+
+    @Override
+    public void emitBlockQuads(BlockRenderView blockView, BlockState state,
+                             BlockPos pos, Supplier&lt;Random&gt; randomSupplier,
+                             RenderContext context) {
+        mesh.outputTo(context.getEmitter());
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="架构总结">架构总结</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Fabric Renderer API                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              fabric-renderer-api-v1                   │   │
+│  │  Renderer, RenderMaterial, Mesh, QuadView,           │   │
+│  │  FabricBakedModel, RenderContext                     │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                              │                              │
+│                              ▼                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              fabric-renderer-indigo                   │   │
+│  │  IndigoRenderer, MeshBuilderImpl,                     │   │
+│  │  AoCalculator, EncodingFormat                        │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │  particles  │  │   fluids   │  │    tags    │        │
+│  │   -v1       │  │  -fluids   │  │ -client    │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘        │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<em>源码位置: <code>fabric-renderer-api-v1/</code>, <code>fabric-renderer-indigo/</code>, <code>fabric-rendering-v1/</code>, <code>fabric-rendering-fluids-v1/</code>, <code>fabric-particles-v1/</code></em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-entity-event-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Fabric API 实体与事件系统分析
+        </a><a href="07-networking-system.html" class="next">
+            Fabric API 网络系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Architecture Summary - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+<a href="SUMMARY.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Architecture Summary
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Architecture Summary</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Architecture Summary
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 20 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>ImmersivePortalsMod Architecture Summary</h1>
+
+</p>
+<p><pre class="code-block"><code class="language-yaml">---
+title: Architecture Summary
+readingTime: 20
+---</code></pre>
+
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+
+<ul><li><a href="#overview">Overview</a></li></ul>
+<ul><li><a href="#architecture-overview">Architecture Overview</a></li></ul>
+<ul><li><a href="#subsystem-summary">Subsystem Summary</a></li></ul>
+<ul><li><a href="#key-design-patterns">Key Design Patterns</a></li></ul>
+<ul><li><a href="#data-flow-architecture">Data Flow Architecture</a></li></ul>
+<ul><li><a href="#extension-points">Extension Points</a></li></ul>
+<ul><li><a href="#technology-stack">Technology Stack</a></li></ul>
+<ul><li><a href="#references">References</a></li></ul>
+
+<hr>
+
+<h2 id="overview">Overview</h2>
+
+
+ImmersivePortalsMod (IPCM) is a sophisticated Minecraft mod that enables seamless cross-dimensional portal experiences. Unlike vanilla portals that display loading screens during dimension transitions, this mod renders portal destinations in real-time and supports complex portal hierarchies (nested portals).
+
+The mod consists of approximately <strong>375+ Java files</strong> organized into multiple subsystems, following a <strong>client-server separation</strong> pattern with shared core logic. It heavily leverages Fabric's event system and Mixin for bytecode injection.
+
+<strong>Core Features:</strong>
+<ul><li>Seamless dimension transitions without loading screens</li></ul>
+<ul><li>Multi-layer nested portal rendering</li></ul>
+<ul><li>Cross-portal collision detection</li></ul>
+<ul><li>Multi-world client-side rendering</li></ul>
+<ul><li>Compatibility with Sodium, Iris, and Flywheel</li></ul>
+
+<hr>
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+
+<h3>System Architecture Diagram</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Core["Core Layer"]
+        IPModMain["IPModMain<br/>(Entry Point)"]
+        IPGlobal["IPGlobal<br/>(Server Config)"]
+        IPCGlobal["IPCGlobal<br/>(Client Config)"]
+    end
+    
+    subgraph Client["Client Systems"]
+        ClientWorldLoader["ClientWorldLoader<br/>(Multi-World)"]
+        PortalRenderer["PortalRenderer"]
+        CHelper["CHelper<br/>(Client Utils)"]
+    end
+    
+    subgraph Server["Server Systems"]
+        McHelper["McHelper<br/>(Server Utils)"]
+        IPPerServerInfo["IPPerServerInfo"]
+        TeleportManager["ServerTeleportationManager"]
+    end
+    
+    subgraph Subsystems["Subsystems"]
+        Network["Network Sync"]
+        Rendering["Rendering"]
+        Teleportation["Teleportation"]
+        Collision["Collision"]
+        Chunk["Chunk Loading"]
+    end
+    
+    IPModMain --> IPGlobal
+    IPModMain --> IPCGlobal
+    IPModMain --> ClientWorldLoader
+    IPModMain --> McHelper
+    
+    ClientWorldLoader --> CHelper
+    ClientWorldLoader --> PortalRenderer
+    
+    IPGlobal --> TeleportManager
+    IPGlobal --> Network
+    IPGlobal --> Collision
+    
+    Network --> Chunk
+    TeleportManager --> Collision
+    
+    class IPModMain fill:#e3f2fd,stroke:#1976d2
+    class ClientWorldLoader fill:#fce4ec,stroke:#c2185b
+    class PortalRenderer fill:#c8e6c9,stroke:#388e3c</div>
+</div>
+
+
+<h3>Package Structure</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">qouteall/imm_ptl/core/
+├── IPModMain.java              # Main entry point
+├── IPGlobal.java               # Server-side global state
+├── IPCGlobal.java              # Client-side global state
+├── McHelper.java               # Minecraft server utilities
+├── CHelper.java                # Minecraft client utilities
+├── IPMcHelper.java             # Cross-side portal utilities
+├── ClientWorldLoader.java      # Multi-world management
+├── IPPerServerInfo.java        # Per-server state storage
+│
+├── portal/                     # Portal entity definitions
+├── teleportation/              # Teleport mechanics
+├── render/                     # Rendering pipeline
+├── network/                   # Packet handling
+├── chunk_loading/              # Chunk management
+├── collision/                  # Portal collision
+├── compat/                     # Third-party mod compatibility
+├── mixin/                      # Bytecode injection
+│   ├── common/                 # Shared mixins
+│   └── client/                 # Client-side mixins
+└── api/                        # Public API</code></pre>
+
+
+<hr>
+
+<h2 id="subsystem-summary">Subsystem Summary</h2>
+
+
+| Subsystem | Description | Key Classes | Document |
+|-----------|-------------|-------------|----------|
+| <strong>Core Architecture</strong> | Entry point, configuration, helper classes | <code>IPModMain</code>, <code>IPGlobal</code>, <code>IPCGlobal</code>, <code>McHelper</code>, <code>CHelper</code> | <a href="01-core-architecture.html">01-core-architecture</a> |
+| <strong>Portal Entity</strong> | Portal entity system with transformation math | <code>Portal</code>, <code>Mirror</code>, <code>PortalLike</code>, <code>GlobalPortalStorage</code> | <a href="02-portal-entity.html">02-portal-entity</a> |
+| <strong>Teleportation</strong> | Cross-dimension teleportation management | <code>ServerTeleportationManager</code>, <code>ClientTeleportationManager</code>, <code>PortalCollisionHandler</code> | <a href="03-teleportation-system.html">03-teleportation-system</a> |
+| <strong>Rendering</strong> | Cross-portal rendering with stencil/framebuffer | <code>PortalRenderer</code>, <code>RendererUsingStencil</code>, <code>PortalRendering</code> | <a href="04-rendering-system.html">04-rendering-system</a> |
+| <strong>Network Sync</strong> | Multi-dimension packet redirection | <code>PacketRedirection</code>, <code>ImmPtlNetworking</code>, <code>EntitySync</code> | <a href="05-network-sync.html">05-network-sync</a> |
+| <strong>Compatibility</strong> | Sodium, Iris, Flywheel integration | <code>SodiumInterface</code>, <code>IrisInterface</code>, <code>IPCompatMixinPlugin</code> | <a href="06-compatibility.html">06-compatibility</a> |
+| <strong>Mixin System</strong> | Bytecode injection architecture | <code>IPMixinPlugin</code>, Duck interfaces, 140+ Mixin classes | <a href="07-mixin-system.html">07-mixin-system</a> |
+| <strong>Public API</strong> | Extension interfaces for mod developers | <code>PortalAPI</code>, <code>ImmPtlEntityExtension</code> | <a href="08-public-api.html">08-public-api</a> |
+
+<h3>Core Classes Responsibility Matrix</h3>
+
+
+| Class | Responsibility | Side |
+|-------|---------------|------|
+| <code>IPModMain</code> | Mod initialization, registry | Common |
+| <code>IPGlobal</code> | Configuration, server events | Server |
+| <code>IPCGlobal</code> | Client renderer, client events | Client |
+| <code>McHelper</code> | Server-side Minecraft utilities | Server |
+| <code>CHelper</code> | Client-side Minecraft utilities | Client |
+| <code>IPMcHelper</code> | Portal-aware operations | Common |
+| <code>ClientWorldLoader</code> | Multi-world simulation | Client |
+| <code>IPPerServerInfo</code> | Per-server-instance state | Server |
+
+<hr>
+
+<h2 id="key-design-patterns">Key Design Patterns</h2>
+
+
+<h3>1. Singleton Global State Pattern</h3>
+
+
+Both <code>IPGlobal</code> and <code>IPCGlobal</code> use static fields as lightweight singletons:
+</p>
+<p><pre class="code-block"><code class="language-java">IPGlobal.maxPortalLayer = 5;
+IPCGlobal.rendererUsingStencil = new RendererUsingStencil();</code></pre>
+
+
+<h3>2. Context Switching Pattern</h3>
+
+
+Used extensively for multi-world operations on the client:
+</p>
+<p><pre class="code-block"><code class="language-java">T withSwitchedContext(Level world, Supplier&lt;T&gt; func) {
+    ClientLevel original = CLIENT.level;
+    try {
+        CLIENT.level = (ClientLevel) world;
+        return func.get();
+    }
+    finally {
+        CLIENT.level = original;
+    }
+}</code></pre>
+
+
+<h3>3. Event-Driven Task Processing</h3>
+
+
+Tasks are queued and processed during specific game phases:
+</p>
+<p><pre class="code-block"><code class="language-java">ServerTaskList.of(server).addTask(() -&gt; {
+    if (condition) return true;
+    return false;
+});</code></pre>
+
+
+<h3>4. Duck Typing via Mixin Interfaces</h3>
+
+
+Custom interfaces expose internal Minecraft state:
+</p>
+<p><pre class="code-block"><code class="language-java">public interface IEWorld {
+    LevelEntityGetter&lt;Entity&gt; portal_getEntityLookup();
+}</code></pre>
+
+
+<h3>5. Strategy + Null Object Pattern</h3>
+
+
+Used extensively in the compatibility system:
+</p>
+<p><pre class="code-block"><code class="language-java">public static Invoker invoker = new Invoker();  // Default empty implementation
+
+public static class OnSodiumPresent extends Invoker {
+    // Full implementation when Sodium is present
+}</code></pre>
+
+
+<h3>6. Builder Pattern for World Rendering</h3>
+
+
+<code>WorldRenderInfo</code> uses a builder pattern for complex rendering configuration:
+</p>
+<p><pre class="code-block"><code class="language-java">WorldRenderInfo worldRenderInfo = new WorldRenderInfo.Builder()
+    .setWorld(ClientWorldLoader.getWorld(dimension))
+    .setCameraPos(cameraPosition)
+    .setCameraTransformation(matrix)
+    .setOverwriteCameraTransformation(false)
+    .build();</code></pre>
+
+
+<h3>7. ThreadLocal Context Storage</h3>
+
+
+Used for dimension-aware packet redirection:
+</p>
+<p><pre class="code-block"><code class="language-java">private static final ThreadLocal&lt;ResourceKey&lt;Level&gt;&gt; serverPacketRedirection =
+    ThreadLocal.withInitial(() -&gt; null);</code></pre>
+
+
+<h3>8. Per-Server State Storage</h3>
+
+
+<code>IPPerServerInfo</code> provides per-server-instance state without static pollution:
+</p>
+<p><pre class="code-block"><code class="language-java">public static IPPerServerInfo of(MinecraftServer server) {
+    return ((IEMinecraftServer) server).ip_getPerServerInfo();
+}</code></pre>
+
+
+<hr>
+
+<h2 id="data-flow-architecture">Data Flow Architecture</h2>
+
+
+<h3>Teleportation Data Flow</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Player
+    participant Client as ClientTeleportationManager
+    participant Portal as Portal Entity
+    participant Network as Network Layer
+    participant Server as ServerTeleportationManager
+    participant Chunk as Chunk Loading
+    participant Dest as Destination World
+
+    Player->>Portal: Enter portal bounds
+    Portal->>Client: Check teleport conditions
+    Client->>Client: Client-side prediction
+    
+    alt Same Dimension
+        Client->>Client: Transform position locally
+    else Cross Dimension
+        Client->>Client: changePlayerDimension()
+        Client->>Network: Send TeleportPacket
+        Network->>Server: RedirectedPacket
+        Server->>Server: validatePlayerTeleportation()
+        
+        alt Valid
+            Server->>Server: changePlayerDimension()
+            Server->>Chunk: Load destination chunks
+            Chunk-->>Server: Chunk data
+            Server-->>Network: Position confirm
+            Network-->>Client: Update client
+        else Invalid
+            Server-->>Client: Force teleport back
+        end
+    end
+    
+    Server->>Dest: Teleport player
+    Dest-->>Server: Teleport complete</div>
+</div>
+
+
+<h3>Multi-Dimension Network Flow</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Server["Server Side"]
+        S1["ServerLevel A"]
+        S2["ServerLevel B"]
+        PR["PacketRedirection"]
+        
+        S1 -->|withForceRedirect| PR
+        S2 -->|withForceRedirect| PR
+        PR -->|CustomPayload| Network
+    end
+    
+    subgraph Network["Network Channel"]
+        NP["imm_ptl:i:r"]
+    end
+    
+    subgraph Client["Client Side"]
+        C1["ClientWorldLoader"]
+        PRC["PacketRedirectionClient"]
+        
+        Network --> PRC
+        PRC --> C1
+        C1 -->|withSwitchedWorld| C1
+    end</div>
+</div>
+
+
+<h3>Rendering Pipeline Flow</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    A[Minecraft Render] --> B{Detection}
+    B -->|Iris Shaders| C[IrisPortalRenderer]
+    B -->|Normal Mode| D[RendererUsingStencil]
+    B -->|Compatibility| E[RendererUsingFrameBuffer]
+    
+    C --> F[getPortalsToRender]
+    D --> F
+    E --> F
+    
+    F --> G[Sort by distance]
+    G --> H{For each portal}
+    
+    H -->|Portal visible| I[pushPortalLayer]
+    I --> J[clearDepth]
+    J --> K[renderPortalContent]
+    K --> L[WorldRenderInfo]
+    L --> M[switchAndRenderWorld]
+    M --> N[popPortalLayer]
+    N --> O[restoreDepth]
+    
+    H -->|Portal not visible| P[Skip]
+    O --> H
+    
+    N --> Q[finishRendering]</div>
+</div>
+
+
+<hr>
+
+<h2 id="extension-points">Extension Points</h2>
+
+
+<h3>Public API Usage</h3>
+
+
+ImmersivePortalsMod provides two main extension interfaces:
+
+<h4>PortalAPI - Static Utility Methods</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+PortalAPI.setPortalPositionOrientationAndSize(portal, position, orientation, width, height);
+PortalAPI.setPortalTransformation(portal, destDim, destPos, rotation, scale);
+world.addFreshEntity(portal);
+portal.reloadAndSyncToClient();
+
+// Add chunk loaders
+PortalAPI.addChunkLoaderForPlayer(player, chunkLoader);
+
+// Teleport entities
+PortalAPI.teleportEntity(entity, targetWorld, targetPos);</code></pre>
+
+
+<h4>ImmPtlEntityExtension - Entity Behavior Control</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class CustomEntity extends Entity implements ImmPtlEntityExtension {
+    @Override
+    public boolean imm_ptl_canTeleportThroughPortal(Entity portal) {
+        // Custom logic to control teleport behavior
+        return checkCustomCondition(portal);
+    }
+}</code></pre>
+
+
+<h3>Portal Events</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">Portal.CLIENT_PORTAL_TICK_SIGNAL.register(portal -&gt; { /* ... */ });
+Portal.SERVER_PORTAL_TICK_SIGNAL.register(portal -&gt; { /* ... */ });
+Portal.PORTAL_DISPOSE_SIGNAL.register(portal -&gt; { /* ... */ });</code></pre>
+
+
+<h3>Custom Portal Rendering</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">WorldRenderInfo info = new WorldRenderInfo.Builder()
+    .setWorld(ClientWorldLoader.getWorld(dimension))
+    .setCameraPos(cameraPosition)
+    .setCameraTransformation(matrix)
+    .setOverwriteCameraTransformation(true)
+    .setRenderDistance(renderDistance)
+    .build();
+
+GuiPortalRendering.submitNextFrameRendering(info, frameBuffer);</code></pre>
+
+
+<hr>
+
+<h2 id="technology-stack">Technology Stack</h2>
+
+
+<h3>Core Technologies</h3>
+
+
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| <strong>Minecraft</strong> | Game framework | 1.21.1 |
+| <strong>Fabric Loader</strong> | Mod loading | Latest |
+| <strong>Fabric API</strong> | Minecraft API wrappers | Latest |
+| <strong>Mixin</strong> | Bytecode injection | 0.8+ |
+| <strong>Cloth Config</strong> | Configuration GUI | Latest |
+
+<h3>Rendering Technologies</h3>
+
+
+| Technology | Purpose |
+|------------|---------|
+| <strong>OpenGL Stencil Buffer</strong> | Portal area masking |
+| <strong>FrameBuffer Objects</strong> | Secondary rendering targets |
+| <strong>Occlusion Queries</strong> | Visibility prediction |
+| <strong>Custom Shaders</strong> | Portal area rendering |
+
+<h3>Compatibility Stack</h3>
+
+
+| Mod | Integration Type |
+|-----|-----------------|
+| <strong>Sodium</strong> | Render context switching, frustum culling override |
+| <strong>Iris</strong> | Shader pipeline integration, deferred framebuffer |
+| <strong>Flywheel</strong> | GPU instancing for portal geometry |
+| <strong>Cardinal Components</strong> | Entity component system |
+
+<h3>Key Libraries</h3>
+
+
+| Library | Purpose |
+|---------|---------|
+| <strong>FastUtil</strong> | High-performance collections |
+| <strong>Gson</strong> | JSON serialization |
+| <strong>JOML</strong> | Matrix/vector math |
+
+<hr>
+
+<h2 id="references">References</h2>
+
+
+<h3>Source Code Location</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\</code></pre>
+
+
+<h3>Analysis Documents</h3>
+
+
+| Document | Description |
+|----------|-------------|
+| <a href="01-core-architecture.html">01-core-architecture</a> | Core architecture, entry point, configuration, helpers |
+| <a href="02-portal-entity.html">02-portal-entity</a> | Portal entity system, transformation mathematics, mirror system |
+| <a href="03-teleportation-system.html">03-teleportation-system</a> | Teleportation management, collision detection |
+| <a href="04-rendering-system.html">04-rendering-system</a> | Cross-portal rendering, stencil/framebuffer renderers |
+| <a href="05-network-sync.html">05-network-sync</a> | Multi-dimension packet redirection, chunk loading |
+| <a href="06-compatibility.html">06-compatibility</a> | Sodium, Iris, Flywheel integration |
+| <a href="07-mixin-system.html">07-mixin-system</a> | 140+ Mixin classes, duck interfaces |
+| <a href="08-public-api.html">08-public-api</a> | Extension interfaces, usage examples |
+
+<h3>Key Source Files</h3>
+
+
+| File | Purpose |
+|------|---------|
+| <code>IPModMain.java</code> | Main mod entry point |
+| <code>Portal.java</code> | Core portal entity |
+| <code>ServerTeleportationManager.java</code> | Server-side teleportation |
+| <code>ClientTeleportationManager.java</code> | Client-side prediction |
+| <code>RendererUsingStencil.java</code> | Primary portal renderer |
+| <code>PacketRedirection.java</code> | Network packet redirection |
+| <code>ClientWorldLoader.java</code> | Multi-world management |
+| <code>PortalAPI.java</code> | Public extension API |
+
+<hr>
+
+<h2 id="summary">Summary</h2>
+
+
+ImmersivePortalsMod demonstrates sophisticated Minecraft modding architecture with:
+
+<ul><li><strong>Client-Server Separation</strong>: Clean separation between client prediction and server validation</li></ul>
+<ul><li><strong>Mixin-Based Injection</strong>: 140+ Mixin classes for deep core modifications</li></ul>
+<ul><li><strong>Multi-World Rendering</strong>: Client can maintain and render multiple dimensions simultaneously</li></ul>
+<ul><li><strong>Advanced Rendering</strong>: Stencil-based portal masking with nested layer support</li></ul>
+<ul><li><strong>Smart Compatibility</strong>: Modular support for Sodium, Iris, and Flywheel</li></ul>
+<ul><li><strong>Clean Public API</strong>: Well-designed extension points for mod developers</li></ul>
+
+The architecture enables seamless portal experiences by maintaining synchronized state across dimensions on both client and server, with careful attention to thread safety and context management.
+
+<hr>
+
+<strong>Reading Time</strong>: ~20 minutes  
+<strong>Last Updated</strong>: 2026-03-24
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-public-api.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Public API
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

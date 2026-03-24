@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>粒子效果 - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../part-0-prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="../part-0-prerequisites/02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="../part-0-prerequisites/03-minecraft-mod-concepts.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="../part-0-prerequisites/04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../part-1-basics/01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="../part-1-basics/02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="../part-1-basics/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="../part-1-basics/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-world-gen/01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="../part-4-world-gen/02-custom-biome.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="../part-4-world-gen/03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="03-particles.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-advanced/01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="../part-7-advanced/02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="../part-7-advanced/03-recipes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="../part-7-advanced/04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="../part-8-projects/02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="../part-8-projects/03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="../part-8-projects/04-magic-creature.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Fabric Mod 开发完全指南</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>粒子效果</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    粒子效果
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>粒子效果</h1>
+
+
+<blockquote><p>学会创建自定义粒子效果，为你的 Mod 添加绚丽的外观</p></blockquote>
+
+<h2 id="什么是粒子">什么是粒子？</h2>
+
+
+粒子（Particles）是 Minecraft 中的小型视觉效果：
+<ul><li>火焰燃烧时的火焰粒子</li></ul>
+<ul><li>法师施展魔法时的魔法粒子</li></ul>
+<ul><li>生物受伤时的血液粒子</li></ul>
+
+Fabric API 提供了完整的粒子系统支持，让我们可以创建任意类型的粒子效果。
+
+<hr>
+
+<h2 id="1-粒子系统架构">1. 粒子系统架构</h2>
+
+
+<h3>1.1 核心组件</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">粒子系统 = 粒子类型 + 粒子工厂 + 粒子渲染器
+
+1. 粒子类型 (ParticleType) - 定义粒子的种类
+2. 粒子工厂 (ParticleFactory) - 创建粒子的实例
+3. 粒子效果 (ParticleEffect) - 粒子渲染时的参数</code></pre>
+
+
+<h3>1.2 创建流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">1. 注册粒子类型
+   ↓
+2. 在客户端注册粒子工厂
+   ↓
+3. 在游戏中生成粒子</code></pre>
+
+
+<hr>
+
+<h2 id="2-完整示例火焰粒子">2. 完整示例：火焰粒子</h2>
+
+
+<h3>2.1 添加依赖</h3>
+
+
+在 <code>build.gradle</code> 中添加：
+</p>
+<p><pre class="code-block"><code class="language-groovy">dependencies {
+    // 粒子 API
+    modImplementation &#39;net.fabricmc:fabric-particles-v1:2.0.0&#39;
+}</code></pre>
+
+
+<h3>2.2 创建粒子类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.particle;
+
+import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+
+// 1. 创建粒子类型
+public class ModParticles {
+    
+    // 简单的火焰粒子类型
+    public static final ParticleType&lt;?&gt; FLAME_PARTICLE = 
+        FabricParticleTypes.simple();
+    
+    // 带有数据的复杂粒子类型（后面会用到）
+    // public static final ParticleType&lt;FlameParticleEffect&gt; FLAME_WITH_DATA = ...
+    
+    // 注册所有粒子
+    public static void register() {
+        Registry.register(
+            Registry.PARTICLE_TYPE,
+            Identifier.of(&quot;mymod&quot;, &quot;flame&quot;),
+            FLAME_PARTICLE
+        );
+    }
+}</code></pre>
+
+
+<h3>2.3 注册粒子工厂</h3>
+
+
+粒子工厂只在客户端需要注册，所以放在客户端初始化类中：
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.client;
+
+import com.example.mod.particle.ModParticles;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.client.particle.FlameParticle;
+import net.minecraft.client.particle.SpriteTexturedParticle;
+
+// 2. 在客户端初始化时注册工厂
+public class MyModClient implements ClientModInitializer {
+    
+    @Override
+    public void initializeClient() {
+        // 获取粒子工厂注册表
+        ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
+        
+        // 注册火焰粒子工厂
+        // 使用已有的 FlameParticle 作为演示
+        registry.register(
+            ModParticles.FLAME_PARTICLE,
+            // lambda 表达式创建粒子工厂
+            provider -&gt; new FlameParticle(provider)
+        );
+    }
+}</code></pre>
+
+
+<h3>2.4 生成粒子</h3>
+
+
+现在可以在游戏中生成粒子了：
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.event;
+
+import com.example.mod.particle.ModParticles;
+import net.fabricmc.fabric.api.client.particle.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.minecraft.block.BlockState;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayConnectionListener;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+
+// 生成粒子的工具类
+public class ParticleHelper {
+    
+    // 在世界中的某个位置生成火焰粒子
+    public static void spawnFlameParticles(World world, double x, double y, double z) {
+        // 参数: 粒子类型, X, Y, Z, 速度 X, 速度 Y, 速度 Z
+        world.addParticle(
+            ModParticles.FLAME_PARTICLE,  // 粒子类型
+            x, y, z,                     // 位置
+            0, 0.1, 0                    // 速度（稍微向上飘）
+        );
+    }
+    
+    // 在区域中生成多个粒子
+    public static void spawnFlameParticlesInArea(World world, BlockPos pos) {
+        for (int i = 0; i &lt; 10; i++) {
+            // 在方块周围随机位置生成
+            double x = pos.getX() + Math.random();
+            double y = pos.getY() + Math.random();
+            double z = pos.getZ() + Math.random();
+            
+            spawnFlameParticles(world, x, y, z);
+        }
+    }
+}</code></pre>
+
+
+<h3>2.5 在 Mod 主类中初始化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod;
+
+import com.example.mod.particle.ModParticles;
+import net.fabricmc.api.ModInitializer;
+
+public class MyMod implements ModInitializer {
+    
+    @Override
+    public void onInitialize() {
+        // 注册粒子类型
+        ModParticles.register();
+        
+        // 其他初始化...
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-高级自定义粒子工厂">3. 高级：自定义粒子工厂</h2>
+
+
+<h3>3.1 创建自定义粒子类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.client.particle;
+
+import net.minecraft.client.particle.SpriteTexturedParticle;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.MathHelper;
+
+// 自定义粒子类
+public class CustomFlameParticle extends SpriteTexturedParticle {
+    
+    // 粒子生命周期中的位置
+    private float yaw;
+    private float pitch;
+    
+    public CustomFlameParticle(Factory factory) {
+        super(factory);
+        
+        // 设置粒子基本属性
+        this.maxAge = 40;                    // 存活 40 刻（约 2 秒）
+        this.scale = 0.5f;                   // 大小为 0.5
+        this.setVelocity(0, 0.1, 0);         // 向上飘
+        this.setBoundingBoxSpacing(0.5f, 0.5f);
+    }
+    
+    @Override
+    public void tick() {
+        // 每次更新调用
+        
+        // 向上移动
+        this.velocityY += 0.01;
+        
+        // 随机左右摆动
+        this.velocityX += (Math.random() - 0.5) * 0.1;
+        this.velocityZ += (Math.random() - 0.5) * 0.1;
+        
+        // 淡出效果
+        float alpha = 1.0f - ((float) this.age / this.maxAge);
+        this.setAlpha(alpha * 0.8f);
+        
+        // 调用父类的 tick 方法
+        super.tick();
+    }
+    
+    @Override
+    protected float getMinU() {
+        return sprite.getMinU();
+    }
+    
+    @Override
+    protected float getMaxU() {
+        return sprite.getMaxU();
+    }
+    
+    @Override
+    protected float getMinV() {
+        return sprite.getMinV();
+    }
+    
+    @Override
+    protected float getMaxV() {
+        return sprite.getMaxV();
+    }
+    
+    // 工厂类，用于创建粒子
+    public static class Factory implements net.fabricmc.fabric.api.client.particle.v1.ParticleFactory&lt;net.minecraft.particle.ParticleDefaultType&gt; {
+        
+        private final Sprite sprite;
+        
+        public Factory(Sprite sprite) {
+            this.sprite = sprite;
+        }
+        
+        @Override
+        public CustomFlameParticle create(net.minecraft.particle.ParticleDefaultType parameters,
+                                          net.minecraft.client.particle.ParticleTextureSheet sheet) {
+            // 这里会返回带有 Sprite 的粒子
+            // 实际实现需要更复杂的处理
+            return null;  // 简化示例
+        }
+    }
+}</code></pre>
+
+
+<h3>3.2 使用 Sprite 的工厂</h3>
+
+
+更常见的写法是使用 <code>SpriteProviderWithAlpha</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.client;
+
+import com.example.mod.particle.ModParticles;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.client.particle.FlameParticle;
+import net.minecraft.client.particle.SpriteProvider;
+
+// 带有 Sprite 的粒子工厂
+public class MyModClient implements ClientModInitializer {
+    
+    @Override
+    public void initializeClient() {
+        ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
+        
+        // 方法 1: 使用已有的粒子类
+        registry.register(
+            ModParticles.FLAME_PARTICLE,
+            // SpriteProvider 会自动加载纹理
+            provider -&gt; new FlameParticle(provider)
+        );
+        
+        // 方法 2: 延迟加载 Sprite（更推荐）
+        // 这种方式会在需要时从纹理图集加载 Sprite
+        registry.register(
+            ModParticles.FLAME_PARTICLE,
+            // PendingParticleFactory 在首次渲染时才加载 Sprite
+            provider -&gt; new SpriteParticle(provider)
+        );
+    }
+}
+
+// 自定义粒子类示例
+class SpriteParticle extends net.minecraft.client.particle.SpriteTexturedParticle {
+    
+    private final float initialVelocityY;
+    
+    public SpriteParticle(SpriteProvider spriteProvider) {
+        super(spriteProvider);
+        
+        this.maxAge = 30;
+        this.scale = 0.3f;
+        this.initialVelocityY = 0.05f;
+        this.setVelocity(
+            (Math.random() - 0.5) * 0.1,
+            this.initialVelocityY,
+            (Math.random() - 0.5) * 0.1
+        );
+    }
+    
+    @Override
+    public void tick() {
+        // 向上飘动
+        this.velocityY += 0.005;
+        
+        // 逐渐变小
+        this.scale *= 0.95;
+        
+        // 淡出
+        this.setAlpha(this.age &gt; 20 ? 1.0f - (this.age - 20) / 10f : 1.0f);
+        
+        super.tick();
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-高级带数据的粒子">4. 高级：带数据的粒子</h2>
+
+
+<h3>4.1 创建粒子效果类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.particle;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
+
+// 带参数的粒子效果
+public class MagicParticleEffect implements ParticleEffect {
+    
+    // Codec 用于网络传输和文件读写
+    public static final Codec&lt;MagicParticleEffect&gt; CODEC = RecordCodecBuilder.create(instance -&gt;
+        instance.group(
+            Codec.FLOAT.fieldOf(&quot;r&quot;).forGetter(e -&gt; e.r),
+            Codec.FLOAT.fieldOf(&quot;g&quot;).forGetter(e -&gt; e.g),
+            Codec.FLOAT.fieldOf(&quot;b&quot;).forGetter(e -&gt; e.b),
+            Codec.FLOAT.fieldOf(&quot;size&quot;).forGetter(e -&gt; e.size)
+        ).apply(instance, MagicParticleEffect::new)
+    );
+    
+    // PacketCodec 用于数据包传输
+    public static final PacketCodec&lt;RegistryByteBuf, MagicParticleEffect&gt; PACKET_CODEC =
+        PacketCodec.tuple(
+            PacketCodec.of((buf, e) -&gt; buf.writeFloat(e.r), RegistryByteBuf::readFloat),
+            PacketCodec.of((buf, e) -&gt; buf.writeFloat(e.g), RegistryByteBuf::readFloat),
+            PacketCodec.of((buf, e) -&gt; buf.writeFloat(e.b), RegistryByteBuf::readFloat),
+            PacketCodec.of((buf, e) -&gt; buf.writeFloat(e.size), RegistryByteBuf::readFloat),
+            MagicParticleEffect::new
+        );
+    
+    public final float r;
+    public final float g;
+    public final float b;
+    public final float size;
+    
+    public MagicParticleEffect(float r, float g, float b, float size) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.size = size;
+    }
+    
+    @Override
+    public ParticleType&lt;?&gt; getType() {
+        return ModParticles.MAGIC_PARTICLE;
+    }
+}</code></pre>
+
+
+<h3>4.2 注册复杂粒子类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ModParticles {
+    
+    // 带参数的魔法粒子
+    public static final ParticleType&lt;MagicParticleEffect&gt; MAGIC_PARTICLE = 
+        FabricParticleTypes.complex(
+            MagicParticleEffect.CODEC,
+            MagicParticleEffect.PACKET_CODEC
+        );
+    
+    public static void register() {
+        // ... 其他注册
+        
+        Registry.register(
+            Registry.PARTICLE_TYPE,
+            Identifier.of(&quot;mymod&quot;, &quot;magic&quot;),
+            MAGIC_PARTICLE
+        );
+    }
+}</code></pre>
+
+
+<h3>4.3 为带参数的粒子创建工厂</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">registry.register(
+    ModParticles.MAGIC_PARTICLE,
+    // 使用 SpriteProvider 来处理纹理
+    provider -&gt; new SpriteTexturedParticle.Factory(provider)
+);</code></pre>
+
+
+<hr>
+
+<h2 id="5-实际应用玩家手持物品发光">5. 实际应用：玩家手持物品发光</h2>
+
+
+<h3>5.1 粒子生成器类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package com.example.mod.util;
+
+import com.example.mod.particle.ModParticles;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+
+// 玩家粒子工具类
+public class PlayerParticleEffects {
+    
+    // 在玩家手中生成粒子
+    public static void spawnHoldingParticles(PlayerEntity player) {
+        World world = player.getWorld();
+        
+        // 检查主手和副手
+        for (Hand hand : Hand.values()) {
+            var stack = player.getStackInHand(hand);
+            
+            // 检查是否是特定物品（这里用 modid:enchanted_gem ���例）
+            if (stack.getItem().toString().contains(&quot;mymod&quot;)) {
+                spawnEnchantedParticles(world, player, hand);
+            }
+        }
+    }
+    
+    private static void spawnEnchantedParticles(World world, PlayerEntity player, Hand hand) {
+        // 获取玩家朝向
+        Vec3d lookDir = player.getRotationVector();
+        Vec3d handPos = player.getHandPos(hand);
+        
+        // 生成魔法粒子
+        for (int i = 0; i &lt; 3; i++) {
+            world.addParticle(
+                ModParticles.FLAME_PARTICLE,
+                handPos.x,
+                handPos.y,
+                handPos.z,
+                // 随机速度
+                (Math.random() - 0.5) * 0.1,
+                (Math.random() - 0.5) * 0.1,
+                (Math.random() - 0.5) * 0.1
+            );
+        }
+    }
+    
+    // 爆炸效果粒子
+    public static void spawnExplosion(World world, Vec3d position) {
+        // 简单的爆炸环
+        for (int i = 0; i &lt; 20; i++) {
+            double angle = (i / 20.0) * Math.PI * 2;
+            world.addParticle(
+                ModParticles.FLAME_PARTICLE,
+                position.x,
+                position.y,
+                position.z,
+                Math.cos(angle) * 0.5,  // 水平速度
+                0.2,                      // 向上速度
+                Math.sin(angle) * 0.5   // 水平速度
+            );
+        }
+    }
+}</code></pre>
+
+
+<h3>5.2 在事件中触发</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -&gt; {
+    // 挖掘完成后生成粒子
+    PlayerParticleEffects.spawnExplosion(world, Vec3d.ofCenter(pos));
+});</code></pre>
+
+
+<hr>
+
+<h2 id="6-粒子纹理">6. 粒子纹理</h2>
+
+
+<h3>6.1 准备纹理</h3>
+
+
+在 <code>src/main/resources/assets/mymod/textures/particle/</code> 目录下放置粒子纹理。
+
+<h3>6.2 纹理图集配置</h3>
+
+
+粒子通常打包在纹理图集中。在 <code>assets/mymod/minecraft/textures/particle/</code> 创建粒子纹理。
+
+对于自定义粒子，通常需要：
+<ul><li>在 <code>assets/mymod/particles/</code> 定义粒子 JSON（可选）</li></ul>
+<ul><li>或让粒子自动从纹理图集获取</li></ul>
+
+<hr>
+
+<h2 id="7-常见问题">7. 常见问题</h2>
+
+
+<h3>Q: 粒子不显示？</h3>
+
+
+<ul><li><strong>检查粒子工厂是否注册</strong> - 确保在客户端正确注册</li></ul>
+<ul><li><strong>检查粒子类型是否注册</strong> - 服务端和客户端都需要</li></ul>
+<ul><li><strong>检查粒子生成位置</strong> - 确保在玩家可见范围内</li></ul>
+<ul><li><strong>检查粒子生命周期</strong> - 确保 <code>maxAge > 0</code></li></ul>
+
+<h3>Q: 如何让粒子跟随实体？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
+public void tick() {
+    super.tick();
+    
+    // 每���几刻生成一次粒子
+    if (this.age % 5 == 0) {
+        this.getWorld().addParticle(
+            ModParticles.FLAME_PARTICLE,
+            this.getX(), this.getY() + 0.5, this.getZ(),
+            0, 0, 0
+        );
+    }
+}</code></pre>
+
+
+<h3>Q: 如何控制粒子数量？</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private int particleCooldown = 0;
+
+public void update() {
+    if (particleCooldown &gt; 0) {
+        particleCooldown--;
+        return;
+    }
+    
+    // 生成粒子
+    spawnParticles();
+    
+    // 重置冷却（每 2 tick 生成一次）
+    particleCooldown = 2;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="8-练习题">8. 练习题</h2>
+
+
+<ul><li><strong>练习 1</strong>: 创建一个绿色魔法粒子</li></ul>
+   - 使用已有的粒子类型，改变生成参数
+
+<ul><li><strong>练习 2</strong>: 创建一个跟随玩家的粒子轨迹</li></ul>
+   - 在玩家移动时在脚下生成粒子
+
+<ul><li><strong>练习 3</strong>: 创建一个爆炸效果</li></ul>
+   - 在特定事件触发时生成一圈向外扩散的粒子
+
+<ul><li><strong>练习 4</strong>: 创建一个自定义粒子类</li></ul>
+   - 实现粒子随时间改变大小和透明度
+
+<hr>
+
+<h2 id="9-总结">9. 总结</h2>
+
+
+本章学习了：
+<ul><li>粒子系统的基本架构</li></ul>
+<ul><li>如何创建粒子类型</li></ul>
+<ul><li>如何注册粒子工厂</li></ul>
+<ul><li>如何在游戏中生成粒子</li></ul>
+<ul><li>如何创建自定义粒子效果</li></ul>
+
+<hr>
+
+<h2 id="相关资料">相关资料</h2>
+
+
+<ul><li><a href="../analysis/06-rendering-system.html">渲染系统分析文档 - 粒子部分</a></li></ul>
+<ul><li><a href="https://fabricmc.net/wiki/documentation:fabric&lt;em>particles&lt;/em>v1" target="_blank" rel="noopener noreferrer">Fabric Particles API Wiki</a></li></ul>
+<ul><li><a href="https://minecraft.wiki/w/Particles" target="_blank" rel="noopener noreferrer">Minecraft Wiki: Particles</a></li></ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-custom-models.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            自定义模型
+        </a><a href="../part-6-networking/01-networking-basics.html" class="next">
+            1. 网络基础
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../../script.js"></script>
+    <script src="../../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

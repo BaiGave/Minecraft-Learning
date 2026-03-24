@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>遮挡剔除算法 - Sodium 优化</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+<a href="../Part-0/01-rendering-prerequisites.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染优化入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="01-sodium-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Sodium 简介与架构概述</span>
+        </a>
+<a href="02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="02-chunk-render.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：区块渲染系统（Chunk Render System）</span>
+        </a>
+<a href="03-occlusion-culling.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="03-occlusion-culling.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>遮挡剔除算法</span>
+        </a>
+<a href="04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+<a href="04-render-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染管线与批处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../Part-2/01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="../Part-2/01-mixin-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Mixin 注入基础</span>
+        </a>
+<a href="../Part-2/02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+<a href="../Part-2/02-performance-practice.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：性能优化实战</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="01-mod-dev-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Mod 开发入门</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="03-multithreading-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：多线程编程</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Sodium 教程索引</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Sodium 优化</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>遮挡剔除算法</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    遮挡剔除算法
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-neoforge-0.8.6</span>
+                    <span><i class="fas fa-clock"></i> 25 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第三章：遮挡剔除算法</h1>
+
+
+<blockquote><p>⭐ <strong>本章将带你理解 Sodium 如何"聪明地"决定哪些区块需要渲染，大幅提升帧率！</strong></p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将能够：
+
+<ul><li><strong>理解什么是遮挡剔除</strong> - 为什么不需要渲染看不见的东西</li></ul>
+<ul><li><strong>掌握 BFS 可见性传播</strong> - Sodium 的核心算法思想</li></ul>
+<ul><li><strong>理解位掩码编码</strong> - 如何用 64 位数字存储复杂信息</li></ul>
+<ul><li><strong>了解角度优化</strong> - 如何进一步减少计算量</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Minecraft 区块（Chunk）的概念</li></ul>
+<ul><li>知道什么是<strong>渲染</strong>（把东西画到屏幕上）</li></ul>
+<ul><li>熟悉基本的 Java 语法</li></ul>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<a href="#什么是遮挡剔除">什么是遮挡剔除？</a>
+<a href="#生活中的例子走进房间">生活中的例子：走进房间</a>
+<a href="#原版-minecraft-的问题">原版 Minecraft 的问题</a>
+<a href="#sodium-的解决方案bfs-可见性传播">Sodium 的解决方案：BFS 可见性传播</a>
+<a href="#位掩码编码用一个数字存很多信息">位掩码编码：用一个数字存很多信息</a>
+<a href="#角度优化排除不可能的视线">角度优化：排除不可能的视线</a>
+<a href="#迷宫探索的比喻">迷宫探索的比喻</a>
+<a href="#简化版代码示例">简化版代码示例</a>
+<a href="#课后自查">课后自查</a>
+
+<hr>
+
+<h2 id="什么是遮挡剔除">什么是遮挡剔除？</h2>
+
+
+<h3>基本概念</h3>
+
+
+<strong>遮挡剔除（Occlusion Culling）</strong> 是一种渲染优化技术。
+
+<blockquote><p>💡 <strong>核心思想</strong>：只渲染你能看到的东西，看不到的就不画了。</p></blockquote>
+
+在 Minecraft 中，当你在地面上行走时，你只能看到<strong>面前和上方</strong>的区块。<strong>你永远看不到自己身后的区块</strong>，所以根本不需要渲染它们。
+</p>
+<p><pre class="code-block"><code class="language-text">        你能看到的区域（简化俯视图）
+        
+                    [前方]
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+   [左方]              ▲              [右方]
+        │         [你的位置]            │
+        │              │              │
+        └──────────────┼──────────────┘
+                       │
+                   [后方 - 你看不到！]
+                       
+        ❌ 后方的区块：不需要渲染
+        ✅ 前方、左右、上方的区块：可能需要渲染</code></pre>
+
+
+<hr>
+
+<h2 id="生活中的例子走进房间">生活中的例子：走进房间</h2>
+
+
+想象你走进一个房间：
+</p>
+<p><pre class="code-block"><code class="language-text">    ┌─────────────────────────┐
+    │                         │
+    │    ┌─────────────┐     │
+    │    │   书架       │     │  ← 你先看到书架
+    │    └─────────────┘     │
+    │                         │
+    │         🚶 你          │  ← 你站在这里
+    │                         │
+    └─────────────────────────┘</code></pre>
+
+
+<ul><li><strong>你走进房间</strong>：首先看到的是门口的区块（就像渲染初始化）</li></ul>
+<ul><li><strong>书架挡住了视线</strong>：书架后面的东西你暂时看不到</li></ul>
+<ul><li><strong>绕到书架侧面</strong>：现在能看到书架后面的区域了</li></ul>
+
+<blockquote><p>💡 <strong>关键洞察</strong>：光线从门口进入，在房间内"弹跳"（传播），遇到不透明物体（书架）就停下来。这就是 Sodium 算法的核心思想！</p></blockquote>
+
+<hr>
+
+<h2 id="原版-minecraft-的问题">原版 Minecraft 的问题</h2>
+
+
+<h3>原版如何渲染？</h3>
+
+
+原版 Minecraft <strong>渲染所有在渲染距离内的区块</strong>，不管它们是否被遮挡。
+</p>
+<p><pre class="code-block"><code class="language-text">原版渲染策略：
+
+        渲染距离 = 12 区块
+        
+        你在中心，周围 12 格的区块全部渲染！
+        
+        ┌─────────────────────────────┐
+        │                             │
+        │      ████████████████████   │
+        │      ████████████████████   │
+        │      ████████████████████   │
+        │      ████████🧑██████████   │  ← 你在中间
+        │      ████████████████████   │
+        │      ████████████████████   │
+        │      ████████████████████   │
+        │                             │
+        └─────────────────────────────┘
+        
+        问题：你背后有 1/3 的区块是白渲染的！
+        （因为你面朝前方）</code></pre>
+
+
+<h3>问题分析</h3>
+
+
+|| 问题 | 影响 |
+||------|------|
+| 渲染白块 | 即使被山挡住，也全部渲染 | FPS 下降 |
+| 内存浪费 | GPU 处理不需要的像素 | 发热、耗电 |
+| 性能不稳定 | 复杂地形帧率暴跌 | 游戏卡顿 |
+
+<hr>
+
+<h2 id="sodium-的解决方案bfs-可见性传播">Sodium 的解决方案：BFS 可见性传播</h2>
+
+
+<h3>什么是 BFS？</h3>
+
+
+<strong>BFS（Breadth-First Search）</strong> = 广度优先搜索
+
+<blockquote><p>💡 <strong>简单理解</strong>：像水面波纹一样，一圈一圈地向外扩展。</p></blockquote>
+</p>
+<p><pre class="code-block"><code class="language-text">BFS 传播过程（俯视图）：
+
+    你在中心，开始向四周&quot;探索&quot;：
+    
+    第 1 圈：     第 2 圈：      第 3 圈：
+    
+       A            B              C
+      ┌─┐         ┌─┬─┬─┐        ┌─┬─┬─┬─┬─┐
+      │🧑│   →    │B│B│B│   →   │C│C│C│C│C│
+      └─┘         └─┼─┼─┘        ├─┼─┼─┼─┼─┤
+                     │🧑│         │C│C│🧑│C│C│
+                     └─┼─┘        ├─┼─┼─┼─┼─┤
+                       │          │C│C│C│C│C│
+                                  └─┴─┴─┴─┴─┘
+    
+    每一步都问：&quot;从这里能看到哪里？&quot;</code></pre>
+
+
+<h3>算法流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph 开始["🚶 从玩家所在区块出发"]
+        START["开始"]
+    end
+    
+    subgraph 可见性判断["🔍 可见性判断"]
+        VIS1{当前区块<br/>在渲染距离内？}
+        VIS2{当前区块<br/>在视锥体内？}
+        VIS1 -->|是| VIS2
+        VIS1 -->|否| SKIP["跳过此区块"]
+        VIS2 -->|是| VIS3{被其他方块<br/>完全遮挡？}
+        VIS2 -->|否| SKIP
+    end
+    
+    subgraph 传播["📡 向邻居传播"]
+        VIS3 -->|否，可见| VIS4["标记为可见<br/>加入渲染队列"]
+        VIS3 -->|是，遮挡| STOP["停止传播<br/>不继续向前"]
+        VIS4 --> NEIGH["检查 6 个方向的邻居"]
+        NEIGH --> CHECK{邻居是否<br/>首次访问？}
+        CHECK -->|是| ADD["加入处理队列"]
+        CHECK -->|否| UPDATE["更新信息<br/>继续传播"]
+        ADD --> QUEUE{队列<br/>是否为空？}
+        UPDATE --> QUEUE
+        QUEUE -->|否| VIS1
+        QUEUE -->|是| END["完成！"]
+    end
+    
+    style START fill:#ffd93d,color:#000
+    style VIS4 fill:#6bcb77,color:#fff
+    style STOP fill:#ff6b6b,color:#fff
+    style END fill:#4d96ff,color:#fff</div>
+</div>
+
+
+<h3>区块图结构</h3>
+
+
+Sodium 把世界分成 16x16x16 的<strong>区块切片（Chunk Section）</strong>，每个切片就是一个节点：
+</p>
+<p><pre class="code-block"><code class="language-text">区块切片示意（3x3x3 区域）：
+
+        ┌───────────────┐
+        │    TOP (上)    │
+        ┌───────────────┤
+        │  MIDDLE (中层) │   ← 玩家通常在这里
+        │    你在这里     │
+        ┌───────────────┤
+        │  BOTTOM (下)   │
+        └───────────────┘
+        
+    每个切片有 6 个邻居：上、下、北、南、西、东</code></pre>
+
+
+<hr>
+
+<h2 id="位掩码编码用一个数字存很多信息">位掩码编码：用一个数字存很多信息</h2>
+
+
+<h3>什么是位掩码？</h3>
+
+
+<strong>位掩码（Bitmask）</strong> = 用一个数字的每一位表示"是/否"。
+
+<blockquote><p>💡 <strong>想象</strong>：你有 64 个开关（位），每个可以独立打开或关闭，全部信息存在一个整数里。</p></blockquote>
+
+<h3>简单的例子</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">
+// DOWN = 第 0 位：0b001 = 1
+// UP   = 第 1 位：0b010 = 2  
+// NORTH = 第 2 位：0b100 = 4
+
+// 没有方向选中：0b000 = 0
+int none = 0;
+
+// DOWN 和 UP 选中：0b011 = 3
+int downAndUp = 1 | 2;  // 或 3
+
+// 检查是否包含某个方向
+boolean hasDown = (downAndUp &amp; 1) != 0;  // true
+boolean hasNorth = (downAndUp &amp; 4) != 0; // false</code></pre>
+
+
+<h3>Sodium 的 6x6 矩阵</h3>
+
+
+Sodium 用 64 位存储一个 <strong>6x6 的矩阵</strong>，表示"从哪个方向能看到哪个方向"：
+</p>
+<p><pre class="code-block"><code class="language-text">6x6 可见性矩阵（简化）：
+
+           能看到的方向 →
+           DOWN  UP  NORTH SOUTH WEST EAST
+         ┌─────┬───┬─────┬─────┬─────┬─────┐
+    DOWN │  0  │ 1 │  0  │  0  │  0  │  0  │
+         ├─────┼───┼─────┼─────┼─────┼─────┤
+      UP │  1  │ 0 │  0  │  0  │  0  │  0  │
+         ├─────┼───┼─────┼─────┼─────┼─────┤
+ FROM NORTH │  0  │ 0 │  0  │  1  │  0  │  0  │
+         ├─────┼───┼─────┼─────┼─────┼─────┤
+    SOUTH │  0  │ 0 │  1  │  0  │  0  │  0  │
+         ├─────┼───┼─────┼─────┼─────┼─────┤
+     WEST │  0  │ 0 │  0  │  0  │  0  │  1  │
+         ├─────┼───┼─────┼─────┼─────┼─────┤
+     EAST │  0  │ 0 │  0  │  0  │  1  │  0  │
+         └─────┴───┴─────┴─────┴─────┴─────┘
+         
+    0 = 视线被阻挡（实心方块）
+    1 = 视线可以通过（透明方块）
+
+    实际存储：一个 64 位整数（long）</code></pre>
+
+
+<blockquote><p>💡 <strong>关键洞察</strong>：石头方块（实心）只有主对角线为 1，树叶（透明）几乎全为 1！</p></blockquote>
+
+<hr>
+
+<h2 id="角度优化排除不可能的视线">角度优化：排除不可能的视线</h2>
+
+
+<h3>核心思想</h3>
+
+
+当你站在区块<strong>正上方</strong>时，你<strong>不可能同时</strong>看到"正下方"和"正上方"：
+</p>
+<p><pre class="code-block"><code class="language-text">情况 1：相机在区块正上方
+
+        相机
+          │
+          │ dy (垂直距离很大)
+          │
+    ┌─────────┐
+    │         │
+    │  区块   │ ← 你在区块正上方
+    │         │
+    └─────────┘
+    
+    ❌ 不可能：从区块看&quot;下&quot;，再看到&quot;上&quot;
+    ❌ 不可能：从区块看&quot;上&quot;，再看到&quot;下&quot;
+    
+    因为你不可能绕到区块&quot;下面&quot;去看！</code></pre>
+
+
+<h3>Sodium 的实现</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class AngleOptimizer {
+    
+    // 如果相机在 Z 轴方向最远，排除 Z 轴的相反方向
+    // 如果相机在 X 轴方向最远，排除 X 轴的相反方向
+    // 如果相机在 Y 轴方向最远，排除 Y 轴的相反方向
+    
+    public long getAngleMask(float cameraX, float cameraY, float cameraZ,
+                             float blockX, float blockY, float blockZ) {
+        long mask = 0L;
+        
+        float dx = Math.abs(cameraX - blockX);
+        float dy = Math.abs(cameraY - blockY);
+        float dz = Math.abs(cameraZ - blockZ);
+        
+        // Y 轴距离最大（相机在上方或下方）
+        if (dx &gt; dy || dz &gt; dy) {
+            mask |= 0b11000000_11000000; // 排除 UP↔DOWN
+        }
+        
+        // Z 轴距离最大（相机在正北或正南）
+        if (dx &gt; dz || dy &gt; dz) {
+            mask |= 0b00110000_00110000; // 排除 NORTH↔SOUTH
+        }
+        
+        // X 轴距离最大（相机在正东或正西）
+        if (dy &gt; dx || dz &gt; dx) {
+            mask |= 0b00001100_00001100; // 排除 WEST↔EAST
+        }
+        
+        return ~mask; // 返回保留的方向
+    }
+}</code></pre>
+
+
+<h3>优化效果</h3>
+
+
+|| 场景 | 排除的方向 | 减少的计算 |
+||------|----------|-----------|
+| 站在山上俯瞰 | 上↔下 | 约 1/3 |
+| 在隧道中直行 | 前↔后 | 约 1/3 |
+| 在峡谷中穿行 | 左↔右 | 约 1/3 |
+
+<hr>
+
+<h2 id="迷宫探索的比喻">迷宫探索的比喻</h2>
+
+
+把 BFS 可见性传播想象成<strong>在迷宫中探索</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">迷宫（简化 5x5）：
+
+    入口 ──→ [1][1][0][0][0]
+             [0][1][0][1][1]   ← 1 = 可以通行（透明）
+             [0][1][1][1][0]   ← 0 = 墙壁（遮挡）
+             [0][0][0][1][0]
+             [0][1][1][1][0]
+                      ↓
+                   出口
+
+BFS 探索过程：
+
+Step 1: 从入口开始
+        [V][ ][ ][ ][ ]
+        [ ][?][ ][?][?]
+        [ ][?][?][?][ ]
+        [ ][ ][ ][?][ ]
+        [ ][?][?][?][ ]
+        
+Step 2: 标记入口的邻居（可见）
+        [V][V][ ][ ][ ]
+        [ ][V][ ][?][?]   ← V = 已访问
+        [ ][V][?][?][ ]   ← ? = 待探索
+        [ ][ ][ ][?][ ]
+        [ ][?][?][?][ ]
+        
+Step 3: 继续传播（遇到墙壁停止）
+        [V][V][ ][ ][ ]
+        [ ][V][ ][ ][ ]   ← 墙壁 0 阻止了传播
+        [ ][V][ ][ ][ ]   
+        [ ][ ][ ][ ][ ]
+        [ ][?][?][?][ ]
+        
+Step 4: 绕道继续探索
+        [V][V][ ][ ][ ]
+        [ ][V][ ][ ][ ]   
+        [ ][V][V][V][ ]
+        [ ][ ][ ][V][ ]
+        [ ][?][?][V][V]
+        
+Step 5: 到达出口！
+        [V][V][ ][ ][ ]
+        [ ][V][ ][ ][ ]   
+        [ ][V][V][V][ ]
+        [ ][ ][ ][V][ ]
+        [ ][V][V][V][V] ✓</code></pre>
+
+
+<blockquote><p>✅ <strong>核心比喻</strong>：BFS = 从起点出发，一圈一圈扩散，遇到障碍物（不透明方块）就停止，绕道继续探索</p></blockquote>
+
+<hr>
+
+<h2 id="简化版代码示例">简化版代码示例</h2>
+
+
+下面是一个<strong>极度简化</strong>的遮挡剔除实现，帮助你理解核心逻辑：
+</p>
+<p><pre class="code-block"><code class="language-java">import java.util.*;
+
+// 简化的区块节点
+class ChunkNode {
+    int x, y, z;
+    boolean isOpaque;  // 是否不透明（完全遮挡）
+    List&lt;ChunkNode&gt; neighbors = new ArrayList&lt;&gt;();
+    
+    ChunkNode(int x, int y, int z, boolean isOpaque) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.isOpaque = isOpaque;
+    }
+}
+
+// 简化的 BFS 遮挡剔除
+public class SimpleOcclusionCuller {
+    
+    public Set&lt;ChunkNode&gt; findVisible(ChunkNode origin, int maxDistance) {
+        Set&lt;ChunkNode&gt; visible = new HashSet&lt;&gt;();
+        Queue&lt;ChunkNode&gt; queue = new LinkedList&lt;&gt;();
+        
+        // 从玩家所在区块开始
+        queue.add(origin);
+        visible.add(origin);
+        
+        while (!queue.isEmpty()) {
+            ChunkNode current = queue.poll();
+            
+            // 检查所有邻居
+            for (ChunkNode neighbor : current.neighbors) {
+                if (!visible.contains(neighbor)) {
+                    // 计算距离
+                    int dist = Math.abs(neighbor.x - origin.x)
+                             + Math.abs(neighbor.y - origin.y)
+                             + Math.abs(neighbor.z - origin.z);
+                    
+                    if (dist &lt;= maxDistance) {
+                        // 邻居可见（简化：假设只要不是完全遮挡就可见）
+                        visible.add(neighbor);
+                        queue.add(neighbor);
+                    }
+                }
+            }
+        }
+        
+        return visible;
+    }
+    
+    public static void main(String[] args) {
+        // 创建测试场景：简单的 3x3 网格
+        ChunkNode center = new ChunkNode(0, 0, 0, false);
+        ChunkNode north = new ChunkNode(0, 0, -1, false);
+        ChunkNode wall = new ChunkNode(0, 0, -2, true);  // 墙壁
+        ChunkNode behindWall = new ChunkNode(0, 0, -3, false);
+        
+        // 设置邻居关系
+        center.neighbors.add(north);
+        north.neighbors.add(center);
+        north.neighbors.add(wall);
+        wall.neighbors.add(north);
+        wall.neighbors.add(behindWall);
+        behindWall.neighbors.add(wall);
+        
+        // 执行剔除
+        SimpleOcclusionCuller culler = new SimpleOcclusionCuller();
+        Set&lt;ChunkNode&gt; visible = culler.findVisible(center, 10);
+        
+        // 输出结果
+        System.out.println(&quot;可见区块数量: &quot; + visible.size());
+        System.out.println(&quot;墙壁后面的区块可见: &quot; + visible.contains(behindWall));
+        
+        // 预期输出：
+        // 可见区块数量: 3
+        // 墙壁后面的区块可见: true
+        // （简化版本无法正确处理墙壁遮挡）
+    }
+}</code></pre>
+
+
+<blockquote><p>💡 <strong>提示</strong>：真实实现要复杂得多，包括 6x6 可见性矩阵、位运算、角度优化等。但核心思想就是<strong>从起点开始，一圈一圈扩散，遇到遮挡就停止</strong>。</p></blockquote>
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，请确认你能够：
+
+<ul><li>[ ] 用生活中的例子解释什么是遮挡剔除</li></ul>
+<ul><li>[ ] 描述 BFS（广度优先搜索）的核心思想</li></ul>
+<ul><li>[ ] 解释为什么原版 Minecraft 需要优化遮挡剔除</li></ul>
+<ul><li>[ ] 说出 6x6 可见性矩阵中每个格子的含义</li></ul>
+<ul><li>[ ] 解释角度优化如何减少计算量</li></ul>
+<ul><li>[ ] 用"迷宫探索"比喻描述 Sodium 的遮挡剔除算法</li></ul>
+
+<hr>
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<h3>源码文件</h3>
+
+
+| 文件 | 路径 | 作用 |
+|------|------|------|
+| <code>OcclusionCuller.java</code> | <code>assets/sodium/src/.../render/chunk/occlusion/</code> | 主剔除器 |
+| <code>VisibilityEncoding.java</code> | <code>assets/sodium/src/.../render/chunk/occlusion/</code> | 位掩码编码 |
+| <code>GraphDirection.java</code> | <code>assets/sodium/src/.../render/chunk/occlusion/</code> | 方向常量 |
+
+<h3>进阶阅读</h3>
+
+
+<ul><li>下一章：<a href="04-render-pipeline.html">渲染管线与批处理</a> - 了解 Sodium 如何高效渲染可见区块</li></ul>
+<ul><li><a href="../analysis/01-architecture-overview.html">Sodium 架构概述</a> - 整体架构分析</li></ul>
+<ul><li><a href="../analysis/02-chunk-render-system.html">区块渲染系统</a> - 多线程构建详解</li></ul>
+
+<hr>
+
+<blockquote><p>💡 <strong>提示</strong>：遮挡剔除是 Sodium 性能提升的关键之一！理解这个算法后，你会发现很多渲染优化都基于类似的"可见性传播"思想。</p></blockquote>
+
+<hr>
+
+<em>文档版本：Sodium v0.8.6 / Minecraft 1.21</em>
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-chunk-render.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：区块渲染系统（Chunk Render System）
+        </a><a href="03-occlusion-culling.html" class="next">
+            遮挡剔除算法
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

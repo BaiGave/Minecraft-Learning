@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Forge 模组开发入门 - Forge 模组</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Forge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-intro.html" class="active">
+            <i class="fas fa-book"></i>
+            Forge 模组开发入门
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-book"></i>
+            Forge 模组开发
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Forge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Forge 模组开发入门</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    Forge 模组开发入门
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Forge 模组开发入门</h1>
+
+
+<blockquote><p>探索 Forge 模组开发框架的核心概念</p></blockquote>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+<ul><li><strong>什么是 Forge/NeoForge</strong></li></ul>
+<ul><li><strong>Forge 与 Fabric 的区别</strong></li></ul>
+<ul><li><strong>Forge 开发环境搭建</strong></li></ul>
+<ul><li><strong>第一个 Forge 模组的基本结构</strong></li></ul>
+
+<hr>
+
+<h2 id="什么是-forge">什么是 Forge？</h2>
+
+
+Forge（Forge Mod Loader）是 Minecraft 历史最悠久的模组加载框架，由 LexManos 创建并维护。
+
+<h3>Forge vs NeoForge</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">Forge 生态演进：
+
+Forge 1.20.1
+    ↓
+    ├─ Legacy Forge（继续维护旧版本）
+    ↓
+NeoForge 1.20.1+（现代化重构，由原团队主导）
+    ↓
+NeoForge 1.21+（最新版本）</code></pre>
+
+
+<blockquote><p><strong>注意</strong>：2023 年底，Forge 团队宣布将项目拆分为两个分支：</p></blockquote>
+<blockquote><p>- <strong>Legacy Forge</strong>：继续支持 1.20.1 及以下版本</p></blockquote>
+<blockquote><p>- <strong>NeoForge</strong>：全新架构，支持 1.20.1 及以上版本（新项目）</p></blockquote>
+
+<hr>
+
+<h2 id="forge-的核心概念">Forge 的核心概念</h2>
+
+
+<h3>1. 注册系统（Registry）</h3>
+
+
+Forge 使用注册表系统来管理所有游戏内容：
+</p>
+<p><pre class="code-block"><code class="language-java">@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+public class BlockRegistry {
+    public static final DeferredRegister&lt;Block&gt; BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
+
+    public static final RegistryObject&lt;Block&gt; EXAMPLE_BLOCK = BLOCKS.register(&quot;example_block&quot;,
+            () -&gt; new Block(BlockBehaviour.Properties.copy(Blocks.STONE)));
+
+    public static void register(IEventBus eventBus) {
+        BLOCKS.register(eventBus);
+    }
+}</code></pre>
+
+
+<h3>2. 事件系统（Event Bus）</h3>
+
+
+Forge 使用事件驱动架构：
+</p>
+<p><pre class="code-block"><code class="language-java">@Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class ModEvents {
+
+    @SubscribeEvent
+    public static void onBlockBreak(Block.BreakEvent event) {
+        Player player = event.getPlayer();
+        player.sendMessage(Component.literal(&quot;你挖掘了方块！&quot;), player.getUUID());
+    }
+}</code></pre>
+
+
+<h3>3. 配置系统（Configuration）</h3>
+
+
+内置的配置管理：
+</p>
+<p><pre class="code-block"><code class="language-java">@Mod(MOD_ID)
+public class ExampleMod {
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static class Config {
+        @SubscribeEvent
+        public static void load(RegistryEvent.Register&lt;?&gt; event) {
+            LOGGER.info(&quot;模组正在加载...&quot;);
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="forge-项目结构">Forge 项目结构</h2>
+
+
+一个典型的 Forge 项目结构：
+</p>
+<p><pre class="code-block"><code class="language-text">src/
+├── main/
+│   ├── java/
+│   │   └── com/example/mod/
+│   │       ├── ExampleMod.java          # 主类
+│   │       ├── init/
+│   │       │   ├── BlockInit.java       # 方块注册
+│   │       │   ├── ItemInit.java        # 物品注册
+│   │       │   └── EntityInit.java      # 实体注册
+│   │       ├── util/
+│   │       │   └── RegistryHelper.java  # 注册帮助类
+│   │       └── client/
+│   │           └── ClientSetup.java     # 客户端初始化
+│   └── resources/
+│       ├── META-INF/
+│       │   └── mods.toml                # 模组清单
+│       └── assets/
+│           └── modid/
+│               ├── lang/
+│               │   └── zh_cn.json       # 中文翻译
+│               ├── models/
+│               │   ├── block/
+│               │   └── item/
+│               └── textures/
+│                   ├── block/
+│                   └── item/
+└── test/                                 # 测试资源（可选）</code></pre>
+
+
+<hr>
+
+<h2 id="模组清单modstoml">模组清单（mods.toml）</h2>
+
+
+Forge 使用 TOML 格式的清单文件：
+</p>
+<p><pre class="code-block"><code class="language-toml">modLoader=&quot;javafml&quot;
+loaderVersion=&quot;[49,)&quot;
+license=&quot;MIT&quot;
+issueTrackerURL=&quot;&quot;
+
+[[mods]]
+modId=&quot;examplemod&quot;
+version=&quot;1.0.0&quot;
+displayName=&quot;示例模组&quot;
+authors=&quot;Your Name&quot;
+description=&#39;&#39;&#39;
+这是一个 Forge 模组示例
+&#39;&#39;&#39;
+
+[[dependencies.examplemod]]
+modId=&quot;forge&quot;
+mandatory=true
+versionRange=&quot;[50,)&quot;
+ordering=&quot;NONE&quot;
+side=&quot;BOTH&quot;
+
+[[dependencies.examplemod]]
+modId=&quot;minecraft&quot;
+mandatory=true
+versionRange=&quot;[1.21,)&quot;
+ordering=&quot;NONE&quot;
+side=&quot;BOTH&quot;</code></pre>
+
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Forge 开发要点                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. Forge/NeoForge 是 Minecraft 模组开发的主要框架           │
+│                                                             │
+│  2. NeoForge 是 Forge 的现代化分支，支持最新版本             │
+│                                                             │
+│  3. 核心系统：                                              │
+│     ├── 注册表（Registry） - 管理所有游戏内容                 │
+│     ├── 事件总线（Event Bus） - 响应游戏事件                 │
+│     └── 配置系统 - 管理模组设置                              │
+│                                                             │
+│  4. 清单文件 mods.toml 定义模组元数据                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>关键要点</h3>
+
+
+<ul><li><strong>Forge 是历史最久的模组框架</strong> - 生态丰富，文档完善</li></ul>
+<ul><li><strong>NeoForge 是未来方向</strong> - 新项目建议使用 NeoForge</li></ul>
+<ul><li><strong>事件驱动架构</strong> - 理解事件系统是掌握 Forge 的关键</li></ul>
+<ul><li><strong>注册系统</strong> - DeferredRegister 是现代 Forge 的标准做法</li></ul>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+<ul><li>下一章：<a href="02-setup.html">Forge 开发环境搭建</a> - 配置 Gradle 和 IDE</li></ul>
+<ul><li>学习 <a href="../mc/1.21/tutorials/Part-1-Foundation/04-registry-system.html">注册表系统</a> - 深入理解 Forge 的注册机制</li></ul>
+
+<hr>
+
+<blockquote><p>💡 <strong>提示</strong>：Forge 的事件系统非常强大，几乎所有游戏行为都可以通过事件拦截和修改。多阅读 Forge 源码中的事件类，了解有哪些事件可用。</p></blockquote>
+
+<hr>
+
+<em>文档版本：NeoForge 1.21.x / Minecraft 1.21</em>
+<em>最后更新：2026-03-23</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="README.html" class="next">
+            Forge 模组开发
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第四章：魔法生物 - 自定义实体与 AI - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../part-0-prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="../part-0-prerequisites/02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="../part-0-prerequisites/03-minecraft-mod-concepts.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="../part-0-prerequisites/04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../part-1-basics/01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="../part-1-basics/02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="../part-1-basics/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="../part-1-basics/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-world-gen/01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="../part-4-world-gen/02-custom-biome.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="../part-4-world-gen/03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-rendering/01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="../part-5-rendering/02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="../part-5-rendering/03-particles.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-advanced/01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="../part-7-advanced/02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="../part-7-advanced/03-recipes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="../part-7-advanced/04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="04-magic-creature.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Fabric Mod 开发完全指南</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第四章：魔法生物 - 自定义实体与 AI</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第四章：魔法生物 - 自定义实体与 AI
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21/-/core</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第四章：魔法生物 - 自定义实体与 AI</h1>
+
+
+<blockquote><p>在这一章中，我们将创建一个完整的魔法生物，包括自定义实体、属性系统、行为 AI、驯服机制和自然生成。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-概述">概述</a></li></ul>
+<ul><li><a href="#2-创建实体类">创建实体类</a></li></ul>
+<ul><li><a href="#3-定义实体属性">定义实体属性</a></li></ul>
+<ul><li><a href="#4-实现-ai-行为">实现 AI 行为</a></li></ul>
+<ul><li><a href="#5-驯服系统">驯服系统</a></li></ul>
+<ul><li><a href="#6-自然生成">自然生成</a></li></ul>
+<ul><li><a href="#7-与魔法棒联动">与魔法棒联动</a></li></ul>
+<ul><li><a href="#8-测试运行">测试运行</a></li></ul>
+
+<hr>
+
+<h2 id="1-概述">1. 概述</h2>
+
+
+<h3>1.1 本章目标</h3>
+
+
+魔法水晶精灵是一个可以驯服的魔法生物，具有以下功能：
+<ul><li><strong>自然生成</strong>：在特定生物群系中自然生成</li></ul>
+<ul><li><strong>驯服机制</strong>：使用魔法水晶驯服</li></ul>
+<ul><li><strong>跟随行为</strong>：驯服后跟随玩家</li></ul>
+<ul><li><strong>攻击行为</strong>：攻击时发射魔法弹</li></ul>
+<ul><li><strong>坐下命令</strong>：可以被命令坐下</li></ul>
+
+<h3>1.2 技术架构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│                 魔法生物系统                         │
+├──��──────────────────────────────────────────────────┤
+│  MagicCreatureEntity (实体)                        │
+│  ├── 继承 PathAwareEntity（可寻路）                 │
+│  ├── DefaultAttributeContainer（属性）             │
+│  └── Tameable（可驯服）                             │
+├─────────────────────────────────────────────────────┤
+│  MagicCreatureGoals (AI 行为)                       │
+│  ├── WanderGoal - 随机游荡                          │
+│  ├── FollowOwnerGoal - 跟随主人                    │
+│  ├── AttackGoal - 攻击敌人                          │
+│  └── SitGoal - 坐下命令                             │
+├─────────────────────────────────────────────────────┤
+│  Spawn Conditions (生成条件)                        │
+│  ├── BiomeModification - 生物群系修改              │
+│  └── SpawnWeight - 生成权重                         │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="2-创建实体类">2. 创建实体类</h2>
+
+
+<h3>2.1 创建魔法生物实体</h3>
+
+
+创建 <code>src/main/java/net/example/mymod/entity/MagicCreatureEntity.java</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.entity;
+
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+import net.example.mymod.entity.ai.FollowOwnerGoal;
+import net.example.mymod.entity.ai.MagicAttackGoal;
+
+/**
+ * 魔法水晶精灵
+ * 特性：
+ * - 可被驯服
+ * - 跟随玩家
+ * - 发射魔法弹攻击
+ */
+public class MagicCreatureEntity extends TameableEntity {
+    
+    public MagicCreatureEntity(EntityType&lt;? extends MagicCreatureEntity&gt; type, World world) {
+        super(type, world);
+    }
+    
+    // 定义实体属性
+    public static DefaultAttributeContainer.Builder createAttributes() {
+        return MobEntity.createMobAttributes()
+            // 最大生命值
+            .add(EntityAttributes.GENERIC_MAX_HEALTH, 20.0)
+            // 移动速度
+            .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.3)
+            // 攻击伤害
+            .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4.0)
+            // 击退抗性
+            .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 0.3)
+            // 跟踪范围
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 32.0);
+    }
+    
+    // 初始化 AI 目标
+    @Override
+    protected void initGoals() {
+        // 获取目标选择器
+        this.goalSelector.add(1, new SwimGoal(this));
+        
+        // 坐下目标（优先级最高）
+        this.goalSelector.add(2, new SitGoal(this));
+        
+        // 跟随主人目标
+        this.goalSelector.add(3, new FollowOwnerGoal(this, 1.0, 5.0f, 2.0f));
+        
+        // 攻击目标
+        this.goalSelector.add(4, new MagicAttackGoal(this, 1.0, true));
+        
+        // 游荡目标（空闲时随机移动）
+        this.goalSelector.add(5, new WanderAroundGoal(this, 1.0));
+        
+        // 看向玩家目标
+        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f));
+        
+        // 目标选择器：选择攻击目标
+        this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
+        this.targetSelector.add(2, new ActiveTargetGoal&lt;&gt;(this, PlayerEntity.class, 
+            true, this::shouldAttackPlayer));
+    }
+    
+    // 是否应该攻击玩家（未驯服时攻击）
+    private boolean shouldAttackPlayer(PlayerEntity player) {
+        return !isTamed() &amp;&amp; this.canTarget.test(player);
+    }
+    
+    // 生成时调用
+    @Override
+    public void onSpawn() {
+        super.onSpawn();
+        
+        // 生成时播放音效
+        if (!getWorld().isClient()) {
+            playSound(net.minecraft.sound.SoundEvents.ENTITY_ELDER_GUARDIAN_HURT, 
+                0.5f, 1.0f);
+        }
+    }
+    
+    // 每帧更新
+    @Override
+    public void tick() {
+        super.tick();
+        
+        // 客户端：生成漂浮粒子
+        if (getWorld().isClient() &amp;&amp; this.age % 20 == 0) {
+            spawnParticles();
+        }
+    }
+    
+    // 生成魔法粒子
+    private void spawnParticles() {
+        double x = this.getX() + (getWorld().getRandom().nextDouble() - 0.5) * 1.0;
+        double y = this.getY() + 0.5;
+        double z = this.getZ() + (getWorld().getRandom().nextDouble() - 0.5) * 1.0;
+        
+        getWorld().addParticle(
+            net.minecraft.particle.ParticleTypes.ENCHANT,
+            x, y, z,
+            0, 0.05, 0
+        );
+    }
+    
+    // 处理交互（用于驯服）
+    @Override
+    public ActionResult interactMob(PlayerEntity player, net.minecraft.util.Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        
+        // 检查是否是魔法水晶
+        if (itemStack.getItem() == net.example.mymod.init.ModItems.MAGIC_CRYSTAL) {
+            // 未驯服时尝试驯服
+            if (!isTamed()) {
+                if (!getWorld().isClient()) {
+                    // 驯服成功
+                    setTamed(true);
+                    setOwner(player);
+                    
+                    // 消耗物品
+                    itemStack.decrement(1);
+                    
+                    // 播放驯服音效
+                    playSound(net.minecraft.sound.SoundEvents.ENTITY_CAT_BEG_FOR_FOOD, 
+                        1.0f, 1.0f);
+                    
+                    // 发送消息
+                    player.sendMessage(
+                        net.minecraft.text.Text.literal(&quot;§a魔法生物已被驯服！&quot;),
+                        true
+                    );
+                }
+                return ActionResult.SUCCESS;
+            }
+        }
+        
+        // 驯服后点击可以命令坐下/起立
+        if (isTamed() &amp;&amp; isOwner(player)) {
+            if (!getWorld().isClient()) {
+                setSitting(!isSitting());
+                playSound(net.minecraft.sound.SoundEvents.ENTITY_CAT_PURR, 
+                    0.5f, 1.0f);
+            }
+            return ActionResult.SUCCESS;
+        }
+        
+        return super.interactMob(player, hand);
+    }
+    
+    // 处理伤害
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        boolean result = super.damage(source, amount);
+        
+        // 受伤时如果有主人，攻击攻击者
+        if (result &amp;&amp; getOwner() != null &amp;&amp; source.getAttacker() != null) {
+            this.setTarget((LivingEntity) source.getAttacker());
+        }
+        
+        return result;
+    }
+    
+    // 获取用于繁殖的实体类
+    @Override
+    public EntityType&lt;? extends PassiveEntity&gt; getBreedOffspring() {
+        return net.example.mymod.init.ModEntities.MAGIC_CREATURE;
+    }
+    
+    // 是否可以 breeding
+    @Override
+    public boolean canBreed() {
+        return false;  // 魔法生物不能自然繁殖
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-定义实体属性">3. 定义实体属性</h2>
+
+
+<h3>3.1 在 ModEntities 中注册</h3>
+
+
+更新 <code>ModEntities.java</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.entity.MagicCreatureEntity;
+import net.example.mymod.entity.projectile.MagicProjectileEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+
+public class ModEntities {
+    
+    // 魔法弹实体
+    public static final EntityType&lt;MagicProjectileEntity&gt; MAGIC_PROJECTILE = 
+        EntityType.Builder.&lt;MagicProjectileEntity&gt;create(
+            MagicProjectileEntity::new,
+            EntityType.Group.PROJECTILE
+        )
+        .dimensions(0.25f, 0.25f)
+        .trackRangeBlocks(32)
+        .build()
+        .setKey(Identifier.of(Mymod.MOD_ID, &quot;magic_projectile&quot;));
+    
+    // 魔法生物实体
+    public static final EntityType&lt;MagicCreatureEntity&gt; MAGIC_CREATURE = 
+        EntityType.Builder.&lt;MagicCreatureEntity&gt;create(
+            MagicCreatureEntity::new,
+            EntityType.Group.CREATURE
+        )
+        .dimensions(0.6f, 0.8f)  // 宽 0.6，高 0.8
+        .trackRangeBlocks(16)
+        .defaultStepHeight(0.6f)
+        .build()
+        .setKey(Identifier.of(Mymod.MOD_ID, &quot;magic_creature&quot;));
+    
+    public static void register() {
+        Registry.register(
+            Registries.ENTITY_TYPE,
+            Identifier.of(Mymod.MOD_ID, &quot;magic_projectile&quot;),
+            MAGIC_PROJECTILE
+        );
+        
+        Registry.register(
+            Registries.ENTITY_TYPE,
+            Identifier.of(Mymod.MOD_ID, &quot;magic_creature&quot;),
+            MAGIC_CREATURE
+        );
+    }
+}</code></pre>
+
+
+<h3>3.2 实体属性工厂</h3>
+
+
+为了正确设置实体属性，需要创建一个工厂方法。在 <code>MagicCreatureEntity</code> 内部已经有 <code>createAttributes()</code> 方法，但我们需要确保它在注册时被使用。
+
+由于 Minecraft 1.20+ 的实体属性是通过实体类型工厂自动设置的，我们不需要额外代码。
+
+<hr>
+
+<h2 id="4-实现-ai-行为">4. 实现 AI 行为</h2>
+
+
+<h3>4.1 创建 AI 行为类</h3>
+
+
+创建 <code>src/main/java/net/example/mymod/entity/ai/FollowOwnerGoal.java</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.entity.ai;
+
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.Vec3d;
+
+import java.util.EnumSet;
+
+/**
+ * 跟随主人目标
+ * 让已驯服的生物跟随主人
+ */
+public class FollowOwnerGoal extends Goal {
+    
+    private final TameableEntity entity;
+    private final double speed;
+    private final float minDistance;
+    private final float maxDistance;
+    
+    private LivingEntity target;
+    private int cooldown = 0;
+    
+    public FollowOwnerGoal(TameableEntity entity, double speed, 
+                           float minDistance, float maxDistance) {
+        this.entity = entity;
+        this.speed = speed;
+        this.minDistance = minDistance;
+        this.maxDistance = maxDistance;
+        
+        // 设置 controls：包含移动
+        this.setControls(EnumSet.of(Goal.Control.MOVE));
+    }
+    
+    @Override
+    public boolean canStart() {
+        // 检查是否有主人
+        LivingEntity owner = entity.getOwner();
+        if (owner == null) {
+            return false;
+        }
+        
+        // 如果坐下，不跟随
+        if (entity.isSitting()) {
+            return false;
+        }
+        
+        this.target = owner;
+        return true;
+    }
+    
+    @Override
+    public boolean shouldContinue() {
+        // 如果坐下或没有主人，停止
+        if (entity.isSitting() || entity.getOwner() == null) {
+            return false;
+        }
+        
+        // 如果距离太近，不需要跟随
+        double distance = entity.squaredDistanceTo(target.getX(), 
+            target.getY(), target.getZ());
+        
+        return distance &gt; (minDistance * minDistance);
+    }
+    
+    @Override
+    public void start() {
+        cooldown = 0;
+    }
+    
+    @Override
+    public void stop() {
+        this.target = null;
+        // 停止移动
+        entity.getNavigation().stop();
+    }
+    
+    @Override
+    public void tick() {
+        if (target == null) return;
+        
+        // 检查是否冷却
+        if (cooldown &gt; 0) {
+            cooldown--;
+            return;
+        }
+        
+        // 计算与目标的距离
+        double distance = entity.squaredDistanceTo(
+            target.getX(), target.getY(), target.getZ()
+        );
+        
+        // 距离太远，尝试靠近
+        if (distance &gt; (maxDistance * maxDistance)) {
+            Vec3d targetPos = target.getPos();
+            
+            // 保持在主人上方一点
+            Vec3d movePos = new Vec3d(
+                targetPos.x,
+                targetPos.y + 1.0,
+                targetPos.z
+            );
+            
+            entity.getNavigation().startMovingTo(
+                entity, movePos, speed
+            );
+            
+            cooldown = 10;  // 每 10 tick 重新计算一次路径
+        }
+    }
+}</code></pre>
+
+
+<h3>4.2 创建攻击目标</h3>
+
+
+创建 <code>src/main/java/net/example/mymod/entity/ai/MagicAttackGoal.java</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.entity.ai;
+
+import net.example.mymod.entity.MagicCreatureEntity;
+import net.example.mymod.entity.projectile.MagicProjectileEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.World;
+
+/**
+ * 魔法攻击目标
+ * 在一定距离内发射魔法弹攻击敌人
+ */
+public class MagicAttackGoal extends MeleeAttackGoal {
+    
+    // 攻击冷却
+    private int attackCooldown = 0;
+    // 攻击范围（魔法弹射程）
+    private static final float ATTACK_RANGE = 16.0f;
+    // 最小攻击距离（太近时用近战）
+    private static final float MIN_ATTACK_RANGE = 3.0f;
+    
+    public MagicAttackGoal(MagicCreatureEntity entity, double speed, boolean pauseWhenIdle) {
+        super(entity, speed, pauseWhenIdle);
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        attackCooldown = 0;
+    }
+    
+    @Override
+    public void tick() {
+        super.tick();
+        
+        // 更新攻击冷却
+        if (attackCooldown &gt; 0) {
+            attackCooldown--;
+        }
+    }
+    
+    @Override
+    protected void attack(LivingEntity target) {
+        // 检查是否可以远程攻击
+        double distance = this.mob.squaredDistanceTo(target.getPos());
+        float range = ATTACK_RANGE;
+        
+        // 检查是否在攻击范围内
+        if (distance &gt; range * range) {
+            // 距离太远，不攻击
+            return;
+        }
+        
+        // 检查冷却
+        if (attackCooldown &gt; 0) {
+            return;
+        }
+        
+        // 检查是否太近（太近时用近战）
+        if (distance &lt; MIN_ATTACK_RANGE * MIN_ATTACK_RANGE) {
+            // 执行近战攻击
+            super.attack(target);
+            return;
+        }
+        
+        // 发射魔法弹
+        shootMagicProjectile(target);
+        
+        // 设置冷却（2 秒）
+        attackCooldown = 40;
+    }
+    
+    // 发射魔法弹
+    private void shootMagicProjectile(LivingEntity target) {
+        World world = mob.getWorld();
+        
+        if (!(world instanceof ServerWorld serverWorld)) {
+            return;
+        }
+        
+        // 创建魔法弹实体
+        MagicProjectileEntity.shoot(
+            world,
+            mob,
+            java.util.Optional.empty(),  // 没有物品时使用默认
+            1.0f  // 满蓄力
+        );
+        
+        // 播放发射音效
+        world.playSound(
+            null,
+            mob.getPos(),
+            net.minecraft.sound.SoundEvents.ENTITY_PHANTOM_SHOOT,
+            net.minecraft.sound.SoundCategory.HOSTILE,
+            0.5f, 0.8f
+        );
+    }
+}</code></pre>
+
+
+<h3>4.3 修改 MagicProjectileEntity 支持空物品发射</h3>
+
+
+更新 <code>MagicProjectileEntity</code> 支持不需要物品的发射方式：
+</p>
+<p><pre class="code-block"><code class="language-java">public static void shoot(World world, LivingEntity shooter, 
+                          java.util.Optional&lt;ItemStack&gt; wandStack, float charge) {
+    if (!(world instanceof ServerWorld serverWorld)) return;
+    
+    EntityType&lt;MagicProjectileEntity&gt; entityType = 
+        net.example.mymod.init.ModEntities.MAGIC_PROJECTILE;
+    
+    MagicProjectileEntity projectile = entityType.create(serverWorld);
+    if (projectile == null) return;
+    
+    projectile.setOwner(shooter);
+    
+    // 设置位置
+    projectile.setPosition(
+        shooter.getX(),
+        shooter.getEyeY() - 0.1,
+        shooter.getZ()
+    );
+    
+    // 计算方向：指向目标
+    Vec3d shooterPos = shooter.getPos();
+    Vec3d targetPos = target.getPos();
+    Vec3d direction = targetPos.subtract(shooterPos).normalize();
+    
+    float velocity = 1.5f + charge * 2.0f;
+    Vec3d velocityVec = direction.multiply(velocity);
+    
+    projectile.setVelocity(velocityVec);
+    
+    serverWorld.spawnEntity(projectile);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-驯服系统">5. 驯服系统</h2>
+
+
+<h3>5.1 Tameable 接口</h3>
+
+
+<code>MagicCreatureEntity</code> 继承自 <code>TameableEntity</code>，这提供了：
+<ul><li><code>setOwner()</code> - 设置主人</li></ul>
+<ul><li><code>getOwner()</code> - 获取主人</li></ul>
+<ul><li><code>isTamed()</code> - 是否已驯服</li></ul>
+<ul><li><code>isOwner()</code> - 检查是否是主人</li></ul>
+<ul><li><code>setSitting()</code> / <code>isSitting()</code> - 坐下/起立</li></ul>
+
+<h3>5.2 驯服逻辑</h3>
+
+
+在 <code>MagicCreatureEntity.interactMob()</code> 方法中，我们实现了：
+<ul><li>检查玩家手持物品是否为魔法水晶</li></ul>
+<ul><li>如果未驯服，使用水晶驯服</li></ul>
+<ul><li>如果已驯服且是主人，点击切换坐下状态</li></ul>
+
+<h3>5.3 攻击目标选择</h3>
+
+
+添加 <code>TrackOwnerAttackerGoal</code> 来让魔法生物在受伤时攻击伤害来源：
+</p>
+<p><pre class="code-block"><code class="language-java">this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));</code></pre>
+
+
+<hr>
+
+<h2 id="6-自然生成">6. 自然生成</h2>
+
+
+<h3>6.1 创建生成条件类</h3>
+
+
+创建 <code>src/main/java/net/example/mymod/world/ModWorldEvents.java</code>：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.world;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.init.ModEntities;
+import net.fabricmc.fabric.api.biome.v1.BiomeModificationContext;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
+import net.fabricmc.fabric.api.event.player.PlayerEvent;
+import net.minecraft.entity.EntityType;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
+
+/**
+ * 世界生成事件
+ * 添加魔法生物的自然生成
+ */
+public class ModWorldEvents {
+    
+    public static void registerSpawns() {
+        // 使用 Fabric API 的生物群系修改
+        net.fabricmc.fabric.api.biome.v1.BiomeModifications.addSpawn(
+            BiomeSelectors.includeByKey(
+                // 在这些生物群系生成
+                BiomeKeys.FOREST,
+                BiomeKeys.BIRCH_FOREST,
+                BiomeKeys.DARK_FOREST,
+                BiomeKeys.PLAINS,
+                BiomeKeys.SUNFLOWER_PLAINS
+            ),
+            // 实体类型
+            net.fabricmc.fabric.api.biome.v1.SpawnCategory.CREATURE,
+            // 实体类型
+            ModEntities.MAGIC_CREATURE,
+            // 生成权重（越高越容易生成）
+            10,
+            // 最小生成数量
+            1,
+            // 最大生成数量
+            3
+        );
+    }
+    
+    public static void init() {
+        registerSpawns();
+    }
+}</code></pre>
+
+
+<h3>6.2 使用更简单的生成方式（Fabric 1.20+）</h3>
+
+
+如果你使用的 Fabric 版本较新，可以使用更简单的方式：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.world;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.init.ModEntities;
+import net.minecraft.entity.EntityType;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.tag.BiomeTags;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.registry.entry.RegistryEntry;
+
+public class ModWorldEvents {
+    
+    public static void addSpawn() {
+        // 创建生成设置
+        SpawnSettings.Builder builder = new SpawnSettings.Builder();
+        
+        builder.spawn(
+            EntityType.SHEEP.getSpawnGroup(),  // 使用羊的组
+            new SpawnSettings.SpawnEntry(
+                ModEntities.MAGIC_CREATURE,
+                10,  // 权重
+                1,   // 最小数量
+                3    // 最大数量
+            )
+        );
+        
+        // 应用到所有森林生物群系
+        // 注意：这需要更复杂的 Fabric API 代码
+    }
+}</code></pre>
+
+
+<h3>6.3 简单的注册方式</h3>
+
+
+在 Mod 入口中直接添加生成（在 <code>Mymod.java</code> 中）：
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
+public void onInitialize() {
+    LOGGER.info(&quot;开始加载魔法水晶 Mod...&quot;);
+    
+    // ... 其他注册 ...
+    
+    // 添加生物生成
+    addEntitySpawns();
+    
+    LOGGER.info(&quot;魔法水晶 Mod 加载完成！&quot;);
+}
+
+private void addEntitySpawns() {
+    // 使用 Fabric API 的简化的生物群系修改
+    net.fabricmc.fabric.api.biome.v1.BiomeModifications.addSpawn(
+        // 选择所有森林类型的生物群系
+        net.fabricmc.fabric.api.biome.v1.BiomeSelectors.tag(
+            net.minecraft.registry.tag.BiomeTags.IS_FOREST
+        ),
+        net.fabricmc.fabric.api.biome.v1.SpawnCategory.CREATURE,
+        ModEntities.MAGIC_CREATURE,
+        8,   // 权重
+        1,   // 最小组大小
+        3    // 最大组大小
+    );
+}</code></pre>
+
+
+<hr>
+
+<h2 id="7-与魔法棒联动">7. 与魔法棒联动</h2>
+
+
+<h3>7.1 魔法生物可以被魔法棒攻击</h3>
+
+
+由于魔法生物继承自 <code>TameableEntity</code>（间接继承 <code>LivingEntity</code>），魔法弹可以正确识别并造成伤害。
+
+<h3>7.2 魔法生物可以发射魔法弹</h3>
+
+
+在 <code>MagicAttackGoal</code> 中，我们已经实现了魔法生物的攻击逻辑。
+
+<hr>
+
+<h2 id="8-完整代码整合">8. 完整代码整合</h2>
+
+
+<h3>8.1 项目结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">src/main/java/net/example/mymod/
+├── Mymod.java
+├── init/
+│   ├── ModBlocks.java
+│   ├── ModItems.java
+│   ├── ModBlockEntities.java
+│   └── ModEntities.java
+├── block/
+│   └── MagicCrystalBlock.java
+├── block/entity/
+│   └── MagicCrystalBlockEntity.java
+├── item/
+│   ├── MagicCrystalItem.java
+│   └── MagicWandItem.java
+├── entity/
+│   ├── MagicCreatureEntity.java
+│   └── projectile/
+│       └── MagicProjectileEntity.java
+├── entity/ai/
+│   ├── FollowOwnerGoal.java
+│   └── MagicAttackGoal.java
+├── network/
+│   └── ModNetworking.java
+└── world/
+    └── ModWorldEvents.java</code></pre>
+
+
+<h3>8.2 代码要点回顾</h3>
+
+
+| 类 | 职责 | 关键方法 |
+|-----|------|----------|
+| <code>MagicCreatureEntity</code> | 实体核心 | <code>initGoals()</code> - AI 初始化 |
+| <code>FollowOwnerGoal</code> | 跟随行为 | <code>tick()</code> - 跟随逻辑 |
+| <code>MagicAttackGoal</code> | 攻击行为 | <code>shootMagicProjectile()</code> - 发射 |
+| <code>ModWorldEvents</code> | 自然生成 | <code>addSpawn()</code> - 添加生成 |
+
+<hr>
+
+<h2 id="9-测试运行">9. 测试运行</h2>
+
+
+<h3>9.1 编译并运行</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-bash">./gradlew build
+./gradlew runClient</code></pre>
+
+
+<h3>9.2 游戏内测试</h3>
+
+
+<ul><li><strong>自然生成测试</strong>：</li></ul>
+   - 创建一个新的世界
+   - 进入森林生物群系
+   - 等待一段时间，观察是否有魔法生物生成
+
+<ul><li><strong>驯服测试</strong>：</li></ul>
+   - 找到魔法生物
+   - 给予魔法水晶：
+     
+<pre class="code-block"><code class="language-text">     /give @p mymod:magic_crystal</code></pre>
+
+   - 右键点击魔法生物
+   - 观察是否被驯服
+
+<ul><li><strong>跟随测试</strong>：</li></ul>
+   - 驯服后走开
+   - 观察魔法生物是否跟随
+
+<ul><li><strong>坐下测试</strong>：</li></ul>
+   - 驯服后右键点击
+   - 观察坐下/起立状态切换
+
+<ul><li><strong>攻击测试</strong>：</li></ul>
+   - 攻击魔法生物（或其他生物）
+   - 观察魔法生物发射魔法弹攻击
+
+<ul><li><strong>与魔法棒联动</strong>：</li></ul>
+   - 用魔法棒射击魔法生物
+   - 观察伤害效果
+
+<h3>9.3 预期效果</h3>
+
+
+| 功能 | 预期结果 |
+|------|----------|
+| 自然生成 | 森林中随机生成 |
+| 驯服 | 使用水晶驯服，显示消息 |
+| 跟随 | 保持一定距离跟随 |
+| 坐下 | 右键切换坐下状态 |
+| 攻击 | 发射魔法弹攻击目标 |
+| 受伤 | 攻击伤害来源 |
+
+<hr>
+
+<h2 id="常见问题">常见问题</h2>
+
+
+<h3>Q1: 魔法生物不生成？</h3>
+
+检查生成条件是否正确，确保生物群系选择正确。尝试增加生成权重。
+
+<h3>Q2: 魔法生物不跟随？</h3>
+
+检查 <code>FollowOwnerGoal</code> 是否正确添加，确保 <code>setControls</code> 包含 <code>MOVE</code>。
+
+<h3>Q3: 魔法弹发射方向错误？</h3>
+
+检查 <code>shoot</code> 方法中的方向计算。
+
+<h3>Q4: 驯服没有效果？</h3>
+
+检查 <code>interactMob</code> 方法，确保正确使用 <code>isTamed()</code> 和 <code>setOwner()</code>。
+
+<hr>
+
+<h2 id="进阶功能">进阶功能</h2>
+
+
+完成基础功能后，可以尝试扩展：
+
+<ul><li><strong>繁殖系统</strong></li></ul>
+   - 允许两只已驯服的魔法生物繁殖
+
+<ul><li><strong>进化系统</strong></li></ul>
+   - 使用不同水晶让魔法生物进化
+
+<ul><li><strong>特殊技能</strong></li></ul>
+   - 添加更多攻击模式
+
+<ul><li><strong>骑乘系统</strong></li></ul>
+   - 允许玩家骑乘魔法生物
+
+<hr>
+
+<h2 id="项目完成总结">项目完成总结</h2>
+
+
+恭喜！你已经完成了整个魔法水晶 Mod 的开发：
+
+<ul><li>✅ <strong>魔法水晶方块</strong>：发光、可收集</li></ul>
+<ul><li>✅ <strong>魔法水晶物品</strong>：可堆叠、有工具提示</li></ul>
+<ul><li>✅ <strong>魔法棒</strong>：蓄力发射、网络通信</li></ul>
+<ul><li>✅ <strong>魔法弹</strong>：粒子效果、伤害判定、爆炸效果</li></ul>
+<ul><li>✅ <strong>魔法生物</strong>：自然生成、驯服、跟随、攻击</li></ul>
+
+这是一个完整的、功能丰富的 Mod，涵盖了 Fabric 开发的核心知识点。
+
+<hr>
+
+<em>你的魔法冒险已经开始了！创造出更多神奇的内容吧！</em></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-magic-wand.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第三章：魔法棒 - 特殊物品与网络通信
+        </a><a href="../README.html" class="next">
+            Fabric Mod 开发完全指南
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../../script.js"></script>
+    <script src="../../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Iris Sodium 集成系统分析 - Iris 光影</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 光影 Mod 整体架构分析
+        </a>
+<a href="02-rendering-pipeline.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 渲染管线
+        </a>
+<a href="03-shaderpack-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 着色器包系统
+        </a>
+<a href="04-shadow-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 阴影系统
+        </a>
+<a href="05-framebuffer-texture.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 帧缓冲与纹理系统
+        </a>
+<a href="06-uniforms.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Uniform 系统
+        </a>
+<a href="07-sodium-integration.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Iris Sodium 集成系统分析
+        </a>
+<a href="08-mixin-mechanism.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris Mixin 注入机制分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Iris 分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Iris 光影</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Iris Sodium 集成系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Iris Sodium 集成系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-fabric-1.7.3</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Iris Sodium 集成系统分析</h1>
+
+
+<blockquote><p>基于 Iris v1.7.3 源码的 Sodium 集成深度分析</p></blockquote>
+
+<h2 id="项目信息">项目信息</h2>
+
+
+| 属性 | 值 |
+|------|-----|
+| Mod 版本 | 1.7.3 |
+| Minecraft 版本 | 1.21 |
+| Sodium 版本 | 0.5.9 |
+| 分析日期 | 2026-03-23 |
+
+<hr>
+
+<h2 id="文档目录">文档目录</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="01-architecture-overview.html">01-architecture-overview</a> | 整体架构设计模式、模块划分 |
+| <a href="02-rendering-pipeline.html">02-rendering-pipeline</a> | 渲染管线 - GBuffer、Composite Pass |
+| <a href="03-shaderpack-system.html">03-shaderpack-system</a> | 着色器包加载与解析 |
+| <a href="04-shadow-system.html">04-shadow-system</a> | 阴影系统 - 视锥体剔除、阴影渲染 |
+| <a href="05-framebuffer-texture.html">05-framebuffer-texture</a> | 帧缓冲与纹理系统 |
+| <a href="06-uniforms.html">06-uniforms</a> | Uniform 管理 |
+| <a href="07-sodium-integration.html">07-sodium-integration</a> | Sodium 集成系统 |
+| <a href="08-mixin-mechanism.html">08-mixin-mechanism</a> | Mixin 注入机制 |
+| <a href="README.html">README</a> | 模块说明 |
+| <a href="SUMMARY.html">SUMMARY</a> | 总结文档 |
+
+<hr>
+
+<h2 id="1-整体架构设计">1. 整体架构设计</h2>
+
+
+<h3>1.1 分层架构</h3>
+
+
+Iris 通过 <code>sodiumCompatibility</code> 模块实现与 Sodium 的深度集成，采用分层架构：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Iris (主模块)                            │
+│  ┌─────────────────┐  ┌─────────────────────────────────┐  │
+│  │ SodiumTerrainPipeline │  │ WorldRenderingPipeline       │  │
+│  └────────┬────────┘  └─────────────────────────────────┘  │
+└───────────┼────────────────────────────────────────────────┘
+            │
+┌───────────┼────────────────────────────────────────────────┐
+│           ▼     sodiumCompatibility 模块                    │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              impl (实现层)                           │   │
+│  │  ┌──────────────┐ ┌───────────────┐ ┌─────────────┐ │   │
+│  │  │vertex_format │ │shader_overrides│ │ shadow_map  │ │   │
+│  │  │ (顶点格式)   │ │ (着色器覆盖)  │ │ (阴影映射)  │ │   │
+│  │  └──────────────┘ └───────────────┘ └─────────────┘ │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              mixin (注入层)                          │   │
+│  │  ┌──────────────┐ ┌───────────────┐ ┌─────────────┐ │   │
+│  │  │vertex_format │ │shader_overrides│ │ shadow_map  │ │   │
+│  │  └──────────────┘ └───────────────┘ └─────────────┘ │   │
+│  └─────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>1.2 核心类表</h3>
+
+
+| 类名 | 位置 | 功能 |
+|------|------|------|
+| <code>SodiumTerrainPipeline</code> | pipeline/ | Sodium 地形渲染管线 |
+| <code>IrisChunkProgramOverrides</code> | sodiumCompatibility/impl/shader_overrides/ | 着色器程序覆盖管理 |
+| <code>XHFPModelVertexType</code> | sodiumCompatibility/impl/vertex<em>format/terrain</em>xhfp/ | 扩展顶点格式 |
+| <code>MixinShaderChunkRenderer</code> | sodiumCompatibility/mixin/ | 渲染器注入 |
+| <code>MixinRenderSectionManager</code> | sodiumCompatibility/mixin/shadow_map/ | 区块渲染管理 |
+
+<hr>
+
+<h2 id="2-顶点格式扩展机制">2. 顶点格式扩展机制</h2>
+
+
+<h3>2.1 扩展属性注入</h3>
+
+
+Iris 通过 Mixin hack 技术向 Sodium 的枚举添加新的顶点属性：
+</p>
+<p><pre class="code-block"><code class="language-java">static {
+    int baseOrdinal = $VALUES.length;
+
+    IrisChunkMeshAttributes.NORMAL
+        = ChunkMeshAttributeAccessor.createChunkMeshAttribute(&quot;NORMAL&quot;, baseOrdinal);
+    IrisChunkMeshAttributes.TANGENT
+        = ChunkMeshAttributeAccessor.createChunkMeshAttribute(&quot;TANGENT&quot;, baseOrdinal + 1);
+    IrisChunkMeshAttributes.MID_TEX_COORD
+        = ChunkMeshAttributeAccessor.createChunkMeshAttribute(&quot;MID_TEX_COORD&quot;, baseOrdinal + 2);
+    IrisChunkMeshAttributes.BLOCK_ID
+        = ChunkMeshAttributeAccessor.createChunkMeshAttribute(&quot;BLOCK_ID&quot;, baseOrdinal + 3);
+    IrisChunkMeshAttributes.MID_BLOCK
+        = ChunkMeshAttributeAccessor.createChunkMeshAttribute(&quot;MID_BLOCK&quot;, baseOrdinal + 4);
+
+    $VALUES = ArrayUtils.addAll($VALUES,
+        IrisChunkMeshAttributes.NORMAL,
+        IrisChunkMeshAttributes.TANGENT,
+        IrisChunkMeshAttributes.MID_TEX_COORD,
+        IrisChunkMeshAttributes.BLOCK_ID,
+        IrisChunkMeshAttributes.MID_BLOCK);
+}</code></pre>
+
+
+<h3>2.2 自定义顶点类型</h3>
+
+
+<code>XHFPModelVertexType</code> 定义了扩展的顶点格式（Stride = 40 字节）：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
+│                   XHFPModelVertexType 布局 (40 字节)                │
+├─────────┬─────────┬─────────┬─────────┬─────────┬─────────────────┤
+│POS(0-7) │COLOR(8-11)│TEX(12-15)│LIGHT(16-19)│MID_TEX(20-23)│ TANGENT(24-27)│
+├─────────┼─────────┼─────────┼─────────┼─────────┼─────────────────┤
+│NORM(28-31)│BLOCK_ID(32-33)│MID_BLOCK(36-39)│                         │
+└─────────┴─────────┴─────────┴─────────┴─────────┴─────────────────┘</code></pre>
+
+
+| 偏移 | 属性 | 类型 | 说明 |
+|------|------|------|------|
+| 0-7 | Position | float[2] | X, Y 坐标 |
+| 8-11 | Color | ubyte[4] | 颜色 + 透明度 |
+| 12-15 | TexCoord | ushort[2] | 纹理坐标 |
+| 16-19 | LightCoord | ushort[2] | 光照坐标 |
+| 20-23 | MidTexCoord | ushort[2] | 中点纹理坐标 |
+| 24-27 | Tangent | byte[4] | 切线向量 |
+| 28-31 | Normal | byte[4] | 法线向量 |
+| 32-33 | BlockId | short[2] | 方块 ID |
+| 36-39 | MidBlock | byte[4] | 中点坐标 |
+
+<hr>
+
+<h2 id="3-缓冲区构建器扩展">3. 缓冲区构建器扩展</h2>
+
+
+<h3>3.1 顶点序列化器注册</h3>
+
+
+Iris 注册了多个顶点格式转换器来处理不同格式间的数据转换：
+</p>
+<p><pre class="code-block"><code class="language-java">@Inject(method = &quot;&lt;init&gt;&quot;, at = @At(&quot;TAIL&quot;))
+private void putSerializerIris(CallbackInfo ci) {
+    cache.put(createKey(..., IrisVertexFormats.ENTITY), new ModelToEntityVertexSerializer());
+    cache.put(createKey(..., IrisVertexFormats.TERRAIN), new IrisEntityToTerrainVertexSerializer());
+    cache.put(createKey(..., IrisVertexFormats.TERRAIN), new EntityToTerrainVertexSerializer());
+    cache.put(createKey(..., IrisVertexFormats.GLYPH), new GlyphExtVertexSerializer());
+}</code></pre>
+
+
+<h3>3.2 顶点转换逻辑</h3>
+
+
+<code>EntityToTerrainVertexSerializer</code> 实现法线和切线计算：
+</p>
+<p><pre class="code-block"><code class="language-java">public class EntityToTerrainVertexSerializer implements VertexSerializer {
+    @Override
+    public void serialize(long src, long dst, int vertexCount) {
+        int quadCount = vertexCount / 4;
+        for (int i = 0; i &lt; quadCount; i++) {
+            int normal = MemoryUtil.memGetInt(src + 32);
+            int tangent = NormalHelper.computeTangent(...);
+
+            // 计算中点纹理坐标
+            float midU = 0, midV = 0;
+            for (int vertex = 0; vertex &lt; 4; vertex++) {
+                midU += MemoryUtil.memGetFloat(src + 16 + (ModelVertex.STRIDE * vertex));
+                midV += MemoryUtil.memGetFloat(src + 20 + (ModelVertex.STRIDE * vertex));
+            }
+            midU /= 4;
+            midV /= 4;
+            // 写入扩展顶点数据...
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-渲染钩子实现">4. 渲染钩子实现</h2>
+
+
+<h3>4.1 着色器程序覆盖</h3>
+
+
+<code>IrisChunkProgramOverrides</code> 是核心着色器管理类：
+</p>
+<p><pre class="code-block"><code class="language-java">public class IrisChunkProgramOverrides {
+    private final EnumMap&lt;IrisTerrainPass, GlProgram&lt;IrisChunkShaderInterface&gt;&gt; programs
+        = new EnumMap&lt;&gt;(IrisTerrainPass.class);
+    private boolean shadersCreated = false;
+
+    public void createShaders(SodiumTerrainPipeline pipeline, ChunkVertexType vertexType) {
+        if (pipeline != null) {
+            pipeline.patchShaders(vertexType);
+            for (IrisTerrainPass pass : IrisTerrainPass.values()) {
+                this.programs.put(pass, createShader(pass, pipeline, vertexType));
+            }
+        }
+    }
+}</code></pre>
+
+
+<h3>4.2 渲染通道枚举</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public enum IrisTerrainPass {
+    SHADOW(&quot;shadow&quot;),
+    SHADOW_CUTOUT(&quot;shadow&quot;),
+    GBUFFER_SOLID(&quot;gbuffers_terrain&quot;),
+    GBUFFER_CUTOUT(&quot;gbuffers_terrain_cutout&quot;),
+    GBUFFER_TRANSLUCENT(&quot;gbuffers_water&quot;);
+
+    public TerrainRenderPass toTerrainPass() {
+        switch (this) {
+            case SHADOW, GBUFFER_SOLID:
+                return DefaultTerrainRenderPasses.SOLID;
+            case SHADOW_CUTOUT, GBUFFER_CUTOUT:
+                return DefaultTerrainRenderPasses.CUTOUT;
+            case GBUFFER_TRANSLUCENT:
+                return DefaultTerrainRenderPasses.TRANSLUCENT;
+        }
+    }
+}</code></pre>
+
+
+<h3>4.3 渲染器注入</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mixin(ShaderChunkRenderer.class)
+public class MixinShaderChunkRenderer implements ShaderChunkRendererExt {
+    @Inject(method = &quot;begin&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+    private void iris$begin(TerrainRenderPass pass, CallbackInfo ci) {
+        this.override = irisChunkProgramOverrides.getProgramOverride(pass, this.vertexType);
+        if (this.override == null) return;
+        ci.cancel();
+        irisChunkProgramOverrides.bindFramebuffer(pass);
+        pass.startDrawing();
+        override.bind();
+        override.getInterface().setupState();
+    }
+
+    @Inject(method = &quot;end&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+    private void iris$onEnd(TerrainRenderPass pass, CallbackInfo ci) {
+        ProgramUniforms.clearActiveUniforms();
+        ProgramSamplers.clearActiveSamplers();
+        if (override != null) {
+            irisChunkProgramOverrides.unbindFramebuffer();
+            override.getInterface().restore();
+            override.unbind();
+            pass.endDrawing();
+            override = null;
+            ci.cancel();
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-阴影渲染集成">5. 阴影渲染集成</h2>
+
+
+<h3>5.1 渲染列表切换</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mixin(RenderSectionManager.class)
+public class MixinRenderSectionManager {
+    @Unique
+    private @NotNull SortedRenderLists shadowRenderLists = SortedRenderLists.empty();
+
+    @Redirect(method = &quot;createTerrainRenderList&quot;,
+        at = @At(value = &quot;FIELD&quot;, target = &quot;renderLists:...&quot;))
+    private void useShadowRenderList(RenderSectionManager instance, SortedRenderLists value) {
+        if (ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
+            shadowRenderLists = value;
+        } else {
+            renderLists = value;
+        }
+    }
+
+    @Redirect(method = {&quot;getRenderLists&quot;, &quot;getVisibleChunkCount&quot;, &quot;renderLayer&quot;},
+        at = @At(value = &quot;FIELD&quot;, target = &quot;renderLists:...&quot;))
+    private SortedRenderLists useShadowRenderList2(RenderSectionManager instance) {
+        return ShadowRenderingState.areShadowsCurrentlyBeingRendered()
+            ? shadowRenderLists : renderLists;
+    }
+}</code></pre>
+
+
+<h3>5.2 区块实体渲染</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mixin(SodiumWorldRenderer.class)
+public class MixinSodiumWorldRenderer {
+    static {
+        ShadowRenderingState.setBlockEntityRenderFunction((shadowRenderer, bufferSource, ...) -&gt; {
+            renderLightsOnly = lightsOnly;
+            ((SodiumWorldRendererAccessor) SodiumWorldRenderer.instance())
+                .invokeRenderBlockEntities(...);
+            ((SodiumWorldRendererAccessor) SodiumWorldRenderer.instance())
+                .invokeRenderGlobalBlockEntities(...);
+            renderLightsOnly = false;
+            return beList;
+        });
+    }
+
+    @Inject(method = &quot;isEntityVisible&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+    private void iris$overrideEntityCulling(Entity entity, CallbackInfoReturnable&lt;Boolean&gt; cir) {
+        if (ShadowRenderingState.areShadowsCurrentlyBeingRendered())
+            cir.setReturnValue(true);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-sodiumterrainpipeline-核心逻辑">6. SodiumTerrainPipeline 核心逻辑</h2>
+
+
+<h3>6.1 默认顶点着色器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-glsl">#version 330 core
+in ivec2 a_LightCoord;
+in vec4 a_Color;
+in vec2 a_TexCoord;
+in uvec4 a_PosId;
+uniform mat4 iris_ProjectionMatrix;
+uniform mat4 iris_ModelViewMatrix;
+uniform vec3 u_RegionOffset;
+vec3 _vert_position;
+vec2 _vert_tex_diffuse_coord;
+ivec2 _vert_tex_light_coord;
+uint _draw_id;
+uint _material_params;
+out float v_FragDistance;
+
+void main() {
+    _vert_init();
+    vec3 translation = u_RegionOffset + _get_draw_translation(_draw_id);
+    vec3 position = _vert_position + translation;
+    v_FragDistance = getFragDistance(fogShape, position);
+    gl_Position = iris_ProjectionMatrix * iris_ModelViewMatrix * vec4(position, 1.0);
+    v_ColorModulator = vec4((_vert_color.rgb * _vert_color.a), 1)
+                     * vec4(_sample_lightmap(_vert_tex_light_coord), 1.0);
+}</code></pre>
+
+
+<h3>6.2 着色器补丁处理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void patchShaders(ChunkVertexType vertexType) {
+    ShaderAttributeInputs inputs = new ShaderAttributeInputs(true, true, false, true, true);
+
+    // 处理 terrainSolid
+    terrainSolidSource.ifPresentOrElse(sources -&gt; {
+        Map&lt;PatchShaderType, String&gt; transformed = TransformPatcher.patchSodium(
+            sources.getName(),
+            sources.getVertexSource().orElse(null),
+            sources.getFragmentSource().orElse(null),
+            AlphaTest.ALWAYS, inputs, parent.getTextureMap());
+        terrainSolidVertex = Optional.ofNullable(transformed.get(PatchShaderType.VERTEX));
+        terrainSolidFragment = Optional.ofNullable(transformed.get(PatchShaderType.FRAGMENT));
+    }, () -&gt; {
+        terrainSolidVertex = Optional.of(defaultVertex);
+        terrainSolidFragment = Optional.of(defaultFragment);
+    });
+    // 类似处理 cutout, translucent, shadow...
+}</code></pre>
+
+
+<hr>
+
+<h2 id="7-架构总结图">7. 架构总结图</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────────────────┐
+│                           SodiumTerrainPipeline                          │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │ patchShaders() → TransformPatcher.patchSodium()                   │ │
+│  │   - 转换 gbuffers_terrain/gbuffers_water/shadow 着色器           │ │
+│  │   - 注入 uniform: iris_ModelViewMatrix, iris_ProjectionMatrix    │ │
+│  │   - 注入属性: NORMAL, TANGENT, MID_TEX_COORD, BLOCK_ID, MID_BLOCK│ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                       IrisChunkProgramOverrides                          │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │ createShader(pass, pipeline)                                       │ │
+│  │   - 为 GBUFFER_SOLID/CUTOUT, TRANSLUCENT, SHADOW 创建程序        │ │
+│  │   - 绑定属性位置: a_PosId, a_Color, a_TexCoord, mc_Entity...     │ │
+│  │   - 创建 IrisChunkShaderInterface                                  │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                      MixinShaderChunkRenderer                           │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
+│  │ begin()          │  │ end()           │  │ iris$getOverride()     │  │
+│  │ - 绑定帧缓冲     │  │ - 清除uniform   │  │ - 返回当前override程序 │  │
+│  │ - 启用绘制       │  │ - 恢复状态      │  │                        │  │
+│  │ - 调用setupState │  │ - 禁用绘制      │  │                        │  │
+│  └──────────────────┘  └──────────────────┘  └────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        XHFPModelVertexType                             │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │ STRIDE = 40 bytes                                                 │ │
+│  │ ┌──────┬────────────┬────────────┬──────────────┬──────────────┐ │ │
+│  │ │POS(0)│COLOR(8)   │TEX(12)    │LIGHT(16)     │MID_TEX(20)   │ │ │
+│  │ ├──────┼────────────┼────────────┼──────────────┼──────────────┤ │ │
+│  │ │TANG(24)│NORM(28)  │BLOCK_ID(32)│MID_BLOCK(36)│              │ │ │
+│  │ └──────┴────────────┴────────────┴──────────────┴──────────────┘ │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="8-关键设计模式">8. 关键设计模式</h2>
+
+
+| 模式 | 应用位置 | 说明 |
+|------|---------|------|
+| <strong>策略模式</strong> | <code>IrisTerrainPass</code> | 为不同渲染通道定义不同策略 |
+| <strong>装饰器模式</strong> | <code>IrisChunkShaderInterface</code> | 扩展 ChunkShaderInterface 添加 Iris 特定功能 |
+| <strong>工厂模式</strong> | <code>VertexSerializerRegistryImpl</code> | 注册多种顶点转换器 |
+| <strong>代理模式</strong> | <code>ShaderBindingContextExt</code> | 提供 uniform 绑定的延迟解析 |
+| <strong>单例模式</strong> | <code>ShadowRenderingState</code> | 管理阴影渲染全局状态 |
+
+<hr>
+
+<h2 id="9-相关文档">9. 相关文档</h2>
+
+
+<ul><li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线详解</li></ul>
+<ul><li><a href="04-shadow-system.html">04-shadow-system</a> - 阴影系统</li></ul>
+<ul><li><a href="08-mixin-mechanism.html">08-mixin-mechanism</a> - Mixin 注入机制</li></ul>
+
+<hr>
+
+<em>生成时间: 2026-03-23</em>
+<em>基于 Iris v1.7.3 源码分析</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="06-uniforms.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Iris Uniform 系统
+        </a><a href="08-mixin-mechanism.html" class="next">
+            Iris Mixin 注入机制分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>NeoForge 世界生成与区块系统 - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Getting Started</div>
+            <a href="../part-1-getting-started/01-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 1.21.x 环境搭建与第一个 Mod</span>
+        </a>
+<a href="../part-1-getting-started/02-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：注册系统 - DeferredRegister 完全指南</span>
+        </a>
+<a href="../part-1-getting-started/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Blocks Items</div>
+            <a href="../part-2-blocks-items/01-blocks-and-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>方块与物品开发完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Entities</div>
+            <a href="../part-3-entities/01-entity-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 实体系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Networking</div>
+            <a href="../part-4-networking/01-network-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 网络通信完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: World Gen</div>
+            <a href="01-world-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 世界生成与区块系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: Recipes</div>
+            <a href="../part-6-recipes/01-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配方与酿造系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: Config</div>
+            <a href="../part-7-config/01-config-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配置系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: Projects</div>
+            <a href="../part-8-projects/01-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>魔法水晶方块 - NeoForge 实战项目</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-getting-started.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 入门指南</span>
+        </a>
+<a href="02-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 1.21.x 模组开发教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>NeoForge 世界生成与区块系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    NeoForge 世界生成与区块系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>NeoForge 世界生成与区块系统</h1>
+
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-前言">1. 前言</a></li></ul>
+  - <a href="#11-本章目标">1.1 本章目标</a>
+  - <a href="#12-前置知识">1.2 前置知识</a>
+  - <a href="#13-关键术语">1.3 关键术语</a>
+<ul><li><a href="#2-世界事件系统">2. 世界事件系统</a></li></ul>
+  - <a href="#21-levelevent---世界事件基类">2.1 LevelEvent - 世界事件基类</a>
+  - <a href="#22-chunkevent---区块事件">2.2 ChunkEvent - 区块事件</a>
+  - <a href="#23-chunkwatchevent---区块监视事件">2.3 ChunkWatchEvent - 区块监视事件</a>
+  - <a href="#24-blockevent---方块事件">2.4 BlockEvent - 方块事件</a>
+<ul><li><a href="#3-生物群系修改系统">3. 生物群系修改系统</a></li></ul>
+  - <a href="#31-biomemodifier-接口">3.1 BiomeModifier 接口</a>
+  - <a href="#32-内置生物群系修改器">3.2 内置生物群系修改器</a>
+  - <a href="#33-phase-执行顺序">3.3 Phase 执行顺序</a>
+<ul><li><a href="#4-强制区块加载系统">4. 强制区块加载系统</a></li></ul>
+  - <a href="#41-forcedchunkmanager-核心机制">4.1 ForcedChunkManager 核心机制</a>
+  - <a href="#42-ticketcontroller-票据控制器">4.2 TicketController 票据控制器</a>
+  - <a href="#43-票据生命周期">4.3 票据生命周期</a>
+<ul><li><a href="#5-完整示例注册自定义生物群系">5. 完整示例：注册自定义生物群系</a></li></ul>
+  - <a href="#51-数据包-json-文件">5.1 数据包 JSON 文件</a>
+  - <a href="#52-编程式创建生物群系">5.2 编程式创建生物群系</a>
+  - <a href="#53-监听区块事件">5.3 监听区块事件</a>
+<ul><li><a href="#6-工作流程图">6. 工作流程图</a></li></ul>
+<ul><li><a href="#7-课后自查">7. 课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="1-前言">1. 前言</h2>
+
+
+<h3>1.1 本章目标</h3>
+
+
+本章将带你掌握 NeoForge 1.21.x 的世界生成与区块系统。学完本章后，你将能够：
+
+<ul><li>✅ 监听和处理各种世界级别的事件（区块加载、方块变化等）</li></ul>
+<ul><li>✅ 使用 <code>BiomeModifier</code> 数据驱动地修改生物群系</li></ul>
+<ul><li>✅ 实现自定义生物群系的注册和生成</li></ul>
+<ul><li>✅ 使用 <code>ForcedChunkManager</code> 实现区块强制加载</li></ul>
+<ul><li>✅ 构建一个完整的自定义生物群系模组</li></ul>
+
+<h3>1.2 前置知识</h3>
+
+
+学习本章前，你应该熟悉：
+
+| 知识领域 | 要求程度 | 参考章节 |
+|---------|---------|---------|
+| Java 基础 | 掌握 | <a href="../part-0-prerequisites/01-java-basics.html">Java 基础教程</a> |
+| NeoForge 注册系统 | 了解 | <a href="../part-1-getting-started/02-registry-system.html">注册系统教程</a> |
+| 事件总线机制 | 了解 | <a href="../part-1-getting-started/03-event-system.html">事件系统教程</a> |
+| Minecraft 生物群系 | 了解 | <a href="https://minecraft.wiki/w/Biome" target="_blank" rel="noopener noreferrer">Minecraft Wiki 生物群系</a> |
+
+<h3>1.3 关键术语</h3>
+
+
+本章涉及的关键术语解释：
+
+| 术语 | 英文 | 解释 |
+|-----|------|------|
+| <strong>区块</strong> | Chunk | Minecraft 世界的基本存储单元，通常为 16×16×256 的方块柱 |
+| <strong>生物群系</strong> | Biome | 具有特定气候、植被和生物的地理区域，如森林、沙漠 |
+| <strong>票据</strong> | Ticket | 用于控制区块加载状态的机制 |
+| <strong>特征</strong> | Feature | 世界生成的结构，如树木、矿石矿脉 |
+| <strong>雕刻器</strong> | Carver | 洞穴和峡谷等空腔的生成器 |
+
+<hr>
+
+<h2 id="2-世界事件系统">2. 世界事件系统</h2>
+
+
+NeoForge 提供了丰富的事件系统来拦截世界级别的操作。所有事件都通过 <code>NeoForge.EVENT_BUS</code> 分发。
+
+<h3>2.1 LevelEvent - 世界事件基类</h3>
+
+
+<code>LevelEvent</code> 是所有世界相关事件的抽象基类。
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class LevelEvent extends Event {
+    private final LevelAccessor level;
+
+    public LevelEvent(LevelAccessor level) {
+        this.level = level;
+    }
+
+    public LevelAccessor getLevel() {
+        return level;
+    }
+}</code></pre>
+
+
+<strong>常见子类事件：</strong>
+
+| 事件类 | 触发时机 | 可取消 |
+|-------|---------|--------|
+| <code>LevelEvent.Load</code> | 世界加载时 | 否 |
+| <code>LevelEvent.Unload</code> | 世界卸载时 | 否 |
+| <code>LevelEvent.Save</code> | 世界保存时 | 否 |
+| <code>LevelEvent.CreateSpawnPosition</code> | 选择出生位置时 | 是 |
+| <code>LevelEvent.PotentialSpawns</code> | 计算潜在实体生成时 | 是 |
+
+<h3>2.2 ChunkEvent - 区块事件</h3>
+
+
+<code>ChunkEvent</code> 专门处理区块的生命周期事件，是最常用的世界事件之一。
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class ChunkEvent&lt;T extends ChunkAccess&gt; extends LevelEvent {
+    private final T chunk;
+
+    public ChunkEvent(T chunk) {
+        super(chunk.getLevel());
+        this.chunk = chunk;
+    }
+
+    public T getChunk() {
+        return chunk;
+    }
+}</code></pre>
+
+
+<strong>两个重要子类：</strong>
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                    ChunkEvent&lt;T&gt;                        │
+├─────────────────────────────────────────────────────────┤
+│  Load extends ChunkEvent&lt;LevelChunk&gt;                     │
+│  ├── isNewChunk(): boolean  // 判断是否新生成            │
+│  │                                                       │
+│  Unload extends ChunkEvent&lt;LevelChunk&gt;                   │
+│  └── 在区块保存后、卸载前触发                            │
+└─────────────────────────────────────────────────────────┘</code></pre>
+
+
+💡 <strong>提示</strong>：<code>isNewChunk()</code> 在客户端始终返回 <code>false</code>，因为客户端不会生成区块。
+
+<h3>2.3 ChunkWatchEvent - 区块监视事件</h3>
+
+
+<code>ChunkWatchEvent</code> 处理玩家监视区块的状态变化，<strong>仅在服务器端触发</strong>。
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class ChunkWatchEvent extends Event {
+    private final ServerLevel level;
+    private final ServerPlayer player;
+    private final ChunkPos pos;
+}</code></pre>
+
+
+<strong>子类事件：</strong>
+
+| 事件类 | 触发时机 | 注意事项 |
+|-------|---------|---------|
+| <code>Watch</code> | 玩家开始监视区块时 | ❌ 不能向客户端发送数据 |
+| <code>Sent</code> | 区块数据发送给客户端时 | ✅ 可以安全发送额外数据 |
+| <code>UnWatch</code> | 玩家停止监视区块时 | 区块可能从未发送到客户端 |
+
+<h3>2.4 BlockEvent - 方块事件</h3>
+
+
+<code>BlockEvent</code> 提供了丰富的方块交互钩子。
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class BlockEvent extends Event {
+    private final LevelAccessor level;
+    private final BlockPos pos;
+    private final BlockState state;
+}</code></pre>
+
+
+<strong>常用子类事件：</strong>
+
+| 事件类 | 用途 | 可取消 |
+|-------|------|--------|
+| <code>BreakEvent</code> | 玩家破坏方块 | ✅ |
+| <code>EntityPlaceEvent</code> | 实体放置方块 | ✅ |
+| <code>NeighborNotifyEvent</code> | 相邻方块通知更新 | ✅ |
+| <code>FarmlandTrampleEvent</code> | 耕地被践踏 | ✅ |
+
+<hr>
+
+<h2 id="3-生物群系修改系统">3. 生物群系修改系统</h2>
+
+
+<h3>3.1 BiomeModifier 接口</h3>
+
+
+<code>BiomeModifier</code> 是数据驱动的生物群系修改核心接口，支持通过 JSON 数据包定义修改规则。
+</p>
+<p><pre class="code-block"><code class="language-java">public interface BiomeModifier {
+    // 内联编解码器，用于数据生成
+    Codec&lt;BiomeModifier&gt; DIRECT_CODEC = ...;
+    
+    // 引用编解码器，用于数据包引用
+    Codec&lt;Holder&lt;BiomeModifier&gt;&gt; REFERENCE_CODEC = ...;
+    
+    /**
+     * 修改生物群系信息
+     * @param biome   被修改的生物群系（可读取原始数据）
+     * @param phase   修改阶段
+     * @param builder 可变生物群系信息构建器
+     */
+    void modify(Holder&lt;Biome&gt; biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder);
+    
+    MapCodec&lt;? extends BiomeModifier&gt; codec();
+}</code></pre>
+
+
+<h3>3.2 内置生物群系修改器</h3>
+
+
+NeoForge 提供了多种内置修改器，开箱即用：
+</p>
+<p><pre class="code-block"><code class="language-java">public final class BiomeModifiers {
+    // 1. 添加特征到生物群系
+    public record AddFeaturesBiomeModifier(
+        HolderSet&lt;Biome&gt; biomes,      // 目标生物群系
+        HolderSet&lt;PlacedFeature&gt; features,  // 要添加的特征
+        Decoration step                // 生成阶段
+    ) implements BiomeModifier { ... }
+
+    // 2. 移除特征
+    public record RemoveFeaturesBiomeModifier(
+        HolderSet&lt;Biome&gt; biomes,
+        HolderSet&lt;PlacedFeature&gt; features,
+        Set&lt;Decoration&gt; steps
+    ) implements BiomeModifier { ... }
+
+    // 3. 添加生物生成
+    public record AddSpawnsBiomeModifier(
+        HolderSet&lt;Biome&gt; biomes,
+        WeightedList&lt;SpawnerData&gt; spawners
+    ) implements BiomeModifier { ... }
+
+    // 4. 移除生物生成
+    public record RemoveSpawnsBiomeModifier(
+        HolderSet&lt;Biome&gt; biomes,
+        HolderSet&lt;EntityType&lt;?&gt;&gt; entityTypes
+    ) implements BiomeModifier { ... }
+
+    // 5. 添加洞穴雕刻器
+    public record AddCarversBiomeModifier(...) { ... }
+
+    // 6. 移除洞穴雕刻器
+    public record RemoveCarversBiomeModifier(...) { ... }
+}</code></pre>
+
+
+<h3>3.3 Phase 执行顺序</h3>
+
+
+<code>BiomeModifier.Phase</code> 定义了修改的执行顺序：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    A["BEFORE_EVERYTHING\n前置处理"] --> B["ADD\n添加内容"]
+    B --> C["REMOVE\n移除内容"]
+    C --> D["MODIFY\n修改属性"]
+    D --> E["AFTER_EVERYTHING\n后置处理"]</div>
+</div>
+
+
+| Phase | 用途 | 使用场景 |
+|-------|------|---------|
+| <code>BEFORE_EVERYTHING</code> | 前置处理 | 需要在其他修改之前执行的逻辑 |
+| <code>ADD</code> | 添加内容 | 添加特征、生物、雕刻器 |
+| <code>REMOVE</code> | 移除内容 | 移除不需要的特征或生物 |
+| <code>MODIFY</code> | 修改属性 | 修改气候、颜色等属性 |
+| <code>AFTER_EVERYTHING</code> | 后置处理 | 确保在其他修改之后执行 |
+
+<hr>
+
+<h2 id="4-强制区块加载系统">4. 强制区块加载系统</h2>
+
+
+<h3>4.1 ForcedChunkManager 核心机制</h3>
+
+
+<code>ForcedChunkManager</code> 管理区块强制加载的票据生命周期：
+</p>
+<p><pre class="code-block"><code class="language-java">public class ForcedChunkManager {
+    private static Map&lt;Identifier, TicketController&gt; controllers = Map.of();
+    
+    public static synchronized void init() {
+        // 通过 RegisterTicketControllersEvent 注册控制器
+    }
+    
+    public static boolean hasForcedChunks(ServerLevel level) {
+        TicketStorage data = level.getDataStorage().get(TicketStorage.TYPE);
+        return !data.getBlockForcedChunks().isEmpty() || 
+               !data.getEntityForcedChunks().isEmpty();
+    }
+    
+    static &lt;T extends Comparable&lt;? super T&gt;&gt; boolean forceChunk(
+            ServerLevel level, Identifier id, T owner, 
+            int chunkX, int chunkZ, boolean add,
+            boolean forceNaturalSpawning, 
+            Function&lt;TicketStorage, TicketTracker&lt;T&gt;&gt; ticketGetter) {
+        // 核心强制加载逻辑
+    }
+}</code></pre>
+
+
+<h3>4.2 TicketController 票据控制器</h3>
+
+
+<code>TicketController</code> 是模组注册区块加载票据的入口点：
+</p>
+<p><pre class="code-block"><code class="language-java">public record TicketController(Identifier id, @Nullable LoadingValidationCallback callback) {
+    public boolean forceChunk(ServerLevel level, BlockPos owner, 
+                              int chunkX, int chunkZ, 
+                              boolean add, boolean forceNaturalSpawning) {
+        return ForcedChunkManager.forceChunk(level, id, owner, 
+            chunkX, chunkZ, add, forceNaturalSpawning, 
+            TicketStorage::getBlockForcedChunks);
+    }
+}</code></pre>
+
+
+<h3>4.3 票据生命周期</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    票据生命周期                              │
+├─────────────────────────────────────────────────────────────┤
+│  1. 注册阶段                                                │
+│     Mod 初始化 → RegisterTicketControllersEvent → 注册控制器 │
+│                                                             │
+│  2. 激活阶段                                                │
+│     forceChunk(true) → 添加票据 → 区块开始加载               │
+│                                                             │
+│  3. 活跃阶段                                                │
+│     区块保持加载 → 支持 Tick 处理 → 自然生成                 │
+│                                                             │
+│  4. 停用阶段                                                │
+│     世界关闭 → 票据停用 → 保存到 level.dat                   │
+│                                                             │
+│  5. 重新激活阶段                                            │
+│     世界加载 → 读取票据 → 验证回调 → 激活票据                │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="5-完整示例注册自定义生物群系">5. 完整示例：注册自定义生物群系</h2>
+
+
+<h3>5.1 数据包 JSON 文件</h3>
+
+
+首先创建生物群系修改器 JSON 文件：
+
+<strong>文件路径</strong>：<code>data/mymod/worldgen/biome<em>modifier/mystic</em>forest_modifier.json</code>
+</p>
+<p><pre class="code-block"><code class="language-json">{
+  &quot;type&quot;: &quot;neoforge:add_features&quot;,
+  &quot;biomes&quot;: &quot;#mymod:mystic_forests&quot;,
+  &quot;features&quot;: [
+    &quot;mymod:mystic_tree&quot;,
+    &quot;mymod:magic_crystal_cluster&quot;,
+    &quot;mymod:glowing_mushroom_patch&quot;
+  ],
+  &quot;step&quot;: &quot;vegetal_decoration&quot;
+}</code></pre>
+
+
+<h3>5.2 编程式创建生物群系</h3>
+
+
+<strong>Java 代码</strong>：<code>src/main/java/com/mymod/world/ModBiomes.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod.world;
+
+import com.mojang.datafixers.kinds.App;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeGenerationSettings;
+import net.minecraft.world.level.biome.BiomeSpecialEffects;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.neoforged.neoforge.common.world.BiomeModifier;
+import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import java.util.List;
+
+public class ModBiomes {
+    // 定义生物群系资源键
+    public static final ResourceKey&lt;Biome&gt; MYSTIC_FOREST = 
+        ResourceKey.create(Registry.BIOME_REGISTRY, 
+            new ResourceLocation(&quot;mymod&quot;, &quot;mystic_forest&quot;));
+
+    // 定义生物群系修改器资源键
+    public static final ResourceKey&lt;BiomeModifier&gt; MYSTIC_FOREST_MODIFIER = 
+        ResourceKey.create(NeoForgeRegistries.Keys.BIOME_MODIFIERS,
+            new ResourceLocation(&quot;mymod&quot;, &quot;mystic_forest_modifier&quot;));
+
+    // 注册生物群系
+    public static void bootstrap(BootstrapContext&lt;Biome&gt; context) {
+        HolderGetter&lt;PlacedFeature&gt; placedFeatures = context.lookup(Registry.PLACED_FEATURE_REGISTRY);
+        
+        // 创建神秘森林生物群系
+        context.register(MYSTIC_FOREST, createMysticForest(placedFeatures));
+    }
+
+    private static Biome createMysticForest(HolderGetter&lt;PlacedFeature&gt; placedFeatures) {
+        // 生物生成设置 - 添加自定义生物
+        MobSpawnSettings.Builder spawnBuilder = new MobSpawnSettings.Builder()
+            .addSpawn(MobSpawnSettings.SpawnerData.CREATURE,
+                new MobSpawnSettings.SpawnerData(
+                    net.minecraft.world.entity.EntityType.WOLF, 5, 2, 4))
+            .addSpawn(MobSpawnSettings.SpawnerData.CREATURE,
+                new MobSpawnSettings.SpawnerData(
+                    net.minecraft.world.entity.EntityType.FOX, 3, 2, 4));
+
+        // 生成设置 - 添加特征
+        BiomeGenerationSettings.Builder genBuilder = new BiomeGenerationSettings.Builder(placedFeatures)
+            .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, 
+                placedFeatures.getOrThrow(ModPlacedFeatures.MYSTIC_TREE_KEY))
+            .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION,
+                placedFeatures.getOrThrow(ModPlacedFeatures.MAGIC_CRYSTAL_CLUSTER_KEY));
+
+        // 特殊效果 - 自定义氛围
+        BiomeSpecialEffects.Builder effectsBuilder = new BiomeSpecialEffects.Builder()
+            .fogColor(0x9966CC)      // 紫色雾气
+            .waterColor(0x3300CC)   // 深紫蓝色水
+            .waterFogColor(0x220088) // 水下雾色
+            .skyColor(0x7766AA)      // 紫色天空
+            .ambientMoodSound(
+                net.minecraft.world.level.biome.AmbientMoodSettings.CaveSound.INSTANCE);
+
+        return new Biome.BiomeBuilder()
+            .hasPrecipitation(true)
+            .temperature(0.7f)
+            .downfall(0.8f)
+            .temperatureModifier(Biome.TemperatureModifier.FROZEN)
+            .specialEffects(effectsBuilder.build())
+            .mobSpawnSettings(spawnBuilder.build())
+            .generationSettings(genBuilder.build())
+            .build();
+    }
+
+    // 创建自定义生物群系修改器（带 Codec）
+    public static class MysticForestBiomeModifier implements BiomeModifier {
+        public static final MapCodec&lt;MysticForestBiomeModifier&gt; CODEC = RecordCodecBuilder.mapCodec(
+            instance -&gt; instance.group(
+                BiomeModifier.LIST_CODEC.fieldOf(&quot;biomes&quot;).forGetter(m -&gt; m.biomes),
+                PlacedFeature.LIST_CODEC.fieldOf(&quot;features&quot;).forGetter(m -&gt; m.features),
+                GenerationStep.Decoration.CODEC.listOf().fieldOf(&quot;steps&quot;).forGetter(m -&gt; m.steps)
+            ).apply(instance, MysticForestBiomeModifier::new)
+        );
+
+        private final HolderSet&lt;Biome&gt; biomes;
+        private final HolderSet&lt;PlacedFeature&gt; features;
+        private final List&lt;GenerationStep.Decoration&gt; steps;
+
+        public MysticForestBiomeModifier(HolderSet&lt;Biome&gt; biomes, 
+                                         HolderSet&lt;PlacedFeature&gt; features,
+                                         List&lt;GenerationStep.Decoration&gt; steps) {
+            this.biomes = biomes;
+            this.features = features;
+            this.steps = steps;
+        }
+
+        @Override
+        public void modify(Holder&lt;Biome&gt; biome, Phase phase, 
+                          ModifiableBiomeInfo.BiomeInfo.Builder builder) {
+            if (phase == Phase.ADD &amp;&amp; this.biomes.contains(biome)) {
+                for (GenerationStep.Decoration step : this.steps) {
+                    builder.getGenerationSettings().addFeature(step, this.features);
+                }
+            }
+        }
+
+        @Override
+        public MapCodec&lt;? extends BiomeModifier&gt; codec() {
+            return CODEC;
+        }
+    }
+}</code></pre>
+
+
+<h3>5.3 监听区块事件</h3>
+
+
+<strong>事件监听器</strong>：<code>src/main/java/com/mymod/event/ModWorldEvents.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">package com.mymod.event;
+
+import com.mymod.block.ModBlocks;
+import com.mymod.world.ModBiomes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.level.ChunkWatchEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ModWorldEvents {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModWorldEvents.class);
+    private static final int CRYSTAL_SPAWN_CHANCE = 100; // 1/100
+
+    public static void register() {
+        NeoForge.EVENT_BUS.register(ModWorldEvents.class);
+        LOGGER.info(&quot;世界事件监听器已注册&quot;);
+    }
+
+    /**
+     * 世界加载事件
+     */
+    @SubscribeEvent
+    public static void onWorldLoad(LevelEvent.Load event) {
+        Level level = event.getLevel();
+        if (!level.isClientSide()) {
+            LOGGER.info(&quot;服务器世界已加载: {}&quot;, level.dimension().location());
+        }
+    }
+
+    /**
+     * 区块加载事件 - 检测新生成的区块
+     */
+    @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (event.getLevel().isClientSide()) return;
+        
+        var chunk = event.getChunk();
+        var pos = chunk.getPos();
+        
+        if (event.isNewChunk()) {
+            LOGGER.info(&quot;新生成的区块: [{}, {}]&quot;, pos.x, pos.z);
+            handleNewChunkGeneration((ServerLevel) event.getLevel(), chunk);
+        } else {
+            LOGGER.debug(&quot;从磁盘加载的区块: [{}, {}]&quot;, pos.x, pos.z);
+        }
+    }
+
+    /**
+     * 区块卸载事件
+     */
+    @SubscribeEvent
+    public static void onChunkUnload(ChunkEvent.Unload event) {
+        if (event.getLevel().isClientSide()) return;
+        
+        var pos = event.getChunk().getPos();
+        LOGGER.debug(&quot;区块卸载: [{}, {}]&quot;, pos.x, pos.z);
+    }
+
+    /**
+     * 玩家开始监视区块 - 这里不能发送数据包！
+     */
+    @SubscribeEvent
+    public static void onChunkWatch(ChunkWatchEvent.Watch event) {
+        Player player = event.getPlayer();
+        LOGGER.debug(&quot;{} 开始监视区块 [{}, {}]&quot;, 
+            player.getName().getString(),
+            event.getChunk().getPos().x,
+            event.getChunk().getPos().z);
+    }
+
+    /**
+     * 区块数据发送到客户端 - 可以在这里发送额外数据
+     */
+    @SubscribeEvent
+    public static void onChunkSent(ChunkWatchEvent.Sent event) {
+        // 可以在此处发送自定义数据包到客户端
+        // ExamplePacket.send(event.getPlayer(), event.getChunk());
+        LOGGER.debug(&quot;区块数据已发送到: {}&quot;, event.getPlayer().getName().getString());
+    }
+
+    /**
+     * 方块破坏事件 - 可取消
+     */
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        Player player = event.getPlayer();
+        BlockPos pos = event.getPos();
+        BlockState state = event.getState();
+        
+        // 示例：阻止破坏神秘水晶
+        if (state.is(ModBlocks.MYSTIC_CRYSTAL.get())) {
+            if (!player.hasPermissions(2)) {
+                LOGGER.info(&quot;玩家 {} 尝试破坏神秘水晶被阻止&quot;, player.getName().getString());
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    /**
+     * 方块放置事件
+     */
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        // 可以在此处验证方块放置是否合法
+    }
+
+    /**
+     * 处理新生成区块的特殊生成逻辑
+     */
+    private static void handleNewChunkGeneration(ServerLevel level, var chunk) {
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        
+        // 遍历区块内的一些随机位置
+        for (int i = 0; i &lt; 16; i++) {
+            int x = chunk.getPos().getMinBlockX() + level.random.nextInt(16);
+            int z = chunk.getPos().getMinBlockZ() + level.random.nextInt(16);
+            int y = level.getHeightmapPos(
+                net.minecraft.world.level.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                new BlockPos(x, 0, z)
+            ).getY();
+            
+            // 在顶层放置一些草丛
+            if (y &gt; 60 &amp;&amp; level.random.nextInt(CRYSTAL_SPAWN_CHANCE) == 0) {
+                BlockPos crystalPos = new BlockPos(x, y + 1, z);
+                if (level.getBlockState(crystalPos).isAir()) {
+                    level.setBlock(crystalPos, 
+                        ModBlocks.MYSTIC_CRYSTAL.get().defaultBlockState(), 
+                        net.minecraft.world.level.block.state.BlockState.BlockStatePairPolicy.DEFAULT);
+                }
+            }
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-工作流程图">6. 工作流程图</h2>
+
+
+<h3>区块加载完整流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Player as 玩家
+    participant Server as ServerLevel
+    participant ChunkMap as ChunkMap
+    participant NeoForge as NeoForge EventBus
+    participant BlockEntity as BlockEntity
+    
+    Player->>Server: 移动到新区块范围
+    Server->>ChunkMap: 请求加载区块
+    ChunkMap->>ChunkMap: 检查票据有效性
+    
+    ChunkMap->>ChunkMap: 加载 ChunkAccess
+    ChunkMap->>NeoForge: 触发 ChunkDataEvent.Load
+    Note over NeoForge: 可修改持久化数据
+    NeoForge-->>ChunkMap: 事件完成
+    
+    ChunkMap->>NeoForge: 触发 ChunkEvent.Load
+    Note over NeoForge: isNewChunk() 可判断是否新生成
+    NeoForge-->>ChunkMap: 事件完成
+    
+    alt 玩家开始监视
+        ChunkMap->>NeoForge: 触发 ChunkWatchEvent.Watch
+        Note over NeoForge: ❌ 不能发送数据到客户端
+        NeoForge-->>ChunkMap: 事件完成
+        
+        ChunkMap->>NeoForge: 触发 ChunkWatchEvent.Sent
+        Note over NeoForge: ✅ 可以发送自定义数据包
+        NeoForge-->>ChunkMap: 事件完成
+        
+        ChunkMap-->>Player: 区块数据包
+    end
+    
+    Server->>Server: 游戏刻Tick处理
+    Server->>BlockEntity: 激活相关方块实体</div>
+</div>
+
+
+<h3>生物群系修改器执行流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "数据包加载"
+        A["biome_modifiers.json"] --> B["解析 BiomeModifier"]
+        B --> C["注册到 NeoForge"]
+    end
+    
+    subgraph "生物群系构建阶段"
+        D["开始构建 Biome"] --> E{"Phase = BEFORE_EVERYTHING"}
+        E -->|执行| F["前置修改器"]
+        F --> G{"Phase = ADD"}
+        G -->|执行| H["添加特征/生物"]
+        H --> I{"Phase = REMOVE"}
+        I -->|执行| J["移除特征/生物"]
+        J --> K{"Phase = MODIFY"}
+        K -->|执行| L["修改气候/颜色"]
+        L --> M{"Phase = AFTER_EVERYTHING"}
+        M -->|执行| N["后置修改器"]
+    end
+    
+    subgraph "最终结果"
+        N --> O["生成最终 Biome"]
+        O --> P["世界生成使用"]
+    end</div>
+</div>
+
+
+<hr>
+
+<h2 id="7-课后自查">7. 课后自查</h2>
+
+
+完成本章学习后，请尝试回答以下问题：
+
+| # | 问题 | 考察点 |
+|---|------|--------|
+| 1 | <code>ChunkEvent.Load</code> 和 <code>ChunkWatchEvent.Watch</code> 有何本质区别？ | 区块生命周期 vs 玩家监视 |
+| 2 | 如何使用 <code>TicketController</code> 为模组注册强制区块加载？ | 票据系统使用 |
+| 3 | <code>BiomeModifier.Phase</code> 的五个阶段按什么顺序执行？ | 生物群系修改流程 |
+| 4 | 为什么 <code>ChunkWatchEvent.Watch</code> 不能向客户端发送数据包？ | 事件触发时机 |
+| 5 | 如何在模组中创建一个自定义的生物群系？ | 综合应用 |
+| 6 | <code>LoadingValidationCallback</code> 在票据生命周期中起什么作用？ | 票据持久化 |
+| 7 | 数据驱动的生物群系修改与编程式修改各有何优缺点？ | 设计权衡 |
+
+<hr>
+
+<strong>参考答案提示</strong>：
+
+<ul><li><code>ChunkEvent.Load</code> 在区块加载到世界时触发（服务器和客户端都会触发），而 <code>ChunkWatchEvent.Watch</code> 仅在玩家开始监视区块时触发（仅服务器）</li></ul>
+<ul><li>在 <code>RegisterTicketControllersEvent</code> 中注册 <code>TicketController</code>，然后通过 <code>controller.forceChunk()</code> 方法控制区块加载</li></ul>
+<ul><li><code>BEFORE<em>EVERYTHING</code> → <code>ADD</code> → <code>REMOVE</code> → <code>MODIFY</code> → <code>AFTER</em>EVERYTHING</code></li></ul>
+<ul><li>因为 <code>ChunkWatchEvent.Watch</code> 触发时区块数据还未打包发送给客户端，而 <code>ChunkWatchEvent.Sent</code> 触发时数据正在发送</li></ul>
+<ul><li>定义 <code>ResourceKey<Biome></code>，在 <code>BootstrapContext</code> 中注册，创建 <code>Biome.Builder</code> 并配置生成设置和特殊效果</li></ul>
+<ul><li>在世界重新加载时验证票据是否仍然有效，可以清理过期的或不存在的票据</li></ul>
+<ul><li>数据驱动：可被数据包覆盖、易于非程序员修改；编程式：更灵活、可包含复杂逻辑</li></ul>
+
+<hr>
+
+<strong>延伸阅读</strong>：
+
+<ul><li><a href="https://docs.neoforged.net/" target="_blank" rel="noopener noreferrer">NeoForge 官方文档 - 生物群系修改</a></li></ul>
+<ul><li><a href="https://minecraft.wiki/w/Biome" target="_blank" rel="noopener noreferrer">Minecraft Wiki - 生物群系</a></li></ul>
+<ul><li><a href="https://minecraft.wiki/w/World_generation" target="_blank" rel="noopener noreferrer">World Generation Wiki</a></li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../part-4-networking/01-network-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            NeoForge 网络通信完全指南
+        </a><a href="../part-6-recipes/01-recipe-system.html" class="next">
+            NeoForge 配方与酿造系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第四章：渲染原理 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-portal-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="../Part-1-Foundation/02-portal-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="../Part-1-Foundation/03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="04-portal-rendering.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="../Part-3-Advanced/05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="../Part-3-Advanced/06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="../Part-3-Advanced/07-scaling-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="../Part-4-Development/08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="../Part-4-Development/09-portal-api-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第四章：渲染原理</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第四章：渲染原理
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1-fabric-6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第四章：渲染原理</h1>
+
+
+<blockquote><p><strong>本章目标</strong>：深入理解 ImmersivePortalsMod 如何实现"透过传送门看世界"的视觉效果，掌握渲染管线的核心概念。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#目标">目标</a></li></ul>
+<ul><li><a href="#前置知识">前置知识</a></li></ul>
+<ul><li><a href="#传送门渲染的核心挑战">传送门渲染的核心挑战</a></li></ul>
+<ul><li><a href="#渲染管线流程图">渲染管线流程图</a></li></ul>
+<ul><li><a href="#portalrenderer-架构">PortalRenderer 架构</a></li></ul>
+<ul><li><a href="#stencil-渲染器原理">Stencil 渲染器原理</a></li></ul>
+<ul><li><a href="#帧缓冲区切换概念">帧缓冲区切换概念</a></li></ul>
+<ul><li><a href="#嵌套渲染层简介">嵌套渲染层简介</a></li></ul>
+<ul><li><a href="#简化渲染流程示例">简化渲染流程示例</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="目标">目标</h2>
+
+
+学完本章后，你将理解：
+
+<ul><li><strong>传送门渲染的核心挑战</strong> - 为什么普通的渲染方式无法实现传送门效果</li></ul>
+<ul><li><strong>渲染管线流程</strong> - 传送门内容是如何被渲染到屏幕上的</li></ul>
+<ul><li><strong>Stencil 模板缓冲</strong> - 如何用模板缓冲限制渲染区域</li></ul>
+<ul><li><strong>PortalRenderer 架构</strong> - 渲染器的组织结构</li></ul>
+<ul><li><strong>嵌套渲染层</strong> - 多层传送门如何递归渲染</li></ul>
+
+<hr>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Minecraft 基本的渲染流程</li></ul>
+<ul><li>知道 GPU 的基本概念（显卡负责画图）</li></ul>
+<ul><li>了解 Java 面向对象编程（类、继承、抽象类）</li></ul>
+<ul><li>知道什么是 <strong>OpenGL</strong>（一种图形 API）</li></ul>
+
+<hr>
+
+<h2 id="传送门渲染的核心挑战">传送门渲染的核心挑战</h2>
+
+
+<h3>什么是传送门渲染？</h3>
+
+
+当你站在传送门前，往里看时，你看到的不是传送门本身的纹理，而是<strong>另一个维度的世界</strong>！
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      普通方块渲染                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│   玩家视角                                                      │
+│       ↓                                                        │
+│   [屏幕像素] ← [渲染器] ← [方块数据]                            │
+│                                                               │
+│   💡 简单明了：输入是方块，输出是像素                            │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      传送门渲染                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│   玩家视角                                                      │
+│       ↓                                                        │
+│   [屏幕像素] ← [渲染器] ← [传送门] ← [目标维度的世界]           │
+│                                                               │
+│   💡 复杂：需要渲染&quot;另一个世界&quot;的内容                           │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>核心挑战</h3>
+
+
+| 挑战 | 描述 | 为什么困难 |
+|------|------|-----------|
+| <strong>跨维度渲染</strong> | 渲染完全不同的世界 | 需要切换世界上下文 |
+| <strong>正确的深度</strong> | 传送门内容要与外部世界正确叠加 | 深度缓冲需要特殊处理 |
+| <strong>区域限制</strong> | 只渲染传送门框内的内容 | 超出部分要"裁剪"掉 |
+| <strong>多层嵌套</strong> | 传送门内再看向传送门 | 递归渲染 |
+
+<hr>
+
+<h2 id="渲染管线流程图">渲染管线流程图</h2>
+
+
+<h3>完整渲染流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Init["初始化阶段"]
+        A["Minecraft 渲染开始"]
+        B{"检测渲染模式"}
+        B -->|Iris Shaders| C["IrisPortalRenderer"]
+        B -->|普通模式| D["RendererUsingStencil"]
+        B -->|兼容性模式| E["RendererUsingFrameBuffer"]
+    end
+
+    subgraph Main["主渲染循环"]
+        D --> F["收集可见传送门"]
+        F --> G["按距离排序"]
+        G --> H{"遍历传送门"}
+    end
+
+    subgraph Portal["单个传送门渲染"]
+        H -->|处理| I["pushPortalLayer"]
+        I --> J["清除传送门区域深度"]
+        J --> K["渲染传送门内容"]
+        K --> L["切换到目标维度"]
+        L --> M["设置相机位置"]
+        M --> N["渲染目标世界"]
+        N --> O["恢复原始状态"]
+        O --> P["popPortalLayer"]
+    end
+
+    H -->|完成| Q["渲染完成"]
+    P --> H
+
+    style A fill:#e1f5fe
+    style K fill:#c8e6c9
+    style N fill:#fff3e0</div>
+</div>
+
+
+<h3>渲染状态变化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                   单帧渲染的状态变化                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  帧开始                                                       │
+│     ↓                                                         │
+│  [当前维度: 主世界]  [相机: 玩家位置]                           │
+│     ↓                                                         │
+│  检测到传送门                                                   │
+│     ↓                                                         │
+│  pushPortalLayer()                                           │
+│     ↓                                                         │
+│  [当前维度: 主世界]  [相机: 玩家位置]  [层数: 1]                 │
+│     ↓                                                         │
+│  渲染传送门内容                                                 │
+│     ↓                                                         │
+│  switchWorld() → [当前维度: 下界]  [相机: 目标位置]             │
+│     ↓                                                         │
+│  渲染下界的世界...                                             │
+│     ↓                                                         │
+│  restoreWorld() → [当前维度: 主世界]  [相机: 玩家位置]          │
+│     ↓                                                         │
+│  popPortalLayer()                                            │
+│     ↓                                                         │
+│  [当前维度: 主世界]  [相机: 玩家位置]  [层数: 0]                 │
+│     ↓                                                         │
+│  帧结束 → 显示画面                                              │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="portalrenderer-架构">PortalRenderer 架构</h2>
+
+
+<h3>渲染器类层次结构</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class PortalRenderer {
+        <<abstract>>
+        +prepareRendering()
+        +doRenderPortal()
+        +finishRendering()
+        +onBeforeTranslucentRendering()
+        +onAfterTranslucentRendering()
+    }
+
+    class RendererUsingStencil {
+        +prepareRendering()
+        +doRenderPortal()
+        +clearDepthOfPortalViewArea()
+        +restoreDepthOfPortalViewArea()
+    }
+
+    class RendererUsingFrameBuffer {
+        +SecondaryFrameBuffer secondaryBuffer
+        +renderSecondBufferIntoMainBuffer()
+    }
+
+    class IrisPortalRenderer {
+        +prepareRenderingIris()
+        +handleIrisShader()
+    }
+
+    class ExperimentalIrisPortalRenderer {
+        +renderWithExperimentalIris()
+    }
+
+    PortalRenderer <|-- RendererUsingStencil
+    PortalRenderer <|-- RendererUsingFrameBuffer
+    PortalRenderer <|-- IrisPortalRenderer
+    PortalRenderer <|-- ExperimentalIrisPortalRenderer
+
+    style PortalRenderer fill:#e3f2fd,stroke:#1976d2</div>
+</div>
+
+
+<h3>渲染器选择逻辑</h3>
+
+
+ImmersivePortalsMod 会根据不同情况选择最合适的渲染器：
+</p>
+<p><pre class="code-block"><code class="language-java">public static void switchToCorrectRenderer() {
+    if (PortalRendering.isRendering()) {
+        return;  // 已经在渲染中，跳过
+    }
+
+    // 根据配置选择渲染器
+    if (IrisInterface.invoker.isIrisPresent()) {
+        // Iris 光影 mod 存在
+        if (IrisInterface.invoker.isShaders()) {
+            if (IPCGlobal.experimentalIrisPortalRenderer) {
+                switchRenderer(ExperimentalIrisPortalRenderer.instance);
+            } else {
+                switchRenderer(IrisPortalRenderer.instance);
+            }
+        }
+    } else {
+        // 没有 Iris，使用标准渲染器
+        switch (IPGlobal.renderMode) {
+            case normal -&gt; switchRenderer(IPCGlobal.rendererUsingStencil);
+            case compatibility -&gt; switchRenderer(IPCGlobal.rendererUsingFrameBuffer);
+        }
+    }
+}</code></pre>
+
+
+<h3>三种渲染器对比</h3>
+
+
+| 渲染器 | 原理 | 性能 | 嵌套支持 | 适用场景 |
+|--------|------|------|----------|----------|
+| <strong>Stencil</strong> | 使用模板缓冲限制区域 | ⭐⭐⭐⭐⭐ | 支持多层 | 默认首选 |
+| <strong>FrameBuffer</strong> | 渲染到辅助缓冲区 | ⭐⭐⭐ | 仅单层 | 兼容性模式 |
+| <strong>Iris</strong> | 集成 Iris 管线 | ⭐⭐⭐⭐ | 支持 | 使用光影时 |
+
+<hr>
+
+<h2 id="stencil-渲染器原理">Stencil 渲染器原理</h2>
+
+
+<h3>什么是模板缓冲（Stencil Buffer）？</h3>
+
+
+<strong>模板缓冲</strong>是 OpenGL 提供的一种像素级蒙版机制，可以理解为一层"遮罩"：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      模板缓冲原理                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  主缓冲区（颜色）  │  深度缓冲区  │  模板缓冲区                 │
+│  ┌─────────────┐  │ ┌─────────┐ │ ┌─────────┐              │
+│  │ RGB 颜色    │  │ │ 深度值  │ │ │ 0 或 1  │              │
+│  └─────────────┘  │ └─────────┘ │ └─────────┘              │
+│                                                               │
+│  💡 模板缓冲 = 像素级别的&quot;通行证&quot;                              │
+│     只有模板值为 1 的像素才会被渲染                            │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>Stencil 渲染的核心步骤</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant R as 渲染器
+    participant GL as OpenGL
+    participant P as 传送门
+    participant W as 目标世界
+
+    Note over R: 1. 初始化模板缓冲
+    R->>GL: glClearStencil(0)
+    R->>GL: glClear(GL_STENCIL_BUFFER_BIT)
+    R->>GL: glEnable(GL_STENCIL_TEST)
+
+    Note over R: 2. 检测传送门可见性
+    R->>GL: 执行可见性查询
+    GL-->>R: 是否可见
+
+    Note over R: 3. 写入传送门区域到模板缓冲
+    R->>P: renderPortalViewAreaToStencil()
+    P->>GL: glStencilFunc(EQUAL, currentLayer, 0xFF)
+    P->>GL: glStencilOp(INCR)  // 模板值+1
+    P->>GL: 渲染传送门几何到模板缓冲
+
+    Note over R: 4. 入栈渲染层
+    R->>R: pushPortalLayer()
+
+    Note over R: 5. 清除传送门区域深度
+    R->>GL: glColorMask(false)  // 不写颜色
+    R->>GL: glDepthFunc(ALWAYS)
+    R->>GL: 渲染屏幕三角形（深度设为最远）
+
+    Note over R: 6. 渲染传送门内容
+    R->>W: switchAndRenderWorld()
+    W->>GL: 渲染目标维度
+    GL-->>W: 渲染完成
+
+    Note over R: 7. 出栈渲染层
+    R->>R: popPortalLayer()
+
+    Note over R: 8. 恢复状态
+    R->>GL: glDisable(GL_STENCIL_TEST)</div>
+</div>
+
+
+<h3>模板值管理</h3>
+
+
+模板值用于追踪传送门的嵌套层级：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      模板值层级管理                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Layer 0（最外层）：传送门区域模板值 = 1                       │
+│     ↓                                                         │
+│  Layer 1（嵌套层）：传送门区域模板值 = 2                       │
+│     ↓                                                         │
+│  Layer 2（更深层）：传送门区域模板值 = 3                       │
+│                                                               │
+│  💡 使用 glStencilOp(INCR) 每进入一层就 +1                      │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void renderPortalViewAreaToStencil(Portal portal) {
+    int outerPortalStencilValue = PortalRendering.getPortalLayer();
+
+    // 只渲染当前层级的像素（模板值等于当前层级）
+    GL11.glStencilFunc(GL_EQUAL, outerPortalStencilValue, 0xFF);
+
+    // 如果模板和深度测试都通过，增加模板值
+    GL11.glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+
+    // 渲染传送门可视区域
+    ViewAreaRenderer.renderPortalArea(portal, ...);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="帧缓冲区切换概念">帧缓冲区切换概念</h2>
+
+
+<h3>为什么需要帧缓冲区？</h3>
+
+
+<strong>帧缓冲区（Framebuffer）</strong> 是 GPU 内存中的一块区域，用来存储渲染结果。
+
+当你透过传送门看时，需要：
+<ul><li>在<strong>辅助缓冲区</strong>中渲染目标世界</li></ul>
+<ul><li>把辅助缓冲区的内容<strong>绘制到主缓冲区</strong>的传送门区域</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    帧缓冲区切换流程                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  主帧缓冲区（屏幕）                                           │
+│  ┌─────────────────────────────┐                           │
+│  │  普通世界内容                │                           │
+│  │  ┌─────────┐                │                           │
+│  │  │ 传送门   │ ← 需要填充这里 │                           │
+│  │  │ 区域    │                │                           │
+│  │  └─────────┘                │                           │
+│  └─────────────────────────────┘                           │
+│                                                               │
+│       ↓ copyTexture()                                        │
+│                                                               │
+│  辅助帧缓冲区                                                 │
+│  ┌─────────────────────────────┐                           │
+│  │ 目标维度的内容               │                           │
+│  │                             │                           │
+│  │                             │                           │
+│  └─────────────────────────────┘                           │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>FrameBuffer 渲染器的限制</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
+protected void doRenderPortal(Portal portal) {
+    // FrameBuffer 渲染器不支持嵌套渲染！
+    if (PortalRendering.isRendering()) {
+        return;
+    }
+
+    // 1. 保存当前帧缓冲
+    RenderTarget oldFrameBuffer = client.getMainRenderTarget();
+
+    // 2. 切换到辅助帧缓冲
+    secondaryFrameBuffer.fb.bindWrite(true);
+    GlStateManager._clearColor(1, 0, 1, 1);  // 清除为洋红色
+    GlStateManager._clearDepth(1);
+    GlStateManager._clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // 3. 渲染传送门内容
+    renderPortalContent(portal);
+
+    // 4. 恢复主帧缓冲
+    oldFrameBuffer.bindWrite(true);
+
+    // 5. 将辅助帧缓冲绘制到主帧缓冲
+    renderSecondBufferIntoMainBuffer(portal);
+}</code></pre>
+
+
+<blockquote><p><strong>💡 为什么不用 FrameBuffer 实现嵌套？</strong></p></blockquote>
+>
+<blockquote><p>因为每层嵌套都需要一个新的辅助缓冲区，内存开销太大！</p></blockquote>
+<blockquote><p>Stencil 渲染器只需要一个模板值变量，就能追踪无限层级。</p></blockquote>
+
+<hr>
+
+<h2 id="嵌套渲染层简介">嵌套渲染层简介</h2>
+
+
+<h3>什么是嵌套传送门？</h3>
+
+
+<strong>嵌套传送门</strong>就是站在传送门内，再看向另一个传送门：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      嵌套传送门示意                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  玩家站在传送门 A 内，看向传送门 B                             │
+│                                                               │
+│       玩家                                                    │
+│         ↓                                                     │
+│   ┌───────────────────┐                                      │
+│   │   传送门 A        │                                      │
+│   │  ┌───────────┐   │                                      │
+│   │  │ 传送门 B  │   │                                      │
+│   │  │           │   │                                      │
+│   │  └───────────┘   │                                      │
+│   └───────────────────┘                                      │
+│                                                               │
+│  A → 主世界                                                   │
+│  B → 下界                                                     │
+│                                                               │
+│  玩家实际看到的是：下界通过传送门 B 的内容                      │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>Portal Layer 栈</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Stack["PortalRendering.portalLayers 栈"]
+        direction TB
+        L3["Layer 3: 最深层传送门"]
+        L2["Layer 2: 中间传送门"]
+        L1["Layer 1: 外层传送门"]
+        Base["Layer 0: 外部世界"]
+    end
+
+    subgraph Top["栈顶操作"]
+        Top1["pushPortalLayer() - 入栈"]
+        Top2["popPortalLayer() - 出栈"]
+    end
+
+    Top1 -->|添加| L1
+    L1 -->|添加| L2
+    L2 -->|添加| L3
+    L3 -->|移除| Top2</div>
+</div>
+
+
+<h3>层数限制</h3>
+
+
+为了性能和安全，传送门嵌套层数有限制：
+</p>
+<p><pre class="code-block"><code class="language-java">public static int getMaxPortalLayer() {
+    if (RenderStates.isLaggy) {
+        return 1;  // 卡顿时只允许单层
+    }
+    return IPGlobal.maxPortalLayer;  // 默认是 6
+}</code></pre>
+
+
+| 配置 | 最大层数 | 说明 |
+|------|----------|------|
+| 默认 | 6 | 性能与功能平衡 |
+| 卡顿时 | 1 | 保障基本可用 |
+| 可配置 | 1-16 | 通过配置文件调整 |
+
+<hr>
+
+<h2 id="简化渲染流程示例">简化渲染流程示例</h2>
+
+
+<h3>伪代码实现</h3>
+
+
+以下是传送门渲染的简化实现，帮助你理解核心逻辑：
+</p>
+<p><pre class="code-block"><code class="language-java"> * 传送门渲染简化伪代码
+ */
+public class SimplifiedPortalRenderer {
+
+    public void renderPortal(Portal portal) {
+        // 1. 检测传送门是否可见
+        if (!isPortalVisible(portal)) {
+            return;
+        }
+
+        // 2. 入栈渲染层
+        PortalRendering.pushPortalLayer(portal);
+
+        // 3. 清除传送门区域的深度值
+        clearDepthInPortalArea(portal);
+
+        // 4. 渲染传送门内容
+        renderPortalContent(portal);
+
+        // 5. 出栈渲染层
+        PortalRendering.popPortalLayer();
+    }
+
+    private void renderPortalContent(Portal portal) {
+        // 4a. 获取目标世界和位置
+        ClientLevel destWorld = ClientWorldLoader.getWorld(portal.getDestDim());
+        Vec3 cameraPos = portal.transformPoint(getCameraPos());
+
+        // 4b. 创建世界渲染信息
+        WorldRenderInfo info = new WorldRenderInfo.Builder()
+            .setWorld(destWorld)
+            .setCameraPos(cameraPos)
+            .setCameraTransformation(portal.getAdditionalCameraTransformation())
+            .build();
+
+        // 4c. 切换世界并渲染
+        switchAndRenderWorld(info);
+    }
+
+    private void switchAndRenderWorld(WorldRenderInfo info) {
+        // 保存当前世界状态
+        ClientLevel originalWorld = getCurrentWorld();
+
+        try {
+            // 切换到目标世界
+            setCurrentWorld(info.world);
+
+            // 设置相机
+            setCameraPosition(info.cameraPos);
+            applyCameraTransformation(info.cameraTransformation);
+
+            // 渲染世界
+            renderWorld(info.renderDistance);
+
+        } finally {
+            // 恢复原始世界
+            setCurrentWorld(originalWorld);
+        }
+    }
+}</code></pre>
+
+
+<h3>相机变换</h3>
+
+
+当渲染嵌套传送门时，相机位置需要经过多次变换：
+</p>
+<p><pre class="code-block"><code class="language-java">public static Vec3 getRenderingCameraPos() {
+    Vec3 pos = RenderStates.originalCamera.getPosition();
+
+    // 依次应用每个传送门的变换
+    for (Portal portal : portalLayers) {
+        pos = portal.transformPoint(pos);
+    }
+
+    return pos;
+}</code></pre>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    嵌套相机变换示意                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Layer 0: 原始相机位置 P0                                    │
+│     ↓ transformPoint(Portal1)                                 │
+│  Layer 1: P1 = T1(P0)                                        │
+│     ↓ transformPoint(Portal2)                                 │
+│  Layer 2: P2 = T2(T1(P0))                                    │
+│     ↓ transformPoint(Portal3)                                 │
+│  Layer 3: P3 = T3(T2(T1(P0)))                               │
+│                                                               │
+│  💡 每一层的变换都会应用到下一层！                              │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章节学习后，请确认你能回答以下问题：
+
+<ul><li>[ ] <strong>Q1</strong>: 传送门渲染的核心挑战是什么？为什么原版 Minecraft 无法实现"透过传送门看世界"？</li></ul>
+
+<ul><li>[ ] <strong>Q2</strong>: Stencil 渲染器的工作原理是什么？模板缓冲如何限制渲染区域？</li></ul>
+
+<ul><li>[ ] <strong>Q3</strong>: 为什么 FrameBuffer 渲染器不支持嵌套传送门？它的主要用途是什么？</li></ul>
+
+<ul><li>[ ] <strong>Q4</strong>: <code>pushPortalLayer()</code> 和 <code>popPortalLayer()</code> 的作用是什么？为什么需要配对使用？</li></ul>
+
+<ul><li>[ ] <strong>Q5</strong>: 传送门的最大嵌套层数是多少？如何配置？超过限制会怎样？</li></ul>
+
+<hr>
+
+<h2 id="相关文档">相关文档</h2>
+
+
+| 文档 | 说明 |
+|------|------|
+| <a href="../analysis/02-portal-entity.html">02-portal-entity</a> | 传送门实体系统详解 |
+| <a href="../analysis/04-rendering-system.html">04-rendering-system</a> | 完整渲染系统分析 |
+| <a href="../analysis/SUMMARY.html">SUMMARY</a> | 架构总结 |
+
+<hr>
+
+<h2 id="附录核心文件速查">附录：核心文件速查</h2>
+
+
+| 功能 | 文件 |
+|------|------|
+| 渲染器基类 | <code>render/renderer/PortalRenderer.java</code> |
+| Stencil 渲染器 | <code>render/renderer/RendererUsingStencil.java</code> |
+| FrameBuffer 渲染器 | <code>render/renderer/RendererUsingFrameBuffer.java</code> |
+| 渲染层管理 | <code>render/context_management/PortalRendering.java</code> |
+| 世界渲染信息 | <code>render/context_management/WorldRenderInfo.java</code> |
+| 可视区域渲染 | <code>render/ViewAreaRenderer.java</code> |
+| 前向裁剪 | <code>render/FrontClipping.java</code> |
+
+<hr>
+
+<em>文档版本：ImmersivePortalsMod 6.0.6, Minecraft 1.21.1</em>
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../Part-1-Foundation/03-teleportation-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            传送机制基础
+        </a><a href="../Part-3-Advanced/05-nested-portals.html" class="next">
+            嵌套传送门
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>API 高级应用 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-portal-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="../Part-1-Foundation/02-portal-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="../Part-1-Foundation/03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="../Part-2-Rendering/04-portal-rendering.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="../Part-3-Advanced/05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="../Part-3-Advanced/06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="../Part-3-Advanced/07-scaling-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="09-portal-api-advanced.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>API 高级应用</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    API 高级应用
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>API 高级应用</h1>
+
+
+<blockquote><p>本章目标：掌握 ImmPtlEntityExtension 接口、自定义传送门生成器，以及完整模组集成方法。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#immtlentitityextension-接口">ImmPtlEntityExtension 接口</a></li></ul>
+<ul><li><a href="#自定义传送门生成器">自定义传送门生成器</a></li></ul>
+<ul><li><a href="#完整模组集成示例">完整模组集成示例</a></li></ul>
+<ul><li><a href="#api-最佳实践">API 最佳实践</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="immptlentityextension-接口">ImmPtlEntityExtension 接口</h2>
+
+
+<h3>什么是 ImmPtlEntityExtension？</h3>
+
+
+<strong>ImmPtlEntityExtension</strong> 是一个允许开发者控制实体传送行为的接口。通过实现这个接口，你可以：
+<ul><li>自定义实体的传送逻辑</li></ul>
+<ul><li>阻止特定实体传送</li></ul>
+<ul><li>在传送时执行特殊效果</li></ul>
+<ul><li>修改传送目的地</li></ul>
+
+源码位置：</p>
+<p><pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\ImmersivePortalsMod-6.0.6-mc1.21.1\src\main\java\qouteall\imm_ptl\core\api\ImmPtlEntityExtension.java</code></pre>
+
+
+<h3>接口定义</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface ImmPtlEntityExtension {
+    
+    // 当实体被传送前调用
+    default void ip_onEntityTeleported(
+        ServerWorld sourceWorld,
+        ServerWorld destinationWorld,
+        Vec3d sourcePosition,
+        Vec3d destinationPosition
+    ) {}
+    
+    // 检查实体是否可以传送
+    default boolean ip_canTeleport(Portal portal) {
+        return true;
+    }
+    
+    // 获取实体的特殊目的地（可选）
+    default Vec3d ip_getCustomTeleportDestination(Portal portal) {
+        return null;
+    }
+    
+    // 当实体进入传送门时调用
+    default void ip_onEnterPortal(Portal portal) {}
+    
+    // 当实体离开传送门时调用
+    default void ip_onExitPortal(Portal portal) {}
+}</code></pre>
+
+
+<h3>实现示例：阻止特定实体传送</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyEntityExtension implements ImmPtlEntityExtension {
+    
+    private static final Set&lt;EntityType&lt;?&gt;&gt; BLOCKED_TYPES = Set.of(
+        EntityType.VILLAGER,  // 村民不能传送
+        EntityType.ITEM        // 物品不能传送
+    );
+    
+    @Override
+    public boolean ip_canTeleport(Portal portal) {
+        // 获取当前实体
+        Entity entity = (Entity) this;
+        
+        // 检查是否是阻止列表中的类型
+        if (BLOCKED_TYPES.contains(entity.getType())) {
+            return false;  // 阻止传送
+        }
+        
+        return true;  // 允许传送
+    }
+}</code></pre>
+
+
+<h3>实现示例：自定义传送目的地</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class HomeTeleporter implements ImmPtlEntityExtension {
+    
+    private Vec3d homePosition = null;
+    
+    @Override
+    public Vec3d ip_getCustomTeleportDestination(Portal portal) {
+        // 返回玩家的家位置
+        if (homePosition == null) {
+            // 使用玩家首次登录的位置作为&quot;家&quot;
+            PlayerEntity player = (PlayerEntity) this;
+            homePosition = player.getPos();
+        }
+        
+        // 返回固定的目的地
+        return homePosition;
+    }
+    
+    @Override
+    public void ip_onEntityTeleported(
+        ServerWorld sourceWorld,
+        ServerWorld destinationWorld,
+        Vec3d sourcePosition,
+        Vec3d destinationPosition
+    ) {
+        // 传送成功后播放音效
+        PlayerEntity player = (PlayerEntity) this;
+        player.playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
+        
+        // 发送消息
+        player.sendMessage(Text.literal(&quot;已传送到家！&quot;), true);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="自定义传送门生成器">自定义传送门生成器</h2>
+
+
+<h3>PortalGenerator 接口</h3>
+
+
+<strong>PortalGenerator</strong> 允许你定义自定义的传送门创建和触发逻辑。
+</p>
+<p><pre class="code-block"><code class="language-java">public interface PortalGenerator {
+    
+    // 获取生成器标识符
+    Identifier getIdentifier();
+    
+    // 检查是否应该创建传送门
+    boolean shouldGeneratePortal(BlockPos pos, Level world);
+    
+    // 创建传送门
+    @Nullable Portal createPortal(BlockPos pos, Level world);
+    
+    // 传送门创建后的处理
+    default void onPortalCreated(Portal portal, BlockPos framePos) {}
+}</code></pre>
+
+
+<h3>完整示例：创建下界传送门生成器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class NetherPortalGenerator implements PortalGenerator {
+    
+    public static final Identifier ID = new Identifier(&quot;mymod&quot;, &quot;nether_portal&quot;);
+    
+    @Override
+    public Identifier getIdentifier() {
+        return ID;
+    }
+    
+    @Override
+    public boolean shouldGeneratePortal(BlockPos pos, Level world) {
+        // 只在下界维度生成
+        return world.dimension() == Level.NETHER;
+    }
+    
+    @Override
+    public Portal createPortal(BlockPos pos, Level world) {
+        // 创建传送门实体
+        Portal portal = new Portal(world);
+        
+        // 设置传送门位置（在方块位置）
+        Vec3d portalPos = Vec3d.atCenterOf(pos);
+        portal.setPos(portalPos.x, portalPos.y, portalPos.z);
+        
+        // 设置传送门大小
+        portal.setWidth(2.0);
+        portal.setHeight(3.0);
+        
+        // 设置轴向（朝向 Z 轴）
+        portal.setAxisW(new Vec3d(0, 0, 1));
+        portal.setAxisH(new Vec3d(0, 1, 0));
+        
+        // 设置目标维度为主世界
+        ResourceKey&lt;Level&gt; netherKey = Level.NETHER;
+        ResourceKey&lt;Level&gt; overworldKey = Level.OVERWORLD;
+        portal.setDestinationDimension(overworldKey);
+        
+        // 计算主世界对应位置（下界坐标转换）
+        Vec3d overworldPos = convertNetherToOverworld(portalPos);
+        portal.setDestination(overworldPos);
+        
+        // 生成到世界
+        world.spawnEntity(portal);
+        
+        return portal;
+    }
+    
+    @Override
+    public void onPortalCreated(Portal portal, BlockPos framePos) {
+        // 添加粒子效果
+        ServerWorld world = (ServerWorld) portal.getWorld();
+        world.spawnParticles(
+            ParticleTypes.PORTAL,
+            portal.getX(), portal.getY(), portal.getZ(),
+            100,  // 粒子数量
+            1.0, 1.0, 1.0,  // 偏移
+            0.1   // 速度
+        );
+    }
+    
+    // 下界坐标转换为主世界坐标（8倍）
+    private Vec3d convertNetherToOverworld(Vec3d netherPos) {
+        return new Vec3d(
+            netherPos.x * 8,
+            netherPos.y,
+            netherPos.z * 8
+        );
+    }
+}</code></pre>
+
+
+<h3>注册自定义生成器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyMod implements DedicatedServerModInit {
+    
+    @Override
+    public void onInitialize() {
+        // 注册自定义传送门生成器
+        PortalGeneratorRegistry.register(new NetherPortalGenerator());
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="完整模组集成示例">完整模组集成示例</h2>
+
+
+<h3>模组概述</h3>
+
+
+创建一个完整的"回家传送门"模组，包含：
+<ul><li>自定义传送门物品</li></ul>
+<ul><li>右键使用创建传送门对</li></ul>
+<ul><li>支持玩家传送</li></ul>
+
+<h3>项目结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">src/main/java/com/example/hometeleporter/
+├── HomeTeleporterMod.java      # 模组主类
+├── item/HomePortalWandItem.java # 传送门魔杖物品
+├── entity/HomePortalEntity.java # 自定义传送门实体
+└── mixin/PortalMixin.java       # Mixin 注入</code></pre>
+
+
+<h3>模组主类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mod(HomeTeleporterMod.MOD_ID)
+public class HomeTeleporterMod implements DedicatedServerModInit {
+    
+    public static final String MOD_ID = &quot;hometeleporter&quot;;
+    
+    @Override
+    public void onInitialize() {
+        // 注册物品
+        Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, &quot;home_portal_wand&quot;),
+            new HomePortalWandItem()
+        );
+        
+        // 注册实体类型
+        Registry.register(
+            Registries.ENTITY_TYPE,
+            new Identifier(MOD_ID, &quot;home_portal&quot;),
+            HomePortalEntity.TYPE
+        );
+        
+        // 注册传送门生成器
+        PortalGeneratorRegistry.register(new HomePortalGenerator());
+        
+        HomeTeleporterMod.LOGGER.info(&quot;HomeTeleporterMod 已加载！&quot;);
+    }
+}</code></pre>
+
+
+<h3>传送门魔杖物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class HomePortalWandItem extends Item {
+    
+    public HomePortalWandItem() {
+        super(new Settings()
+            .maxCount(1)
+            .rarity(Rarity.EPIC)
+        );
+    }
+    
+    @Override
+    public TypedActionResult&lt;ItemStack&gt; use(
+        Level world,
+        PlayerEntity player,
+        Hand hand
+    ) {
+        if (world.isClient) {
+            return TypedActionResult.pass(player.getStackInHand(hand));
+        }
+        
+        // 检查是否在主世界
+        if (world.dimension() != Level.OVERWORLD) {
+            player.sendMessage(
+                Text.literal(&quot;这个物品只能在主世界使用！&quot;),
+                false
+            );
+            return TypedActionResult.fail(player.getStackInHand(hand));
+        }
+        
+        // 获取玩家朝向的方块
+        BlockHitResult hit = raycast(player, 10.0, false);
+        
+        if (hit.getType() == MissType.MISS) {
+            player.sendMessage(
+                Text.literal(&quot;请指向一个方块！&quot;),
+                false
+            );
+            return TypedActionResult.fail(player.getStackInHand(hand));
+        }
+        
+        BlockPos pos = hit.getBlockPos();
+        
+        // 创建传送门对
+        createPortalPair(world, pos, player);
+        
+        // 消耗物品
+        player.getStackInHand(hand).decrement(1);
+        
+        // 播放音效
+        player.playSound(SoundEvents.BLOCK_PORTAL_AMBIENT, 1.0F, 1.0F);
+        
+        return TypedActionResult.success(player.getStackInHand(hand));
+    }
+    
+    private void createPortalPair(Level world, BlockPos pos, PlayerEntity player) {
+        // 位置 A（玩家位置）
+        Vec3d posA = player.getPos();
+        
+        // 位置 B（玩家指向的位置）
+        Vec3d posB = Vec3d.atCenterOf(pos);
+        
+        // 创建传送门 A（回到这里）
+        Portal portalA = new Portal(world);
+        portalA.setPos(posA.x, posA.y, posA.z);
+        portalA.setWidth(2.0);
+        portalA.setHeight(3.0);
+        portalA.setAxisW(new Vec3d(0, 0, 1));
+        portalA.setAxisH(new Vec3d(0, 1, 0));
+        portalA.setDestinationDimension(world.getDimensionKey());
+        portalA.setDestination(posB);
+        portalA.setCustomName(Text.literal(&quot;回家传送门&quot;));
+        world.spawnEntity(portalA);
+        
+        // 创建传送门 B（从这里出发）
+        Portal portalB = new Portal(world);
+        portalB.setPos(posB.x, posB.y, posB.z);
+        portalB.setWidth(2.0);
+        portalB.setHeight(3.0);
+        portalB.setAxisW(new Vec3d(0, 0, 1));
+        portalB.setAxisH(new Vec3d(0, 1, 0));
+        portalB.setDestinationDimension(world.getDimensionKey());
+        portalB.setDestination(posA);
+        portalB.setCustomName(Text.literal(&quot;出发传送门&quot;));
+        world.spawnEntity(portalB);
+        
+        // 发送成功消息
+        player.sendMessage(
+            Text.literal(&quot;已创建传送门对！&quot;),
+            false
+        );
+    }
+}</code></pre>
+
+
+<h3>自定义传送门实体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class HomePortalEntity extends Portal {
+    
+    public static final EntityType&lt;HomePortalEntity&gt; TYPE = FabricEntityTypeBuilder
+        .create(MobCategory.MISC, HomePortalEntity::new)
+        .dimensions(EntityDimensions.fixed(2, 3))
+        .fireImmune()
+        .build();
+    
+    public HomePortalEntity(Level world) {
+        super(TYPE, world);
+    }
+    
+    @Override
+    public boolean canTeleportEntity(Entity entity) {
+        // 只有玩家可以使用这个传送门
+        return entity instanceof PlayerEntity;
+    }
+    
+    @Override
+    public void tick() {
+        super.tick();
+        
+        // 添加持续的粒子效果
+        if (this.getWorld().isClient) {
+            this.getWorld().addParticle(
+                ParticleTypes.PORTAL,
+                this.getX() + random.nextGaussian() * 0.5,
+                this.getY() + random.nextGaussian() * 1.5,
+                this.getZ() + random.nextGaussian() * 0.5,
+                0, 0.02, 0
+            );
+        }
+    }
+}</code></pre>
+
+
+<h3>Mixin：修改传送行为</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Mixin(Portal.class)
+public abstract class PortalMixin {
+    
+    @Shadow
+    protected abstract boolean canTeleport(Entity entity);
+    
+    @Inject(
+        method = &quot;onEntityCollision&quot;,
+        at = @At(&quot;HEAD&quot;),
+        cancellable = true
+    )
+    private void onEntityCollision(Entity entity, CallbackInfo ci) {
+        // 检查是否是回家传送门
+        if (this instanceof HomePortalEntity) {
+            // 如果是物品，阻止传送
+            if (entity instanceof ItemEntity) {
+                ci.cancel();
+            }
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="api-最佳实践">API 最佳实践</h2>
+
+
+<h3>1. 性能优化</h3>
+
+
+💡 <strong>避免在每帧创建对象</strong>：</p>
+<p><pre class="code-block"><code class="language-java">public Vec3d getOffset() {
+    return new Vec3d(1, 0, 0);  // 每次调用都创建新对象
+}
+
+// 好：使用常量或缓存
+private static final Vec3d OFFSET = new Vec3d(1, 0, 0);
+
+public Vec3d getOffset() {
+    return OFFSET;
+}</code></pre>
+
+
+<h3>2. 空值检查</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public Vec3d getDestination(Portal portal) {
+    if (portal == null) {
+        return Vec3d.ZERO;
+    }
+    
+    Vec3d customDest = portal.getCustomTeleportDestination();
+    return customDest != null ? customDest : portal.getDestination();
+}</code></pre>
+
+
+<h3>3. 同步问题</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class SafeTeleportHandler {
+    
+    public void teleport(PlayerEntity player, Portal portal) {
+        // 只在服务端执行
+        if (player.getWorld().isClient) {
+            return;
+        }
+        
+        // 执行传送
+        doTeleport(player, portal);
+    }
+}</code></pre>
+
+
+<h3>4. 错误恢复</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public boolean safeTeleport(PlayerEntity player, Portal portal) {
+    try {
+        // 验证传送条件
+        if (!validateTeleport(player, portal)) {
+            return false;
+        }
+        
+        // 执行传送
+        performTeleport(player, portal);
+        return true;
+        
+    } catch (Exception e) {
+        // 记录错误
+        LOGGER.error(&quot;传送失败：&quot;, e);
+        
+        // 尝试恢复到安全位置
+        player.setPosition(player.getSpawnPoint(player.getWorld(), player.getBlockPos()));
+        return false;
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+✅ <strong>第1题</strong>：ImmPtlEntityExtension 接口有哪些方法？每个方法的作用是什么？
+
+✅ <strong>第2题</strong>：如何创建一个自定义的 PortalGenerator？
+
+✅ <strong>第3题</strong>：在多线程环境下，如何保证传送操作的安全性？
+
+✅ <strong>第4题</strong>：设计一个"主城传送门"模组，包含哪些核心组件？
+
+✅ <strong>第5题</strong>：如何处理传送过程中的异常情况？有哪些最佳实践？
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+<ul><li><a href="../SUMMARY.html">教程总结</a> - 回顾整个教程系列</li></ul>
+<ul><li><a href="../README.html">ImmersivePortalsMod 文档</a> - 返回模组文档首页</li></ul>
+
+<hr>
+
+<em>教程版本：ImmersivePortalsMod 6.0.6 / Minecraft 1.21.1</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="08-portal-api-basics.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            API 基础使用
+        </a><a href="../README.html" class="next">
+            ImmersivePortalsMod 教程系列
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../../script.js"></script>
+    <script src="../../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

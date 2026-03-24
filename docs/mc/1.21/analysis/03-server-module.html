@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <title>03 server module - Minecraft 原版</title>
+    <title>Minecraft 1.21 服务端模块分析 - Minecraft 原版</title>
     <link rel="stylesheet" href="../../../../styles/main.css">
     <link rel="stylesheet" href="../../../../styles.css">
     <link rel="stylesheet" href="../../../../styles/site-shell.css">
@@ -119,10 +119,10 @@
                         <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
                         <a href="../../../../docs/iris/index.html">Iris 光影</a>
                         <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
-                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
-                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
-                        <a href="../../../../docs/ImmersivePortalsMod/index.html">Immersiveportalsmod</a>
-                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
                     </div>
                 </li>
                 <li><a href="../../../../about.html">关于</a></li>
@@ -189,6 +189,14 @@
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 包结构详解
         </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="../index.html">
@@ -210,14 +218,14 @@
                     <i class="fas fa-chevron-right"></i>
                     <a href="../index.html">Minecraft 原版</a>
                     <i class="fas fa-chevron-right"></i>
-                    <span>03 server module</span>
+                    <span>Minecraft 1.21 服务端模块分析</span>
                 </nav>
                 <h1>
                     <span class="doc-type-tag analysis">
                         <i class="fas fa-microscope"></i>
                         源码分析
                     </span>
-                    03 server module
+                    Minecraft 1.21 服务端模块分析
                 </h1>
                 <div class="docs-meta">
                     <span><i class="fas fa-code-branch"></i> 1.21</span>
@@ -227,21 +235,30 @@
 
             <div class="docs-body doc-content">
                 <h1>Minecraft 1.21 服务端模块分析</h1>
+
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#1-服务端架构概述">服务端架构概述</a></li>
-<li><a href="#2-主类分析-minecraftserver">主类分析 (MinecraftServer)</a></li>
-<li><a href="#3-服务器生命周期">服务器生命周期</a></li>
-<li><a href="#4-玩家管理系统-playermanager">玩家管理系统 (PlayerManager)</a></li>
-<li><a href="#5-世界管理">世界管理</a></li>
-<li><a href="#6-网络协议实现">网络协议实现</a></li>
-<li><a href="#7-整合服务器-vs-独立服务器">整合服务器 vs 独立服务器</a></li>
-<li><a href="#8-tick-系统分析">Tick 系统分析</a></li>
-<li><a href="#9-命令系统">命令系统</a></li>
-<li><a href="#10-关键代码引用">关键代码引用</a></li></ul></p>
-<p><hr></p>
+
+<ul><li><a href="#1-服务端架构概述">服务端架构概述</a></li></ul>
+<ul><li><a href="#2-主类分析-minecraftserver">主类分析 (MinecraftServer)</a></li></ul>
+<ul><li><a href="#3-服务器生命周期">服务器生命周期</a></li></ul>
+<ul><li><a href="#4-玩家管理系统-playermanager">玩家管理系统 (PlayerManager)</a></li></ul>
+<ul><li><a href="#5-世界管理">世界管理</a></li></ul>
+<ul><li><a href="#6-网络协议实现">网络协议实现</a></li></ul>
+<ul><li><a href="#7-整合服务器-vs-独立服务器">整合服务器 vs 独立服务器</a></li></ul>
+<ul><li><a href="#8-tick-系统分析">Tick 系统分析</a></li></ul>
+<ul><li><a href="#9-命令系统">命令系统</a></li></ul>
+<ul><li><a href="#10-关键代码引用">关键代码引用</a></li></ul>
+
+<hr>
+
 <h2 id="1-服务端架构概述">1. 服务端架构概述</h2>
+
+
 <h3>1.1 模块层次结构</h3>
-<pre class="code-block"><code class="language-text">net.minecraft.server
+
+</p>
+<p><pre class="code-block"><code class="language-text">net.minecraft.server
 ├── MinecraftServer.java          # 核心抽象基类
 ├── PlayerManager.java            # 玩家管理抽象类
 ├── ServerNetworkIo.java          # 网络I/O管理
@@ -262,13 +279,21 @@
     ├── ServerLoginNetworkHandler.java
     ├── ServerPlayNetworkHandler.java
     └── ServerHandshakeNetworkHandler.java</code></pre>
+
+
 <h3>1.2 设计模式</h3>
-<p>服务端采用<strong>模板方法模式</strong>：</p>
-<pre class="code-block"><code class="language-java">public abstract class MinecraftServer
+
+
+服务端采用<strong>模板方法模式</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class MinecraftServer
 extends ReentrantThreadExecutor&lt;ServerTask&gt;
 implements QueryableServer, ChunkErrorHandler, CommandOutput, AutoCloseable</code></pre>
-<p><code>MinecraftServer</code> 是抽象基类，定义了服务端的核心流程：</p>
-<pre class="code-block"><code class="language-java">protected abstract boolean setupServer() throws IOException;  // 子类实现
+
+
+<code>MinecraftServer</code> 是抽象基类，定义了服务端的核心流程：
+</p>
+<p><pre class="code-block"><code class="language-java">protected abstract boolean setupServer() throws IOException;  // 子类实现
 
 // MinecraftServer.java:661
 protected void runServer() {
@@ -278,10 +303,17 @@ protected void runServer() {
         }
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="2-主类分析-minecraftserver">2. 主类分析 (MinecraftServer)</h2>
+
+
 <h3>2.1 核心成员变量</h3>
-<pre class="code-block"><code class="language-java">public abstract class MinecraftServer {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class MinecraftServer {
     // 存储与会话
     protected final LevelStorage.Session session;
     protected final PlayerSaveHandler saveHandler;
@@ -310,8 +342,12 @@ protected void runServer() {
     // 服务器线程
     private final Thread serverThread;
 }</code></pre>
+
+
 <h3>2.2 静态工厂方法</h3>
-<pre class="code-block"><code class="language-java">public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread, S&gt; serverFactory) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static &lt;S extends MinecraftServer&gt; S startServer(Function&lt;Thread, S&gt; serverFactory) {
     AtomicReference&lt;MinecraftServer&gt; atomicReference = new AtomicReference&lt;&gt;();
     Thread thread = new Thread(() -&gt; ((MinecraftServer)atomicReference.get()).runServer(), &quot;Server thread&quot;);
     thread.setUncaughtExceptionHandler((thread, throwable) -&gt; LOGGER.error(&quot;Uncaught exception&quot;, throwable));
@@ -323,12 +359,17 @@ protected void runServer() {
     thread.start();
     return server;
 }</code></pre>
-<p><strong>设计要点</strong>：
-<ul><li>使用 <code>AtomicReference</code> 解决线程初始化时序问题</li>
-<li>服务器线程名称固定为 "Server thread"</li>
-<li>多核系统上提升线程优先级到 8</li></ul></p>
+
+
+<strong>设计要点</strong>：
+<ul><li>使用 <code>AtomicReference</code> 解决线程初始化时序问题</li></ul>
+<ul><li>服务器线程名称固定为 "Server thread"</li></ul>
+<ul><li>多核系统上提升线程优先级到 8</li></ul>
+
 <h3>2.3 构造与初始化</h3>
-<pre class="code-block"><code class="language-java">public MinecraftServer(Thread serverThread, LevelStorage.Session session, 
+
+</p>
+<p><pre class="code-block"><code class="language-java">public MinecraftServer(Thread serverThread, LevelStorage.Session session, 
                        ResourcePackManager dataPackManager, SaveLoader saveLoader,
                        Proxy proxy, DataFixer dataFixer, ApiServices apiServices,
                        WorldGenerationProgressListenerFactory factory) {
@@ -350,10 +391,17 @@ protected void runServer() {
     this.commandFunctionManager = new CommandFunctionManager(...);
     this.structureTemplateManager = new StructureTemplateManager(...);
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="3-服务器生命周期">3. 服务器生命周期</h2>
+
+
 <h3>3.1 启动流程</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
 │                         Main.main()                              │
 │                           │                                      │
 │                           ▼                                      │
@@ -396,8 +444,12 @@ protected void runServer() {
 │  │  - 关闭世界                                             │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘</code></pre>
+
+
 <h3>3.2 Tick 循环核心实现</h3>
-<pre class="code-block"><code class="language-java">protected void runServer() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">protected void runServer() {
     try {
         if (this.setupServer()) {  // 初始化服务器
             this.tickStartTimeNanos = Util.getMeasuringTimeNano();
@@ -446,8 +498,12 @@ protected void runServer() {
         this.shutdown();  // 清理资源
     }
 }</code></pre>
+
+
 <h3>3.3 Tick 方法</h3>
-<pre class="code-block"><code class="language-java">public void tick(BooleanSupplier shouldKeepTicking) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void tick(BooleanSupplier shouldKeepTicking) {
     long startTime = Util.getMeasuringTimeNano();
     ++this.ticks;
     
@@ -473,8 +529,12 @@ protected void runServer() {
     tickTimes[ticks % 100] = tickDuration;
     averageTickTime = averageTickTime * 0.8f + tickDuration * 0.2f;
 }</code></pre>
+
+
 <h3>3.4 世界Tick</h3>
-<pre class="code-block"><code class="language-java">public void tickWorlds(BooleanSupplier shouldKeepTicking) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void tickWorlds(BooleanSupplier shouldKeepTicking) {
     // 禁用所有玩家的网络刷新
     getPlayerManager().getPlayerList().forEach(player -&gt; 
         player.networkHandler.disableFlush());
@@ -513,8 +573,12 @@ protected void runServer() {
         player.networkHandler.enableFlush();
     }
 }</code></pre>
+
+
 <h3>3.5 关闭流程</h3>
-<pre class="code-block"><code class="language-java">public void shutdown() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void shutdown() {
     LOGGER.info(&quot;Stopping server&quot;);
     this.getNetworkIo().stop();        // 停止网络
     
@@ -548,18 +612,29 @@ protected void runServer() {
     
     this.session.close();              // 关闭存储会话
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="4-玩家管理系统-playermanager">4. 玩家管理系统 (PlayerManager)</h2>
+
+
 <h3>4.1 概述</h3>
-<p><code>PlayerManager</code> 是玩家管理的抽象基类，负责：</p>
-<p><ul><li>玩家列表管理</li>
-<li>登录验证与过滤</li>
-<li>玩家数据保存</li>
-<li>权限与白名单</li>
-<li>消息广播</li>
-<li>统计与进度追踪</li></ul></p>
+
+
+<code>PlayerManager</code> 是玩家管理的抽象基类，负责：
+
+<ul><li>玩家列表管理</li></ul>
+<ul><li>登录验证与过滤</li></ul>
+<ul><li>玩家数据保存</li></ul>
+<ul><li>权限与白名单</li></ul>
+<ul><li>消息广播</li></ul>
+<ul><li>统计与进度追踪</li></ul>
+
 <h3>4.2 核心数据结构</h3>
-<pre class="code-block"><code class="language-java">public abstract class PlayerManager {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public abstract class PlayerManager {
     private final MinecraftServer server;
     private final List&lt;ServerPlayerEntity&gt; players;          // 玩家列表
     private final Map&lt;UUID, ServerPlayerEntity&gt; playerMap;   // UUID索引
@@ -579,8 +654,12 @@ protected void runServer() {
     private int viewDistance;
     private int simulationDistance;
 }</code></pre>
+
+
 <h3>4.3 玩家连接处理</h3>
-<pre class="code-block"><code class="language-java">public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, 
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void onPlayerConnect(ClientConnection connection, ServerPlayerEntity player, 
                            ConnectedClientData clientData) {
     GameProfile profile = player.getGameProfile();
     
@@ -628,8 +707,12 @@ protected void runServer() {
     serverWorld.onPlayerConnected(player);
     bossBarManager.onPlayerConnect(player);
 }</code></pre>
+
+
 <h3>4.4 连接检查</h3>
-<pre class="code-block"><code class="language-java">@Nullable
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Nullable
 public Text checkCanJoin(SocketAddress address, GameProfile profile) {
     // 检查封禁玩家列表
     if (this.bannedProfiles.contains(profile)) {
@@ -660,8 +743,12 @@ public Text checkCanJoin(SocketAddress address, GameProfile profile) {
     
     return null;  // 允许加入
 }</code></pre>
+
+
 <h3>4.5 玩家重生</h3>
-<pre class="code-block"><code class="language-java">public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive, 
+
+</p>
+<p><pre class="code-block"><code class="language-java">public ServerPlayerEntity respawnPlayer(ServerPlayerEntity player, boolean alive, 
                                        Entity.RemovalReason reason) {
     // 获取重生目标
     TeleportTarget target = player.getRespawnTarget(alive, TeleportTarget.NO_OP);
@@ -691,8 +778,12 @@ public Text checkCanJoin(SocketAddress address, GameProfile profile) {
     
     return newPlayer;
 }</code></pre>
+
+
 <h3>4.6 消息广播</h3>
-<pre class="code-block"><code class="language-java">public void broadcast(Text message, boolean overlay) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void broadcast(Text message, boolean overlay) {
     this.server.sendMessage(message);  // 发送到控制台
     for (ServerPlayerEntity player : this.players) {
         player.sendMessageToClient(message, overlay);
@@ -712,10 +803,17 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
         player.sendChatMessage(sent, shouldFilter, params);
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="5-世界管理">5. 世界管理</h2>
+
+
 <h3>5.1 世界创建</h3>
-<pre class="code-block"><code class="language-java">protected void createWorlds(WorldGenerationProgressListener listener) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">protected void createWorlds(WorldGenerationProgressListener listener) {
     ServerWorldProperties properties = saveProperties.getMainWorldProperties();
     boolean isDebugWorld = saveProperties.isDebugWorld();
     
@@ -763,8 +861,12 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
         worlds.put(worldKey, dimWorld);
     }
 }</code></pre>
+
+
 <h3>5.2 出生点设置</h3>
-<pre class="code-block"><code class="language-java">private static void setupSpawn(ServerWorld world, ServerWorldProperties properties,
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static void setupSpawn(ServerWorld world, ServerWorldProperties properties,
                                boolean bonusChest, boolean debugWorld) {
     if (debugWorld) {
         properties.setSpawnPos(BlockPos.ORIGIN.up(80), 0.0f);
@@ -807,8 +909,12 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
             .ifPresent(feature -&gt; feature.generate(...));
     }
 }</code></pre>
+
+
 <h3>5.3 准备开始区域</h3>
-<pre class="code-block"><code class="language-java">private void prepareStartRegion(WorldGenerationProgressListener listener) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void prepareStartRegion(WorldGenerationProgressListener listener) {
     ServerWorld overworld = getOverworld();
     BlockPos spawn = overworld.getSpawnPos();
     
@@ -840,10 +946,17 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
     listener.stop();
     updateMobSpawnOptions();
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="6-网络协议实现">6. 网络协议实现</h2>
+
+
 <h3>6.1 网络架构</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
 │                      客户端连接                                   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -875,8 +988,12 @@ public void broadcast(SignedMessage message, ServerPlayerEntity sender,
                                 │   - 聊天消息            │
                                 │   - 实体同步            │
                                 └─────────────────────────┘</code></pre>
+
+
 <h3>6.2 握手处理</h3>
-<pre class="code-block"><code class="language-java">@Override
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
 public void onHandshake(HandshakeC2SPacket packet) {
     switch (packet.intendedState()) {
         case LOGIN:
@@ -916,8 +1033,12 @@ private void login(HandshakeC2SPacket packet, boolean transfer) {
             new ServerLoginNetworkHandler(server, connection, transfer));
     }
 }</code></pre>
+
+
 <h3>6.3 登录流程</h3>
-<pre class="code-block"><code class="language-java">@Override
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
 public void onHello(LoginHelloC2SPacket packet) {
     Validate.validState(this.state == State.HELLO, &quot;Unexpected hello packet&quot;);
     this.profileName = packet.name();
@@ -973,8 +1094,12 @@ public void onKey(LoginKeyC2SPacket packet) {
     };
     verifier.start();
 }</code></pre>
+
+
 <h3>6.4 游戏玩法网络处理</h3>
-<pre class="code-block"><code class="language-java">@Override
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
 public void tick() {
     // 同步玩家位置
     syncWithPlayerPosition();
@@ -998,8 +1123,12 @@ public void tick() {
         disconnect(Text.translatable(&quot;multiplayer.disconnect.idling&quot;));
     }
 }</code></pre>
+
+
 <h3>6.5 网络I/O管理</h3>
-<pre class="code-block"><code class="language-java">public void bind(@Nullable InetAddress address, int port) throws IOException {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void bind(@Nullable InetAddress address, int port) throws IOException {
     EventLoopGroup group;
     Class&lt;? extends ServerChannel&gt; channelClass;
     
@@ -1047,10 +1176,17 @@ public void tick() {
         .localAddress(address, port)
         .bind().syncUninterruptibly();
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="7-整合服务器-vs-独立服务器">7. 整合服务器 vs 独立服务器</h2>
+
+
 <h3>7.1 类层次结构</h3>
-<pre class="code-block"><code class="language-text">MinecraftServer (抽象基类)
+
+</p>
+<p><pre class="code-block"><code class="language-text">MinecraftServer (抽象基类)
     │
     ├── IntegratedServer (整合服务器)
     │       │
@@ -1059,8 +1195,12 @@ public void tick() {
     └── MinecraftDedicatedServer (独立服务器)
             │
             └── DedicatedPlayerManager</code></pre>
+
+
 <h3>7.2 整合服务器 (IntegratedServer)</h3>
-<pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Environment(EnvType.CLIENT)
 public class IntegratedServer extends MinecraftServer {
     private final MinecraftClient client;
     private boolean paused = true;      // 可暂停
@@ -1114,8 +1254,12 @@ public class IntegratedServer extends MinecraftServer {
         return true;
     }
 }</code></pre>
+
+
 <h3>7.3 独立服务器 (MinecraftDedicatedServer)</h3>
-<pre class="code-block"><code class="language-java">public class MinecraftDedicatedServer extends MinecraftServer 
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MinecraftDedicatedServer extends MinecraftServer 
     implements DedicatedServer {
     
     private final List&lt;PendingServerCommand&gt; commandQueue = 
@@ -1179,12 +1323,33 @@ public class IntegratedServer extends MinecraftServer {
         return true;
     }
 }</code></pre>
+
+
 <h3>7.4 关键差异对比</h3>
-<table class="data-table"><thead><tr><th>特性</th><th>整合服务器</th><th>独立服务器</th></tr></thead><tbody><tr><td>运行环境</td><td>客户端内</td><td>独立JVM</td></tr><tr><td>可暂停</td><td>是 (跟随游戏)</td><td>否</td></tr><tr><td>控制台</td><td>无</td><td>有 (stdin)</td></tr><tr><td>玩家上限</td><td>8</td><td>配置决定</td></tr><tr><td>出生点保护</td><td>无</td><td>有 (spawn-protection)</td></tr><tr><td>白名单</td><td>无</td><td>有</td></tr><tr><td>RCON</td><td>无</td><td>有</td></tr><tr><td>Query</td><td>无</td><td>有</td></tr><tr><td>GUI</td><td>无</td><td>可选 (Swing)</td></tr><tr><td>Watchdog</td><td>无</td><td>有</td></tr></tbody></table>
-<hr></p>
+
+
+| 特性 | 整合服务器 | 独立服务器 |
+|------|-----------|-----------|
+| 运行环境 | 客户端内 | 独立JVM |
+| 可暂停 | 是 (跟随游戏) | 否 |
+| 控制台 | 无 | 有 (stdin) |
+| 玩家上限 | 8 | 配置决定 |
+| 出生点保护 | 无 | 有 (spawn-protection) |
+| 白名单 | 无 | 有 |
+| RCON | 无 | 有 |
+| Query | 无 | 有 |
+| GUI | 无 | 可选 (Swing) |
+| Watchdog | 无 | 有 |
+
+<hr>
+
 <h2 id="8-tick-系统分析">8. Tick 系统分析</h2>
+
+
 <h3>8.1 ServerTickManager</h3>
-<pre class="code-block"><code class="language-java">public class ServerTickManager extends TickManager {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ServerTickManager extends TickManager {
     private long sprintTicks = 0L;           // 加速Tick数
     private long scheduledSprintTicks = 0L;  // 计划加速数
     private boolean wasFrozen = false;       // 冻结前状态
@@ -1223,24 +1388,39 @@ public class IntegratedServer extends MinecraftServer {
         return false;
     }
 }</code></pre>
+
+
 <h3>8.2 Tick同步</h3>
-<pre class="code-block"><code class="language-java">private boolean shouldKeepTicking() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">private boolean shouldKeepTicking() {
     return hasRunningTasks() || 
            Util.getMeasuringTimeNano() &lt; 
                (waitingForNextTick ? tickEndTimeNanos : tickStartTimeNanos);
 }</code></pre>
+
+
 <h3>8.3 过载检测</h3>
-<pre class="code-block"><code class="language-java">long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
+
+</p>
+<p><pre class="code-block"><code class="language-java">long elapsed = Util.getMeasuringTimeNano() - tickStartTimeNanos;
 if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
     long missedTicks = elapsed / targetTickTime;
     LOGGER.warn(&quot;Can&#39;t keep up! Running {}ms or {} ticks behind&quot;,
         elapsed / TimeHelper.MILLI_IN_NANOS, missedTicks);
     tickStartTimeNanos += missedTicks * targetTickTime;
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="9-命令系统">9. 命令系统</h2>
+
+
 <h3>9.1 命令管理器</h3>
-<pre class="code-block"><code class="language-java">public CommandManager getCommandManager() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public CommandManager getCommandManager() {
     return this.resourceManagerHolder.dataPackContents.getCommandManager();
 }
 
@@ -1248,8 +1428,12 @@ if (elapsed &gt; OVERLOAD_THRESHOLD_NANOS + 20L * targetTickTime) {
 public void sendCommandTree(ServerPlayerEntity player) {
     getCommandManager().sendCommandTree(player);
 }</code></pre>
+
+
 <h3>9.2 命令源</h3>
-<pre class="code-block"><code class="language-java">public ServerCommandSource getCommandSource() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public ServerCommandSource getCommandSource() {
     ServerWorld world = getOverworld();
     return new ServerCommandSource(
         this,
@@ -1263,8 +1447,12 @@ public void sendCommandTree(ServerPlayerEntity player) {
         null
     );
 }</code></pre>
+
+
 <h3>9.3 独立服务器命令队列</h3>
-<pre class="code-block"><code class="language-java">public void enqueueCommand(String command, ServerCommandSource source) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void enqueueCommand(String command, ServerCommandSource source) {
     commandQueue.add(new PendingServerCommand(command, source));
 }
 
@@ -1281,34 +1469,77 @@ public void tickWorlds(BooleanSupplier shouldKeepTicking) {
     super.tickWorlds(shouldKeepTicking);
     executeQueuedCommands();
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="10-关键代码引用">10. 关键代码引用</h2>
+
+
 <h3>10.1 MinecraftServer.java 关键方法</h3>
-<table class="data-table"><thead><tr><th>方法</th><th>行号</th><th>描述</th></tr></thead><tbody><tr><td><code>startServer()</code></td><td>308-319</td><td>服务器启动入口</td></tr><tr><td><code>runServer()</code></td><td>661-736</td><td>主Tick循环</td></tr><tr><td><code>tick()</code></td><td>887-914</td><td>每个Tick执行</td></tr><tr><td><code>tickWorlds()</code></td><td>967-1007</td><td>世界Tick</td></tr><tr><td><code>createWorlds()</code></td><td>387-435</td><td>世界创建</td></tr><tr><td><code>loadWorld()</code></td><td>361-382</td><td>加载世界</td></tr><tr><td><code>shutdown()</code></td><td>583-624</td><td>关闭服务器</td></tr><tr><td><code>save()</code></td><td>541-562</td><td>保存世界</td></tr><tr><td><code>saveAll()</code></td><td>567-576</td><td>保存所有数据</td></tr></tbody></table>
+
+
+| 方法 | 行号 | 描述 |
+|------|------|------|
+| <code>startServer()</code> | 308-319 | 服务器启动入口 |
+| <code>runServer()</code> | 661-736 | 主Tick循环 |
+| <code>tick()</code> | 887-914 | 每个Tick执行 |
+| <code>tickWorlds()</code> | 967-1007 | 世界Tick |
+| <code>createWorlds()</code> | 387-435 | 世界创建 |
+| <code>loadWorld()</code> | 361-382 | 加载世界 |
+| <code>shutdown()</code> | 583-624 | 关闭服务器 |
+| <code>save()</code> | 541-562 | 保存世界 |
+| <code>saveAll()</code> | 567-576 | 保存所有数据 |
+
 <h3>10.2 PlayerManager.java 关键方法</h3>
-<table class="data-table"><thead><tr><th>方法</th><th>行号</th><th>描述</th></tr></thead><tbody><tr><td><code>onPlayerConnect()</code></td><td>155-240</td><td>处理玩家连接</td></tr><tr><td><code>checkCanJoin()</code></td><td>347-371</td><td>检查能否加入</td></tr><tr><td><code>respawnPlayer()</code></td><td>394-437</td><td>玩家重生</td></tr><tr><td><code>remove()</code></td><td>321-344</td><td>移除玩家</td></tr><tr><td><code>broadcast()</code></td><td>683-774</td><td>消息广播</td></tr><tr><td><code>saveAllPlayerData()</code></td><td>571-575</td><td>保存所有玩家数据</td></tr></tbody></table>
+
+
+| 方法 | 行号 | 描述 |
+|------|------|------|
+| <code>onPlayerConnect()</code> | 155-240 | 处理玩家连接 |
+| <code>checkCanJoin()</code> | 347-371 | 检查能否加入 |
+| <code>respawnPlayer()</code> | 394-437 | 玩家重生 |
+| <code>remove()</code> | 321-344 | 移除玩家 |
+| <code>broadcast()</code> | 683-774 | 消息广播 |
+| <code>saveAllPlayerData()</code> | 571-575 | 保存所有玩家数据 |
+
 <h3>10.3 ServerLoginNetworkHandler.java 状态机</h3>
-<pre class="code-block"><code class="language-text">HELLO -&gt; KEY (在线模式)
+
+</p>
+<p><pre class="code-block"><code class="language-text">HELLO -&gt; KEY (在线模式)
 KEY -&gt; AUTHENTICATING
 AUTHENTICATING -&gt; VERIFYING
 VERIFYING -&gt; WAITING_FOR_DUPE_DISCONNECT / SUCCESS
 WAITING_FOR_DUPE_DISCONNECT -&gt; SUCCESS
 SUCCESS -&gt; PROTOCOL_SWITCHING
 PROTOCOL_SWITCHING -&gt; ACCEPTED (进入配置阶段)</code></pre>
+
+
 <h3>10.4 DedicatedPlayerManager.java 特有功能</h3>
-<p><ul><li>白名单管理 (<code>setWhitelistEnabled</code>)</li>
-<li>OP管理 (<code>addToOperators</code>, <code>removeFromOperators</code>)</li>
-<li>封禁列表加载/保存</li>
-<li>玩家人数限制绕过检查</li></ul></p>
+
+
+<ul><li>白名单管理 (<code>setWhitelistEnabled</code>)</li></ul>
+<ul><li>OP管理 (<code>addToOperators</code>, <code>removeFromOperators</code>)</li></ul>
+<ul><li>封禁列表加载/保存</li></ul>
+<ul><li>玩家人数限制绕过检查</li></ul>
+
 <h3>10.5 IntegratedServer.java 特有功能</h3>
-<p><ul><li>暂停同步 (<code>isPaused()</code>)</li>
-<li>LAN开放 (<code>openToLan()</code>)</li>
-<li>动态视距调整</li>
-<li>客户端集成</li></ul></p>
-<p><hr></p>
+
+
+<ul><li>暂停同步 (<code>isPaused()</code>)</li></ul>
+<ul><li>LAN开放 (<code>openToLan()</code>)</li></ul>
+<ul><li>动态视距调整</li></ul>
+<ul><li>客户端集成</li></ul>
+
+<hr>
+
 <h2 id="附录-数据流图">附录: 数据流图</h2>
+
+
 <h3>玩家登录流程</h3>
-<pre class="code-block"><code class="language-text">Client                    Server                      Database
+
+</p>
+<p><pre class="code-block"><code class="language-text">Client                    Server                      Database
   │                          │                            │
   │──── Handshake ──────────▶│                            │
   │                          │                            │
@@ -1329,8 +1560,12 @@ PROTOCOL_SWITCHING -&gt; ACCEPTED (进入配置阶段)</code></pre>
   │                          │◀── PlayerData ────────────│
   │◀─── GameJoin ────────────│                            │
   │◀─── Chunks/Data ─────────│                            │</code></pre>
+
+
 <h3>Tick流程</h3>
-<pre class="code-block"><code class="language-text">Server Thread
+
+</p>
+<p><pre class="code-block"><code class="language-text">Server Thread
     │
     ├── startTickMetrics()
     │
@@ -1353,8 +1588,11 @@ PROTOCOL_SWITCHING -&gt; ACCEPTED (进入配置阶段)</code></pre>
     │      └── ReentrantThreadExecutor.runTasks()
     │
     └── endTickMetrics()</code></pre>
-<p><hr></p>
-<p><em>文档版本: 1.0</em>
+
+
+<hr>
+
+<em>文档版本: 1.0</em>
 <em>Minecraft版本: 1.21</em>
 <em>生成时间: 2026-03-19</em>
 </p>

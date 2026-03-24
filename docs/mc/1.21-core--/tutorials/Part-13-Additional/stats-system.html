@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>统计系统 (Stats System) - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="stats-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码萌新教程</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>统计系统 (Stats System)</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    统计系统 (Stats System)
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>统计系统 (Stats System)</h1>
+
+
+<h2 id="目标">目标</h2>
+
+
+读完这篇文章后，你将理解 Minecraft 的统计系统如何追踪玩家活动，并能在源码中找到相关实现。
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>了解 Minecraft 服务端架构</li></ul>
+<ul><li>熟悉泛型和注册表(Registry)的概念</li></ul>
+
+<h2 id="核心概念">核心概念</h2>
+
+
+<h3>什么是统计系统？</h3>
+
+
+想象一下手机上的"健康"App，它会自动记录你每天走了多少步、爬了几层楼。Minecraft 的统计系统就是游戏的"健康App"——<strong>自动记录玩家的各种游戏活动</strong>。
+
+<h3>统计系统能记录什么？</h3>
+
+
+| 类别 | 示例 | 说明 |
+|------|------|------|
+| 破坏方块 | 挖矿数、砍树数 | <code>MINED</code> 类型 |
+| 合成物品 | 合成钻石剑次数 | <code>CRAFTED</code> 类型 |
+| 使用物品 | 吃东西次数 | <code>USED</code> 类型 |
+| 拾取物品 | 捡起圆石数量 | <code>PICKED_UP</code> 类型 |
+| 击杀生物 | 杀猪数、杀僵尸数 | <code>KILLED</code> 类型 |
+| 被杀次数 | 被怪物杀死次数 | <code>KILLED_BY</code> 类型 |
+| 自定义统计 | 游戏时长、死亡次数 | <code>CUSTOM</code> 类型 |
+
+<h2 id="图解mermaid">图解（Mermaid）</h2>
+
+
+<h3>统计系统架构</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph Stats[统计注册表]
+        ST1["MINED<Block>"]
+        ST2["CRAFTED<Item>"]
+        ST3["USED<Item>"]
+        ST4["KILLED<EntityType>"]
+        ST5["CUSTOM<Identifier>"]
+    end
+    
+    subgraph StatType[泛型统计类型]
+        ST["StatType<T>"]
+        ST -->|注册表| R["Registry<T>"]
+        ST -->|映射| SM["Map<T, Stat<T>>"]
+    end
+    
+    subgraph Stat[单个统计]
+        S1["Stat<MinedBlock>"]
+        S2["Stat<KilledEntity>"]
+        S3["Stat<Custom>"]
+    end
+    
+    subgraph StatHandler[统计处理器]
+        SH["StatHandler"]
+        SM2["Map<Stat<?>, Integer>"]
+    end
+    
+    ST1 --> ST2 --> ST3 --> ST4 --> ST5
+    ST --> ST1
+    ST1 --> S1
+    ST4 --> S2
+    ST5 --> S3
+    SH --> SM2
+    
+    classDef container fill:#3F51B5,color:white
+    classDef stat fill:#4CAF50,color:white
+    classDef handler fill:#FF9800,color:white
+    
+    class ST,ST1,ST2,ST3,ST4,ST5 container
+    class S1,S2,S3 stat
+    class SH handler</div>
+</div>
+
+
+<h3>统计触发流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant P as 玩家
+    participant SH as StatHandler
+    participant GS as 游戏服务器
+    participant NBT as 存档文件
+    
+    Note over P: 玩家挖掉一个石头
+    
+    P->>GS: 触发 Block#onBreak
+    
+    GS->>SH: increaseStat(player, Stat<?>, +1)
+    
+    alt 服务器端
+        SH->>SH: statMap[stat] += 1
+        SH->>SH: pendingStats.add(stat)
+        GS->>P: 同步统计包
+    else 存档保存
+        GS->>NBT: 每5分钟保存
+        NBT->>SH: 读取/写入 JSON
+    end
+    
+    Note over P: ESC菜单显示统计</div>
+</div>
+
+
+<h3>常见统计类型层次</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class Stat~T~ {
+        +StatType~T~ type
+        +T value
+        +StatFormatter formatter
+        +format(int)
+    }
+    
+    class StatType~T~ {
+        +Registry~T~ registry
+        +Map~T, Stat~ stats
+        +getOrCreateStat(T, formatter)
+    }
+    
+    class StatHandler {
+        +Map~Stat<?>, Integer~ statMap
+        +increaseStat()
+        +getStat()
+        +setStat()
+    }
+    
+    class ServerStatHandler {
+        +MinecraftServer server
+        +File saveFile
+        +save()
+        +parse()
+        +sendStats()
+    }
+    
+    StatHandler <|-- ServerStatHandler
+    Stat *-- StatType
+    StatType *-- Stat</div>
+</div>
+
+
+<h2 id="核心代码">核心代码</h2>
+
+
+<h3>Stats.java - 统计常量定义</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class Stats {
+    // 基于方块的统计 (挖矿)
+    public static final StatType&lt;Block&gt; MINED = registerType(&quot;mined&quot;, Registries.BLOCK);
+    
+    // 基于物品的统计
+    public static final StatType&lt;Item&gt; CRAFTED = registerType(&quot;crafted&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; USED = registerType(&quot;used&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; BROKEN = registerType(&quot;broken&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; PICKED_UP = registerType(&quot;picked_up&quot;, Registries.ITEM);
+    public static final StatType&lt;Item&gt; DROPPED = registerType(&quot;dropped&quot;, Registries.ITEM);
+    
+    // 基于实体类型的统计
+    public static final StatType&lt;EntityType&lt;?&gt;&gt; KILLED = registerType(&quot;killed&quot;, Registries.ENTITY_TYPE);
+    public static final StatType&lt;EntityType&lt;?&gt;&gt; KILLED_BY = registerType(&quot;killed_by&quot;, Registries.ENTITY_TYPE);
+    
+    // 自定义统计
+    public static final StatType&lt;Identifier&gt; CUSTOM = registerType(&quot;custom&quot;, Registries.CUSTOM_STAT);
+    
+    // 常用自定义统计
+    public static final Identifier DEATHS = register(&quot;deaths&quot;, StatFormatter.DEFAULT);
+    public static final Identifier MOB_KILLS = register(&quot;mob_kills&quot;, StatFormatter.DEFAULT);
+    public static final Identifier PLAY_TIME = register(&quot;play_time&quot;, StatFormatter.TIME);
+    
+    // 距离统计
+    public static final Identifier WALK_ONE_CM = register(&quot;walk_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier SPRINT_ONE_CM = register(&quot;sprint_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier FLY_ONE_CM = register(&quot;fly_one_cm&quot;, StatFormatter.DISTANCE);
+    public static final Identifier SWIM_ONE_CM = register(&quot;swim_one_cm&quot;, StatFormatter.DISTANCE);
+    
+    // 伤害统计
+    public static final Identifier DAMAGE_DEALT = register(&quot;damage_dealt&quot;, StatFormatter.DIVIDE_BY_TEN);
+    public static final Identifier DAMAGE_TAKEN = register(&quot;damage_taken&quot;, StatFormatter.DIVIDE_BY_TEN);
+    
+    // 注册统计类型
+    private static &lt;T&gt; StatType&lt;T&gt; registerType(String id, Registry&lt;T&gt; registry) {
+        MutableText text = Text.translatable(&quot;stat_type.minecraft.&quot; + id);
+        return Registry.register(Registries.STAT_TYPE, id, new StatType&lt;T&gt;(registry, text));
+    }
+    
+    // 注册自定义统计
+    private static Identifier register(String id, StatFormatter formatter) {
+        Identifier identifier = Identifier.ofVanilla(id);
+        Registry.register(Registries.CUSTOM_STAT, id, identifier);
+        CUSTOM.getOrCreateStat(identifier, formatter);
+        return identifier;
+    }
+}</code></pre>
+
+
+<h3>Stat.java - 单个统计定义</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class Stat&lt;T&gt; extends ScoreboardCriterion {
+    private final StatFormatter formatter;    // 显示格式器
+    private final T value;                     // 统计值(如石头方块)
+    private final StatType&lt;T&gt; type;             // 统计类型
+    
+    // 获取统计唯一名称
+    public static &lt;T&gt; String getName(StatType&lt;T&gt; type, T value) {
+        return Registries.STAT_TYPE.getId(type) + &quot;:&quot; + 
+               type.getRegistry().getId(value);
+    }
+    
+    // 格式化显示
+    public String format(int value) {
+        return formatter.format(value);
+    }
+}</code></pre>
+
+
+<h3>StatType.java - 统计类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class StatType&lt;T&gt; implements Iterable&lt;Stat&lt;T&gt;&gt; {
+    private final Registry&lt;T&gt; registry;      // 值类型的注册表
+    private final Map&lt;T, Stat&lt;T&gt;&gt; stats = new IdentityHashMap&lt;&gt;();  // 缓存
+    
+    // 获取或创建统计
+    public Stat&lt;T&gt; getOrCreateStat(T key, StatFormatter formatter) {
+        return stats.computeIfAbsent(key, value -&gt; new Stat&lt;&gt;(this, value, formatter));
+    }
+    
+    // 迭代所有统计
+    @Override
+    public Iterator&lt;Stat&lt;T&gt;&gt; iterator() {
+        return stats.values().iterator();
+    }
+}</code></pre>
+
+
+<h3>StatHandler.java - 客户端/服务端统计处理器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class StatHandler {
+    // 存储 统计 -&gt; 数值 的映射
+    protected final Object2IntMap&lt;Stat&lt;?&gt;&gt; statMap = 
+        Object2IntMaps.synchronize(new Object2IntOpenHashMap());
+    
+    // 增加统计值
+    public void increaseStat(PlayerEntity player, Stat&lt;?&gt; stat, int value) {
+        int newValue = (int) Math.min(
+            (long) getStat(stat) + (long) value, 
+            Integer.MAX_VALUE
+        );
+        setStat(player, stat, newValue);
+    }
+    
+    // 获取统计值
+    public &lt;T&gt; int getStat(StatType&lt;T&gt; type, T stat) {
+        return type.hasStat(stat) ? getStat(type.getOrCreateStat(stat)) : 0;
+    }
+    
+    public int getStat(Stat&lt;?&gt; stat) {
+        return statMap.getInt(stat);
+    }
+}</code></pre>
+
+
+<h3>ServerStatHandler.java - 服务端持久化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ServerStatHandler extends StatHandler {
+    private final MinecraftServer server;
+    private final File file;                   // 保存路径
+    private final Set&lt;Stat&lt;?&gt;&gt; pendingStats;   // 待同步统计
+    
+    // 保存到文件
+    public void save() {
+        FileUtils.writeStringToFile(file, asString());
+    }
+    
+    // 发送统计给客户端
+    public void sendStats(ServerPlayerEntity player) {
+        Object2IntOpenHashMap map = new Object2IntOpenHashMap();
+        for (Stat&lt;?&gt; stat : takePendingStats()) {
+            map.put(stat, getStat(stat));
+        }
+        player.networkHandler.sendPacket(new StatisticsS2CPacket(map));
+    }
+    
+    // 从JSON解析
+    public void parse(DataFixer dataFixer, String json) {
+        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonObject statsObj = root.getAsJsonObject(&quot;stats&quot;);
+        
+        for (Map.Entry&lt;String, JsonElement&gt; entry : statsObj.entrySet()) {
+            StatType&lt;?&gt; type = Registries.STAT_TYPE.get(Identifier.of(entry.getKey()));
+            JsonObject typeStats = entry.getValue().getAsJsonObject();
+            
+            for (Map.Entry&lt;String, JsonElement&gt; statEntry : typeStats.entrySet()) {
+                Identifier id = Identifier.tryParse(statEntry.getKey());
+                int value = statEntry.getValue().getAsInt();
+                Stat&lt;?&gt; stat = type.getOrCreateStat(id);
+                statMap.put(stat, value);
+            }
+        }
+    }
+}</code></pre>
+
+
+<h3>StatFormatter.java - 数值格式化</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class StatFormatter {
+    // 直接显示数字
+    public static final StatFormatter DEFAULT = value -&gt; String.valueOf(value);
+    
+    // 显示为时间 (秒数 -&gt; 分:秒)
+    public static final StatFormatter TIME = value -&gt; {
+        int i = value / 3600;
+        int j = (value / 60) % 60;
+        int k = value % 60;
+        return (i != 0 ? i + &quot;m &quot; : &quot;&quot;) + (j != 0 ? j + &quot;s&quot; : (k + &quot;s&quot;));
+    };
+    
+    // 显示为距离 (厘米 -&gt; 米/公里)
+    public static final StatFormatter DISTANCE = value -&gt; {
+        if (value &gt;= 100000) {
+            return String.format(&quot;%.1f km&quot;, value / 10000 / 100.0);
+        }
+        return value / 100.0 + &quot; m&quot;;
+    };
+    
+    // 显示为伤害值 (除以10)
+    public static final StatFormatter DIVIDE_BY_TEN = value -&gt; 
+        String.valueOf(value / 10.0);
+}</code></pre>
+
+
+<h2 id="实战演示">实战演示</h2>
+
+
+<h3>监听玩家挖矿事件</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class Block {
+    public void onBroken(World world, PlayerEntity player) {
+        // 触发挖矿统计
+        Stat&lt;Block&gt; stat = Stats.MINED.getOrCreateStat(this);
+        player.incrementStat(stat);
+    }
+}
+
+// 玩家端获取统计
+public int getMinedCount(PlayerEntity player, Block block) {
+    StatHandler handler = player.getStatHandler();
+    return handler.getStat(Stats.MINED, block);
+}</code></pre>
+
+
+<h3>创建自定义统计</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class MyMod {
+    // 1. 定义自定义统计ID
+    public static final Identifier CUSTOM_STAT_ID = Identifier.of(&quot;mymod&quot;, &quot;jump_count&quot;);
+    
+    // 2. 注册统计 (在 mod 初始化时)
+    public static Identifier JUMP_COUNT;
+    
+    public static void onInitialize() {
+        // 通过 Stats.CUSTOM 注册
+        JUMP_COUNT = Stats.register(&quot;mymod.jump_count&quot;, StatFormatter.DEFAULT);
+    }
+    
+    // 3. 使用统计
+    public void onPlayerJump(ServerPlayerEntity player) {
+        StatHandler handler = player.getStatHandler();
+        handler.incrementStat(player, Stats.CUSTOM.getOrCreateStat(JUMP_COUNT), 1);
+    }
+    
+    // 4. 获取统计
+    public int getJumpCount(ServerPlayerEntity player) {
+        StatHandler handler = player.getStatHandler();
+        return handler.getStat(Stats.CUSTOM.getOrCreateStat(JUMP_COUNT));
+    }
+}</code></pre>
+
+
+<h3>显示玩家统计</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void showPlayerStats(ServerPlayerEntity player, ServerPlayerEntity target) {
+    StatHandler handler = target.getStatHandler();
+    
+    // 获取各种统计
+    int kills = handler.getStat(Stats.MOB_KILLS);
+    int deaths = handler.getStat(Stats.DEATHS);
+    int playTime = handler.getStat(Stats.PLAY_TIME);
+    
+    // 创建显示文本
+    MutableText message = Text.literal(&quot;玩家统计: \n&quot;)
+        .append(&quot;击杀: &quot;).append(String.valueOf(kills)).append(&quot;\n&quot;)
+        .append(&quot;死亡: &quot;).append(String.valueOf(deaths)).append(&quot;\n&quot;)
+        .append(&quot;游戏时间: &quot;).append(Stats.PLAY_TIME.format(playTime));
+    
+    player.sendMessage(message);
+}</code></pre>
+
+
+<h2 id="小结">小结</h2>
+
+
+统计系统是 Minecraft 追踪玩家活动的重要工具：
+
+<ul><li><strong>Stats</strong> 类定义所有内置统计常量</li></ul>
+<ul><li><strong>StatType<T></strong> 泛型类处理不同类型(方块、物品、实体)的统计</li></ul>
+<ul><li><strong>Stat</strong> 表示单个统计项，包含类型、值和格式化器</li></ul>
+<ul><li><strong>StatHandler</strong> 维护玩家统计数据</li></ul>
+<ul><li><strong>ServerStatHandler</strong> 处理服务端持久化和同步</li></ul>
+
+<h2 id="练习">练习</h2>
+
+
+<ul><li>在源码中找到 <code>Stats.java</code>，列出所有 <code>CUSTOM</code> 类型的统计</li></ul>
+<ul><li>实现一个记录玩家说"你好"次数的 mod 统计</li></ul>
+<ul><li>研究 <code>StatFormatter</code> 的其他实现方式</li></ul>
+
+<h2 id="相关链接">相关链接</h2>
+
+
+<ul><li><a href="scoreboard-system.html">记分板系统</a> - 了解记分板与统计的关系</li></ul>
+<ul><li><a href="text-system.html">文本系统</a> - 学习如何格式化统计显示</li></ul>
+<ul><li>源码路径: <code>..../source/net/minecraft/stat/</code></li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="sound-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 声音系统详解
+        </a><a href="text-system.html" class="next">
+            文本系统 (Text System)
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

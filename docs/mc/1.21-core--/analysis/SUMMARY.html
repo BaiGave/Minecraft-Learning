@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Minecraft 1.21 源代码分析总结 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 架构总览
+        </a>
+<a href="02-client-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 客户端模块深度分析报告
+        </a>
+<a href="03-server-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 服务端模块分析
+        </a>
+<a href="04-world-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 世界系统深度分析
+        </a>
+<a href="05-entity-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 实体系统深度分析
+        </a>
+<a href="06-block-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 方块物品系统分析
+        </a>
+<a href="07-network-protocol.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 网络协议分析
+        </a>
+<a href="08-datafixer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 数据修复（DataFixer）系统分析
+        </a>
+<a href="09-registry-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 注册表（Registry）系统分析
+        </a>
+<a href="10-package-structure.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 包结构详解
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Minecraft 1.21 源代码分析总结</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Minecraft 1.21 源代码分析总结
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 源代码分析总结</h1>
+
+
+<blockquote><p>本文档是对 Minecraft 1.21 反编译源代码分析的总结概述</p></blockquote>
+
+<hr>
+
+<h2 id="一项目概述">一、项目概述</h2>
+
+
+| 属性 | 值 |
+|------|-----|
+| 游戏版本 | Minecraft 1.21 |
+| 协议版本 | Protocol 767 |
+| 世界版本 | World Version 3953 |
+| 资源包版本 | Resource Pack 34 |
+| 数据包版本 | Data Pack 48 |
+| 反编译器 | CFR 0.2.2 (FabricMC) |
+| Java 文件数 | 5364 个 |
+
+<hr>
+
+<h2 id="二架构设计">二、架构设计</h2>
+
+
+<h3>2.1 客户端-服务端分离架构</h3>
+
+
+Minecraft 1.21 采用逻辑上分离的客户端-服务端架构：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                      客户端 (Client)                         │
+│  - 渲染游戏世界                                             │
+│  - 处理用户输入                                             │
+│  - 预测本地移动                                             │
+│  - 播放音效和粒子效果                                        │
+├─────────────────────────────────────────────────────────────┤
+│                      网络 (Protocol 767)                    │
+│  - 数据包同步                                               │
+│  - 状态同步                                                 │
+│  - 玩家移动预测                                             │
+├─────────────────────────────────────────────────────────────┤
+│                      服务端 (Server)                        │
+│  - 游戏逻辑权威                                             │
+│  - 实体行为控制                                             │
+│  - 物品栏验证                                               │
+│  - 区块加载/保存                                            │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>2.2 核心设计模式</h3>
+
+
+| 设计模式 | 应用场景 |
+|---------|---------|
+| <strong>注册表模式</strong> | 统一管理 Block、Item、Entity 等所有游戏内容 |
+| <strong>观察者模式</strong> | 游戏事件系统 (GameEvent)、伤害系统 |
+| <strong>组件模式</strong> | 1.21 引入的 ComponentMap 替代直接 NBT |
+| <strong>策略模式</strong> | 方块状态渲染、不同行为处理 |
+| <strong>工厂模式</strong> | 数据包创建、配方生成 |
+| <strong>模板方法</strong> | ServerWorld/ClientWorld 继承 World |
+
+<hr>
+
+<h2 id="三核心系统">三、核心系统</h2>
+
+
+<h3>3.1 世界系统 (World)</h3>
+
+
+| 组件 | 职责 |
+|------|------|
+| <strong>World</strong> | 抽象基类，定义世界通用接口 |
+| <strong>ServerWorld</strong> | 服务端世界，处理 tick 和实体更新 |
+| <strong>ClientWorld</strong> | 客户端世界，接收并渲染服务端数据 |
+| <strong>ChunkProvider</strong> | 区块加载、生成、保存 |
+| <strong>Heightmap</strong> | 快速查询方块高度 |
+| <strong>BiomeAccess</strong> | 生物群系查询 |
+
+<strong>关键常量</strong>:
+<ul><li><code>HORIZONTAL_LIMIT = 30000000</code> (X/Z 轴限制)</li></ul>
+<ul><li><code>MAX_Y = 20000000</code> (最大高度)</li></ul>
+<ul><li><code>CHUNK_WIDTH = 16</code></li></ul>
+
+<h3>3.2 实体系统 (Entity)</h3>
+
+
+| 组件 | 职责 |
+|------|------|
+| <strong>Entity</strong> | 实体基类，位置、运动、碰撞 |
+| <strong>LivingEntity</strong> | 有生命实体，属性、药水效果 |
+| <strong>MobEntity</strong> | 生物基类，AI 目标、活动 |
+| <strong>Brain</strong> | AI 大脑，记忆、感知、决策 |
+| <strong>Sensor</strong> | 环境感知 (最近玩家、床、食物等) |
+| <strong>Task</strong> | AI 行为任务 |
+
+<strong>AI 架构</strong>:</p>
+<p><pre class="code-block"><code class="language-text">Brain
+├── MemoryModule (记忆存储)
+├── Activity (活动状态)
+│   └── Task (具体行为)
+└── Schedule (日程表)</code></pre>
+
+
+<h3>3.3 注册表系统 (Registry)</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">三层标识系统:
+├── Identifier      (&quot;minecraft:stone&quot;)
+├── RegistryKey     (RegistryKey.of(RegistryKeys.BLOCK, Identifier))
+└── RegistryEntry   (实际注册对象)</code></pre>
+
+
+<strong>核心注册表</strong>:
+<ul><li>BLOCK (~700 注册)</li></ul>
+<ul><li>ITEM (~2000 注册)</li></ul>
+<ul><li>ENTITY_TYPE (~100 注册)</li></ul>
+<ul><li>BIOME (~100 注册)</li></ul>
+<ul><li>SOUND_EVENT</li></ul>
+<ul><li>POTION</li></ul>
+<ul><li>ENCHANTMENT</li></ul>
+
+<h3>3.4 网络协议</h3>
+
+
+<strong>协议状态机</strong>:</p>
+<p><pre class="code-block"><code class="language-text">HANDSHAKING
+    ↓
+STATUS ←→ LOGIN
+    ↓
+CONFIGURATION
+    ↓
+PLAY ←──────────────────→ PLAY (双向)</code></pre>
+
+
+<strong>数据包类型</strong> (Protocol 767):
+<ul><li><code>ClientBoundPacketType</code> (~100 种服务端→客户端)</li></ul>
+<ul><li><code>ServerBoundPacketType</code> (~80 种客户端→服务端)</li></ul>
+
+<hr>
+
+<h2 id="四关键技术点">四、关键技术点</h2>
+
+
+<h3>4.1 数据持久化</h3>
+
+
+| 组件 | 用途 |
+|------|------|
+| <strong>NBT</strong> | 存档数据序列化 |
+| <strong>DataFixer</strong> | 版本迁移 (从旧版本到新版本) |
+| <strong>ChunkSerializer</strong> | 区块数据压缩存储 |
+| <strong>PersistentState</strong> | 自定义世界数据存储 |
+
+<h3>4.2 命令系统</h3>
+
+
+集成 <strong>Brigadier</strong> 命令解析库：
+<ul><li>类型安全的参数解析</li></ul>
+<ul><li>命令建议和补全</li></ul>
+<ul><li>自定义异常消息</li></ul>
+
+<h3>4.3 资源管理</h3>
+
+
+| 组件 | 用途 |
+|------|------|
+| <strong>ResourceManager</strong> | 资源加载抽象 |
+| <strong>Pack</strong> | 资源包系统 |
+| <strong>DataPack</strong> | 数据包 (配方、进度、函数) |
+
+<hr>
+
+<h2 id="五源码结构">五、源码结构</h2>
+
+</p>
+<p><pre class="code-block"><code class="language-text">..../source/
+├── net.minecraft/                    # 主命名空间
+│   ├── Bootstrap.java               # 注册表初始化
+│   ├── SharedConstants.java          # 全局常量
+│   ├── client/                       # 客户端 (~500 文件)
+│   │   ├── MinecraftClient.java      # 主客户端
+│   │   ├── render/                   # 渲染引擎
+│   │   ├── gui/                      # GUI 系统
+│   │   └── network/                  # 客户端网络
+│   ├── server/                       # 服务端 (~200 文件)
+│   │   ├── MinecraftServer.java     # 主服务器
+│   │   ├── PlayerManager.java        # 玩家管理
+│   │   ├── integrated/               # 整合服务器
+│   │   └── dedicated/                # 独立服务器
+│   ├── world/                        # 世界系统 (~150 文件)
+│   │   ├── World.java               # 世界基类
+│   │   ├── chunk/                   # 区块系统
+│   │   └── biome/                    # 生物群系
+│   ├── entity/                       # 实体系统 (~200 文件)
+│   │   ├── Entity.java              # 实体基类
+│   │   ├── ai/                      # AI 系统
+│   │   └── attribute/                # 属性系统
+│   ├── block/                        # 方块 (~300 文件)
+│   ├── item/                         # 物品 (~150 文件)
+│   ├── network/                      # 网络协议 (~100 文件)
+│   ├── registry/                     # 注册表系统
+│   ├── datafixer/                    # 数据修复
+│   ├── command/                      # 命令系统
+│   └── [其他模块]                    # ~2764 文件
+├── com/                              # 第三方库
+│   ├── google/gson/                  # JSON
+│   ├── mojang/brigadier/             # 命令解析
+│   └── mojang/logging/               # 日志
+└── META-INF/                         # JAR 元数据</code></pre>
+
+
+<hr>
+
+<h2 id="六版本演进要点-121">六、版本演进要点 (1.21)</h2>
+
+
+<h3>新增特性</h3>
+
+<ul><li><strong>Component 系统</strong> - 物品数据组件化</li></ul>
+<ul><li><strong>配方书 UI 改进</strong></li></ul>
+<ul><li><strong>新的村民职业和交易</strong></li></ul>
+<ul><li><strong>性能优化</strong></li></ul>
+
+<h3>技术更新</h3>
+
+<ul><li>协议版本: 765 → 767</li></ul>
+<ul><li>世界版本: 3952 → 3953</li></ul>
+<ul><li>资源包版本: 34 (未变)</li></ul>
+<ul><li>数据包版本: 48</li></ul>
+
+<hr>
+
+<h2 id="七学习建议">七、学习建议</h2>
+
+
+<h3>入门路径</h3>
+
+<ul><li><strong>理解架构</strong>: 阅读 <code>01-architecture-overview.md</code></li></ul>
+<ul><li><strong>核心类</strong>: <code>World</code>, <code>Entity</code>, <code>MinecraftServer</code>, <code>MinecraftClient</code></li></ul>
+<ul><li><strong>子系统</strong>: 选择感兴趣的系统深入</li></ul>
+
+<h3>推荐阅读顺序</h3>
+</p>
+<p><pre class="code-block"><code class="language-text">1. SharedConstants.java     → 全局常量
+2. Bootstrap.java           → 注册表初始化
+3. World.java               → 世界基类
+4. Entity.java              → 实体基类
+5. MinecraftServer.java     → 服务器主循环
+6. MinecraftClient.java     → 客户端主循环</code></pre>
+
+
+<h3>关键文件索引</h3>
+
+| 文件 | 说明 |
+|------|------|
+| <code>SharedConstants.java</code> | 所有全局常量定义 |
+| <code>Bootstrap.java</code> | 注册表填充逻辑 |
+| <code>Registries.java</code> | 所有内置注册表 |
+| <code>NetworkState.java</code> | 网络协议状态 |
+| <code>CommandDispatcher.java</code> | 命令解析核心 |
+
+<hr>
+
+<h2 id="八文档索引">八、文档索引</h2>
+
+
+| 文档 | 描述 |
+|------|------|
+| <a href="README.html">README</a> | 总览和索引 |
+| <a href="01-architecture-overview.html">01-architecture-overview</a> | 完整架构分析 |
+| <a href="02-client-module.html">02-client-module</a> | 客户端模块详解 |
+| <a href="03-server-module.html">03-server-module</a> | 服务端模块详解 |
+| <a href="04-world-system.html">04-world-system</a> | 世界系统详解 |
+| <a href="05-entity-system.html">05-entity-system</a> | 实体系统详解 |
+| <a href="06-block-item-system.html">06-block-item-system</a> | 方块物品系统 |
+| <a href="07-network-protocol.html">07-network-protocol</a> | 网络协议详解 |
+| <a href="08-datafixer-system.html">08-datafixer-system</a> | 数据修复系统 |
+| <a href="09-registry-system.html">09-registry-system</a> | 注册表系统 |
+| <a href="10-package-structure.html">10-package-structure</a> | 完整包结构 |
+
+<hr>
+
+<h2 id="九总结">九、总结</h2>
+
+
+Minecraft 1.21 是一个高度模块化的 Java 游戏项目，核心架构特点：
+
+<ul><li><strong>清晰的客户端-服务端分离</strong> - 便于理解网络同步机制</li></ul>
+<ul><li><strong>统一的注册表系统</strong> - 管理所有游戏内容</li></ul>
+<ul><li><strong>事件驱动的组件化设计</strong> - 易于扩展和维护</li></ul>
+<ul><li><strong>完善的数据持久化机制</strong> - 支持版本迁移</li></ul>
+<ul><li><strong>高效的区块管理</strong> - 支持无限世界</li></ul>
+
+这些设计使得 Minecraft 能够在保持向后兼容的同时，持续添加新内容并优化性能。
+
+<hr>
+
+<em>总结文档生成时间: 2026-03-19</em>
+<em>由 Cursor Agent Team 自动分析生成</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="README.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 1.21 源代码分析
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

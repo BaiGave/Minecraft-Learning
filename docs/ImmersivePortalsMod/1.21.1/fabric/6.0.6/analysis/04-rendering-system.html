@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Rendering System - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Architecture Summary
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Rendering System</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Rendering System
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 40 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="table-of-contents">Table of Contents</h2>
+
+
+<ul><li><a href="#overview">Overview</a></li></ul>
+<ul><li><a href="#portal-renderer-architecture">Portal Renderer Architecture</a></li></ul>
+<ul><li><a href="#renderer-types-stencil-vs-framebuffer">Renderer Types (Stencil vs FrameBuffer)</a></li></ul>
+<ul><li><a href="#portal-layer-system-portalrendering">Portal Layer System (PortalRendering)</a></li></ul>
+<ul><li><a href="#cross-portal-view-rendering">Cross-Portal View Rendering</a></li></ul>
+<ul><li><a href="#front-clipping-planes">Front Clipping Planes</a></li></ul>
+<ul><li><a href="#rendering-pipeline-diagram">Rendering Pipeline Diagram</a></li></ul>
+<ul><li><a href="#camera-transformation-system">Camera Transformation System</a></li></ul>
+<ul><li><a href="#visibility-prediction-and-occlusion-query">Visibility Prediction and Occlusion Query</a></li></ul>
+
+<h2 id="overview">Overview</h2>
+
+
+ImmersivePortalsMod 的渲染系统是一个复杂但优雅的解决方案，用于在 Minecraft 中实现跨维度传送门效果。核心挑战在于：当玩家透过传送门观察时，需要正确渲染目标维度的内容，同时保持正确的深度测试、裁剪和视觉效果。
+
+渲染系统的设计目标：
+
+<ul><li><strong>跨维度渲染</strong>：透过传送门看到另一个维度的世界</li></ul>
+<ul><li><strong>多层嵌套</strong>：支持传送门内再看向传送门（Portal Layer）</li></ul>
+<ul><li><strong>正确的深度关系</strong>：确保传送门内容与外部世界的深度一致</li></ul>
+<ul><li><strong>性能优化</strong>：使用遮挡查询预测传送门可见性</li></ul>
+<ul><li><strong>兼容性</strong>：支持 Sodium、Iris 等渲染优化 mod</li></ul>
+
+渲染系统的核心文件结构：
+</p>
+<p><pre class="code-block"><code class="language-text">render/
+├── PortalRenderer.java           # 渲染器基类
+├── renderer/
+│   ├── RendererUsingStencil.java    # 模板缓冲渲染器
+│   └── RendererUsingFrameBuffer.java # 帧缓冲渲染器
+├── context_management/
+│   ├── PortalRendering.java         # 传送门层管理
+│   ├── WorldRenderInfo.java         # 世界渲染信息
+│   └── RenderStates.java            # 渲染状态
+├── ViewAreaRenderer.java         # 传送门可视区域渲染
+├── FrontClipping.java            # 前向裁剪平面
+├── CrossPortalViewRendering.java # 第三人称跨传送门视图
+└── MyGameRenderer.java           # 世界切换渲染</code></pre>
+
+
+<h2 id="portal-renderer-architecture">Portal Renderer Architecture</h2>
+
+
+<h3>抽象基类设计</h3>
+
+
+<code>PortalRenderer</code> 是所有渲染器的抽象基类，定义了一组生命周期方法：
+</p>
+<p><pre class="code-block"><code class="language-42">public abstract class PortalRenderer {
+    
+    public abstract void onBeforeTranslucentRendering(Matrix4f modelView);
+    public abstract void onAfterTranslucentRendering(Matrix4f modelView);
+    public abstract void onHandRenderingEnded();
+    public abstract void prepareRendering();
+    public abstract void finishRendering();
+    public abstract void renderPortalInEntityRenderer(Portal portal);
+    public abstract boolean replaceFrameBufferClearing();</code></pre>
+
+
+<h3>渲染器选择逻辑</h3>
+
+
+渲染系统会根据不同的配置和 mod 组合选择合适的渲染器：
+</p>
+<p><pre class="code-block"><code class="language-312">public static void switchToCorrectRenderer() {
+    if (PortalRendering.isRendering()) {
+        return;
+    }
+    
+    if (IrisInterface.invoker.isIrisPresent()) {
+        if (IrisInterface.invoker.isShaders()) {
+            if (IPCGlobal.experimentalIrisPortalRenderer) {
+                switchRenderer(ExperimentalIrisPortalRenderer.instance);
+                return;
+            }
+            switch (IPGlobal.renderMode) {
+                case normal -&gt; switchRenderer(IrisPortalRenderer.instance);
+                case compatibility -&gt; switchRenderer(IrisCompatibilityPortalRenderer.instance);
+                // ...
+            }
+            return;
+        }
+    }
+    
+    switch (IPGlobal.renderMode) {
+        case normal -&gt; switchRenderer(IPCGlobal.rendererUsingStencil);
+        case compatibility -&gt; switchRenderer(IPCGlobal.rendererUsingFrameBuffer);
+        // ...
+    }
+}</code></pre>
+
+
+<h3>传送门筛选</h3>
+
+
+<code>getPortalsToRender</code> 方法负责收集需要渲染的传送门，并按距离排序：
+</p>
+<p><pre class="code-block"><code class="language-86">protected List&lt;Portal&gt; getPortalsToRender(Matrix4f modelView) {
+    // 收集全局传送门和实体传送门
+    List&lt;Portal&gt; globalPortals = GlobalPortalStorage.getGlobalPortals(world);
+    for (Portal globalPortal : globalPortals) {
+        if (!shouldSkipRenderingPortal(globalPortal, frustumSupplier)) {
+            renderables.add(globalPortal);
+        }
+    }
+    
+    world.entitiesForRendering().forEach(e -&gt; {
+        if (e instanceof Portal portal) {
+            if (!shouldSkipRenderingPortal(portal, frustumSupplier)) {
+                renderables.add(portal);
+            }
+        }
+    });
+    
+    // 按距离排序，近的先渲染
+    Vec3 cameraPos = CHelper.getCurrentCameraPos();
+    renderables.sort(Comparator.comparingDouble(
+        e -&gt; e.getDistanceToNearestPointInPortal(cameraPos)
+    ));
+    return renderables;
+}</code></pre>
+
+
+<h2 id="renderer-types-stencil-vs-framebuffer">Renderer Types (Stencil vs FrameBuffer)</h2>
+
+
+<h3>RendererUsingStencil - 模板缓冲渲染器</h3>
+
+
+这是默认且最高效的渲染器，使用 OpenGL 模板缓冲来限制渲染区域。
+
+<h4>核心原理</h4>
+
+
+<ul><li><strong>模板缓冲写入</strong>：将传送门的可视区域写入模板缓冲</li></ul>
+<ul><li><strong>深度缓冲清除</strong>：清除传送门区域外的深度值</li></ul>
+<ul><li><strong>世界渲染</strong>：只渲染模板缓冲指定的区域</li></ul>
+<ul><li><strong>深度恢复</strong>：恢复传送门边框的原始深度值</li></ul>
+
+<h4>初始化阶段</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-91">@Override
+public void prepareRendering() {
+    if (!IPPortingLibCompat.getIsStencilEnabled(client.getMainRenderTarget())) {
+        IPPortingLibCompat.setIsStencilEnabled(client.getMainRenderTarget(), true);
+    }
+    
+    client.getMainRenderTarget().bindWrite(false);
+    
+    GL11.glClearStencil(0);
+    GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);  // 清除模板缓冲为0
+    
+    GlStateManager._enableDepthTest();
+    GL11.glEnable(GL_STENCIL_TEST);
+}</code></pre>
+
+
+<h4>传送门渲染流程</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-123">protected void doRenderPortal(Portal portal, Matrix4f modelView) {
+    // 1. 检查是否跳过渲染
+    if (shouldSkipRenderingInsideFuseViewPortal(portal)) {
+        return;
+    }
+    
+    // 2. 将传送门可视区域写入模板缓冲（模板值+1）
+    int outerPortalStencilValue = PortalRendering.getPortalLayer();
+    boolean anySamplePassed = PortalRenderInfo.renderAndDecideVisibility(portal, () -&gt; {
+        renderPortalViewAreaToStencil(portal, modelView);
+    });
+    
+    if (!anySamplePassed) {
+        setStencilStateForWorldRendering();
+        return;
+    }
+    
+    // 3. 入栈传送门层
+    PortalRendering.pushPortalLayer(portal);
+    
+    // 4. 清除传送门区域的深度
+    if (!portal.isFuseView()) {
+        clearDepthOfThePortalViewArea(portal);
+    }
+    
+    // 5. 渲染传送门内容
+    setStencilStateForWorldRendering();
+    renderPortalContent(portal);
+    
+    // 6. 出栈传送门层
+    PortalRendering.popPortalLayer();
+    
+    // 7. 恢复深度
+    if (!portal.isFuseView()) {
+        restoreDepthOfPortalViewArea(portal, modelView, thisPortalStencilValue);
+    }
+    
+    // 8. 限制模板值（防止无限嵌套）
+    clampStencilValue(outerPortalStencilValue);
+}</code></pre>
+
+
+<h4>模板值管理</h4>
+
+
+使用递增的模板值来追踪传送门嵌套层级：
+</p>
+<p><pre class="code-block"><code class="language-175">private void renderPortalViewAreaToStencil(Portal portal, Matrix4f modelView) {
+    int outerPortalStencilValue = PortalRendering.getPortalLayer();
+    
+    // 只渲染当前层级对应的模板值
+    GL11.glStencilFunc(GL_EQUAL, outerPortalStencilValue, 0xFF);
+    
+    // 如果模板和深度测试都通过，模板值+1
+    GL11.glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+    GL11.glStencilMask(0xFF);
+    
+    FrontClipping.updateInnerClipping(modelView);
+    
+    // 渲染传送门可视区域到模板缓冲
+    ViewAreaRenderer.renderPortalArea(
+        portal, Vec3.ZERO,
+        modelView,
+        RenderSystem.getProjectionMatrix(),
+        true, true,
+        true, true
+    );
+}</code></pre>
+
+
+<h4>深度缓冲操作</h4>
+
+
+清除和恢复传送门区域深度的技巧：
+</p>
+<p><pre class="code-block"><code class="language-203">private void clearDepthOfThePortalViewArea(Portal portal) {
+    GlStateManager._enableDepthTest();
+    GlStateManager._depthMask(true);
+    
+    setStencilStateForWorldRendering();
+    
+    // 不操作颜色缓冲
+    GL11.glColorMask(false, false, false, false);
+    
+    int originalDepthFunc = GL11.glGetInteger(GL_DEPTH_FUNC);
+    
+    // 总是通过深度测试
+    GL11.glDepthFunc(GL_ALWAYS);
+    
+    // 像素深度设为最远（1.0）
+    GL11.glDepthRange(1, 1);
+    
+    // 渲染屏幕三角形
+    MyRenderHelper.renderScreenTriangle();
+    
+    // 恢复状态
+    GL11.glColorMask(true, true, true, true);
+    GL11.glDepthFunc(originalDepthFunc);
+    GL11.glDepthRange(0, 1);
+}</code></pre>
+
+
+<h3>RendererUsingFrameBuffer - 帧缓冲渲染器</h3>
+
+
+这是兼容性渲染器，用于不支持模板缓冲的高级特性（如某些 Sodium 配置）。
+
+<h4>核心原理</h4>
+
+
+<ul><li>创建辅助帧缓冲</li></ul>
+<ul><li>在辅助帧缓冲中渲染传送门内容</li></ul>
+<ul><li>将辅助帧缓冲的内容绘制到主帧缓冲的传送门区域</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-23">public class RendererUsingFrameBuffer extends PortalRenderer {
+    SecondaryFrameBuffer secondaryFrameBuffer = new SecondaryFrameBuffer();
+    
+    @Override
+    protected void doRenderPortal(Portal portal, Matrix4f modelView) {
+        // 只支持单层传送门
+        if (PortalRendering.isRendering()) {
+            return;
+        }
+        
+        PortalRendering.pushPortalLayer(portal);
+        
+        // 保存当前帧缓冲
+        RenderTarget oldFrameBuffer = client.getMainRenderTarget();
+        
+        // 切换到辅助帧缓冲
+        ((IEMinecraftClient) client).ip_setFrameBuffer(secondaryFrameBuffer.fb);
+        secondaryFrameBuffer.fb.bindWrite(true);
+        
+        // 清除辅助帧缓冲
+        GlStateManager._clearColor(1, 0, 1, 1);
+        GlStateManager._clearDepth(1);
+        GlStateManager._clear(
+            GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT,
+            Minecraft.ON_OSX
+        );
+        
+        // 渲染传送门内容
+        renderPortalContent(portal);
+        
+        // 恢复主帧缓冲
+        ((IEMinecraftClient) client).ip_setFrameBuffer(oldFrameBuffer);
+        oldFrameBuffer.bindWrite(true);
+        
+        PortalRendering.popPortalLayer();
+        
+        // 将辅助帧缓冲绘制到主帧缓冲
+        CHelper.enableDepthClamp();
+        renderSecondBufferIntoMainBuffer(portal, modelView);
+        CHelper.disableDepthClamp();
+    }
+}</code></pre>
+
+
+<h3>两种渲染器对比</h3>
+
+
+| 特性 | Stencil | FrameBuffer |
+|------|---------|-------------|
+| 性能 | 更高（单通道渲染） | 较低（多通道） |
+| 多层嵌套 | 支持 | 仅支持单层 |
+| 内存占用 | 低 | 较高 |
+| 兼容性 | 需要模板缓冲支持 | 更广泛 |
+| 适用场景 | 默认配置 | 兼容性/调试模式 |
+
+<h2 id="portal-layer-system-portalrendering">Portal Layer System (PortalRendering)</h2>
+
+
+<code>PortalRendering</code> 是传送门层级的核心管理系统，处理嵌套传送门的渲染。
+
+<h3>层栈机制</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-28">public class PortalRendering {
+    private static final Stack&lt;Portal&gt; portalLayers = new Stack&lt;&gt;();
+    private static boolean isRenderingCache = false;
+    private static boolean isRenderingOddNumberOfMirrorsCache = false;
+    
+    public static void pushPortalLayer(Portal portal) {
+        portalLayers.push(portal);
+        updateCache();
+    }
+    
+    public static void popPortalLayer() {
+        portalLayers.pop();
+        updateCache();
+    }
+    
+    public static int getPortalLayer() {
+        return portalLayers.size();
+    }</code></pre>
+
+
+<h3>缓存更新逻辑</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-43">private static void updateCache() {
+    isRenderingCache = getPortalLayer() != 0;
+    
+    int mirrorNum = 0;
+    for (Portal portal : portalLayers) {
+        if (portal instanceof Mirror) {
+            mirrorNum++;
+        }
+    }
+    isRenderingOddNumberOfMirrorsCache = (mirrorNum % 2 == 1);
+}</code></pre>
+
+
+<h3>相机位置变换</h3>
+
+
+当渲染嵌套传送门时，需要将相机位置通过所有传送门变换：
+</p>
+<p><pre class="code-block"><code class="language-105">public static Vec3 getRenderingCameraPos() {
+    Vec3 pos = RenderStates.originalCamera.getPosition();
+    for (Portal portal : portalLayers) {
+        pos = portal.transformPoint(pos);
+    }
+    return pos;
+}</code></pre>
+
+
+<h3>层数限制</h3>
+
+
+为了性能和安全，传送门嵌套层数有限制：
+</p>
+<p><pre class="code-block"><code class="language-70">public static int getMaxPortalLayer() {
+    if (RenderStates.isLaggy) {
+        return 1;
+    }
+    return IPGlobal.maxPortalLayer;
+}</code></pre>
+
+
+<h3>裁剪平面继承</h3>
+
+
+当嵌套传送门没有内部裁剪平面时，需要从外层继承：
+</p>
+<p><pre class="code-block"><code class="language-178">public static @Nullable Plane getActiveClippingPlane() {
+    Portal renderingPortal = getRenderingPortal();
+    Plane plane = renderingPortal.getInnerClipping();
+    
+    if (plane == null) {
+        if (portalLayers.size() &gt;= 2) {
+            // 从外层继承裁剪平面
+            int i = portalLayers.size() - 2;
+            while (i &gt;= 0) {
+                Portal portal = portalLayers.get(i);
+                Plane outerPlane = portal.getInnerClipping();
+                
+                if (outerPlane != null) {
+                    // 变换裁剪平面到当前坐标系
+                    for (int j = i + 1; j &lt; portalLayers.size(); j++) {
+                        Portal portal1 = portalLayers.get(j);
+                        outerPlane = new Plane(
+                            portal1.transformPoint(outerPlane.pos()),
+                            portal1.transformLocalVecNonScale(outerPlane.normal())
+                        );
+                    }
+                    return outerPlane;
+                }
+                i--;
+            }
+        }
+    }
+    return plane;
+}</code></pre>
+
+
+<h3>Portal Layer 状态机流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">stateDiagram-v2
+    [*] --> Idle: 游戏启动
+    Idle --> OuterWorldRendering: 渲染外部世界
+    OuterWorldRendering --> PortalDetected: 发现传送门
+    PortalDetected --> LayerPush: pushPortalLayer()
+    LayerPush --> ContentRendering: 渲染传送门内容
+    ContentRendering --> NestedPortal: 嵌套传送门？
+    NestedPortal --> LayerPush: 发现新传送门
+    LayerPush --> ContentRendering
+    NestedPortal --> LayerPop: 无更多嵌套
+    LayerPop --> ContentRendering: popPortalLayer()
+    ContentRendering --> OuterWorldRendering: 完成
+    OuterWorldRendering --> Idle: 帧结束</div>
+</div>
+
+
+<h2 id="cross-portal-view-rendering">Cross-Portal View Rendering</h2>
+
+
+第三人称视角下，相机可以穿过传送门看向另一侧。<code>CrossPortalViewRendering</code> 处理这种特殊情况。
+
+<h3>第三人称相机计算</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-29">public static boolean renderCrossPortalView() {
+    if (!IPGlobal.enableCrossPortalView) {
+        return false;
+    }
+    
+    Entity cameraEntity = client.cameraEntity;
+    Vec3 realCameraPos = camera.getPosition();
+    Vec3 isometricAdjustedOriginalCameraPos = TransformationManager.getIsometricAdjustedCameraPos(camera);
+    
+    Vec3 physicalPlayerHeadPos = ClientTeleportationManager.getPlayerEyePos(RenderStates.getPartialTick());
+    
+    // 射线检测传送门
+    Pair&lt;Portal, Vec3&gt; portalHit = PortalCommand.raytracePortals(
+        client.level, physicalPlayerHeadPos, isometricAdjustedOriginalCameraPos, true
+    ).orElse(null);
+    
+    if (portalHit == null) {
+        return false;
+    }
+    
+    Portal portal = portalHit.getFirst();
+    
+    if (!portal.canTeleportEntity(cameraEntity)) {
+        return false;
+    }
+    
+    Vec3 renderingCameraPos;
+    
+    if (isThirdPerson()) {
+        // 计算第三人称相机位置
+        double distance = getThirdPersonMaxDistance();
+        Vec3 thirdPersonPos = realCameraPos.subtract(physicalPlayerHeadPos).normalize()
+            .scale(distance).add(physicalPlayerHeadPos);
+        renderingCameraPos = getThirdPersonCameraPos(thirdPersonPos, portal, hitPos);
+    }
+    else {
+        renderingCameraPos = portal.transformPoint(realCameraPos);
+    }
+    
+    // 设置相机位置
+    ((IECamera) RenderStates.originalCamera).portal_setPos(renderingCameraPos);
+    
+    // 执行跨维度渲染
+    WorldRenderInfo worldRenderInfo = new WorldRenderInfo.Builder()
+        .setWorld(ClientWorldLoader.getWorld(portal.getDestDim()))
+        .setCameraPos(renderingCameraPos)
+        .setCameraTransformation(portal.getAdditionalCameraTransformation())
+        .setOverwriteCameraTransformation(false)
+        .build();
+    
+    IPCGlobal.renderer.invokeWorldRendering(worldRenderInfo);
+    
+    return true;
+}</code></pre>
+
+
+<h3>第三人称相机碰撞检测</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-113">private static Vec3 getThirdPersonCameraPos(Vec3 endPos, Portal portal, Vec3 startPos) {
+    Vec3 rtStart = portal.transformPoint(startPos);
+    Vec3 rtEnd = portal.transformPoint(endPos);
+    
+    // 检测传送门变换后的路径是否会撞到方块
+    BlockHitResult blockHitResult = portal.getDestinationWorld().clip(
+        new ClipContext(
+            rtStart, rtEnd,
+            ClipContext.Block.VISUAL,
+            ClipContext.Fluid.NONE,
+            client.cameraEntity
+        )
+    );
+    
+    if (blockHitResult.getType() == HitResult.Type.BLOCK) {
+        return rtStart.add(rtEnd.subtract(rtStart).normalize().scale(
+            getThirdPersonMaxDistance()
+        ));
+    }
+    
+    return blockHitResult.getLocation();
+}</code></pre>
+
+
+<h2 id="front-clipping-planes">Front Clipping Planes</h2>
+
+
+前向裁剪平面是 ImmersivePortalsMod 渲染系统的重要组成部分，用于防止渲染错误。
+
+<h3>裁剪平面管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-21">public class FrontClipping {
+    private static double[] activeClipPlaneEquationBeforeModelView;
+    private static double[] activeClipPlaneAfterModelView;
+    
+    public static boolean isClippingEnabled = false;
+    
+    public static void disableClipping() {
+        if (IPGlobal.enableClippingMechanism) {
+            if (isClippingEnabled) {
+                GL11.glDisable(GL11.GL_CLIP_PLANE0);
+                isClippingEnabled = false;
+            }
+        }
+    }
+    
+    private static void enableClipping() {
+        if (IPGlobal.enableClippingMechanism) {
+            if (!isClippingEnabled) {
+                GL11.glEnable(GL11.GL_CLIP_PLANE0);
+                isClippingEnabled = true;
+            }
+        }
+    }</code></pre>
+
+
+<h3>内部裁剪平面设置</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-53">public static void updateInnerClipping(Matrix4f modelView) {
+    if (PortalRendering.isRendering()) {
+        setupInnerClipping(
+            PortalRendering.getActiveClippingPlane(),
+            modelView, 0
+        );
+    }
+    else {
+        disableClipping();
+    }
+}
+
+public static void setupInnerClipping(
+    Plane clipping, Matrix4f modelView, double adjustment
+) {
+    if (!IPCGlobal.useFrontClipping) {
+        return;
+    }
+    
+    if (clipping != null) {
+        activeClipPlaneEquationBeforeModelView =
+            getClipEquationInner(clipping.pos(), clipping.normal(), adjustment);
+        activeClipPlaneEquationAfterModelView =
+            transformClipEquation(activeClipPlaneEquationBeforeModelView, modelView);
+        
+        enableClipping();
+    }
+    else {
+        activeClipPlaneEquationBeforeModelView = null;
+        disableClipping();
+    }
+}</code></pre>
+
+
+<h3>裁剪平面方程变换</h3>
+
+
+裁剪平面需要根据模型视图矩阵进行变换：
+</p>
+<p><pre class="code-block"><code class="language-89">private static double[] transformClipEquation(
+    double[] equation, Matrix4f modelView
+) {
+    Vector4f eq =
+        new Vector4f((float) equation[0], (float) equation[1], (float) equation[2], (float) equation[3]);
+    Matrix4f m = new Matrix4f(modelView);
+    m.invert();
+    m.transpose();
+    m.transform(eq);
+    return new double[]{eq.x(), eq.y(), eq.z(), eq.w()};
+}</code></pre>
+
+
+<h3>着色器统一变量更新</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-174">public static void updateClippingEquationUniformForCurrentShader(
+    boolean isRenderingEntities
+) {
+    if (!IPGlobal.enableClippingMechanism) {
+        return;
+    }
+    
+    ShaderInstance shader = RenderSystem.getShader();
+    
+    if (shader == null) {
+        return;
+    }
+    
+    Uniform clippingEquationUniform = ((IEShader) shader).ip_getClippingEquationUniform();
+    if (clippingEquationUniform != null) {
+        if (isClippingEnabled) {
+            double[] equation = activeClipPlaneEquationBeforeModelView;
+            clippingEquationUniform.set(
+                (float) equation[0], (float) equation[1],
+                (float) equation[2], (float) equation[3]
+            );
+        }
+        else {
+            clippingEquationUniform.set(0f, 0f, 0f, 1f);
+        }
+    }
+}</code></pre>
+
+
+<h3>裁剪平面示意图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph 传送门裁剪
+        A[相机位置] --> B[传送门平面]
+        B --> C{裁剪平面}
+        C -->|法线方向| D[保留侧]
+        C -->|法线反方向| E[裁剪侧]
+    end
+    
+    subgraph 嵌套处理
+        F[外层传送门裁剪] --> G[内层传送门裁剪]
+        G --> H[外层裁剪变换]
+        H --> I[应用到内层坐标]
+    end</div>
+</div>
+
+
+<h2 id="rendering-pipeline-diagram">Rendering Pipeline Diagram</h2>
+
+
+<h3>完整渲染流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 初始化阶段
+        A[Minecraft 渲染开始] --> B[PortalRenderer.prepareRendering]
+        B --> C{检测渲染模式}
+        C -->|Iris Shaders| D[使用 Iris 渲染器]
+        C -->|普通模式| E[RendererUsingStencil]
+        C -->|兼容性模式| F[RendererUsingFrameBuffer]
+    end
+    
+    subgraph 主渲染循环
+        E --> G[getPortalsToRender]
+        G --> H[按距离排序传送门]
+        H --> I{遍历传送门列表}
+    end
+    
+    subgraph 单个传送门渲染
+        I -->|处理传送门| J[doRenderPortal]
+        J --> K[renderAndDecideVisibility]
+        K -->|可见| L[pushPortalLayer]
+        K -->|不可见| M[跳过]
+        L --> N[清除传送门区域深度]
+        N --> O[渲染传送门内容]
+        O --> P[WorldRenderInfo]
+        P --> Q[switchAndRenderTheWorld]
+        Q --> R[恢复传送门区域深度]
+        R --> S[popPortalLayer]
+        S --> T[clampStencilValue]
+    end
+    
+    subgraph 世界切换
+        Q --> Q1[保存当前状态]
+        Q1 --> Q2[切换到目标维度]
+        Q2 --> Q3[设置相机位置]
+        Q3 --> Q4[渲染区块和实体]
+        Q4 --> Q5[恢复原始状态]
+    end
+    
+    M --> I
+    I -->|完成| U[finishRendering]
+    U --> V[渲染完成]
+    
+    T --> I</div>
+</div>
+
+
+<h3>Stencil 渲染器详细流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant M as Minecraft 渲染系统
+    participant S as Stencil 渲染器
+    participant G as OpenGL
+    participant V as ViewAreaRenderer
+    participant P as Portal 内容渲染
+    
+    M->>S: prepareRendering()
+    S->>G: glClearStencil(0)
+    S->>G: glClear(GL_STENCIL_BUFFER_BIT)
+    S->>G: glEnable(GL_STENCIL_TEST)
+    
+    M->>S: onBeforeTranslucentRendering()
+    S->>S: getPortalsToRender()
+    
+    loop 每个传送门
+        S->>S: doRenderPortal()
+        S->>V: renderPortalViewAreaToStencil()
+        V->>G: glStencilFunc(EQUAL, layer, 0xFF)
+        V->>G: glStencilOp(KEEP, KEEP, INCR)
+        V->>G: 渲染传送门可视区域
+        S->>S: pushPortalLayer()
+        S->>G: clearDepthOfPortalViewArea()
+        S->>S: renderPortalContent()
+        S->>P: switchAndRenderTheWorld()
+        P-->>S: 渲染完成
+        S->>S: popPortalLayer()
+        S->>G: restoreDepthOfPortalViewArea()
+        S->>G: clampStencilValue()
+    end
+    
+    M->>S: finishRendering()
+    S->>G: glDisable(GL_STENCIL_TEST)</div>
+</div>
+
+
+<h2 id="camera-transformation-system">Camera Transformation System</h2>
+
+
+<h3>相机变换管理</h3>
+
+
+<code>WorldRenderInfo</code> 管理每次世界渲染的相机信息：
+</p>
+<p><pre class="code-block"><code class="language-20">public class WorldRenderInfo {
+    /**
+     * The dimension that it&#39;s going to render
+     */
+    public final ClientLevel world;
+    
+    /**
+     * Camera position
+     */
+    public final Vec3 cameraPos;
+    
+    public final boolean overwriteCameraTransformation;
+    
+    /**
+     * If overwriteCameraTransformation is true,
+     * the world rendering camera transformation will be replaced by this.
+     */
+    @Nullable
+    public final Matrix4f cameraTransformation;
+    
+    // ... 更多字段
+}</code></pre>
+
+
+<h3>相机位置调整</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-113">public static void adjustCameraPos(Camera camera) {
+    if (!renderInfoStack.isEmpty()) {
+        WorldRenderInfo currWorldRenderInfo = getTopRenderInfo();
+        ((IECamera) camera).portal_setPos(currWorldRenderInfo.cameraPos);
+    }
+}</code></pre>
+
+
+<h3>额外变换应用</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-120">public static void applyAdditionalTransformations(PoseStack matrixStack) {
+    for (WorldRenderInfo worldRenderInfo : renderInfoStack) {
+        if (worldRenderInfo.overwriteCameraTransformation) {
+            matrixStack.last().pose().identity();
+            matrixStack.last().normal().identity();
+        }
+        
+        Matrix4f matrix = worldRenderInfo.cameraTransformation;
+        if (matrix != null) {
+            matrixStack.last().pose().mul(matrix);
+            
+            Matrix3f normalMatrixMult = new Matrix3f(matrix);
+            // 确保法向量不被缩放
+            normalMatrixMult.scale(
+                (float) Math.pow(1.0 / Math.abs(normalMatrixMult.determinant()), 1.0 / 3)
+            );
+            matrixStack.last().normal().mul(normalMatrixMult);
+        }
+    }
+}</code></pre>
+
+
+<h3>传送门变换矩阵</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-260">@Nullable
+public static Matrix4f getPortalTransformation(Portal portal) {
+    Matrix4f rot = getPortalRotationMatrix(portal);
+    
+    Matrix4f mirror = portal instanceof Mirror ?
+        TransformationManager.getMirrorTransformation(portal.getNormal()) : null;
+    
+    Matrix4f scale = getPortalScaleMatrix(portal);
+    
+    return combineNullable(rot, combineNullable(mirror, scale));
+}
+
+@Nullable
+public static Matrix4f getPortalScaleMatrix(Portal portal) {
+    if (shouldApplyScaleToModelView(portal)) {
+        float v = (float) (1.0 / portal.getScale());
+        return new Matrix4f().scale(v, v, v);
+    }
+    return null;
+}</code></pre>
+
+
+<h3>相机变换流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 原始相机
+        A[相机位置] --> B[旋转四元数]
+    end
+    
+    subgraph 传送门变换
+        B --> C{旋转矩阵}
+        C -->|镜面反射| D[Mirror 变换]
+        C -->|缩放| E[Scale 变换]
+        D --> F[组合变换]
+        E --> F
+    end
+    
+    subgraph 最终变换
+        F --> G[模型视图矩阵]
+        G --> H[投影矩阵]
+    end
+    
+    subgraph 层叠变换
+        I[Layer 1 变换] --> J[Layer 2 变换]
+        J --> K[Layer N 变换]
+    end</div>
+</div>
+
+
+<h2 id="visibility-prediction-and-occlusion-query">Visibility Prediction and Occlusion Query</h2>
+
+
+<h3>可见性预测机制</h3>
+
+
+<code>PortalRenderInfo</code> 使用 OpenGL 遮挡查询来预测传送门是否可见：
+</p>
+<p><pre class="code-block"><code class="language-212">public static boolean renderAndDecideVisibility(Portal portal, Runnable queryRendering) {
+    boolean decision;
+    if (IPGlobal.offsetOcclusionQuery) {
+        PortalRenderInfo renderInfo = get(portal);
+        
+        List&lt;UUID&gt; renderingDescription = WorldRenderInfo.getRenderingDescription();
+        
+        Visibility visibility = renderInfo.getVisibility(renderingDescription);
+        
+        GlQueryObject lastFrameQuery = visibility.lastFrameQuery;
+        GlQueryObject thisFrameQuery = visibility.acquireThisFrameQuery();
+        
+        // 执行遮挡查询
+        thisFrameQuery.performQueryAnySamplePassed(queryRendering);
+        
+        boolean noPredict =
+            renderInfo.isFrequentlyMispredicted() ||
+                QueryManager.queryStallCounter &lt;= 3;
+        
+        if (lastFrameQuery != null) {
+            boolean lastFrameVisible = lastFrameQuery.fetchQueryResult();
+            
+            if (!lastFrameVisible &amp;&amp; noPredict) {
+                decision = thisFrameQuery.fetchQueryResult();
+                QueryManager.queryStallCounter++;
+            }
+            else {
+                // 使用上一帧的结果预测
+                decision = lastFrameVisible;
+                renderInfo.updatePredictionStatus(visibility, decision);
+            }
+        }
+        else {
+            decision = thisFrameQuery.fetchQueryResult();
+            QueryManager.queryStallCounter++;
+        }
+    }
+    else {
+        decision = QueryManager.renderAndGetDoesAnySamplePass(queryRendering);
+    }
+    return decision;
+}</code></pre>
+
+
+<h3>预测状态跟踪</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-198">private void updatePredictionStatus(Visibility visibility, boolean thisFrameDecision) {
+    visibility.thisFrameRendered = thisFrameDecision;
+    
+    if (thisFrameDecision) {
+        if (visibility.lastFrameRendered != null) {
+            if (!visibility.lastFrameRendered) {
+                if (!isFrequentlyMispredicted()) {
+                    onMispredict();
+                }
+            }
+        }
+    }
+}</code></pre>
+
+
+<h3>遮挡查询流程</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    A[帧 N 开始] --> B[获取上一帧查询结果]
+    B --> C{上一帧可见?}
+    
+    C -->|是| D[使用预测结果]
+    C -->|否| E{频繁误判?}
+    
+    E -->|否| F[使用预测结果]
+    E -->|是| G[执行当前帧查询]
+    G --> H[获取查询结果]
+    
+    D --> I[执行渲染]
+    F --> I
+    H --> I
+    
+    I --> J[记录当前查询对象]
+    J --> K[帧 N 结束]
+    K --> L[帧 N+1 开始]
+    L --> B</div>
+</div>
+
+
+<h2 id="key-implementation-details">Key Implementation Details</h2>
+
+
+<h3>ViewAreaRenderer 可视区域渲染</h3>
+
+
+<code>ViewAreaRenderer</code> 负责渲染传送门的可视区域到模板缓冲：
+</p>
+<p><pre class="code-block"><code class="language-23">public static void renderPortalArea(
+    Portal portal, Vec3 fogColor,
+    Matrix4f modelViewMatrix, Matrix4f projectionMatrix,
+    boolean doFaceCulling, boolean doModifyColor,
+    boolean doModifyDepth, boolean doClip
+) {
+    
+    if (doFaceCulling) {
+        GlStateManager._enableCull();
+    }
+    else {
+        GlStateManager._disableCull();
+    }
+    
+    if (doModifyColor) {
+        GlStateManager._colorMask(true, true, true, true);
+    }
+    else {
+        GlStateManager._colorMask(false, false, false, false);
+    }
+    
+    if (doModifyDepth) {
+        GlStateManager._depthMask(true);
+    }
+    else {
+        GlStateManager._depthMask(false);
+    }
+    
+    // 处理镜面反射的 UV 翻转
+    boolean shouldReverseCull = PortalRendering.isRenderingOddNumberOfMirrors();
+    if (shouldReverseCull) {
+        MyRenderHelper.applyMirrorFaceCulling();
+    }
+    
+    if (doClip) {
+        if (PortalRendering.isRendering()) {
+            FrontClipping.setupInnerClipping(
+                PortalRendering.getActiveClippingPlane(),
+                modelViewMatrix, 0
+            );
+        }
+    }
+    
+    GlStateManager._enableDepthTest();
+    CHelper.enableDepthClamp();
+    
+    // 使用特殊着色器渲染
+    ShaderInstance shader = MyRenderHelper.portalAreaShader;
+    RenderSystem.setShader(() -&gt; shader);
+    shader.MODEL_VIEW_MATRIX.set(modelViewMatrix);
+    shader.PROJECTION_MATRIX.set(projectionMatrix);
+    
+    FrontClipping.updateClippingEquationUniformForCurrentShader(false);
+    
+    shader.apply();
+    
+    ViewAreaRenderer.buildPortalViewAreaTrianglesBuffer(...);
+    
+    shader.clear();
+}</code></pre>
+
+
+<h3>MyGameRenderer 世界切换</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-96">public static void renderWorldNew(
+    WorldRenderInfo worldRenderInfo,
+    Consumer&lt;Runnable&gt; invokeWrapper
+) {
+    WorldRenderInfo.pushRenderInfo(worldRenderInfo);
+    
+    switchAndRenderTheWorld(
+        worldRenderInfo.world,
+        worldRenderInfo.cameraPos,
+        worldRenderInfo.cameraPos,
+        invokeWrapper,
+        worldRenderInfo.renderDistance,
+        worldRenderInfo.doRenderHand
+    );
+    
+    WorldRenderInfo.popRenderInfo();
+}</code></pre>
+
+
+<h3>渲染状态管理</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-41">public class RenderStates {
+    public static int frameIndex = 0;
+    
+    public static ResourceKey&lt;Level&gt; originalPlayerDimension;
+    public static Vec3 originalPlayerPos = Vec3.ZERO;
+    
+    public static Set&lt;ResourceKey&lt;Level&gt;&gt; renderedDimensions = new HashSet&lt;&gt;();
+    public static List&lt;List&lt;WeakReference&lt;Portal&gt;&gt;&gt; portalRenderInfos = new ArrayList&lt;&gt;();
+    public static int portalsRenderedThisFrame = 0;
+    
+    public static Vec3 lastCameraPos = Vec3.ZERO;
+    public static Vec3 cameraPosDelta = Vec3.ZERO;
+    
+    public static boolean isLaggy = false;
+    public static boolean renderedScalingPortal = false;
+    
+    public static Camera originalCamera;
+    
+    public static void updatePreRenderInfo(float newPartialTick) {
+        // 更新每帧的渲染状态
+        originalPlayerDimension = cameraEntity.level().dimension();
+        originalPlayerPos = cameraEntity.position();
+        partialTick = newPartialTick;
+        
+        renderedDimensions.clear();
+        portalRenderInfos = new ArrayList&lt;&gt;();
+        portalsRenderedThisFrame = 0;
+        
+        updateIsLaggy();
+        // ...
+    }
+}</code></pre>
+
+
+<h2 id="summary">Summary</h2>
+
+
+ImmersivePortalsMod 的渲染系统是一个精心设计的复杂系统，主要特点：
+
+<ul><li><strong>双渲染器架构</strong>：Stencil 渲染器用于高性能，FrameBuffer 渲染器用于兼容性</li></ul>
+<ul><li><strong>层级栈管理</strong>：使用模板值追踪传送门嵌套层级</li></ul>
+<ul><li><strong>前向裁剪</strong>：防止渲染错误</li></ul>
+<ul><li><strong>遮挡查询</strong>：优化性能，减少不必要的渲染</li></ul>
+<ul><li><strong>世界切换机制</strong>：正确处理跨维度渲染</li></ul>
+<ul><li><strong>第三人称支持</strong>：处理相机穿过传送门的特殊情况</li></ul>
+
+理解这个渲染系统对于开发基于 ImmersivePortalsMod 的模组或创建自定义传送门类型非常重要。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-teleportation-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Teleportation System
+        </a><a href="05-network-sync.html" class="next">
+            Network Synchronization System
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../script.js"></script>
+    <script src="../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

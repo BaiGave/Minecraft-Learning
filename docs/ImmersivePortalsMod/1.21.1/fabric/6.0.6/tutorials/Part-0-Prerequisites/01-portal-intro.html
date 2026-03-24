@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>传送门基础概念入门 - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../../../docs/fabric/1.21/-/core/index.html">Fabric 模组</a>
+                        <a href="../../../../../../../docs/forge/1.21/-/core/index.html">Forge 模组</a>
+                        <a href="../../../../../../../docs/ImmersivePortalsMod/1.21.1/fabric/6.0.6/index.html">Immersiveportalsmod</a>
+                        <a href="../../../../../../../docs/neoforge/1.21/-/core/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="01-portal-intro.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>传送门基础概念入门</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="../Part-1-Foundation/02-portal-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送门实体初探</span>
+        </a>
+<a href="../Part-1-Foundation/03-teleportation-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>传送机制基础</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Rendering</div>
+            <a href="../Part-2-Rendering/04-portal-rendering.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：渲染原理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="../Part-3-Advanced/05-nested-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>嵌套传送门</span>
+        </a>
+<a href="../Part-3-Advanced/06-mirror-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>镜像系统</span>
+        </a>
+<a href="../Part-3-Advanced/07-scaling-portals.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：缩放传送</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: Development</div>
+            <a href="../Part-4-Development/08-portal-api-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 基础使用</span>
+        </a>
+<a href="../Part-4-Development/09-portal-api-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>API 高级应用</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程系列</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>ImmersivePortalsMod 教程总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>传送门基础概念入门</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    传送门基础概念入门
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.1/fabric/6.0.6</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>传送门基础概念入门</h1>
+
+</p>
+<p><pre class="code-block"><code class="language-yaml">---
+title: 传送门基础概念入门
+readingTime: 25
+---</code></pre>
+
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#什么是-immersiveportalsmod">什么是 ImmersivePortalsMod？</a></li></ul>
+<ul><li><a href="#与原版传送门的对比">与原版传送门的对比</a></li></ul>
+<ul><li><a href="#核心能力详解">核心能力详解</a></li></ul>
+<ul><li><a href="#关键术语解释">关键术语解释</a></li></ul>
+<ul><li><a href="#学习路线图">学习路线图</a></li></ul>
+<ul><li><a href="#入门小实验创建最简单的传送门">入门小实验：创建最简单的传送门</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
+<h2 id="什么是-immersiveportalsmod">什么是 ImmersivePortalsMod？</h2>
+
+
+<strong>ImmersivePortalsMod</strong>（简称 IPCM 或 Immersive Portals）是一个让 Minecraft 传送门体验变得<strong>无缝沉浸</strong>的模组。传统的维度传送（如进入下界或末地）会显示黑屏加载画面，而这个模组让你可以直接"穿越"传送门，实时看到目标维度的画面，就像在现实世界中走进一扇门一样自然。
+
+💡 <strong>简单理解</strong>：原版传送门是"坐车去新城市"（有加载等待），ImmersivePortalsMod 是"穿过一扇任意门"（无缝直达）。
+
+<h3>主要特点</h3>
+
+
+| 特点 | 说明 |
+|------|------|
+| <strong>无缝传送</strong> | 穿越传送门时没有黑屏加载 |
+| <strong>嵌套渲染</strong> | 可以在传送门里看到另一个传送门 |
+| <strong>缩放传送</strong> | 穿过传送门后身体变大或变小 |
+| <strong>旋转传送</strong> | 穿过传送门后视角旋转 90°、180° 等 |
+| <strong>跨维度碰撞</strong> | 在传送门这边能摸到那边的方块 |
+
+<hr>
+
+<h2 id="与原版传送门的对比">与原版传送门的对比</h2>
+
+
+让我们用 ASCII 图示对比一下两种传送门的行为差异：
+
+<h3>原版下界传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│  主世界玩家视角                                              │
+│  ┌─────────┐                                                │
+│  │ 传送门  │  ═══════════&gt;  [黑屏 3-5 秒] ═══════════&gt;  下界  │
+│  └─────────┘                                                │
+│                                                             │
+│  玩家体验：                                                  │
+│  - 走进传送门后屏幕变黑                                      │
+│  - 等待区块加载（3-10秒不等）                                 │
+│  - 突然出现在下界                                            │
+│  - 无法在穿越过程中看到任何画面                               │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>ImmersivePortalsMod 传送门</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│  主世界玩家视角                                              │
+│  ┌─────────┐                                                │
+│  │ 传送门  │  ═══════════&gt;  实时渲染下界画面  ═══════════&gt;  下界│
+│  └─────────┘                                                │
+│       ↓                                                      │
+│  玩家能透过传送门看到：                                       │
+│  - 下界的灵魂沙、荧石、熔岩                                   │
+│  - 正在下界行走的自己                                         │
+│  - 甚至下界里的另一个传送门（嵌套）                            │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>技术对比</h3>
+
+
+| 维度 | 原版传送门 | ImmersivePortalsMod |
+|------|-----------|---------------------|
+| <strong>加载方式</strong> | 全屏阻塞加载 | 实时渲染目标维度 |
+| <strong>玩家体验</strong> | 等待黑屏 | 无感知穿越 |
+| <strong>视觉效果</strong> | 无 | 可看到目标维度 |
+| <strong>嵌套能力</strong> | 不支持 | 支持多层嵌套 |
+| <strong>变换能力</strong> | 仅维度切换 | 支持缩放、旋转 |
+
+<hr>
+
+<h2 id="核心能力详解">核心能力详解</h2>
+
+
+<h3>1. 无加载屏幕传送</h3>
+
+
+这是模组最核心的功能。当玩家穿越传送门时：
+
+<ul><li>客户端<strong>立即开始渲染</strong>目标维度的世界</li></ul>
+<ul><li>服务器在后台加载目标区块</li></ul>
+<ul><li>玩家视角<strong>无缝过渡</strong>，感觉像是穿过了一扇真实的门</li></ul>
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Player as 玩家
+    participant Client as 客户端渲染
+    participant Server as 服务端
+    participant Chunk as 区块加载
+
+    Player->>Client: 走进传送门
+    Note over Client: 立即开始渲染目标维度
+    Client->>Server: 发送传送请求
+    Server->>Chunk: 加载目标区块
+    Note over Player: 玩家视角无缝显示目标世界
+    Chunk-->>Server: 区块加载完成
+    Server-->>Client: 确认传送</div>
+</div>
+
+
+<h3>2. 嵌套渲染（Nested Portal Rendering）</h3>
+
+
+嵌套渲染允许传送门"嵌套"——即在传送门里看到另一个传送门的内容。这对于创造"镜子房间"、"无限走廊"等效果至关重要。
+</p>
+<p><pre class="code-block"><code class="language-text">    外层传送门（看向主世界）
+         │
+         ▼
+    ┌──────────────────┐
+    │  ┌──────────┐    │  ◄── 内层传送门（看向下界）
+    │  │  下界景象 │    │
+    │  └──────────┘    │
+    └──────────────────┘</code></pre>
+
+
+💡 <strong>应用场景</strong>：
+<ul><li>无限镜廊：在镜子房间中创建无限反射效果</li></ul>
+<ul><li>多维度观察站：一个位置同时监控多个维度</li></ul>
+<ul><li>创意建筑：利用嵌套创造视觉奇观</li></ul>
+
+<h3>3. 缩放传送（Scaling Portal）</h3>
+
+
+缩放传送允许传送门改变穿过者的尺寸：
+
+| 缩放比例 | 效果描述 |
+|----------|----------|
+| 0.5x | 缩小 50%，可以进入小洞穴 |
+| 2x | 放大 200%，可以查看微小细节 |
+| 0.1x | 缩小到 10%，进入微观世界 |
+| 10x | 放大到 1000%，变成巨人 |
+
+<h3>4. 旋转传送</h3>
+
+
+穿过传送门后，玩家的朝向可以发生旋转：
+</p>
+<p><pre class="code-block"><code class="language-text">        北
+         ↑
+         │
+    西 ←─┼─→ 东
+         │
+         ↓
+        南
+
+旋转 90° 后：东 → 北，西 → 南</code></pre>
+
+
+<hr>
+
+<h2 id="关键术语解释">关键术语解释</h2>
+
+
+<h3>Portal Entity（传送门实体）</h3>
+
+
+传送门在 ImmersivePortalsMod 中是一个<strong>实体（Entity）</strong>，而不是方块。这意味着：
+<ul><li>传送门有实体 ID</li></ul>
+<ul><li>可以被命令操作（如 <code>/portal</code> 命令）</li></ul>
+<ul><li>继承了 Minecraft 实体的所有特性</li></ul>
+<ul><li>可以像管理其他实体一样被追踪和同步</li></ul>
+
+<h3>Destination（目的地）</h3>
+
+
+传送门的目的地由三部分组成：
+<ul><li><strong>目标维度</strong>（<code>dimensionTo</code>）：主世界、下界、末地或其他自定义维度</li></ul>
+<ul><li><strong>目标位置</strong>（<code>destination</code>）：三维坐标 (x, y, z)</li></ul>
+<ul><li><strong>目标朝向</strong>：玩家到达后的面向方向</li></ul>
+
+<h3>Transformation（变换）</h3>
+
+
+变换决定了玩家穿过传送门时发生的变化：
+<ul><li><strong>旋转变换</strong>：玩家的视角旋转</li></ul>
+<ul><li><strong>缩放变换</strong>：玩家的身体变大或变小</li></ul>
+<ul><li><strong>镜像变换</strong>：玩家被镜像反射（类似镜子效果）</li></ul>
+
+<h3>AxisW / AxisH（坐标轴）</h3>
+
+
+传送门的方向由两个正交轴向量定义：
+<ul><li><code>axisW</code>：水平轴，决定传送门的"宽度"方向</li></ul>
+<ul><li><code>axisH</code>：垂直轴，决定传送门的"高度"方向</li></ul>
+<ul><li>法向量 = <code>axisW × axisH</code>，决定传送门面向哪边</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-text">        axisH (↑)
+          │
+          │
+          │
+    ──────●────── axisW (→)
+         /
+        /
+       /
+    法向量 (指向屏幕外)</code></pre>
+
+
+<h3>Global Portal（全局传送门）</h3>
+
+
+普通传送门在实体被移除（如超出加载范围）时会消失。全局传送门会<strong>持久保存</strong>，即使没有玩家在附近也能继续存在。
+
+<hr>
+
+<h2 id="学习路线图">学习路线图</h2>
+
+
+下面是 ImmersivePortalsMod 的学习路径：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[Part 0<br/>前置知识] --> B[Part 1<br/>基础概念]
+    B --> C[Part 2<br/>传送门实体]
+    C --> D[Part 3<br/>传送机制]
+    D --> E[Part 4<br/>渲染系统]
+    E --> F[Part 5<br/>网络同步]
+    F --> G[Part 6<br/>高级主题]
+    G --> H[Part 7<br/>API 扩展]
+
+    A --> A1[传送门是什么]
+    A --> A2[维度概念]
+    A --> A3[实体系统基础]
+
+    B --> B1[Portal 类结构]
+    B --> B2[四大属性]
+    B --> B3[变换数学]
+
+    C --> C1[创建传送门]
+    C --> C2[配置属性]
+    C --> C3[生命周期]
+
+    D --> D1[碰撞检测]
+    D --> D2[传送流程]
+    D --> D3[双向传送]
+
+    style A fill:#e3f2fd,stroke:#1976d2
+    style B fill:#e8f5e9,stroke:#388e3c
+    style C fill:#fff3e0,stroke:#f57c00</div>
+</div>
+
+
+<h3>各章节学习目标</h3>
+
+
+| 章节 | 主题 | 完成后你将能够 |
+|------|------|--------------|
+| Part 0 | 前置知识 | 理解基本概念 |
+| Part 1 | 基础概念 | 理解 Portal 类结构 |
+| Part 2 | 传送门实体 | 创建和配置传送门 |
+| Part 3 | 传送机制 | 理解传送触发和执行 |
+| Part 4 | 渲染系统 | 实现嵌套渲染效果 |
+| Part 5 | 网络同步 | 处理多维度网络 |
+| Part 6 | 高级主题 | 缩放、旋转、镜像 |
+| Part 7 | API 扩展 | 开发自定义传送门模组 |
+
+<hr>
+
+<h2 id="入门小实验创建最简单的传送门">入门小实验：创建最简单的传送门</h2>
+
+
+现在让我们写一个简单的代码示例，创建一个最基本的传送门。
+
+<h3>实验目标</h3>
+
+
+创建一个将玩家从主世界传送到下界的水平传送门。
+
+<h3>前置准备</h3>
+
+
+确保你的模组项目：
+<ul><li>依赖了 ImmersivePortalsMod API</li></ul>
+<ul><li>可以在服务端初始化时运行代码</li></ul>
+<ul><li>有一个已加载的 Minecraft 世界</li></ul>
+
+<h3>代码实现</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static Portal createSimplePortal(
+    ServerLevel world,           // 传送门所在的世界
+    BlockPos position,           // 传送门中心位置
+    Direction facing,            // 传送门朝向（北/南/东/西）
+    double width,                // 传送门宽度
+    double height                // 传送门高度
+) {
+    // 1. 创建传送门实体
+    Portal portal = Portal.ENTITY_TYPE.create(world);
+
+    // 2. 设置传送门位置
+    Vec3 portalPos = Vec3.atCenterOf(position);
+    portal.setPos(portalPos.x, portalPos.y, portalPos.z);
+
+    // 3. 设置传送门朝向（基于朝向计算 axisW 和 axisH）
+    Vec3 axisW = switch (facing) {
+        case NORTH -&gt; new Vec3(1, 0, 0);
+        case SOUTH -&gt; new Vec3(-1, 0, 0);
+        case EAST  -&gt; new Vec3(0, 0, 1);
+        case WEST  -&gt; new Vec3(0, 0, -1);
+        default    -&gt; new Vec3(1, 0, 0);
+    };
+    Vec3 axisH = new Vec3(0, 1, 0);
+    portal.setAxisW(axisW);
+    portal.setAxisH(axisH);
+
+    // 4. 设置传送门尺寸
+    portal.setWidth(width);
+    portal.setHeight(height);
+
+    // 5. 设置目的地为下界（overworld 的下方）
+    portal.setDestDim(Level.NETHER);
+    Vec3 destPos = new Vec3(
+        position.getX() * 8.0,  // 下界坐标是主世界的 1/8
+        position.getY(),
+        position.getZ() * 8.0
+    );
+    portal.setDestination(destPos);
+
+    // 6. 添加到世界
+    world.addFreshEntity(portal);
+
+    // 7. 同步到所有客户端
+    portal.reloadAndSyncToClient();
+
+    return portal;
+}</code></pre>
+
+
+<h3>简化版本（使用 PortalAPI）</h3>
+
+
+如果你只想快速测试，可以使用 <code>PortalAPI</code> 提供的便捷方法：
+</p>
+<p><pre class="code-block"><code class="language-java">public static Portal createQuickPortal(
+    ServerLevel world,
+    BlockPos position,
+    Direction facing,
+    ResourceKey&lt;Level&gt; destDim,
+    Vec3 destPos
+) {
+    Portal portal = new Portal(Portal.ENTITY_TYPE, world);
+
+    // 使用 PortalAPI 设置传送门属性
+    PortalAPI.setPortalPositionOrientationAndSize(
+        portal,
+        Vec3.atCenterOf(position),  // 位置
+        facing,                     // 朝向
+        4.0,                        // 宽度
+        4.0                         // 高度
+    );
+
+    // 设置目的地
+    PortalAPI.setPortalDestination(portal, destDim, destPos);
+
+    world.addFreshEntity(portal);
+    portal.reloadAndSyncToClient();
+
+    return portal;
+}</code></pre>
+
+
+<h3>运行测试</h3>
+
+
+<ul><li>启动 Minecraft 服务器</li></ul>
+<ul><li>在聊天框或命令方块执行你的代码</li></ul>
+<ul><li>在指定位置会生成一个发光的紫色/蓝色传送门</li></ul>
+<ul><li>走进传送门，应该会传送到下界对应位置</li></ul>
+
+✅ <strong>成功标志</strong>：走进传送门后，没有黑屏，直接出现在下界！
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，请确认你能回答以下问题：
+
+<ul><li>[ ] <strong>1. 理解差异</strong>：ImmersivePortalsMod 和原版传送门的主要区别是什么？</li></ul>
+<ul><li>[ ] <strong>2. 核心概念</strong>：什么是 Portal Entity？它和方块有什么区别？</li></ul>
+<ul><li>[ ] <strong>3. 三大属性</strong>：传送门的目的地由哪三部分组成？</li></ul>
+<ul><li>[ ] <strong>4. 坐标轴理解</strong>：axisW 和 axisH 分别代表什么方向？</li></ul>
+<ul><li>[ ] <strong>5. 术语掌握</strong>：能解释"嵌套渲染"、"缩放传送"、"全局传送门"这三个概念吗？</li></ul>
+
+<hr>
+
+<h2 id="下章预告">下章预告</h2>
+
+
+在下一章 <a href="02-portal-entity.html">传送门实体初探</a> 中，我们将深入了解：
+<ul><li>Portal 类的继承结构</li></ul>
+<ul><li>传送门的四大核心属性详解</li></ul>
+<ul><li>变换数学基础入门</li></ul>
+<ul><li>如何用代码精确控制传送门</li></ul>
+
+准备好了吗？让我们继续探索传送门的内部世界！
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="../Part-1-Foundation/02-portal-entity.html" class="next">
+            传送门实体初探
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../../../script.js"></script>
+    <script src="../../../../../../../scripts/theme.js"></script>
+    <script src="../../../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

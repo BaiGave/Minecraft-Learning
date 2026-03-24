@@ -1,6 +1,17 @@
 /**
  * 通用文档转换脚本
+ *
  * 将 Markdown 文件转换为带主题的 HTML 文档页面
+ *
+ * 目录结构（content）：
+ * content/{模组}/{MC版本}/{加载器}/{模组版本}/{tutorials,analysis}/...
+ *
+ * 输出结构（docs）：
+ * docs/{模组}/{MC版本}-{加载器}-{模组版本}/{tutorials,analysis}/...
+ *
+ * 示例：
+ *   content/fabric/1.21/core/-/tutorials/Part-1/01-intro.md
+ *   -> docs/fabric/1.21-core-/tutorials/Part-1/01-intro.html
  *
  * 使用方法：
  * 1. 在 content/ 目录下添加 .md 文件
@@ -8,12 +19,6 @@
  *    - 自动扫描 content/ 发现所有模块
  *    - 自动转换所有 markdown 到 html
  * 3. 无需手动配置，模块会自动被发现
- *
- * 自动扫描说明：
- * - content/{slug}/ 下每个子目录 = 一个模块
- * - 模块下的 tutorials/ = 教程目录
- * - 模块下的 analysis/ = 分析目录
- * - 数字格式的子目录 (如 1.21) = 版本目录
  */
 
 const fs = require('fs');
@@ -85,6 +90,7 @@ if (fs.existsSync(autoScannerPath)) {
                 icon: 'book',
                 file: doc.file,
                 part: doc.part,
+                partSuffix: doc.partSuffix,
                 topics: []
             }));
 
@@ -122,11 +128,20 @@ try {
 }
 
 // 如果有自动扫描结果，合并到 modules 中
-// 自动发现的模块优先级更高
+// 自动扫描发现的版本信息优先；当 config 中 versions 为 null 但扫描到了版本化内容时，
+// 补充 versions / defaultVersion / docsDir（保留 config 的 name/icon/color 等元信息）。
 if (Object.keys(autoModules).length > 0) {
     for (const [slug, autoModule] of Object.entries(autoModules)) {
         if (!modules[slug]) {
             modules[slug] = autoModule;
+        } else {
+            // config 已存在：保留 name/icon/color，仅补充扫描到的版本信息
+            const existing = modules[slug];
+            if (autoModule.versions && autoModule.versions.length > 0) {
+                existing.versions = autoModule.versions;
+                existing.defaultVersion = autoModule.defaultVersion;
+                // docsDir 通常已是 docs/{slug}，保持不变
+            }
         }
     }
     // 使用自动发现的导航（更准确）
@@ -157,7 +172,14 @@ if (Object.keys(modules).length === 0) {
         }
     }
 }
-const { markdownLinkToHtml, markdownImageToHtml } = require('./safe-markdown-link');
+const { markdownLinkToHtml, markdownImageToHtml, escapeAttr } = require('./safe-markdown-link');
+
+function escapeHtmlText(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/"/g, '&quot;');
+}
 
 // ============================================
 // Markdown 解析器
@@ -195,6 +217,171 @@ function parseFrontmatter(content) {
     };
 }
 
+/** 文档标题：frontmatter > 正文首个 # 标题 > slug 文件名（避免无 frontmatter 时变成英文 slug） */
+function resolveDocTitle(metadata, markdownBody, slug) {
+    if (metadata && metadata.title) {
+        return String(metadata.title).trim();
+    }
+    const hm = String(markdownBody || '').match(/^#\s+(.+)$/m);
+    if (hm) return hm[1].trim();
+    return path.basename(String(slug || '')).replace(/-/g, ' ');
+}
+
+/**
+ * 教程 Part 分组标题：MC/Fabric 优先用 curated 映射；其他模组用文件夹后缀（Part-2-Rendering → Part-2: Rendering）
+ */
+function humanizePartSuffix(suffix) {
+    if (!suffix) return '';
+    if (/[\u4e00-\u9fff]/.test(suffix)) {
+        return String(suffix).replace(/[-_]+/g, ' ').trim();
+    }
+    return String(suffix)
+        .split(/[-_]+/)
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+}
+
+/** 与 auto-scanner extractPartFolderMeta 一致：用路径首段解析 Part 文件夹名 */
+function extractPartFolderMetaFromRelative(relativePathNorm) {
+    const norm = String(relativePathNorm).replace(/\\/g, '/');
+    const firstSeg = norm.split('/')[0] || '';
+    const m =
+        firstSeg.match(/^Part-(\d+)(?:-(.+))?$/i) ||
+        firstSeg.match(/^part-(\d+)(?:-(.+))?$/i);
+    if (!m) return { part: 'Other', partSuffix: null };
+    return { part: m[1], partSuffix: m[2] || null };
+}
+
+function formatTutorialPartLabel(partKey, partItems, moduleSlug) {
+    if (partKey === 'Other') return '其他';
+    const suffix = partItems && partItems[0] && partItems[0].partSuffix;
+    const useCurated = moduleSlug === 'mc' || moduleSlug === 'fabric';
+    if (useCurated && suffix) {
+        const compound = `${partKey}-${suffix}`;
+        if (partDisplayNames[compound]) return partDisplayNames[compound];
+    }
+    if (useCurated && partDisplayNames[partKey]) {
+        return partDisplayNames[partKey];
+    }
+    if (suffix) {
+        return `Part-${partKey}: ${humanizePartSuffix(suffix)}`;
+    }
+    if (partDisplayNames[partKey]) return partDisplayNames[partKey];
+    return `Part-${partKey}`;
+}
+
+/** 读取模组根 README 的致谢与版本元信息（可选 YAML 顶栏） */
+function parseModuleReadmeCredits(contentRoot, moduleSlug) {
+    const readmePath = path.join(contentRoot, 'content', moduleSlug, 'README.md');
+    if (!fs.existsSync(readmePath)) return {};
+    try {
+        const raw = fs.readFileSync(readmePath, 'utf-8');
+        const { metadata } = parseFrontmatter(raw);
+        return {
+            originalAuthor: metadata.originalAuthor || metadata.author || '',
+            sourceUrl: metadata.sourceUrl || '',
+            modVersion: metadata.modVersion || '',
+            minecraftVersion: metadata.minecraftVersion || '',
+            loader: metadata.loader || ''
+        };
+    } catch (e) {
+        return {};
+    }
+}
+
+/**
+ * 从一串版本键构建树形结构 { mcVersion -> loader -> modVersions[] }
+ * 用于三下拉选择器。
+ */
+function buildVersionTree(versions) {
+    const tree = {};
+    if (!versions || !versions.length) return tree;
+    for (const key of versions) {
+        const { mcVersion, loader, modVersion } = versionToPath(key);
+        if (!mcVersion) continue;
+        if (!tree[mcVersion]) tree[mcVersion] = {};
+        if (!tree[mcVersion][loader]) tree[mcVersion][loader] = [];
+        tree[mcVersion][loader].push({ key, modVersion });
+    }
+    return tree;
+}
+
+const LOADER_NAMES = {
+    core: '原版核心',
+    fabric: 'Fabric',
+    forge: 'Forge',
+    neoforge: 'NeoForge',
+};
+
+function formatLoaderName(loader) {
+    return LOADER_NAMES[loader.toLowerCase()] ||
+        (loader.charAt(0).toUpperCase() + loader.slice(1).toLowerCase());
+}
+
+function formatVersionDirLabel(versionToken) {
+    if (!versionToken) return '';
+    const m = String(versionToken).match(/^(\d+\.\d+(?:\.\d+)?)-([a-z0-9_-]+)$/i);
+    if (m) {
+        const loader = m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase();
+        return `Minecraft ${m[1]} · ${loader}`;
+    }
+    return `Minecraft ${versionToken}`;
+}
+
+/** 三下拉徽章：返回 { mc, loader, modVersion } 标签数组或 null */
+function buildVersionBadge(versionToken) {
+    if (!versionToken) return null;
+    const { mcVersion, loader, modVersion } = versionToPath(versionToken);
+    if (!mcVersion) return null;
+    return {
+        mc: mcVersion,
+        loader: formatLoaderName(loader),
+        mod: modVersion && modVersion !== '-' ? modVersion : null,
+    };
+}
+
+/**
+ * 重写文档内相对链接，避免 ./Part-X/foo 从子目录解析成 当前目录/Part-X/foo（404）
+ * @param {string} rawUrl 原始 URL（可能含 .md、#锚点）
+ * @param {string} currentSlug 当前文档 slug，相对 tutorials 或 analysis 根
+ * @param {string} docType 'tutorials' | 'analysis'
+ * @returns {string} 重写后的 href（.html，相对路径）
+ */
+function rewriteDocLinkHref(rawUrl, currentSlug, docType) {
+    const s = String(rawUrl || '').trim();
+    if (!s || /^https?:\/\//i.test(s) || /^#/.test(s) || /^mailto:/i.test(s)) {
+        return s.replace(/\.md(#.*)?$/i, (_, a) => '.html' + (a || ''));
+    }
+    const anchor = (s.match(/#.+$/) || [])[0] || '';
+    let pathPart = s.replace(/#.+$/, '').replace(/\.md$/i, '').trim();
+    pathPart = pathPart.replace(/^\.\//, '');
+    const fromDir = path.posix.dirname(String(currentSlug || '').replace(/\\/g, '/'));
+    const baseDir = fromDir && fromDir !== '.' ? fromDir : '.';
+
+    const looksLikeOtherPart = /^Part-\d+-[^/]+/i.test(pathPart) || /^part-\d+-[^/]+/i.test(pathPart);
+    const isBareReadme = /^(README|SUMMARY)$/i.test(pathPart);
+
+    let targetSlug = pathPart;
+    if (looksLikeOtherPart) {
+        targetSlug = pathPart;
+    } else if (isBareReadme && baseDir !== '.') {
+        targetSlug = pathPart;
+    }
+
+    let rel;
+    if (looksLikeOtherPart || (isBareReadme && baseDir !== '.')) {
+        rel = path.posix.relative(baseDir, targetSlug);
+    } else {
+        const joined = baseDir === '.' ? targetSlug : path.posix.join(baseDir, targetSlug);
+        const resolved = path.posix.normalize(joined);
+        rel = path.posix.relative(baseDir, resolved);
+    }
+    if (!rel || rel === '') rel = path.posix.basename(targetSlug);
+    rel = rel.split(path.sep).join('/');
+    return rel + (rel.endsWith('.html') ? '' : '.html') + anchor;
+}
+
 /**
  * 从 ## 标题文案生成锚点 id，与教程内「目录」中的 (#xxx) 链接对齐。
  * （旧逻辑用整段标题作 id，与手写目录链不一致，导致页内跳转无效。）
@@ -213,8 +400,10 @@ function headingAnchorId(rawTitle) {
     return s || 'section';
 }
 
-function parseMarkdown(text) {
+function parseMarkdown(text, options = {}) {
     let html = text;
+    const currentSlug = options.currentSlug;
+    const docType = options.docType || 'tutorials';
 
     // 预处理：保留代码块（包括 mermaid）
     const codeBlocks = [];
@@ -317,8 +506,13 @@ function parseMarkdown(text) {
     // 图片（src 消毒 + lazy）
     html = html.replace(/!\[(.+?)\]\((.+?)\)/g, (_, alt, src) => markdownImageToHtml(alt, src));
 
-    // 链接（危险协议过滤、外链 noopener）
-    html = html.replace(/\[(.+?)\]\((.+?)\)/g, (_, t, u) => markdownLinkToHtml(t, u));
+    // 链接（危险协议过滤、外链 noopener；站内相对路径重写，避免 ./Part-X 解析成 当前目录/Part-X）
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, (_, t, u) => {
+        const href = currentSlug
+            ? rewriteDocLinkHref(u, currentSlug, docType)
+            : (u.replace(/\.md(#.*)?$/i, (_, a) => '.html' + (a || '')));
+        return markdownLinkToHtml(t, href);
+    });
 
     // 水平线
     html = html.replace(/^---$/gm, '<hr>');
@@ -446,6 +640,8 @@ function tutorialRelativeHref(fromSlug, toFileOrSlug) {
     let toSlug;
     if (toRaw.includes('/')) {
         toSlug = toRaw;
+    } else if (/^(README|SUMMARY)$/i.test(toRaw.trim())) {
+        toSlug = toRaw.trim();
     } else {
         toSlug = baseDir === '.' ? toRaw : path.posix.join(baseDir, toRaw);
     }
@@ -483,7 +679,7 @@ function buildTutorialSidebarHtml(navItems, activeSlug, module) {
     const orderedParts = groups.Other ? [...numbered, 'Other'] : numbered;
     return orderedParts.map(partKey => {
         const items = groups[partKey];
-        const label = partDisplayNames[partKey] || (partKey === 'Other' ? '其他' : `Part ${partKey}`);
+        const label = formatTutorialPartLabel(partKey, items, module.slug);
         const links = items.map(item => {
             const isActive = tutorialNavItemMatchesSlug(item, activeSlug);
             const icon = item.icon || 'book';
@@ -851,6 +1047,40 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     // 索引页路径：docs/{slug}/[version/]index.html → 回到根目录：2 或 3 层
     const relativePath = '../'.repeat(version ? 3 : 2);
     const versionInfo = version ? ` - ${version}` : '';
+    const websiteRoot = path.resolve(__dirname, '..');
+    const credits = parseModuleReadmeCredits(websiteRoot, module.slug);
+    const creditsBlock = (() => {
+        const bits = [];
+        if (credits.originalAuthor) {
+            bits.push(`<span class="module-credits-author">致谢：${escapeHtmlText(credits.originalAuthor)}</span>`);
+        }
+        if (credits.sourceUrl) {
+            bits.push(
+                `<a class="module-credits-link" href="${escapeAttr(credits.sourceUrl)}" target="_blank" rel="noopener noreferrer">源项目</a>`
+            );
+        }
+        if (!bits.length) return '';
+        return `<p class="module-index-credits">${bits.join(' · ')}</p>`;
+    })();
+    const versionMetaChips = (() => {
+        const chips = [];
+        if (credits.modVersion) {
+            chips.push(
+                `<div class="stat-chip accent"><span>模组</span><strong>${escapeHtmlText(credits.modVersion)}</strong></div>`
+            );
+        }
+        if (credits.minecraftVersion) {
+            chips.push(
+                `<div class="stat-chip accent"><span>MC</span><strong>${escapeHtmlText(credits.minecraftVersion)}</strong></div>`
+            );
+        }
+        if (credits.loader) {
+            chips.push(
+                `<div class="stat-chip accent"><span>加载器</span><strong>${escapeHtmlText(credits.loader)}</strong></div>`
+            );
+        }
+        return chips.join('');
+    })();
 
     // 按 Part 分组教程
     const partGroups = groupByPart(tutorialsNavItems);
@@ -862,7 +1092,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     // 生成按 Part 分组的教程 HTML
     const tutorialsByPartHtml = sortedParts.map((partName, partIndex) => {
         const partItems = partGroups[partName];
-        const partLabel = partDisplayNames[partName] || partName;
+        const partLabel = formatTutorialPartLabel(partName, partItems, module.slug);
         const learningAdvice = useCurriculumLayout && partLearningAdvice[partName];
         const prevPart = useCurriculumLayout && partIndex > 0 ? sortedParts[partIndex - 1] : null;
         const nextPart = useCurriculumLayout && partIndex < sortedParts.length - 1 ? sortedParts[partIndex + 1] : null;
@@ -885,8 +1115,8 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                         ${topicsHtml}
                     </div>`;
             }).join('');
-            const prevLink = prevPart ? `<a href="#" onclick="scrollToPart('part-${prevPart}'); return false;" class="part-prev-next-prev">上一部分 ${partDisplayNames[prevPart] || prevPart}</a>` : '';
-            const nextLink = nextPart ? `<a href="#" onclick="scrollToPart('part-${nextPart}'); return false;" class="part-prev-next-next">下一部分 ${partDisplayNames[nextPart] || nextPart}</a>` : '';
+            const prevLink = prevPart ? `<a href="#" onclick="scrollToPart('part-${prevPart}'); return false;" class="part-prev-next-prev">上一部分 ${escapeHtmlText(formatTutorialPartLabel(prevPart, partGroups[prevPart], module.slug))}</a>` : '';
+            const nextLink = nextPart ? `<a href="#" onclick="scrollToPart('part-${nextPart}'); return false;" class="part-prev-next-next">下一部分 ${escapeHtmlText(formatTutorialPartLabel(nextPart, partGroups[nextPart], module.slug))}</a>` : '';
             partContent = `
                 <div class="curriculum-grid">
                     ${curriculumCards}
@@ -957,21 +1187,39 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         </div>
     `).join('');
 
+    const versionTree = module.versions && module.versions.length > 0
+        ? buildVersionTree(module.versions)
+        : {};
+    const versionTreeJson = JSON.stringify(versionTree)
+        .replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+
+    // ── 三下拉 HTML ───────────────────────────────────────────────────────────
     let versionToolbarSelect = '';
     if (module.versions && module.versions.length > 0) {
         versionToolbarSelect = `
-                <div class="module-toolbar-version">
-                    <label class="sr-only" for="versionSelect">Minecraft 版本</label>
-                    <select id="versionSelect" class="toolbar-field toolbar-select" onchange="switchVersion(this.value)">
-                        ${module.versions.map(v =>
-                            `<option value="${v}" ${v === version ? 'selected' : ''}>Minecraft ${v}</option>`
-                        ).join('')}
-                    </select>
+                <div class="module-toolbar-version" id="versionToolbarSelect">
+                    <div class="version-selects">
+                        <div class="version-select-wrap">
+                            <label class="sr-only" for="mcVersionSelect">Minecraft 版本</label>
+                            <select id="mcVersionSelect" class="toolbar-field" onchange="onMcVersionChange(this.value)">
+                            </select>
+                        </div>
+                        <div class="version-select-wrap">
+                            <label class="sr-only" for="loaderSelect">模组加载器</label>
+                            <select id="loaderSelect" class="toolbar-field" onchange="onLoaderChange(this.value)">
+                            </select>
+                        </div>
+                        <div class="version-select-wrap" id="modVersionWrap">
+                            <label class="sr-only" for="modVersionSelect">模组版本</label>
+                            <select id="modVersionSelect" class="toolbar-field" onchange="onModVersionChange(this.value)">
+                            </select>
+                        </div>
+                    </div>
                 </div>`;
     }
 
     const partJumpOptions = sortedParts.map(partName => {
-        const pl = partDisplayNames[partName] || partName;
+        const pl = formatTutorialPartLabel(partName, partGroups[partName], module.slug);
         return `<option value="part-${partName}">${pl.replace(/</g, '')}</option>`;
     }).join('');
 
@@ -1069,6 +1317,19 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
             line-height: 1.55;
             max-width: 36rem;
         }
+        .module-index-credits {
+            margin: 0.65rem 0 0 0;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.92);
+            line-height: 1.5;
+        }
+        .module-index-credits a.module-credits-link {
+            color: #fff;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .module-index-credits a.module-credits-link:hover { opacity: 0.92; }
         .module-index-stats {
             display: flex;
             flex-wrap: wrap;
@@ -1396,10 +1657,21 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
                 </div>
                 <h1 class="module-index-title">${module.description}</h1>
                 <p class="module-index-sub">深入理解 ${module.name} 的核心架构与实现细节</p>
+                ${creditsBlock}
             </div>
             <div class="module-index-stats">
                 <div class="stat-chip"><strong>${tutorialsNavItems.length + analysisNavItems.length}</strong><span>篇文档</span></div>
-                ${version ? `<div class="stat-chip accent"><span>版本</span><strong>${version}</strong></div>` : ''}
+                ${version ? (() => {
+                    const badge = buildVersionBadge(version);
+                    if (badge) {
+                        const parts = [`<strong>${badge.mc}</strong>`];
+                        parts.push(`<span>${badge.loader}</span>`);
+                        if (badge.mod) parts.push(`<span>${badge.mod}</span>`);
+                        return `<div class="stat-chip accent">${parts.join('')}</div>`;
+                    }
+                    return `<div class="stat-chip accent"><span>文档分支</span><strong>${escapeHtmlText(formatVersionDirLabel(version))}</strong></div>`;
+                })() : ''}
+                ${versionMetaChips}
             </div>
         </div>
     </header>
@@ -1442,10 +1714,147 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
     </section>
 
     <script>
-        ${module.versions && module.versions.length ? `
-        function switchVersion(v) {
-            window.location.href = '../' + v + '/index.html';
-        }` : ''}
+        const __VERSION_TREE__ = ${versionTreeJson};
+        const __CURRENT_VERSION_KEY__ = ${JSON.stringify(version || '')};
+        const __LOADER_NAMES__ = ${JSON.stringify(LOADER_NAMES)};
+
+        function formatLoaderName(l) {
+            return (__LOADER_NAMES__[l] || (l.charAt(0).toUpperCase() + l.slice(1).toLowerCase()));
+        }
+
+        function initVersionSelects() {
+            const mcSel = document.getElementById('mcVersionSelect');
+            const ldSel = document.getElementById('loaderSelect');
+            const mvSel = document.getElementById('modVersionSelect');
+            if (!mcSel || !ldSel || !mvSel) return;
+
+            const mcVersions = Object.keys(__VERSION_TREE__).sort().reverse();
+            mcSel.innerHTML = mcVersions.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+
+            function loadLoaders(mc) {
+                const loaders = Object.keys(__VERSION_TREE__[mc] || {}).sort();
+                ldSel.innerHTML = loaders.map(l =>
+                    '<option value="' + l + '">' + formatLoaderName(l) + '</option>'
+                ).join('');
+                const curLoader = ldSel.value;
+                if (!loaders.includes(curLoader) && loaders.length > 0) {
+                    ldSel.value = loaders[0];
+                }
+                loadModVersions(mc, ldSel.value);
+            }
+
+            function loadModVersions(mc, loader) {
+                const mods = (__VERSION_TREE__[mc] || {})[loader] || [];
+                const mvWrap = document.getElementById('modVersionWrap');
+                if (mods.length === 0) {
+                    if (mvWrap) mvWrap.style.display = 'none';
+                    mvSel.innerHTML = '';
+                    return;
+                }
+                if (mvWrap) mvWrap.style.display = '';
+                mvSel.innerHTML = mods.map(m => {
+                    const label = (m.modVersion && m.modVersion !== '-') ? m.modVersion : m.key;
+                    return '<option value="' + m.key + '">' + label + '</option>';
+                }).join('');
+            }
+
+            function findCurrent() {
+                for (const mc of mcVersions) {
+                    const loaders = Object.keys(__VERSION_TREE__[mc] || {});
+                    for (const loader of loaders) {
+                        const mods = (__VERSION_TREE__[mc] || {})[loader] || [];
+                        for (const m of mods) {
+                            if (m.key === __CURRENT_VERSION_KEY__) {
+                                return { mc, loader, mod: m };
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+
+            mcSel.addEventListener('change', function() {
+                loadLoaders(this.value);
+            });
+            ldSel.addEventListener('change', function() {
+                loadModVersions(mcSel.value, this.value);
+            });
+            mvSel.addEventListener('change', function() {
+                const key = this.value;
+                if (key && key !== __CURRENT_VERSION_KEY__) {
+                    window.location.href = '../' + key + '/index.html';
+                }
+            });
+
+            const cur = findCurrent();
+            if (cur) {
+                mcSel.value = cur.mc;
+                loadLoaders(cur.mc);
+                ldSel.value = cur.loader;
+                loadModVersions(cur.mc, cur.loader);
+                if (mvSel.options.length > 0) {
+                    mvSel.value = cur.mod.key;
+                }
+            } else {
+                if (mcVersions.length > 0) {
+                    mcSel.value = mcVersions[0];
+                    loadLoaders(mcVersions[0]);
+                }
+            }
+        }
+
+        function onMcVersionChange(mc) {
+            const ldSel = document.getElementById('loaderSelect');
+            const mvSel = document.getElementById('modVersionSelect');
+            if (!ldSel || !mvSel) return;
+            const loaders = Object.keys(__VERSION_TREE__[mc] || {}).sort();
+            ldSel.innerHTML = loaders.map(l =>
+                '<option value="' + l + '">' + formatLoaderName(l) + '</option>'
+            ).join('');
+            const curLoader = ldSel.value;
+            if (!loaders.includes(curLoader) && loaders.length > 0) {
+                ldSel.value = loaders[0];
+            }
+            const mods = (__VERSION_TREE__[mc] || {})[ldSel.value] || [];
+            const mvWrap = document.getElementById('modVersionWrap');
+            if (mvWrap) mvWrap.style.display = mods.length ? '' : 'none';
+            if (mods.length > 0) {
+                mvSel.innerHTML = mods.map(m => {
+                    const label = (m.modVersion && m.modVersion !== '-') ? m.modVersion : m.key;
+                    return '<option value="' + m.key + '">' + label + '</option>';
+                }).join('');
+                const targetKey = mvSel.value;
+                if (targetKey && targetKey !== __CURRENT_VERSION_KEY__) {
+                    window.location.href = '../' + targetKey + '/index.html';
+                }
+            }
+        }
+
+        function onLoaderChange(loader) {
+            const mcSel = document.getElementById('mcVersionSelect');
+            const mvSel = document.getElementById('modVersionSelect');
+            if (!mcSel || !mvSel) return;
+            const mc = mcSel.value;
+            const mods = (__VERSION_TREE__[mc] || {})[loader] || [];
+            const mvWrap = document.getElementById('modVersionWrap');
+            if (mvWrap) mvWrap.style.display = mods.length ? '' : 'none';
+            if (mods.length > 0) {
+                mvSel.innerHTML = mods.map(m => {
+                    const label = (m.modVersion && m.modVersion !== '-') ? m.modVersion : m.key;
+                    return '<option value="' + m.key + '">' + label + '</option>';
+                }).join('');
+                const targetKey = mvSel.value;
+                if (targetKey && targetKey !== __CURRENT_VERSION_KEY__) {
+                    window.location.href = '../' + targetKey + '/index.html';
+                }
+            }
+        }
+
+        function onModVersionChange(key) {
+            if (key && key !== __CURRENT_VERSION_KEY__) {
+                window.location.href = '../' + key + '/index.html';
+            }
+        }
 
         function togglePart(partId) {
             const part = document.getElementById(partId);
@@ -1480,6 +1889,7 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            initVersionSelects();
             const firstPart = document.querySelector('.part-section');
             if (firstPart && !firstPart.classList.contains('expanded')) {
                 firstPart.classList.add('expanded');
@@ -1570,6 +1980,30 @@ function generateModuleIndex(module, tutorialsNavItems, analysisNavItems, versio
         .module-index-page .doc-meta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem; }
         .module-index-page .doc-arrow { color: var(--text-secondary); font-size: 1rem; transition: transform 0.2s ease; align-self: center; }
         .module-index-page .doc-card:hover .doc-arrow { transform: translateX(4px); color: var(--mi-accent); }
+
+        /* ── 三列版本选择器 ── */
+        .module-index-page .module-toolbar-version { width: 100%; }
+        .module-index-page .version-selects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .module-index-page .version-select-wrap { display: inline-flex; align-items: center; gap: 0.3rem; }
+        .module-index-page .version-select-wrap label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .module-index-page #mcVersionSelect { min-width: 7rem; }
+        .module-index-page #loaderSelect { min-width: 8rem; }
+        .module-index-page #modVersionSelect { min-width: 7rem; }
+        @media (max-width: 600px) {
+            .module-index-page .version-selects { gap: 0.4rem; }
+            .module-index-page #mcVersionSelect,
+            .module-index-page #loaderSelect,
+            .module-index-page #modVersionSelect { min-width: 6rem; }
+        }
     </style>
 </body>
 </html>`;
@@ -1610,9 +2044,15 @@ function getMarkdownFiles(sourceDir, recursive = true) {
             } else if (entry.isFile()) {
                 // 检查是否是 Markdown 文件
                 const isMarkdown = config.markdown.extensions.some(ext => entry.name.endsWith(ext));
-                const isNotIgnored = !config.markdown.ignorePrefixes.some(prefix => entry.name.startsWith(prefix));
-                
-                if (isMarkdown && isNotIgnored) {
+                const atDocRoot = !basePath || basePath === '.' || basePath === '';
+                const isTopLevelReadmeOrSummary =
+                    atDocRoot &&
+                    (entry.name === 'README.md' || entry.name === 'SUMMARY.md');
+                const ignoredByPrefix = config.markdown.ignorePrefixes.some(prefix =>
+                    entry.name.startsWith(prefix));
+                const isNotIgnored = isMarkdown && (!ignoredByPrefix || isTopLevelReadmeOrSummary);
+
+                if (isNotIgnored) {
                     files.push({
                         name: entry.name,
                         path: fullPath,
@@ -1625,6 +2065,32 @@ function getMarkdownFiles(sourceDir, recursive = true) {
     
     scanDir(sourceDir);
     return files;
+}
+
+// 版本字符串转换为路径部分
+// 1.21-core-- -> mcVersion=1.21, loader=core, modVersion=-
+// 1.21-neoforge-0.8.6 -> mcVersion=1.21, loader=neoforge, modVersion=0.8.6
+function versionToPath(version) {
+    if (!version) return { mcVersion: '', loader: '', modVersion: '' };
+    const parts = version.split('-');
+    return {
+        mcVersion: parts[0] || '',
+        loader: parts[1] || 'core',
+        modVersion: parts.slice(2).join('-') || '-'
+    };
+}
+
+// 版本路径转换为版本字符串
+// mcVersion=1.21, loader=core, modVersion=- -> 1.21-core-
+function pathToVersion(mcVersion, loader, modVersion) {
+    if (!mcVersion) return '';
+    if (loader === 'core' && modVersion === '-') {
+        return mcVersion;
+    }
+    if (modVersion === '-' || !modVersion) {
+        return `${mcVersion}-${loader}`;
+    }
+    return `${mcVersion}-${loader}-${modVersion}`;
 }
 
 function convertModule(moduleKey, specificVersion = null, docType = 'tutorials') {
@@ -1644,7 +2110,8 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
     let sourceDir;
     if (module.versions && module.versions.length > 0) {
         const version = specificVersion || module.defaultVersion || module.versions[0];
-        sourceDir = path.resolve(websiteRoot, 'content', module.slug, version, docType);
+        const { mcVersion, loader, modVersion } = versionToPath(version);
+        sourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, docType);
     } else {
         sourceDir = path.resolve(websiteRoot, 'content', module.slug, docType);
     }
@@ -1672,6 +2139,7 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
 
         versionsToProcess.forEach(version => {
             // 创建版本目录
+            // 输出路径: docs/{模组}/{MC版本}-{加载器}-{模组版本}/
             const versionDir = path.join(outputDir, version);
             if (!fs.existsSync(versionDir)) {
                 fs.mkdirSync(versionDir, { recursive: true });
@@ -1686,8 +2154,9 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
             // 获取该版本的导航
             const versionNavItems = navConfig[moduleKey] || [];
 
-            // 获取该版本的源目录（与 content 对齐，勿使用错误的父目录）
-            const versionSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, docType);
+            // 获取该版本的源目录
+            const { mcVersion, loader, modVersion } = versionToPath(version);
+            const versionSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, docType);
 
             // 转换该版本的所有文档（保留 tutorials|analysis 下的子目录结构，与 MC Part-* 等一致）
             if (fs.existsSync(versionSourceDir)) {
@@ -1702,14 +2171,14 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
                     const slug = path.relative(versionSourceDir, fileInfo.path)
                         .replace(/\\/g, '/')
                         .replace(/\.(md|markdown)$/, '');
-                    const title = metadata.title || path.basename(slug).replace(/-/g, ' ');
+                    const title = resolveDocTitle(metadata, markdownContent, slug);
                     const readingTime = metadata.readingTime || config.defaults.readingTime;
 
                     const doc = {
                         slug,
                         title,
                         readingTime,
-                        content: parseMarkdown(markdownContent)
+                        content: parseMarkdown(markdownContent, { currentSlug: slug, docType })
                     };
 
                     const outPath = path.join(typeDir, `${slug}.html`);
@@ -1746,14 +2215,14 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
             const slug = path.relative(sourceDir, fileInfo.path)
                 .replace(/\\/g, '/')
                 .replace(/\.(md|markdown)$/, '');
-            const title = metadata.title || path.basename(slug).replace(/-/g, ' ');
+            const title = resolveDocTitle(metadata, markdownContent, slug);
             const readingTime = metadata.readingTime || config.defaults.readingTime;
 
             const doc = {
                 slug,
                 title,
                 readingTime,
-                content: parseMarkdown(markdownContent)
+                content: parseMarkdown(markdownContent, { currentSlug: slug, docType })
             };
 
             const outPath = path.join(typeDir, `${slug}.html`);
@@ -1780,14 +2249,26 @@ function generateModuleIndexPage(moduleKey) {
     const websiteRoot = path.resolve(__dirname, '..');
     const outputDir = path.resolve(websiteRoot, module.docsDir);
 
+    // 确保输出目录存在
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+
     if (module.versions && module.versions.length > 0) {
         // 有版本分支 - 为每个版本生成索引页
         module.versions.forEach(version => {
+            // 将版本字符串转回路径：1.21-core-- -> mcVersion=1.21, loader=core, modVersion=-
+            const { mcVersion, loader, modVersion } = versionToPath(version);
+
+            // 输出目录: docs/{模组}/{版本}/
             const versionDir = path.join(outputDir, version);
+            if (!fs.existsSync(versionDir)) {
+                fs.mkdirSync(versionDir, { recursive: true });
+            }
 
             // 扫描该版本的教程和分析文件
-            const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, 'tutorials');
-            const analysisSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, 'analysis');
+            const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, 'tutorials');
+            const analysisSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, 'analysis');
 
             const actualTutorials = getActualDocFiles(tutorialsSourceDir);
             const actualAnalysis = getActualDocFiles(analysisSourceDir);
@@ -1807,6 +2288,24 @@ function generateModuleIndexPage(moduleKey) {
             fs.writeFileSync(path.join(versionDir, 'index.html'), indexContent);
             console.log(`生成 ${module.name} ${version} 索引页`);
         });
+
+        // 有版本分支时，在根 docs/iris/ 下生成一个跳转页，兼容旧链接
+        if (module.defaultVersion) {
+            const redirectHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0;url=${module.defaultVersion}/index.html">
+    <title>Redirecting...</title>
+    <script>location.href = '${module.defaultVersion}/index.html';</script>
+</head>
+<body>
+    <p>正在跳转到 <a href="${module.defaultVersion}/index.html">${module.name}</a>...</p>
+</body>
+</html>`;
+            fs.writeFileSync(path.join(outputDir, 'index.html'), redirectHtml);
+            console.log(`生成 ${module.name} 根级跳转页 (→ ${module.defaultVersion})`);
+        }
     } else {
         // 无版本分支 - 扫描实际存在的文件
         const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, 'tutorials');
@@ -1830,36 +2329,27 @@ function generateModuleIndexPage(moduleKey) {
 function getActualDocFiles(sourceDir, recursive = true) {
     const files = getMarkdownFiles(sourceDir, recursive);
     return files.map(f => {
-        // 相对 sourceDir 的路径，含 Part-* / part-* 子目录，与 converter 输出的 HTML 路径一致
-        const slug = f.relativePath.replace(/\\/g, '/').replace(/\.(md|markdown)$/, '');
+        const rel = f.relativePath.replace(/\\/g, '/');
+        const slug = rel.replace(/\.(md|markdown)$/, '');
+        const icon = 'file-alt';
+        const { part, partSuffix } = extractPartFolderMetaFromRelative(rel);
+
         let title = path.basename(slug).replace(/-/g, ' ');
-        let icon = 'file-alt';
-        let part = 'Other';
-
-        // 解析 Part 信息（兼容大小写：Part-0, part-0, PART-0）
-        const partMatch = f.path.match(/[\\/][Pp]art[-_](\d+)/);
-        if (partMatch) {
-            part = partMatch[1];
-        }
-
         try {
             const content = fs.readFileSync(f.path, 'utf-8');
-            const { metadata } = parseFrontmatter(content);
-            if (metadata.title) {
-                title = metadata.title;
-            }
+            const { metadata, content: body } = parseFrontmatter(content);
+            title = resolveDocTitle(metadata, body, slug);
         } catch (e) {
             // 忽略读取错误
         }
 
-        const htmlPath = slug;
-
         return {
             file: slug,
-            htmlPath,
-            title: title,
-            icon: icon,
-            part: part
+            htmlPath: slug,
+            title,
+            icon,
+            part,
+            partSuffix
         };
     });
 }
