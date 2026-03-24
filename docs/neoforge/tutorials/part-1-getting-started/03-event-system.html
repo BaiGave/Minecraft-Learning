@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>NeoForge 事件系统完全指南 - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 1.21.x 环境搭建与第一个 Mod</span>
+        </a>
+<a href="02-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：注册系统 - DeferredRegister 完全指南</span>
+        </a>
+<a href="03-event-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-blocks-and-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>方块与物品开发完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 实体系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-networking/01-network-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 网络通信完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-world-gen/01-world-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 世界生成与区块系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-recipes/01-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配方与酿造系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-config/01-config-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配置系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>魔法水晶方块 - NeoForge 实战项目</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-getting-started.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 入门指南</span>
+        </a>
+<a href="02-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>NeoForge 事件系统完全指南</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    NeoForge 事件系统完全指南
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>NeoForge 事件系统完全指南</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-前言与学习目标">1. 前言与学习目标</a></li>
+<li><a href="#2-事件系统概述">2. 事件系统概述</a></li>
+</ul>  - <a href="#21-什么是事件系统">2.1 什么是事件系统？</a>
+  - <a href="#22-neoforge-vs-旧版-forge">2.2 NeoForge vs 旧版 Forge</a>
+<ul><li><a href="#3-双事件总线架构">3. 双事件总线架构</a></li>
+</ul>  - <a href="#31-neoforgeevent&lt;/em>bus-游戏事件总线">3.1 NeoForge.EVENT&lt;em>BUS 游戏事件总线</a>
+  - <a href="#32-imodeventbus-模组事件总线">3.2 IModEventBus 模组事件总线</a>
+  - <a href="#33-总线选择指南">3.3 总线选择指南</a>
+<ul><li><a href="#4-subscribeevent-注解详解">4. @SubscribeEvent 注解详解</a></li>
+</ul>  - <a href="#41-基本用法">4.1 基本用法</a>
+  - <a href="#42-事件优先级">4.2 事件优先级</a>
+  - <a href="#43-取消事件">4.3 取消事件</a>
+<ul><li><a href="#5-常用事件类型">5. 常用事件类型</a></li>
+</ul>  - <a href="#51-playerevent-玩家事件">5.1 PlayerEvent 玩家事件</a>
+  - <a href="#52-blockevent-方块事件">5.2 BlockEvent 方块事件</a>
+  - <a href="#53-entityevent-实体事件">5.3 EntityEvent 实体事件</a>
+  - <a href="#54-livingevent-生物事件">5.4 LivingEvent 生物事件</a>
+<ul><li><a href="#6-完整示例监听玩家交互事件">6. 完整示例：监听玩家交互事件</a></li>
+<li><a href="#7-事件传播流程图">7. 事件传播流程图</a></li>
+<li><a href="#8-课后自查">8. 课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-前言与学习目标">1. 前言与学习目标</h2>
+<h3>学习目标</h3>
+<p>在本章结束时，你将能够：</p>
+<p><ul><li>✅ 理解 NeoForge 双事件总线架构</li>
+<li>✅ 正确区分 <code>NeoForge.EVENT_BUS</code> 和 <code>IModEventBus</code> 的使用场景</li>
+<li>✅ 掌握 <code>@SubscribeEvent</code> 注解的各种用法</li>
+<li>✅ 熟练使用常见的玩家、方块、实体事件</li>
+<li>✅ 实现一个完整的玩家交互事件监听器</li></ul></p>
+<h3>前置知识</h3>
+<p><ul><li>✅ 了解 Java 基础（注解、泛型、Lambda 表达式）</li>
+<li>✅ 熟悉 Minecraft 模组项目结构</li>
+<li>✅ 掌握 DeferredRegister 注册系统（参考注册系统教程）</li></ul></p>
+<h3>关键术语</h3>
+<table class="data-table"><thead><tr><th>术语</th><th>解释</th></tr></thead><tbody><tr><td><strong>EventBus</strong></td><td>事件总线，负责事件的注册、分发和调用监听器</td></tr><tr><td><strong>@SubscribeEvent</strong></td><td>注解，用于标记事件监听方法</td></tr><tr><td><strong>ICancellableEvent</strong></td><td>可取消事件的接口，实现此接口的事件可以被监听器取消</td></tr><tr><td><strong>EventPriority</strong></td><td>事件优先级，控制监听器的执行顺序</td></tr></tbody></table>
+<hr></p>
+<h2 id="2-事件系统概述">2. 事件系统概述</h2>
+<h3>2.1 什么是事件系统？</h3>
+<p>事件系统是一种<strong>观察者模式</strong>的实现，允许模组在不修改游戏原代码的情况下响应游戏中的各种行为。</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+│                      游戏核心                             │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │                  事件触发点                       │    │
+│  │  (玩家攻击、方块放置、实体生成...)                │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼ post(event)
+┌─────────────────────────────────────────────────────────┐
+│                      EventBus                           │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐            │
+│  │ 监听器 A  │  │ 监听器 B  │  │ 监听器 C  │  ...        │
+│  └───────────┘  └───────────┘  └───────────┘            │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼ notify listeners
+┌─────────────────────────────────────────────────────────┐
+│                      模组代码                            │
+│  对事件做出响应：修改数据、发送消息、取消行为...          │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3>2.2 NeoForge vs 旧版 Forge</h3>
+<p>NeoForge 1.21.x 对事件系统进行了<strong>重大重构</strong>，与旧版 Forge 有显著区别：</p>
+<table class="data-table"><thead><tr><th>特性</th><th>旧版 Forge</th><th>NeoForge 1.21.x</th></tr></thead><tbody><tr><td><strong>事件分发</strong></td><td>反射机制，性能开销大</td><td>强类型直接调用，性能优化</td></tr><tr><td><strong>注册方式</strong></td><td><code>@EventBusSubscriber</code> 自动注册</td><td>显式注册到事件总线</td></tr><tr><td><strong>双总线</strong></td><td>单一 <code>ForgeEvents</code> 总线</td><td><code>NeoForge.EVENT_BUS</code> + <code>IModEventBus</code></td></tr><tr><td><strong>取消机制</strong></td><td><code>setCanceled()</code> 通用方法</td><td><code>ICancellableEvent</code> 接口标识</td></tr><tr><td><strong>优先级</strong></td><td>注解参数</td><td><code>EventPriority</code> 枚举</td></tr></tbody></table>
+<strong>NeoForge 的优势</strong>：</p>
+<p><ul><li>💡 <strong>性能更优</strong>：直接方法调用替代反射</li>
+<li>💡 <strong>类型安全</strong>：编译器检查减少运行时错误</li>
+<li>💡 <strong>清晰分离</strong>：注册事件与游戏事件分开处理</li>
+<li>💡 <strong>灵活控制</strong>：细粒度的事件控制能力</li></ul></p>
+<p><hr></p>
+<h2 id="3-双事件总线架构">3. 双事件总线架构</h2>
+<p>NeoForge 使用两个独立的事件总线，每个总线处理不同类型的任务。</p>
+<h3>3.1 NeoForge.EVENT_BUS 游戏事件总线</h3>
+<p><code>NeoForge.EVENT_BUS</code> 是游戏运行时事件的主要总线。</p>
+<pre class="code-block"><code class="language-java">17:21:D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\common\NeoForge.java
+public static final IEventBus EVENT_BUS = BusBuilder.builder()
+    .startShutdown()
+    .classChecker(eventType -&gt; {
+        if (IModBusEvent.class.isAssignableFrom(eventType)) {
+            throw new IllegalArgumentException(&quot;IModBusEvent events are not allowed on the common NeoForge bus!&quot;);
+        }
+    }).build();</code></pre>
+<p><strong>特点</strong>：</p>
+<p><ul><li>用于游戏运行时事件（如 <code>PlayerTickEvent</code>、<code>EntityJoinLevelEvent</code>）</li>
+<li>两端（客户端和服务端）都会收到事件</li>
+<li>不允许 <code>IModBusEvent</code> 类型的事件</li></ul></p>
+<h3>3.2 IModEventBus 模组事件总线</h3>
+<p><code>IModEventBus</code> 用于模组的初始化和注册事件。</p>
+<pre class="code-block"><code class="language-java">public MyMod(IEventBus modBus) {
+    // 注册 DeferredRegister
+    BLOCKS.register(modBus);
+    ITEMS.register(modBus);
+    
+    // 注册初始化监听器
+    modBus.addListener(this::commonSetup);
+}</code></pre>
+<p><strong>特点</strong>：</p>
+<p><ul><li>用于初始化阶段的 <code>RegisterEvent</code>、<code>NewRegistryEvent</code></li>
+<li>仅在 mod 加载时触发一次</li>
+<li>不应在运行时使用此总线</li></ul></p>
+<h3>3.3 总线选择指南</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["事件类型"] --> B{是注册相关事件?}
+    B -->|是| C["IModEventBus"]
+    B -->|否| D{是游戏运行时事件?}
+    D -->|是| E["NeoForge.EVENT_BUS"]
+    D -->|否| F["检查事件类注释"]
+    
+    C --> G["RegisterEvent"]
+    C --> G2["NewRegistryEvent"]
+    
+    E --> H["PlayerEvent"]
+    E --> H2["EntityEvent"]
+    E --> H3["BlockEvent"]
+    E --> H4["TickEvent"]
+    
+    style C fill:#90caf9
+    style E fill:#a5d6a7
+    style G fill:#90caf9
+    style H fill:#a5d6a7</div>
+</div>
+<p><strong>快速对照表</strong>：</p>
+<table class="data-table"><thead><tr><th>事件总线</th><th>事件示例</th><th>使用场景</th></tr></thead><tbody><tr><td><code>IModEventBus</code></td><td><code>RegisterEvent</code>, <code>NewRegistryEvent</code></td><td>模组初始化、资源注册</td></tr><tr><td><code>NeoForge.EVENT_BUS</code></td><td><code>PlayerTickEvent</code>, <code>EntityJoinLevelEvent</code>, <code>PlayerInteractEvent</code></td><td>游戏运行时逻辑</td></tr></tbody></table>
+<hr></p>
+<h2 id="4-subscribeevent-注解详解">4. @SubscribeEvent 注解详解</h2>
+<h3>4.1 基本用法</h3>
+<p><code>@SubscribeEvent</code> 注解用于标记事件监听方法。</p>
+<pre class="code-block"><code class="language-java">public class MyModEvents {
+    
+    // 监听玩家登录事件
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+        player.sendSystemMessage(Component.literal(&quot;欢迎来到服务器！&quot;));
+    }
+    
+    // 监听实体加入世界事件
+    @SubscribeEvent
+    public static void onEntitySpawn(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof Zombie zombie) {
+            zombie.setSpeed(0.5f);  // 给所有僵尸加速
+        }
+    }
+}</code></pre>
+<p><strong>注册监听器到总线</strong>：</p>
+<pre class="code-block"><code class="language-java">public MyMod(IEventBus modBus) {
+    // 注册到 NeoForge.EVENT_BUS
+    NeoForge.EVENT_BUS.addListener(MyModEvents::onPlayerLogin);
+    NeoForge.EVENT_BUS.addListener(MyModEvents::onEntitySpawn);
+}</code></pre>
+<h3>4.2 事件优先级</h3>
+<p><code>EventPriority</code> 枚举控制监听器的执行顺序：</p>
+<pre class="code-block"><code class="language-java">public enum EventPriority {
+    HIGHEST,    // 最先执行
+    HIGH,       // 较早执行
+    NORMAL,     // 默认优先级
+    LOW,        // 较晚执行
+    LOWEST      // 最后执行
+}</code></pre>
+<p><strong>执行顺序示意</strong>：</p>
+<pre class="code-block"><code class="language-text">事件触发
+    │
+    ▼
+┌───────────────────────────────────┐
+│ HIGHEST  ←── 首先执行             │
+│ HIGH      ←──                    │
+│ NORMAL    ←── 默认优先级          │
+│ LOW       ←──                    │
+│ LOWEST    ←── 最后执行            │
+└───────────────────────────────────┘</code></pre>
+<p><strong>使用示例</strong>：</p>
+<pre class="code-block"><code class="language-java">@SubscribeEvent(priority = EventPriority.HIGH)  // 先执行
+public static void onHighPriority(PlayerTickEvent event) {
+    // 这个方法会在其他监听器之前执行
+}
+
+@SubscribeEvent(priority = EventPriority.LOW)   // 后执行
+public static void onLowPriority(PlayerTickEvent event) {
+    // 这个方法会在其他监听器之后执行
+}</code></pre>
+<p><strong>💡 何时使用不同优先级</strong>：</p>
+<p><ul><li><code>HIGHEST/HIGH</code>：数据修改、限制其他监听器</li>
+<li><code>NORMAL</code>：常规业务逻辑</li>
+<li><code>LOW/LOWEST</code>：日志记录、统计、覆写其他监听器的修改</li></ul></p>
+<h3>4.3 取消事件</h3>
+<p>只有实现 <code>ICancellableEvent</code> 接口的事件才能被取消。</p>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    Player player = event.getEntity();
+    BlockPos pos = event.getPos();
+    
+    // 检查条件
+    if (event.getLevel().getBlockState(pos).is(Blocks.DIAMOND_BLOCK)) {
+        // 取消事件 - 阻止玩家右键钻石块
+        event.setCanceled(true);
+    }
+}</code></pre>
+<p><strong>取消事件的后果</strong>：</p>
+<pre class="code-block"><code class="language-java">// - Block.use() 不会被调用
+// - Item.onItemUseFirst() 不会被调用
+// - Item.useOn() 不会被调用</code></pre>
+<p><strong>💡 重要提示</strong>：</p>
+<p>取消事件时，原版行为会被完全阻止。如果只想改变行为结果，使用 <code>setCancellationResult()</code> 更合适：</p>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    // 取消事件并设置返回值
+    event.setCanceled(true);
+    event.setCancellationResult(InteractionResult.SUCCESS);
+}</code></pre>
+<p><hr></p>
+<h2 id="5-常用事件类型">5. 常用事件类型</h2>
+<h3>5.1 PlayerEvent 玩家事件</h3>
+<p><code>PlayerEvent</code> 是玩家相关事件的基类。</p>
+<p><strong>主要子类</strong>：</p>
+<table class="data-table"><thead><tr><th>事件</th><th>触发时机</th></tr></thead><tbody><tr><td><code>PlayerLoggedInEvent</code></td><td>玩家加入游戏时</td></tr><tr><td><code>PlayerLoggedOutEvent</code></td><td>玩家离开游戏时</td></tr><tr><td><code>PlayerRespawnEvent</code></td><td>玩家重生时</td></tr><tr><td><code>PlayerChangedDimensionEvent</code></td><td>玩家切换维度时</td></tr><tr><td><code>PlayerTickEvent</code></td><td>玩家每刻更新时</td></tr><tr><td><code>HarvestCheck</code></td><td>玩家尝试采集方块时</td></tr><tr><td><code>BreakSpeed</code></td><td>玩家破坏速度计算时</td></tr></tbody></table>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+    Player player = event.getEntity();
+    player.sendSystemMessage(Component.literal(&quot;欢迎回来，&quot; + player.getName().getString() + &quot;！&quot;));
+}
+
+@SubscribeEvent
+public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+    if (event.isEndConquered()) {
+        // 玩家从末地重生（击败末影龙）
+        event.getEntity().sendSystemMessage(
+            Component.literal(&quot;你征服了末地！&quot;).withStyle(ChatFormatting.GOLD)
+        );
+    }
+}</code></pre>
+<h3>5.2 BlockEvent 方块事件</h3>
+<p><strong>主要子类</strong>：</p>
+<table class="data-table"><thead><tr><th>事件</th><th>触发时机</th></tr></thead><tbody><tr><td><code>BlockPlaceEvent</code></td><td>方块被放置时</td></tr><tr><td><code>BlockBreakEvent</code></td><td>方块被破坏时</td></tr><tr><td><code>EntityPlaceEvent</code></td><td>实体放置方块时</td></tr><tr><td><code>EntityBreaksBlockEvent</code></td><td>实体破坏方块时</td></tr></tbody></table>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onBlockBreak(BlockEvent.BlockBreakEvent event) {
+    Player player = event.getPlayer();
+    BlockState state = event.getLevel().getBlockState(event.getPos());
+    
+    if (state.is(Blocks.GOLD_ORE)) {
+        // 给玩家奖励经验
+        player.giveExperiencePoints(10);
+        player.sendSystemMessage(Component.literal(&quot;挖掘金矿获得额外经验！&quot;));
+    }
+}
+
+@SubscribeEvent
+public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+    if (event.getEntity() instanceof Player player &amp;&amp; event.getPlacedBlock().is(Blocks.LAVA)) {
+        event.setCanceled(true);  // 阻止玩家放置岩浆
+    }
+}</code></pre>
+<h3>5.3 EntityEvent 实体事件</h3>
+<p><strong>主要子类</strong>：</p>
+<table class="data-table"><thead><tr><th>事件</th><th>触发时机</th></tr></thead><tbody><tr><td><code>EntityConstructing</code></td><td>实体构造时</td></tr><tr><td><code>EntityJoinLevelEvent</code></td><td>实体加入世界时</td></tr><tr><td><code>EnteringSection</code></td><td>实体进入新区块时</td></tr><tr><td><code>Size</code></td><td>实体大小改变时</td></tr></tbody></table>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
+    Entity entity = event.getEntity();
+    
+    if (entity instanceof Cow cow) {
+        // 将所有牛的名称设置为 &quot;Moo&quot;
+        cow.setCustomName(Component.literal(&quot;Moo&quot;));
+        cow.setCustomNameVisible(true);
+    }
+}
+
+@SubscribeEvent
+public static void onEntityConstructing(EntityEvent.EntityConstructing event) {
+    // 可以在这里给实体添加扩展数据
+}</code></pre>
+<h3>5.4 LivingEvent 生物事件</h3>
+<p><code>LivingEvent</code> 是所有生物（包含玩家）相关事件的基类。</p>
+<p><strong>主要子类</strong>：</p>
+<table class="data-table"><thead><tr><th>事件</th><th>触发时机</th></tr></thead><tbody><tr><td><code>LivingAttackEvent</code></td><td>生物受到攻击时</td></tr><tr><td><code>LivingHurtEvent</code></td><td>生物受到伤害时（可修改伤害值）</td></tr><tr><td><code>LivingDeathEvent</code></td><td>生物死亡时</td></tr><tr><td><code>LivingHealEvent</code></td><td>生物治疗时</td></tr><tr><td><code>LivingJumpEvent</code></td><td>生物跳跃时</td></tr><tr><td><code>LivingVisibilityEvent</code></td><td>生物可见度计算时</td></tr></tbody></table>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onLivingHurt(LivingHurtEvent event) {
+    LivingEntity entity = event.getEntity();
+    float damage = event.getAmount();
+    
+    // 如果是摔落伤害，减少 50%
+    if (event.getSource().is(DamageTypes.FALL)) {
+        event.setAmount(damage * 0.5f);
+        if (entity instanceof Player player) {
+            player.sendSystemMessage(Component.literal(&quot;摔落伤害减半！&quot;));
+        }
+    }
+}
+
+@SubscribeEvent
+public static void onLivingJump(LivingEvent.LivingJumpEvent event) {
+    LivingEntity entity = event.getEntity();
+    if (entity instanceof Cow) {
+        // 给牛额外的跳跃能力
+        entity.setDeltaMovement(entity.getDeltaMovement().add(0, 0.5, 0));
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6-完整示例监听玩家交互事件">6. 完整示例：监听玩家交互事件</h2>
+<h3>项目结构</h3>
+<pre class="code-block"><code class="language-text">src/
+└── main/
+    └── java/
+        └── com/
+            └── example/
+                └── mymod/
+                    ├── MyMod.java
+                    └── event/
+                        └── PlayerInteractHandler.java</code></pre>
+<h3>事件处理器</h3>
+<pre class="code-block"><code class="language-java">17:438:D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\event\entity\player\PlayerInteractEvent.java</code></pre>
+<p><code>PlayerInteractEvent</code> 是玩家交互事件的基类，包含多个子类处理不同交互场景：</p>
+<table class="data-table"><thead><tr><th>子类</th><th>触发时机</th></tr></thead><tbody><tr><td><code>RightClickBlock</code></td><td>玩家右键点击方块</td></tr><tr><td><code>RightClickItem</code></td><td>玩家右键使用物品</td></tr><tr><td><code>RightClickEmpty</code></td><td>玩家右键空白处</td></tr><tr><td><code>LeftClickBlock</code></td><td>玩家左键点击方块</td></tr><tr><td><code>LeftClickEmpty</code></td><td>玩家左键点击空白处</td></tr><tr><td><code>EntityInteract</code></td><td>玩家右键实体</td></tr><tr><td><code>EntityInteractSpecific</code></td><td>玩家右键实体特定位置</td></tr></tbody></table>
+<h3>实现代码</h3>
+<p><strong><code>PlayerInteractHandler.java</code></strong>：</p>
+<pre class="code-block"><code class="language-java">package com.example.mymod.event;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+
+public class PlayerInteractHandler {
+
+    public PlayerInteractHandler() {
+        // 在构造函数中注册到事件总线
+        NeoForge.EVENT_BUS.addListener(this::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(this::onLeftClickBlock);
+        NeoForge.EVENT_BUS.addListener(this::onRightClickEntity);
+        NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
+    }
+
+    /**
+     * 处理玩家右键点击方块事件
+     */
+    @SubscribeEvent
+    public void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        Player player = event.getEntity();
+        Level level = event.getLevel();
+        BlockPos pos = event.getPos();
+        InteractionHand hand = event.getHand();
+        
+        // 获取点击的方块
+        var blockState = level.getBlockState(pos);
+        
+        // 案例 1：当玩家右键工作台时，显示欢迎消息
+        if (blockState.is(Blocks.CRAFTING_TABLE)) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;你正在使用工作台！&quot;).withStyle(ChatFormatting.GREEN),
+                true
+            );
+        }
+        
+        // 案例 2：当玩家右键熔炉时，触发特殊效果
+        if (blockState.is(Blocks.FURNACE)) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;熔炉正在燃烧...&quot;).withStyle(ChatFormatting.ORANGE),
+                true
+            );
+        }
+        
+        // 案例 3：阻止玩家在特定位置放置方块（创建一个&quot;保护区&quot;）
+        if (pos.getY() == 64 &amp;&amp; pos.getX() &gt;= 0 &amp;&amp; pos.getX() &lt;= 10 
+            &amp;&amp; pos.getZ() &gt;= 0 &amp;&amp; pos.getZ() &lt;= 10) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;此处禁止放置方块！&quot;).withStyle(ChatFormatting.RED),
+                true
+            );
+            event.setCanceled(true);
+        }
+        
+        // 案例 4：控制物品使用
+        // 如果玩家手持钻石右键泥土，只允许使用主手
+        if (event.getItemStack().is(net.minecraft.world.item.Items.DIAMOND) 
+            &amp;&amp; blockState.is(Blocks.DIRT)) {
+            if (hand == InteractionHand.OFF_HAND) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    /**
+     * 处理玩家左键点击方块事件
+     */
+    @SubscribeEvent
+    public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        Player player = event.getEntity();
+        BlockPos pos = event.getPos();
+        
+        // 获取点击动作类型
+        PlayerInteractEvent.LeftClickBlock.Action action = event.getAction();
+        
+        switch (action) {
+            case START -&gt; {
+                // 玩家开始破坏方块
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal(&quot;开始破坏方块: &quot; + pos),
+                    true
+                );
+            }
+            case STOP -&gt; {
+                // 玩家完成破坏
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal(&quot;方块被破坏: &quot; + pos),
+                    true
+                );
+            }
+            case ABORT -&gt; {
+                // 玩家取消破坏
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal(&quot;取消破坏&quot;),
+                    true
+                );
+            }
+            case CLIENT_HOLD -&gt; {
+                // 客户端持续按住（每 tick 触发）
+                // 注意：这个动作只在客户端触发
+            }
+        }
+        
+        // 案例：阻止破坏特定方块
+        if (pos.equals(new BlockPos(0, 64, 0)) &amp;&amp; 
+            player.level().getBlockState(pos).is(Blocks.BEDROCK)) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;基岩不能被破坏！&quot;).withStyle(ChatFormatting.DARK_GRAY),
+                true
+            );
+            event.setCanceled(true);
+        }
+    }
+
+    /**
+     * 处理玩家右键实体事件
+     */
+    @SubscribeEvent
+    public void onRightClickEntity(PlayerInteractEvent.EntityInteract event) {
+        Player player = event.getEntity();
+        Entity target = event.getTarget();
+        InteractionHand hand = event.getHand();
+        
+        // 案例 1：当玩家右键牛时，发送消息
+        if (target instanceof Cow) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;你右键了一只牛！&quot;).withStyle(ChatFormatting.YELLOW),
+                true
+            );
+        }
+        
+        // 案例 2：阻止玩家右键末影龙
+        if (target.getType().toString().contains(&quot;ender_dragon&quot;)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;你不能右键末影龙！&quot;),
+                true
+            );
+        }
+    }
+
+    /**
+     * 处理玩家右键使用物品事件（不在方块/实体上时）
+     */
+    @SubscribeEvent
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        Player player = event.getEntity();
+        InteractionHand hand = event.getHand();
+        
+        // 获取使用的物品
+        var itemStack = event.getItemStack();
+        
+        // 案例：检测玩家使用特定物品
+        if (itemStack.is(net.minecraft.world.item.Items.BLAZE_ROD)) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.literal(&quot;你正在使用烈焰棒！&quot;).withStyle(ChatFormatting.GOLD),
+                true
+            );
+        }
+    }
+}</code></pre>
+<p><strong><code>MyMod.java</code></strong>：</p>
+<pre class="code-block"><code class="language-java">package com.example.mymod;
+
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.fml.common.Mod;
+import com.example.mymod.event.PlayerInteractHandler;
+
+@Mod(MyMod.MODID)
+public class MyMod {
+    public static final String MODID = &quot;mymod&quot;;
+    
+    public MyMod(IEventBus modBus) {
+        // 注册 DeferredRegister
+        // BLOCKS.register(modBus);
+        // ITEMS.register(modBus);
+        
+        // 注册事件监听器
+        new PlayerInteractHandler();
+        
+        NeoForge.LOGGER.info(&quot;MyMod 初始化完成！&quot;);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7-事件传播流程图">7. 事件传播流程图</h2>
+<h3>完整事件生命周期</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Game as 游戏代码
+    participant Hooks as EventHooks
+    participant Bus as NeoForge.EVENT_BUS
+    participant Listeners as 事件监听器
+    participant Result as 事件结果
+
+    Game->>Hooks: 触发某个游戏行为<br/>(如玩家点击方块)
+    Hooks->>Hooks: 创建对应事件对象
+    Hooks->>Bus: post(event)
+    
+    Bus->>Bus: 按优先级排序监听器
+    
+    loop 按优先级 HIGH → LOW 执行
+        Bus->>Listeners: 触发第一个监听器
+        Listeners->>Listeners: 处理事件逻辑
+        Note over Listeners: 可修改事件属性<br/>可取消事件
+        
+        alt 事件已取消
+            Listeners->>Listeners: setCanceled(true)
+        end
+        
+        Bus->>Listeners: 触发下一个监听器
+    end
+    
+    Bus-->>Hooks: 返回 EventResult
+    Hooks-->>Game: 根据结果处理后续逻辑
+
+    Note over Game,Listeners: 事件取消后<br/>原版行为被阻止</div>
+</div>
+<h3>交互事件执行顺序</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["玩家右键点击"] --> B{"有实体目标?"}
+    B -->|是| C["EntityInteractSpecific"]
+    B -->|否| D{"有方块目标?"}
+    D -->|是| E["RightClickBlock"]
+    D -->|否| F["RightClickEmpty"]
+    
+    C --> G{"事件未被取消?"}
+    E --> H{"事件未被取消?"}
+    
+    G -->|是| I["Entity.interactAt"]
+    G -->|否| J["使用 cancellationResult"]
+    H -->|是| K["Block.use"]
+    H -->|否| L["使用 cancellationResult"]
+    
+    I --> M{"返回 SUCCESS?"}
+    M -->|否| N["继续 EntityInteract"]
+    M -->|是| O["完成"]
+    
+    K --> P{"返回 SUCCESS?"}
+    P -->|否| Q["尝试 Item.onItemUseFirst"]
+    Q --> R{"返回 SUCCESS?"}
+    R -->|否| S["RightClickItem"]
+    P -->|是| O
+    
+    style C fill:#90caf9
+    style E fill:#a5d6a7
+    style I fill:#ffcc80
+    style K fill:#ffcc80</div>
+</div>
+<p><hr></p>
+<h2 id="8-课后自查">8. 课后自查</h2>
+<p>检查你是否掌握了以下内容：</p>
+<p><ul><li><strong>✅ 区分两个事件总线</strong></li>
+</ul>   - 什么时候使用 <code>NeoForge.EVENT_BUS</code>？什么时候使用 <code>IModEventBus</code>？</p>
+<p><ul><li><strong>✅ 正确使用 @SubscribeEvent 注解</strong></li>
+</ul>   - 监听方法必须是什么签名？
+   - 为什么推荐使用静态方法？</p>
+<p><ul><li><strong>✅ 理解事件优先级</strong></li>
+</ul>   - 如果你希望自己的监听器最后执行，应该使用哪个优先级？</p>
+<p><ul><li><strong>✅ 正确取消事件</strong></li>
+</ul>   - <code>setCanceled(true)</code> 和 <code>setCancellationResult()</code> 有什么区别？
+   - 哪些事件可以被取消？</p>
+<p><ul><li><strong>✅ 理解 PlayerInteractEvent 子类</strong></li>
+</ul>   - <code>RightClickBlock</code> 和 <code>RightClickItem</code> 的区别是什么？
+   - <code>EntityInteract</code> 和 <code>EntityInteractSpecific</code> 有什么区别？</p>
+<p><hr></p>
+<h3>扩展练习</h3>
+<p>尝试实现以下功能：</p>
+<p><ul><li>创建一个"右键提示"功能：玩家右键任意方块时，发送一条显示方块名称的消息</li></ul></p>
+<p><ul><li>创建一个"保护区"功能：在服务器中创建一个区域（坐标范围自定），阻止玩家在该区域内放置或破坏方块</li></ul></p>
+<p><ul><li>创建一个"自定义附魔"效果：当玩家受到摔落伤害时，有几率完全免疫</li></ul></p>
+<p><hr></p>
+<h3>下一步</h3>
+<p><ul><li>📖 <a href="./04-attachment-system.html">NeoForge 附件系统</a> - 学习如何为实体添加持久化数据</li>
+<li>📖 <a href="./05-network-system.html">NeoForge 网络系统</a> - 了解客户端与服务端通信</li>
+<li>📖 <a href="./06-recipe-system.html">NeoForge 配方系统</a> - 创建自定义合成配方</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-registry-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：注册系统 - DeferredRegister 完全指南
+        </a><a href="../part-2-blocks-items/01-blocks-and-items.html" class="next">
+            方块与物品开发完全指南
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

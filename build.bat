@@ -7,10 +7,13 @@ echo  ===========================================================
 echo          Minecraft Learning - Markdown Build Tool
 echo  ===========================================================
 echo.
+echo   UI/theme: edit styles.css (tutorial pages use --bg-* vars)
+echo   After CSS-only changes you can skip this and refresh browser
+echo.
 
 cd /d "%~dp0"
 
-echo [1/4] Checking Node.js...
+echo [1/3] Checking Node.js...
 where node >nul 2>&1
 if errorlevel 1 (
     echo   [ERROR] Node.js not found. Please install: https://nodejs.org/
@@ -21,7 +24,7 @@ if errorlevel 1 (
 echo   [OK] Node.js is ready
 
 echo.
-echo [2/4] Converting Markdown to HTML...
+echo [2/3] Converting Markdown to HTML (includes module index pages^)...
 node scripts\converter.js all
 if errorlevel 1 (
     echo.
@@ -32,12 +35,7 @@ if errorlevel 1 (
 echo   [OK] Conversion done
 
 echo.
-echo [3/4] Generating index pages...
-node scripts\converter.js index
-echo   [OK] Index pages generated
-
-echo.
-echo [4/4] Scanning docs and generating stats...
+echo [3/3] Scanning docs and generating stats...
 node scan-docs.js
 if errorlevel 1 (
     echo.

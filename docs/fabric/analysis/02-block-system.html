@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #4A90D9; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
-        .info-box i { color: #4A90D9; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
-        .docs-body h2 i { color: #4A90D9; }
-        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #4A90D9;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Fabric 模组</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-fabric-api-base.html" class="">
@@ -211,6 +201,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -241,7 +236,7 @@
 <li><code>fabric-block-view-api-v2</code> - 方块视图扩展</li>
 <li><code>fabric-blockrenderlayer-v1</code> - 渲染层控制</li></ul></p>
 <p><hr></p>
-<h2 id="1. fabric-block-api-v1 模块">1. fabric-block-api-v1 模块</h2>
+<h2 id="1-fabric-block-api-v1-模块">1. fabric-block-api-v1 模块</h2>
 <h3>1.1 核心 API 接口</h3>
 <h4>FabricBlock 接口</h4>
 <pre class="code-block"><code class="language-java">public interface FabricBlock {
@@ -275,7 +270,7 @@
     public static final TagKey&lt;Block&gt; CAN_CLIMB_TRAPDOOR_ABOVE = create(&quot;can_climb_trapdoor_above&quot;);
 }</code></pre>
 <p><hr></p>
-<h2 id="2. fabric-block-view-api-v2 模块">2. fabric-block-view-api-v2 模块</h2>
+<h2 id="2-fabric-block-view-api-v2-模块">2. fabric-block-view-api-v2 模块</h2>
 <h3>2.1 核心 API 接口</h3>
 <h4>FabricBlockView 接口</h4>
 <pre class="code-block"><code class="language-java">public interface FabricBlockView {
@@ -316,7 +311,7 @@
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="3. fabric-blockrenderlayer-v1 模块">3. fabric-blockrenderlayer-v1 模块</h2>
+<h2 id="3-fabric-blockrenderlayer-v1-模块">3. fabric-blockrenderlayer-v1 模块</h2>
 <h3>3.1 核心 API</h3>
 <pre class="code-block"><code class="language-java">public interface BlockRenderLayerMap {
     BlockRenderLayerMap INSTANCE = new BlockRenderLayerMapImpl();
@@ -329,7 +324,7 @@
 <h3>3.2 常用 RenderLayer 类型</h3>
 <table class="data-table"><thead><tr><th>RenderLayer</th><th>用途</th><th>示例</th></tr></thead><tbody><tr><td><code>RenderLayer.getSolid()</code></td><td>实心不透明</td><td>石头、泥土</td></tr><tr><td><code>RenderLayer.getCutout()</code></td><td>透明镂空</td><td>栅栏、活板门</td></tr><tr><td><code>RenderLayer.getCutoutMipped()</code></td><td>带 Mipmap 的镂空</td><td>玻璃</td></tr><tr><td><code>RenderLayer.getTranslucent()</code></td><td>半透明混合</td><td>冰、染色玻璃</td></tr></tbody></table>
 <hr></p>
-<h2 id="4. Mixin 注入点总结">4. Mixin 注入点总结</h2>
+<h2 id="4-mixin-注入点总结">4. Mixin 注入点总结</h2>
 <table class="data-table"><thead><tr><th>Mixin 类</th><th>目标类</th><th>功能</th></tr></thead><tbody><tr><td><code>BlockMixin</code></td><td><code>Block</code></td><td>实现 <code>FabricBlock</code></td></tr><tr><td><code>BlockStateMixin</code></td><td><code>BlockState</code></td><td>实现 <code>FabricBlockState</code></td></tr><tr><td><code>BlockViewMixin</code></td><td><code>BlockView</code></td><td>实现 <code>FabricBlockView</code></td></tr><tr><td><code>BlockEntityMixin</code></td><td><code>BlockEntity</code></td><td>实现 <code>RenderDataBlockEntity</code></td></tr><tr><td><code>WorldViewMixin</code></td><td><code>WorldView</code></td><td>实现 <code>hasBiomes()</code> 和 <code>getBiomeFabric()</code></td></tr><tr><td><code>ChunkSectionMixin</code></td><td><code>ChunkSection</code></td><td>修复 Mod 方块空气检测</td></tr><tr><td><code>LivingEntityMixin</code></td><td><code>LivingEntity</code></td><td>活板门攀爬标签支持</td></tr><tr><td><code>RenderLayersMixin</code></td><td><code>RenderLayers</code></td><td>渲染层映射初始化</td></tr></tbody></table>
 <h3>关键 Mixin 详解</h3>
 <h4>ChunkSectionMixin - 修复 Mod 方块 isAir 问题</h4>
@@ -341,7 +336,7 @@ private boolean modifyAirCheck(BlockState blockState) {
 }</code></pre>
 <p><strong>问题背景</strong>：原版 <code>isAir()</code> 方法使用 <code>==</code> 比较，导致 Mod 方块被错误替换为空气。</p>
 <p><hr></p>
-<h2 id="5. 使用示例">5. 使用示例</h2>
+<h2 id="5-使用示例">5. 使用示例</h2>
 <h3>5.1 自定义外观方块</h3>
 <pre class="code-block"><code class="language-java">public class FacadeBlock extends Block implements FabricBlock {
     private final Block mimickingBlock;
@@ -434,6 +429,7 @@ public class MyBakedModel implements FabricBakedModel {
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -456,5 +452,6 @@ public class MyBakedModel implements FabricBakedModel {
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

@@ -62,6 +62,7 @@ flowchart TB
 | 04 | [ShaderPack 结构](04-shaderpack-structure.md) | 理解完整文件组织 | ⭐⭐ | 45分钟 |
 | 05 | [Uniform 动画](05-uniform-animation.md) | 让画面动起来 | ⭐⭐ | 75分钟 |
 | 06 | [后处理魔法](06-postprocessing.md) | 全屏特效 | ⭐⭐⭐ | 90分钟 |
+| 07 | [创造光影包](07-create-shaderpack.md) | 综合实战 | ⭐⭐⭐⭐ | 120分钟 |
 
 ---
 

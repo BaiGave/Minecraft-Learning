@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,24 +136,29 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Sodium 优化</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 整体架构分析
+            Sodium 架构概述
         </a>
 <a href="02-chunk-render-system.html" class="active">
             <i class="fas fa-microscope"></i>
-            Sodium 区块渲染系统
+            Sodium 区块渲染系统 (Chunk Render System)
         </a>
 <a href="03-occlusion-culling.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 遮挡剔除系统
+            Sodium 遮挡剔除系统 (Occlusion Culling)
         </a>
 <a href="04-render-pipeline.html" class="">
             <i class="fas fa-microscope"></i>
@@ -180,7 +170,19 @@
         </a>
 <a href="06-platform-integration.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 平台集成机制
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
         </a>
             </nav>
             <div class="sidebar-footer">
@@ -190,6 +192,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -214,360 +221,797 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>Sodium 区块渲染系统</h1>
-<blockquote><p>多线程异步构建与批处理渲染机制</p></blockquote>
-<h2 id="1. 概述">1. 概述</h2>
-<p>区块（Chunk）是 Minecraft 世界的基本渲染单位。Sodium 通过多线程异步构建和批处理渲染显著优化了区块渲染性能。</p>
-<p><strong>核心文件</strong>：</p>
-<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>RenderSection</code></td><td><code>common/.../render/chunk/RenderSection.java</code></td></tr><tr><td><code>RenderSectionManager</code></td><td><code>common/.../render/chunk/RenderSectionManager.java</code></td></tr><tr><td><code>ChunkBuilder</code></td><td><code>common/.../render/chunk/compile/executor/ChunkBuilder.java</code></td></tr><tr><td><code>DefaultChunkRenderer</code></td><td><code>common/.../render/chunk/DefaultChunkRenderer.java</code></td></tr><tr><td><code>BlockRenderer</code></td><td><code>common/.../render/chunk/compile/pipeline/BlockRenderer.java</code></td></tr></tbody></table>
+                <h1>Sodium 区块渲染系统 (Chunk Render System)</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#系统概述">系统概述</a></li>
+<li><a href="#核心组件">核心组件</a></li>
+<li><a href="#区块数据结构">区块数据结构</a></li>
+<li><a href="#异步构建机制">异步构建机制</a></li>
+<li><a href="#多线程调度策略">多线程调度策略</a></li>
+<li><a href="#区块状态管理">区块状态管理</a></li>
+<li><a href="#渲染数据存储结构">渲染数据存储结构</a></li>
+<li><a href="#帧预算控制机制">帧预算控制机制</a></li>
+<li><a href="#遮挡剔除算法">遮挡剔除算法</a></li>
+<li><a href="#课后自查">课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="系统概述">系统概述</h2>
+<p>Sodium 的区块渲染系统是其高性能渲染的核心子系统，负责将 Minecraft 的区块（Chunk）数据转换为高效的 GPU 渲染指令。该系统通过以下关键技术实现了显著的性能提升：</p>
+<table class="data-table"><thead><tr><th>技术</th><th>作用</th></tr></thead><tbody><tr><td><strong>异步网格构建</strong></td><td>将耗时的区块编译任务从主线程分离到工作线程池</td></tr><tr><td><strong>多级任务队列</strong></td><td>根据任务重要性分级调度，保证帧率稳定性</td></tr><tr><td><strong>遮挡剔除</strong></td><td>利用区块间的可见性关系减少不必要的渲染</td></tr><tr><td><strong>增量更新</strong></td><td>仅在区块内容变化时重新编译，避免全量重建</td></tr><tr><td><strong>帧预算控制</strong></td><td>智能限制每帧的构建和上传工作量，防止卡顿</td></tr></tbody></table>
+<h3>核心设计思想</h3>
+<p>Sodium 将区块渲染任务分解为两个主要阶段：</p>
+<p><ul><li><strong>编译阶段 (Build Phase)</strong> - 在工作线程中执行，包括：</li>
+</ul>   - 区块数据采样
+   - 模型构建
+   - 半透明排序
+   
+<ul><li><strong>上传阶段 (Upload Phase)</strong> - 在主线程中执行，包括：</li>
+</ul>   - GPU 数据传输
+   - 渲染列表更新</p>
+<p><hr></p>
+<h2 id="核心组件">核心组件</h2>
+<h3>组件关系图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    direction TB
+    
+    class RenderSectionManager {
+        <<主控制器>>
+        -ChunkBuilder builder
+        -RenderRegionManager regions
+        -OcclusionCuller occlusionCuller
+        -RemovableMultiForest renderableSectionTree
+        +updateChunks()
+        +uploadChunks()
+        +renderLayer()
+    }
+    
+    class ChunkBuilder {
+        <<异步构建器>>
+        -ChunkJobQueue queue
+        -List~Thread~ threads
+        +scheduleTask()
+        +shutdown()
+    }
+    
+    class RenderSection {
+        <<区块渲染单元>>
+        -RenderRegion region
+        -int chunkX, chunkY, chunkZ
+        -int flags
+        -ChunkJob runningJob
+        +isBuilt()
+        +getPendingUpdate()
+    }
+    
+    class RenderRegion {
+        <<渲染区域>>
+        -Long2ReferenceMap sections
+        -ChunkGraphicsState state
+        +upload()
+    }
+    
+    class OcclusionCuller {
+        <<遮挡剔除器>>
+        -Long2ReferenceMap sections
+        -DoubleBufferedQueue queue
+        +findVisible()
+    }
+    
+    RenderSectionManager --> ChunkBuilder : 管理
+    RenderSectionManager --> RenderRegion : 管理
+    RenderSectionManager --> OcclusionCuller : 使用
+    RenderSectionManager --> RenderSection : 包含
+    RenderSection --> RenderRegion : 属于</div>
+</div>
+<h3>核心类职责</h3>
+<table class="data-table"><thead><tr><th>类名</th><th>职责</th><th>源码位置</th></tr></thead><tbody><tr><td><code>RenderSectionManager</code></td><td>主控制器，协调所有渲染子系统</td><td><code>render/chunk/RenderSectionManager.java</code></td></tr><tr><td><code>ChunkBuilder</code></td><td>工作线程池管理，任务调度</td><td><code>render/chunk/compile/executor/ChunkBuilder.java</code></td></tr><tr><td><code>RenderSection</code></td><td>单个区块的渲染状态持有者</td><td><code>render/chunk/RenderSection.java</code></td></tr><tr><td><code>RenderRegion</code></td><td>区块组管理，优化批量渲染</td><td><code>render/chunk/region/RenderRegion.java</code></td></tr><tr><td><code>OcclusionCuller</code></td><td>区块可见性判断</td><td><code>render/chunk/occlusion/OcclusionCuller.java</code></td></tr><tr><td><code>BuiltSectionInfo</code></td><td>区块编译结果数据</td><td><code>render/chunk/data/BuiltSectionInfo.java</code></td></tr></tbody></table>
 <hr></p>
-<h2 id="2. 核心数据结构">2. 核心数据结构</h2>
-<h3>2.1 RenderSection</h3>
-<p><code>RenderSection</code> 是区块渲染的基本单位：</p>
-<pre class="code-block"><code class="language-java">    private static final int SECTION_HEIGHT = 16;
+<h2 id="区块数据结构">区块数据结构</h2>
+<h3>RenderSection 核心结构</h3>
+<p><code>RenderSection</code> 是区块渲染的核心状态对象，管理单个 16x16x16 区块的所有渲染相关数据。</p>
+<pre class="code-block"><code class="language-11">public class RenderSection {
+    // 区块位置信息
+    private final int chunkX, chunkY, chunkZ;
+
+    // 遮挡剔除状态 - 可见性数据和邻居连接
+    private long visibilityData = VisibilityEncoding.NULL;
+    private int incomingDirections;
+    private int lastVisibleFrame = -1;
+    private int adjacentMask;
+    public RenderSection
+            adjacentDown, adjacentUp,
+            adjacentNorth, adjacentSouth,
+            adjacentWest, adjacentEast;
+
+    // 渲染状态
+    private boolean built = false;
+    private int flags = RenderSectionFlags.NONE;
+    private BlockEntity @Nullable[] globalBlockEntities;
+    private BlockEntity @Nullable[] culledBlockEntities;
+    private TextureAtlasSprite @Nullable[] animatedSprites;
     
-    // 区块坐标（区块级，不是方块级）
-    private final int sectionX;
-    private final int sectionY;
-    private final int sectionZ;
+    // 半透明排序数据
+    @Nullable
+    private TranslucentData translucentData;
+
+    // 异步构建状态
+    @Nullable
+    private ChunkJob runningJob = null;
+    private int pendingUpdateType;
+    private long pendingUpdateSince;
     
-    // 渲染数据
-    private volatile ChunkGraphicsState graphicsState;
-    private volatile int frameIndex;
-    
-    // 可见性数据
-    private volatile long visibilityData;
-    private volatile long neighborVisibilityData;
-    
-    // 包围盒
-    private final AABB boundingBox;
-    
-    public int getCenterX() { return sectionX &lt;&lt; 4 | 8; }
-    public int getCenterY() { return sectionY &lt;&lt; 4 | 8; }
-    public int getCenterZ() { return sectionZ &lt;&lt; 4 | 8; }
+    // 上传状态追踪
+    private int lastUploadFrame = -1;
+    private int lastSubmittedFrame = -1;
 }</code></pre>
-<h3>2.2 RenderSectionManager</h3>
-<p>管理所有 <code>RenderSection</code> 的生命周期：</p>
-<pre class="code-block"><code class="language-java">    private final RenderSection[] sections;
-    private final ChunkTracker tracker;
-    private final ChunkUpdateQueue updateQueue;
-    
-    // 区块可见性状态
-    private final RemovableMultiTree&lt;RenderSection&gt; sectionTree;
-    private final OcclusionCuller occlusionCuller;
-    
-    // 渲染列表
-    private final ChunkRenderList[] renderLists;
+<h3>区块标志位系统</h3>
+<p><code>RenderSectionFlags</code> 使用位标志表示区块包含的内容类型：</p>
+<pre class="code-block"><code class="language-1">public class RenderSectionFlags {
+    public static final int NONE = 0;
+    public static final int HAS_BLOCK_GEOMETRY = 0;      // 位 0: 有方块几何体
+    public static final int HAS_BLOCK_ENTITIES = 1;       // 位 1: 有方块实体
+    public static final int HAS_ANIMATED_SPRITES = 2;     // 位 2: 有动画纹理
+    // ... 其他标志
 }</code></pre>
-<h3>2.3 RenderRegion</h3>
-<p>区块区域分组，优化 GPU 缓冲区管理：</p>
-<pre class="code-block"><code class="language-java">    public static final int REGION_WIDTH = 8;    // X 方向区块数
-    public static final int REGION_HEIGHT = 4;   // Y 方向区块数
-    public static final int REGION_DEPTH = 8;    // Z 方向区块数
-    
-    // 区域内的区块总数: 8 × 4 × 8 = 256
-    private static final int REGION_SIZE = REGION_WIDTH * REGION_HEIGHT * REGION_DEPTH;
-    
-    // GPU 缓冲区
-    private final GlBuffer vertexBuffer;
-    private final GlBuffer uploadBuffer;
-    
-    // 缓存的批处理
-    private final CachedBatch[] cachedBatches;
+<h3>BuiltSectionInfo 数据容器</h3>
+<p>编译阶段产出的完整区块信息：</p>
+<pre class="code-block"><code class="language-22">public class BuiltSectionInfo {
+    public static final BuiltSectionInfo EMPTY = createEmptyData();
+
+    public final int flags;                    // 渲染标志位
+    public final long visibilityData;         // 遮挡可见性数据
+    public final BlockEntity @Nullable[] globalBlockEntities;     // 全局方块实体
+    public final BlockEntity @Nullable[] culledBlockEntities;      // 可剔除方块实体
+    public final TextureAtlasSprite @Nullable[] animatedSprites;     // 动画纹理
+
+    private BuiltSectionInfo(...) {
+        // 根据内容构建标志位
+        if (!blockRenderPasses.isEmpty()) {
+            flags |= 1 &lt;&lt; RenderSectionFlags.HAS_BLOCK_GEOMETRY;
+        }
+        if (!culledBlockEntities.isEmpty()) {
+            flags |= 1 &lt;&lt; RenderSectionFlags.HAS_BLOCK_ENTITIES;
+        }
+        if (!animatedSprites.isEmpty()) {
+            flags |= 1 &lt;&lt; RenderSectionFlags.HAS_ANIMATED_SPRITES;
+        }
+        
+        // 编码遮挡数据
+        this.visibilityData = VisibilityEncoding.encode(occlusionData);
+    }
 }</code></pre>
 <p><hr></p>
-<h2 id="3. 多线程构建系统">3. 多线程构建系统</h2>
-<h3>3.1 ChunkBuilder 架构</h3>
-<pre class="code-block"><code class="language-java">    private final ClientLevel level;
-    private final ChunkVertexType vertexType;
-    private final Thread[] workers;
-    private final ChunkJobQueue queue;
-    private final ChunkJobCollector collector;
-    
+<h2 id="异步构建机制">异步构建机制</h2>
+<h3>ChunkBuilder 工作线程池</h3>
+<p><code>ChunkBuilder</code> 使用固定数量的工作线程处理区块编译任务：</p>
+<pre class="code-block"><code class="language-22">public class ChunkBuilder {
+    private final ChunkJobQueue queue = new ChunkJobQueue();
+    private final List&lt;Thread&gt; threads = new ArrayList&lt;&gt;();
+    private final AtomicInteger busyThreadCount = new AtomicInteger();
+
     public ChunkBuilder(ClientLevel level, ChunkVertexType vertexType) {
-        this.level = level;
-        this.vertexType = vertexType;
-        this.queue = new ChunkJobQueue();
-        this.collector = new ChunkJobCollector();
-        
-        int count = calculateOptimalThreadCount();
-        this.workers = new Thread[count];
-        
+        int count = getThreadCount();
+
         for (int i = 0; i &lt; count; i++) {
-            this.workers[i] = new Thread(new WorkerRunnable(), 
-                &quot;Chunk Render Task Executor #&quot; + i);
+            ChunkBuildContext context = new ChunkBuildContext(level, vertexType);
+            WorkerRunnable worker = new WorkerRunnable(&quot;Chunk Render Task Executor #&quot; + i, context);
+
+            Thread thread = new Thread(worker, &quot;Chunk Render Task Executor #&quot; + i);
+            thread.setPriority(Math.max(0, Thread.NORM_PRIORITY - 2)); // 降低优先级
+            thread.start();
+
+            this.threads.add(thread);
         }
     }
-}</code></pre>
-<h3>3.2 任务调度</h3>
-<pre class="code-block"><code class="language-java">    ChunkJob job = ChunkJob.create(section, priority);
-    this.queue.enqueue(job);
-    this.workerSemaphore.release();
-}
 
-private static int calculateOptimalThreadCount() {
-    int processors = Runtime.getRuntime().availableProcessors();
-    int maxThreads = Math.max(1, processors - 2);
-    // 智能限制线程数
-    return Math.min(maxThreads, 10);
+    private static int getOptimalThreadCount() {
+        return Mth.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
+    }
 }</code></pre>
-<h3>3.3 工作线程执行</h3>
-<pre class="code-block"><code class="language-java">    @Override
+<p><strong>线程数量计算逻辑</strong>：
+<ul><li>默认策略：<code>可用CPU核心数 / 3</code> 或 <code>可用核心数 - 6</code>（取较大值）</li>
+<li>最大限制：10 个线程</li>
+<li>用户可通过配置 <code>chunkBuilderThreads</code> 覆盖</li></ul></p>
+<h3>工作线程执行循环</h3>
+<pre class="code-block"><code class="language-159">private class WorkerRunnable implements Runnable {
+    @Override
     public void run() {
-        while (!isShutdown.get()) {
+        while (ChunkBuilder.this.queue.isRunning()) {
+            ChunkJob job;
             try {
-                ChunkJob job = queue.dequeue(timeout);
-                
-                if (job != null) {
-                    BuildResult result = buildChunk(job.section);
-                    collector.offer(result);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+                job = ChunkBuilder.this.queue.waitForNextJob();
+            } catch (InterruptedException ignored) {
+                continue;
+            }
+
+            if (job == null) {
+                continue;
+            }
+
+            ChunkBuilder.this.busyThreadCount.getAndIncrement();
+
+            try {
+                job.execute(this.context);
+            } finally {
+                this.context.cleanup();
+                ChunkBuilder.this.busyThreadCount.decrementAndGet();
             }
         }
     }
-    
-    private BuildResult buildChunk(RenderSection section) {
-        ChunkBuildBuffers buffers = buffersByThread.get();
-        ChunkBuildContext context = new ChunkBuildContext(buffers);
+}</code></pre>
+<h3>任务队列机制</h3>
+<p><code>ChunkJobQueue</code> 使用信号量实现线程安全的任务分发：</p>
+<pre class="code-block"><code class="language-12">class ChunkJobQueue {
+    private final ConcurrentLinkedDeque&lt;ChunkJob&gt; jobs = new ConcurrentLinkedDeque&lt;&gt;();
+    private final AtomicLong jobDurationSum = new AtomicLong();
+    private final Semaphore semaphore = new Semaphore(0);
+    private final AtomicBoolean isRunning = new AtomicBoolean(true);
+
+    public void add(ChunkJob job, boolean important) {
+        if (important) {
+            this.jobs.addFirst(job);  // 重要任务插入队首
+        } else {
+            this.jobs.addLast(job);   // 普通任务加入队尾
+        }
+        this.jobDurationSum.addAndGet(job.getEstimatedDuration());
+        this.semaphore.release(1);
+    }
+
+    public ChunkJob waitForNextJob() throws InterruptedException {
+        this.semaphore.acquire();
+        var job = this.jobs.poll();
+        if (job != null) {
+            this.jobDurationSum.addAndGet(-job.getEstimatedDuration());
+        }
+        return job;
+    }
+}</code></pre>
+<h3>区块编译任务流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[主线程创建 ChunkBuilderMeshingTask] --> B[任务加入 ChunkBuilder 队列]
+    B --> C{是否有空闲工作线程?}
+    C -->|是| D[立即执行]
+    C -->|否| E[等待信号量]
+    E --> D
+    D --> F[遍历区块内所有方块]
+    F --> G{方块是否透明?}
+    G -->|是| H[收集到 TranslucentGeometryCollector]
+    G -->|否| I[直接添加到 BakedChunkModelBuilder]
+    H --> J[执行 BSP 半透明排序]
+    I --> K[为每个渲染 Pass 创建网格]
+    J --> K
+    K --> L[返回 ChunkBuildOutput]
+    L --> M[结果加入 buildResults 队列]
+    M --> N[主线程上传到 GPU]</div>
+</div>
+<h3>MeshingTask 核心实现</h3>
+<pre class="code-block"><code class="language-54">public class ChunkBuilderMeshingTask extends ChunkBuilderTask&lt;ChunkBuildOutput&gt; {
+    @Override
+    public ChunkBuildOutput execute(ChunkBuildContext buildContext, CancellationToken cancellationToken) {
+        BuiltSectionInfo.Builder renderData = new BuiltSectionInfo.Builder();
+        VisGraph occluder = new VisGraph();
+
+        ChunkBuildBuffers buffers = buildContext.buffers;
+        buffers.init(renderData, this.render.getSectionIndex());
+
+        BlockRenderCache cache = buildContext.cache;
+        cache.init(this.renderContext);
+
+        LevelSlice slice = cache.getWorldSlice();
+
+        // 遍历区块内所有方块
+        for (int y = minY; y &lt; maxY; y++) {
+            for (int z = minZ; z &lt; maxZ; z++) {
+                for (int x = minX; x &lt; maxX; x++) {
+                    BlockState blockState = slice.getBlockState(x, y, z);
+
+                    if (blockState.isSolidRender()) {
+                        occluder.setOpaque(blockPos);  // 记录遮挡数据
+                    }
+                    // ... 模型渲染逻辑
+                }
+            }
+        }
+
+        // 创建各个渲染 Pass 的网格
+        Map&lt;TerrainRenderPass, BuiltSectionMeshParts&gt; meshes = ...;
         
-        // 调用渲染管道构建网格
-        return BlockRenderer.render(context, section, vertexType);
+        return new ChunkBuildOutput(this.render, this.submitTime, 
+                                   translucentData, renderData.build(), meshes);
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="4. 网格构建流程">4. 网格构建流程</h2>
-<h3>4.1 BlockRenderer 管道</h3>
-<pre class="code-block"><code class="language-java">    private final ChunkOcclusionTracker occlusionTracker;
-    private final ChunkBuildBuffers buffers;
-    
-    public static BuildResult render(ChunkBuildContext context,
-                                     RenderSection section,
-                                     ChunkVertexType vertexType) {
-        // 1. 收集需要渲染的方块
-        List&lt;BlockPos&gt; blocks = collectRenderableBlocks(section);
-        
-        // 2. 按材质分组
-        Map&lt;RenderMaterial, List&lt;BlockPos&gt;&gt; byMaterial = groupByMaterial(blocks);
-        
-        // 3. 对每个材质渲染
-        for (Map.Entry&lt;RenderMaterial, List&lt;BlockPos&gt;&gt; entry : byMaterial) {
-            RenderMaterial material = entry.getKey();
-            List&lt;BlockPos&gt; positions = entry.getValue();
-            
-            // 渲染该材质的所有方块
-            renderBlocks(context, section, material, positions);
+<h2 id="多线程调度策略">多线程调度策略</h2>
+<h3>任务优先级系统</h3>
+<p>Sodium 使用多级任务队列系统，根据任务重要性分配不同的执行时机：</p>
+<pre class="code-block"><code class="language-10">public class ChunkUpdateTypes {
+    public static final int SORT = 0b001;        // 排序任务
+    public static final int REBUILD = 0b010;    // 重建任务
+    public static final int IMPORTANT = 0b100;  // 重要标记
+    public static final int INITIAL_BUILD = 0b1000;  // 初始构建
+
+    public static int getQueueType(int type, ...) {
+        if (isInitialBuild(type)) {
+            return TaskQueueType.INITIAL_BUILD;
         }
-        
-        // 4. 构建最终网格
-        return buildMesh(context, section, vertexType);
+        if (isImportant(type)) {
+            if (isRebuild(type)) {
+                return importantRebuildQueueType;
+            } else {
+                return importantSortQueueType;
+            }
+        }
+        return TaskQueueType.ALWAYS_DEFER;
     }
 }</code></pre>
-<h3>4.2 遮挡追踪</h3>
-<pre class="code-block"><code class="language-java">    private static final int CACHE_SIZE = 512;
-    
-    // LRU 缓存
-    private final Long2ObjectMap&lt;BlockOcclusionData&gt; cache;
-    
-    public boolean shouldDrawSide(BlockState selfState, 
-                                   BlockGetter view,
-                                   BlockPos selfPos, 
-                                   Direction facing) {
-        BlockState neighborState = view.getBlockState(selfPos.relative(facing));
-        
-        // 全方块形状 - 快速路径
-        if (neighborState.isSolid() &amp;&amp; neighborState.hasLargeCollisionShape()) {
-            return false;
-        }
-        
-        // VoxelShape 交集检测 - 慢速路径（带缓存）
-        return this.lookupOcclusion(selfState, neighborState, facing);
+<h3>任务队列类型</h3>
+<table class="data-table"><thead><tr><th>队列类型</th><th>描述</th><th>延迟</th></tr></thead><tbody><tr><td><code>ZERO<em>FRAME</em>DEFER</code></td><td>零帧延迟，重要任务立即执行</td><td>0 帧</td></tr><tr><td><code>ONE<em>FRAME</em>DEFER</code></td><td>一帧延迟，半重要任务</td><td>1 帧</td></tr><tr><td><code>ALWAYS<em>DEFER</code></td><td>始终延迟，普通任务</td><td>无限制</td></tr><tr><td><code>INITIAL</em>BUILD</code></td><td>初始构建队列</td><td>初始加载时</td></tr></tbody></table>
+<h3>三层收集器架构</h3>
+<p><code>RenderSectionManager.updateChunks()</code> 使用三个收集器管理不同优先级的任务：</p>
+<pre class="code-block"><code class="language-548">public void updateChunks(boolean updateImmediately) {
+    this.thisFrameBlockingTasks = 0;
+    this.nextFrameBlockingTasks = 0;
+    this.deferredTasks = 0;
+
+    var thisFrameBlockingCollector = this.lastBlockingCollector;
+    this.lastBlockingCollector = null;
+    if (thisFrameBlockingCollector == null) {
+        thisFrameBlockingCollector = new ChunkJobCollector(this.buildResults::add);
     }
-    
-    private boolean lookupOcclusion(BlockState self, BlockState neighbor, Direction facing) {
-        long cacheKey = calculateCacheKey(self, neighbor, facing);
-        BlockOcclusionData data = cache.get(cacheKey);
-        
-        if (data != null) {
-            return data.isVisible(facing);
-        }
-        
-        // 计算并缓存结果
-        data = computeOcclusion(self, neighbor, facing);
-        cache.put(cacheKey, data);
-        return data.isVisible(facing);
+
+    if (updateImmediately) {
+        // 完美帧：等待所有任务完成
+        this.submitSectionTasks(thisFrameBlockingCollector, 
+                               thisFrameBlockingCollector, 
+                               thisFrameBlockingCollector, 
+                               UnlimitedResourceBudget.INSTANCE);
+        thisFrameBlockingCollector.awaitCompletion(this.builder);
+    } else {
+        var remainingDuration = this.builder.getTotalRemainingDuration(this.averageFrameDuration);
+        var uploadBudget = new LimitedResourceBudget(...);
+
+        var nextFrameBlockingCollector = new ChunkJobCollector(...);
+        var deferredCollector = new ChunkJobCollector(remainingDuration, ...);
+
+        this.submitSectionTasks(thisFrameBlockingCollector, 
+                               nextFrameBlockingCollector, 
+                               deferredCollector, 
+                               uploadBudget);
+
+        // 等待本帧重要任务
+        thisFrameBlockingCollector.awaitCompletion(this.builder);
+        // 保存半重要任务供下帧等待
+        this.lastBlockingCollector = nextFrameBlockingCollector;
     }
 }</code></pre>
-<h3>4.3 顶点编码</h3>
-<pre class="code-block"><code class="language-java">    long write(long ptr, int materialBits, Vertex[] vertices, int sectionIndex);
+<h3>任务提交流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[遍历四个任务队列] --> B{ZERO_FRAME_DEFER 队列}
+    A --> C{ONE_FRAME_DEFER 队列}
+    A --> D{ALWAYS_DEFER 队列}
+    A --> E{INITIAL_BUILD 队列}
     
-    class Vertex {
-        public float x, y, z;      // 位置 (16-bit 压缩)
-        public int color;          // ABGR 颜色
-        public float ao;           // 环境光遮蔽 [0, 1]
-        public float u, v;         // 纹理坐标
-        public int light;          // 天空 + 阻塞光照
+    B --> F{collector 有预算?}
+    B --> G{uploadBudget 有余量?}
+    F -->|是| H[提交到 importantCollector]
+    F -->|否| I[跳过]
+    G -->|否| I
+    
+    C --> J[提交到 semiImportantCollector]
+    D --> K[提交到 deferredCollector]
+    E --> K
+    
+    H --> L[本帧阻塞等待]
+    J --> M[下帧阻塞等待]
+    K --> N[无限期延迟执行]</div>
+</div>
+<h3>重要性判断逻辑</h3>
+<p>任务是否标记为"重要"取决于以下因素：</p>
+<pre class="code-block"><code class="language-787">public void scheduleRebuild(int x, int y, int z, boolean playerChanged) {
+    this.sectionCache.invalidate(x, y, z);
+    RenderSection section = this.sectionByPosition.get(SectionPos.asLong(x, y, z));
+
+    if (section != null &amp;&amp; section.isBuilt()) {
+        int pendingUpdate;
+
+        // 玩家附近且玩家变化 → 标记为重要
+        if (playerChanged &amp;&amp; this.shouldPrioritizeTask(section, NEARBY_REBUILD_DISTANCE)) {
+            pendingUpdate = ChunkUpdateTypes.join(ChunkUpdateTypes.REBUILD, 
+                                                  ChunkUpdateTypes.IMPORTANT);
+        } else {
+            pendingUpdate = ChunkUpdateTypes.REBUILD;
+        }
+
+        this.upgradePendingUpdate(section, pendingUpdate);
     }
 }
 
-public enum ChunkVertexType {
-    VANILLA(24),      // 24 bytes per vertex
-    IMMIX(16);        // 优化格式，16 bytes per vertex
-    
-    public final int stride;
-    private final ChunkVertexEncoder encoder;
+private static final float NEARBY_REBUILD_DISTANCE = Mth.square(16.0f);</code></pre>
+<p><hr></p>
+<h2 id="区块状态管理">区块状态管理</h2>
+<h3>区块状态转换</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">stateDiagram-v2
+    [*] --> Empty : 区块加载
+    Empty --> PendingBuild : 检测到有效内容
+    PendingBuild --> Building : 任务提交到队列
+    Building --> Built : 编译完成上传
+    Built --> Dirty : 区块内容变化
+    Dirty --> PendingBuild : 调度重建任务
+    Built --> PendingBuild : 调度排序任务
+    Dirty --> PendingSort : 透明排序失效
+    PendingBuild --> [*] : 区块卸载
+    PendingSort --> Building : 排序任务提交</div>
+</div>
+<h3>区块生命周期管理</h3>
+<pre class="code-block"><code class="language-257">public void onSectionAdded(int x, int y, int z) {
+    long key = SectionPos.asLong(x, y, z);
+
+    if (this.sectionByPosition.containsKey(key)) {
+        return;
+    }
+
+    // 创建渲染区域和区块对象
+    RenderRegion region = this.regions.createForChunk(x, y, z);
+    RenderSection renderSection = new RenderSection(region, x, y, z);
+    region.addSection(renderSection);
+
+    this.sectionByPosition.put(key, renderSection);
+
+    ChunkAccess chunk = this.level.getChunk(x, z);
+    LevelChunkSection section = chunk.getSections()[this.level.getSectionIndexFromSectionY(y)];
+
+    if (section.hasOnlyAir()) {
+        this.updateSectionInfo(renderSection, BuiltSectionInfo.EMPTY);
+    } else {
+        this.renderableSectionTree.add(renderSection);
+        renderSection.setPendingUpdate(ChunkUpdateTypes.INITIAL_BUILD, this.lastFrameAtTime);
+    }
+
+    this.connectNeighborNodes(renderSection);
+    this.markGraphDirty();
+}</code></pre>
+<h3>邻居节点连接</h3>
+<p>区块之间通过六方向邻居引用形成图结构，用于遮挡剔除：</p>
+<pre class="code-block"><code class="language-833">private void connectNeighborNodes(RenderSection render) {
+    for (int direction = 0; direction &lt; GraphDirection.COUNT; direction++) {
+        RenderSection adj = this.getRenderSection(render.getChunkX() + GraphDirection.x(direction),
+                render.getChunkY() + GraphDirection.y(direction),
+                render.getChunkZ() + GraphDirection.z(direction));
+
+        if (adj != null) {
+            adj.setAdjacentNode(GraphDirection.opposite(direction), render);
+            render.setAdjacentNode(direction, adj);
+        }
+    }
+}</code></pre>
+<h3>区块可见性追踪</h3>
+<pre class="code-block"><code class="language-358">public boolean isSectionVisible(int x, int y, int z) {
+    RenderSection render = this.getRenderSection(x, y, z);
+
+    if (render == null) {
+        return false;
+    }
+
+    return render.getLastVisibleFrame() == this.lastUpdatedFrame;
 }</code></pre>
 <p><hr></p>
-<h2 id="5. 批处理渲染">5. 批处理渲染</h2>
-<h3>5.1 DefaultChunkRenderer</h3>
-<pre class="code-block"><code class="language-java">    private final RenderDevice device;
-    private final ChunkShader parentShader;
-    private final SharedQuadIndexBuffer indexBuffer;
-    
-    public void render(ChunkRenderMatrices matrices,
-                       CommandList commandList,
-                       ChunkRenderListIterable renderLists,
-                       TerrainRenderPass renderPass) {
-        // 按 Region 分组渲染
-        while (iterator.hasNext()) {
-            ChunkRenderList renderList = iterator.next();
-            RenderRegion region = renderList.getRegion();
-            
-            // 获取或创建缓存的批处理
-            CachedBatch batch = region.getCachedBatch(renderPass);
-            
-            if (!batch.isFilled()) {
-                // 填充批处理
-                fillCommandBuffer(batch, region, storage, renderPass);
+<h2 id="渲染数据存储结构">渲染数据存储结构</h2>
+<h3>RenderRegion 区域管理</h3>
+<p><code>RenderRegion</code> 将相邻的多个区块组合成更大的渲染单元，以减少 OpenGL 绘制调用次数：</p>
+<pre class="code-block"><code class="language-1">public class RenderRegionManager {
+    private final Long2ReferenceOpenHashMap&lt;RenderRegion&gt; regions = new Long2ReferenceOpenHashMap&lt;&gt;();
+    private final StagingBuffer stagingBuffer;
+
+    public RenderRegion createForChunk(int chunkX, int chunkY, int chunkZ) {
+        return this.create(chunkX &gt;&gt; RenderRegion.REGION_WIDTH_SH,
+                chunkY &gt;&gt; RenderRegion.REGION_HEIGHT_SH,
+                chunkZ &gt;&gt; RenderRegion.REGION_LENGTH_SH);
+    }
+
+    @NonNull
+    private RenderRegion create(int x, int y, int z) {
+        var key = RenderRegion.key(x, y, z);
+        var instance = this.regions.get(key);
+
+        if (instance == null) {
+            this.regions.put(key, instance = new RenderRegion(x, y, z, this.stagingBuffer));
+        }
+        return instance;
+    }
+}</code></pre>
+<h3>网格数据上传流程</h3>
+<pre class="code-block"><code class="language-57">public void uploadResults(CommandList commandList, Collection&lt;BuilderTaskOutput&gt; results) {
+    for (var entry : this.createMeshUploadQueues(results)) {
+        this.uploadResults(commandList, entry.getKey(), entry.getValue());
+    }
+}
+
+private void uploadResults(CommandList commandList, RenderRegion region, 
+                          Collection&lt;BuilderTaskOutput&gt; results) {
+    var uploads = new ArrayList&lt;PendingSectionMeshUpload&gt;();
+    var indexUploads = new ArrayList&lt;PendingSectionIndexBufferUpload&gt;();
+
+    for (BuilderTaskOutput result : results) {
+        if (result instanceof ChunkBuildOutput chunkBuildOutput) {
+            for (TerrainRenderPass pass : DefaultTerrainRenderPasses.ALL) {
+                BuiltSectionMeshParts mesh = chunkBuildOutput.getMesh(pass);
+                if (mesh != null) {
+                    uploads.add(new PendingSectionMeshUpload(
+                        result.render, meshTime, mesh, pass, 
+                        new PendingUpload(mesh.getVertexData())));
+                }
             }
-            
-            // 执行绘制（每个 Region 一次 Draw Call）
-            executeDrawBatch(commandList, tessellation, batch);
         }
+        // ... 处理索引缓冲区
     }
-    
-    private void executeDrawBatch(CommandList commandList,
-                                  Tessellator tessellator,
-                                  CachedBatch batch) {
-        // 使用 MultiDraw 批量绘制
-        batch.multiDraw(commandList, tessellator, indexBuffer);
-    }
-}</code></pre>
-<h3>5.2 MultiDrawBatch</h3>
-<pre class="code-block"><code class="language-java">    void begin();
-    void add(int vertexCount, int firstVertex);
-    void end();
-    void draw(CommandList commandList, Tessellator tessellator, 
-              SharedQuadIndexBuffer indices);
-    void multiDraw(CommandList commandList, Tessellator tessellator,
-                   SharedQuadIndexBuffer indices);
-}</code></pre>
-<h3>5.3 共享索引缓冲区</h3>
-<pre class="code-block"><code class="language-java">    private static final int[] QUAD_INDICES;
-    
-    static {
-        // 预生成 quad 索引模式
-        QUAD_INDICES = new int[6 * 1024 * 1024];  // 6M quads
-        for (int i = 0; i &lt; QUAD_INDICES.length; i += 6) {
-            int base = (i / 6) * 4;
-            QUAD_INDICES[i + 0] = base + 0;
-            QUAD_INDICES[i + 1] = base + 1;
-            QUAD_INDICES[i + 2] = base + 2;
-            QUAD_INDICES[i + 3] = base + 0;
-            QUAD_INDICES[i + 4] = base + 2;
-            QUAD_INDICES[i + 5] = base + 3;
-        }
+
+    // 上传到 GPU
+    var resources = region.createResources(commandList);
+    if (!uploads.isEmpty()) {
+        var arena = resources.getGeometryArena();
+        arena.upload(commandList, uploads.stream()
+                .map(upload -&gt; upload.vertexUpload), regionFillFractionInv);
     }
 }</code></pre>
-<p><hr></p>
-<h2 id="6. 渲染列表管理">6. 渲染列表管理</h2>
-<h3>6.1 ChunkRenderList</h3>
-<pre class="code-block"><code class="language-java">    private static final int SORTING_HISTOGRAM_SIZE = 64;
-    
-    // 排序后的区块索引数组
-    private int[] sortedIndices;
-    private int sortedCount;
-    
-    // 几何数据位图
-    private long[] sectionsWithGeometryMap;
-    
-    // 相机相对位置
-    private int relativeCameraX;
-    private int relativeCameraY;
-    private int relativeCameraZ;
-    
-    public void sort(int cameraX, int cameraY, int cameraZ) {
-        // 直方图排序 - O(n) 复杂度
-        int[] histogram = new int[SORTING_HISTOGRAM_SIZE];
-        
-        // 第一遍：计算直方图
-        for (int i = 0; i &lt; sectionsWithGeometryMap.length; i++) {
-            long map = sectionsWithGeometryMap[i];
-            while (map != 0) {
-                int index = Long.numberOfTrailingZeros(map);
-                map &amp;= map - 1;
-                
-                int distance = calculateDistance(i, index, cameraX, cameraY, cameraZ);
-                histogram[distance]++;
+<h3>ChunkBuildBuffers 临时缓冲区</h3>
+<p>每个工作线程持有独立的缓冲区实例，避免锁竞争：</p>
+<pre class="code-block"><code class="language-23">public class ChunkBuildBuffers {
+    private final Reference2ReferenceOpenHashMap&lt;TerrainRenderPass, 
+                                                   BakedChunkModelBuilder&gt; builders = 
+        new Reference2ReferenceOpenHashMap&lt;&gt;();
+
+    public ChunkBuildBuffers(ChunkVertexType vertexType) {
+        this.vertexType = vertexType;
+
+        for (TerrainRenderPass pass : DefaultTerrainRenderPasses.ALL) {
+            var vertexBuffers = new ChunkMeshBufferBuilder[ModelQuadFacing.COUNT];
+
+            for (int facing = 0; facing &lt; ModelQuadFacing.COUNT; facing++) {
+                // 每个朝向一个缓冲区，初始 128KB
+                vertexBuffers[facing] = new ChunkMeshBufferBuilder(
+                    this.vertexType, 128 * 1024);
             }
-        }
-        
-        // 第二遍：前缀和
-        for (int i = 1; i &lt; SORTING_HISTOGRAM_SIZE; i++) {
-            histogram[i] += histogram[i - 1];
-        }
-        
-        // 第三遍：收集排序结果
-        // ... 
-    }
-    
-    private int calculateDistance(int regionIndex, int sectionIndex, 
-                                   int camX, int camY, int camZ) {
-        // 使用曼哈顿距离
-        int dx = Math.abs(sectionX - camX);
-        int dy = Math.abs(sectionY - camY);
-        int dz = Math.abs(sectionZ - camZ);
-        return (dx + dy + dz) / 16;  // 区块级距离
-    }
-}</code></pre>
-<p><hr></p>
-<h2 id="7. 帧预算控制">7. 帧预算控制</h2>
-<pre class="code-block"><code class="language-java">    // 估算任务耗时
-    var uploadBudget = new LimitedResourceBudget(
-        Math.max((long)(averageFrameDuration * 0.1f), MIN_UPLOAD_DURATION_BUDGET),
-        regions.getStagingBuffer().getUploadSizeLimit(averageFrameDuration)
-    );
-    
-    // 控制每帧处理的 Chunk 数量
-    while (!queue.isEmpty() &amp;&amp; workBudget.hasRemaining()) {
-        ChunkJob job = queue.dequeue();
-        if (job != null) {
-            processJob(job);
-            workBudget.decrement(job.getEstimatedCost());
+
+            this.builders.put(pass, new BakedChunkModelBuilder(vertexBuffers));
         }
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="8. 性能优化要点">8. 性能优化要点</h2>
-<table class="data-table"><thead><tr><th>优化项</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>多线程构建</strong></td><td>专用工作线程池</td><td>帧率更稳定</td></tr><tr><td><strong>直方图排序</strong></td><td>O(n) 排序算法</td><td>排序更快</td></tr><tr><td><strong>MultiDraw</strong></td><td>批量绘制</td><td>减少 Draw Calls</td></tr><tr><td><strong>共享索引</strong></td><td>预生成索引缓冲</td><td>减少显存占用</td></tr><tr><td><strong>帧预算</strong></td><td>时间片控制</td><td>避免卡顿</td></tr><tr><td><strong>工作窃取</strong></td><td>负载均衡</td><td>CPU 利用率更高</td></tr></tbody></table>
-<hr></p>
-<h2 id="9. 相关文档">9. 相关文档</h2>
-<p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
-<li><a href="03-occlusion-culling.html">03-occlusion-culling</a> - 遮挡剔除</li>
-<li><a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线</li></ul></p>
+<h2 id="帧预算控制机制">帧预算控制机制</h2>
+<h3>帧时长追踪</h3>
+<p><code>RenderSectionManager</code> 持续监控帧时长并计算指数移动平均值：</p>
+<pre class="code-block"><code class="language-154">public void prepareFrame(Vector3dc cameraPosition) {
+    var now = System.nanoTime();
+    this.lastFrameDuration = now - this.lastFrameAtTime;
+    this.lastFrameAtTime = now;
+    
+    if (this.averageFrameDuration == -1) {
+        this.averageFrameDuration = this.lastFrameDuration;
+    } else {
+        this.averageFrameDuration = MathUtil.exponentialMovingAverage(
+            this.averageFrameDuration, this.lastFrameDuration, 
+            FRAME_DURATION_UPDATE_RATIO);
+    }
+    this.averageFrameDuration = Mth.clamp(this.averageFrameDuration, 1_000_100, 100_000_000);
+
+    this.frame += 1;
+    this.cameraPosition = cameraPosition;
+}
+
+private static final float FRAME_DURATION_UPDATE_RATIO = 0.05f;</code></pre>
+<h3>资源预算计算</h3>
+<pre class="code-block"><code class="language-1">public class LimitedResourceBudget implements UploadResourceBudget {
+    private long duration;   // 时间预算（纳秒）
+    private long size;       // 大小预算（字节）
+
+    @Override
+    public boolean isAvailable() {
+        return this.duration &gt; 0 &amp;&amp; this.size &gt; 0;
+    }
+
+    @Override
+    public void consume(long duration, long size) {
+        this.duration -= duration;
+        this.size -= size;
+    }
+}</code></pre>
+<h3>任务调度预算限制</h3>
+<pre class="code-block"><code class="language-601">private void submitSectionTasks(ChunkJobCollector collector, 
+                               UploadResourceBudget uploadBudget, 
+                               TaskQueueType queueType) {
+    var taskList = this.taskLists.get(queueType);
+
+    // 只要有任务、collector 有预算、uploadBudget 有余量，就继续提交
+    while (!taskList.isEmpty() &amp;&amp; collector.hasBudgetRemaining() 
+           &amp;&amp; (uploadBudget.isAvailable() || queueType.allowsUnlimitedUploadDuration())) {
+        RenderSection section = taskList.poll();
+
+        if (section == null) {
+            break;
+        }
+
+        var pendingUpdate = section.getPendingUpdate();
+        if (pendingUpdate != 0) {
+            submitSectionTask(collector, section, pendingUpdate, 
+                            uploadBudget, queueType == TaskQueueType.ZERO_FRAME_DEFER);
+        }
+    }
+}</code></pre>
+<h3>任务估算器</h3>
+<p>系统使用机器学习风格的估算器预测任务耗时：</p>
+<pre class="code-block"><code class="language-270">@Override
+public long estimateTaskSizeWith(MeshTaskSizeEstimator estimator) {
+    return estimator.estimateSize(this.render);
+}</code></pre>
 <p><hr></p>
-<p><em>生成时间: 2026-03-19</em>
+<h2 id="遮挡剔除算法">遮挡剔除算法</h2>
+<h3>可见性图结构</h3>
+<p>每个区块存储其遮挡数据，用于判断从特定方向是否能"看到"相邻区块：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph ChunkA["区块 A (当前位置)"]
+        A1[北向可见]
+        A2[东向可见]
+        A3[南向可见]
+    end
+    
+    subgraph ChunkB["区块 B"]
+        B1[可见性连接]
+    end
+    
+    subgraph ChunkC["区块 C"]
+        C1[可见性连接]
+    end
+    
+    A1 --> B1 : 北侧连接
+    A2 --> C1 : 东侧连接</div>
+</div>
+<h3>OcclusionCuller 剔除逻辑</h3>
+<pre class="code-block"><code class="language-31">public void findVisible(RenderSectionVisitor visitor,
+                        Viewport viewport,
+                        float searchDistance,
+                        boolean useOcclusionCulling,
+                        int frame)
+{
+    final var queues = this.queue;
+    queues.reset();
+
+    var initWriteQueue = this.queue.write();
+    this.init(visitor, initWriteQueue, viewport, useOcclusionCulling, frame);
+
+    // 逐层遍历
+    while (queues.flip()) {
+        if (this.outOfWorldRadius &gt; 0) {
+            this.initOutsideWorldHeight(queues.write(), viewport, searchDistance, frame);
+            this.outOfWorldRadius++;
+        }
+
+        processQueue(visitor, viewport, searchDistance, 
+                    useOcclusionCulling, frame, queues.read(), queues.write());
+    }
+
+    this.addNearbySections(visitor, viewport, frame);
+}</code></pre>
+<h3>角度可见性计算</h3>
+<p>根据相机与区块的相对位置关系，计算可能被遮挡的方向：</p>
+<pre class="code-block"><code class="language-111">private static long getAngleVisibilityMask(Viewport viewport, RenderSection section) {
+    var transform = viewport.getTransform();
+    var dx = Math.abs(transform.x - section.getCenterX());
+    var dy = Math.abs(transform.y - section.getCenterY());
+    var dz = Math.abs(transform.z - section.getCenterZ());
+
+    var angleOcclusionMask = 0L;
+    // 如果 X 或 Z 距离大于 Y，则上下方向可能被遮挡
+    if (dx &gt; dy || dz &gt; dy) {
+        angleOcclusionMask |= UP_DOWN_OCCLUDED;
+    }
+    // 如果 X 或 Y 距离大于 Z，则南北方向可能被遮挡
+    if (dx &gt; dz || dy &gt; dz) {
+        angleOcclusionMask |= NORTH_SOUTH_OCCLUDED;
+    }
+    // 如果 Y 或 Z 距离大于 X，则东西方向可能被遮挡
+    if (dy &gt; dx || dz &gt; dx) {
+        angleOcclusionMask |= WEST_EAST_OCCLUDED;
+    }
+
+    return ~angleOcclusionMask;
+}</code></pre>
+<h3>可见性连接传播</h3>
+<pre class="code-block"><code class="language-62">private static void processQueue(...) {
+    RenderSection section;
+
+    while ((section = readQueue.dequeue()) != null) {
+        if (!isSectionVisible(section, viewport, searchDistance)) {
+            continue;
+        }
+
+        visitor.visit(section);
+
+        int connections;
+
+        if (useOcclusionCulling) {
+            var sectionVisibilityData = section.getVisibilityData();
+
+            // 应用角度可见性掩码
+            sectionVisibilityData &amp;= getAngleVisibilityMask(viewport, section);
+
+            // 获取可通行的邻居方向
+            connections = VisibilityEncoding.getConnections(
+                sectionVisibilityData, section.getIncomingDirections());
+        } else {
+            connections = GraphDirectionSet.ALL;  // 无遮挡剔除时所有方向
+        }
+
+        // 只向远离相机的方向遍历
+        connections &amp;= getOutwardDirections(viewport.getChunkCoord(), section);
+
+        visitNeighbors(writeQueue, section, connections, frame);
+    }
+}</code></pre>
+<h3>剔除流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[从相机所在区块开始] --> B[计算可见性掩码]
+    B --> C{启用遮挡剔除?}
+    C -->|是| D[应用角度可见性掩码]
+    C -->|否| E[所有方向可通行]
+    D --> F[获取邻居连接方向]
+    E --> F
+    F --> G{方向向外?}
+    G -->|是| H[入队邻居]
+    G -->|否| I[跳过]
+    H --> J{邻居已访问?}
+    J -->|否| K[设置可见帧标记]
+    J -->|是| L[只更新入射方向]
+    K --> H
+    L --> H
+    I --> J</div>
+</div>
+<p><hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p>完成本章节学习后，请确认您能够回答以下问题：</p>
+<h3>基础概念</h3>
+<p><ul><li><strong>RenderSection 和 RenderRegion 的区别是什么？</strong></li>
+</ul>   - 提示：<code>RenderSection</code> 对应单个 16x16x16 区块，而 <code>RenderRegion</code> 是区块的组合。</p>
+<p><ul><li><strong>为什么 ChunkBuilder 要降低工作线程的优先级？</strong></li>
+</ul>   - 提示：考虑与主渲染线程的关系。</p>
+<p><ul><li><strong>任务队列中 <code>addFirst</code> 和 <code>addLast</code> 的区别是什么？</strong></li>
+</ul>   - 提示：重要任务 vs 普通任务的处理顺序。</p>
+<h3>核心机制</h3>
+<p><ul><li><strong>帧预算控制是如何避免帧时间超限的？</strong></li>
+</ul>   - 提示：<code>LimitedResourceBudget</code> 跟踪时间和大小预算。</p>
+<p><ul><li><strong>遮挡剔除算法如何利用区块间的可见性关系？</strong></li>
+</ul>   - 提示：<code>VisibilityEncoding</code> 和 <code>getAngleVisibilityMask</code>。</p>
+<p><ul><li><strong>三层收集器（important/semi-important/deferred）的设计目的是什么？</strong></li>
+</ul>   - 提示：考虑帧率稳定性和加载速度的平衡。</p>
+<h3>高级理解</h3>
+<p><ul><li><strong>为什么透明区块需要 BSP 排序？</strong></li>
+</ul>   - 提示：考虑透明方块的渲染顺序问题。</p>
+<p><ul><li><strong>任务窃取（Task Stealing）机制在什么场景下会触发？</strong></li>
+</ul>   - 提示：<code>awaitCompletion</code> 方法中的逻辑。</p>
+<p><ul><li><strong>如果一个区块在编译过程中被卸载，会发生什么？</strong></li>
+</ul>   - 提示：<code>isDisposed</code> 检查和 <code>setCancelled</code> 调用。</p>
+<h3>实践应用</h3>
+<p><ul><li><strong>如何在 Sodium 基础上实现自定义的区块剔除策略？</strong></li>
+</ul>    - 提示：扩展 <code>OcclusionCuller</code> 或实现 <code>RenderSectionVisitor</code>。</p>
+<p><hr></p>
+<h2 id="参考资源">参考资源</h2>
+<p><ul><li>源码位置：<code>D:\Minecraft-Learning\assets\sodium\common\src\main\java\net\caffeinemc\mods\sodium\client\render\chunk\</code></li>
+<li>相关文档：</li>
+</ul>  - <a href="./01-architecture-overview.html">Sodium 架构概览</a>
+  - <a href="./01-architecture-overview.html#渲染管线">Sodium 渲染管线</a>
 </p>
             </div>
 
             <div class="docs-footer">
                 <div class="prev-next"><a href="01-architecture-overview.html" class="prev">
             <i class="fas fa-arrow-left"></i>
-            Sodium 整体架构分析
+            Sodium 架构概述
         </a><a href="03-occlusion-culling.html" class="next">
-            Sodium 遮挡剔除系统
+            Sodium 遮挡剔除系统 (Occlusion Culling)
             <i class="fas fa-arrow-right"></i>
         </a></div>
             </div>
@@ -576,6 +1020,7 @@ public enum ChunkVertexType {
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -598,5 +1043,6 @@ public enum ChunkVertexType {
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

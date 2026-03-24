@@ -381,8 +381,8 @@ flowchart TB
         T4["命令执行"]
     end
     
-    共享 --> 客户端独占
-    共享 --> 服务端独占
+    共享代码 --> 客户端独占
+    共享代码 --> 服务端独占
 ```
 
 ---
@@ -431,7 +431,7 @@ flowchart TB
     subgraph 核心要点["本章核心要点"]
         E1["1. isClient = true 表示客户端<br/>isClient = false 表示服务端"]
         E2["2. ServerWorld 管理游戏逻辑<br/>ClientWorld 只负责渲染"]
-        E3["3. 服务端是"权威"<br/>所有重要计算都在服务端"]
+        E3["3. 服务端是「权威」<br/>所有重要计算都在服务端"]
         E4["4. 数据包（Packet）是<br/>客户端和服务端通信的桥梁"]
         E5["5. 单人游戏也有内置服务端<br/>称为 IntegratedServer"]
     end

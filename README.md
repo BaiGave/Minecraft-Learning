@@ -66,11 +66,16 @@ Minecraft-Learning/
 ├── src/                     # Tailwind 源码
 │   └── tailwind.css
 │
+├── documentation/          # 仓库说明（非站点页面）
+│   └── content-conventions.md   # content/ 目录与构建约定（必读）
+│
 └── docs/                   # 生成的 HTML 文档（部署用）
     ├── mc/1.21/
     ├── iris/
     └── sodium/
 ```
+
+编写或调整教程时，请先阅读 **[文档目录与构建约定](documentation/content-conventions.md)**（分 Part 子目录、输出路径与索引链接规则）。
 
 ## 快速开始
 

@@ -1,559 +1,615 @@
-# Sodium 平台集成机制
+# Sodium 平台集成 (Platform Integration)
 
-> Fabric 和 NeoForge 的服务加载与 Mixin 配置
+## 目录
 
-## 1. 概述
-
-Sodium 需要同时支持 Fabric 和 NeoForge 两个模组加载器。通过服务加载模式和 Mixin 配置实现平台无关的代码设计。
-
-**核心文件**：
-
-| 文件 | 平台 | 路径 |
-|------|------|------|
-| `Services` | Common | `common/.../services/Services.java` |
-| `FabricBlockAccess` | Fabric | `fabric/.../FabricBlockAccess.java` |
-| `NeoForgeBlockAccess` | NeoForge | `neoforge/.../NeoForgeBlockAccess.java` |
-| `SodiumFabricMod` | Fabric | `fabric/.../SodiumFabricMod.java` |
-| `SodiumForgeMod` | NeoForge | `neoforge/.../SodiumForgeMod.java` |
+- [平台抽象概述](#平台抽象概述)
+- [SPI 机制](#spi-机制)
+- [核心服务接口](#核心服务接口)
+- [Fabric 平台实现](#fabric-平台实现)
+- [NeoForge 平台实现](#neoforge-平台实现)
+- [平台差异对比](#平台差异对比)
+- [服务加载流程](#服务加载流程)
+- [课后自查](#课后自查)
 
 ---
 
-## 2. 服务加载模式
+## 平台抽象概述
 
-### 2.1 Services 类
+Sodium 是一个高性能渲染优化模组，同时支持 **Fabric** 和 **NeoForge** 两个模组加载器。为了实现代码复用，Sodium 采用了**平台抽象层（Platform Abstraction Layer）** 设计模式，将平台特定的 API 调用封装在统一接口后面。
 
-```startLine:1:50:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/Services.java
+```mermaid
+flowchart TB
+    subgraph Common["公共代码层 (common)"]
+        A["Services.java"] --> B["PlatformBlockAccess"]
+        A["Services.java"] --> C["PlatformLevelAccess"]
+        A["Services.java"] --> D["PlatformRuntimeInformation"]
+        A["Services.java"] --> E["PlatformModelAccess"]
+        A["Services.java"] --> F["PlatformMixinOverrides"]
+        A["Services.java"] --> G["FluidRendererFactory"]
+    end
+    
+    subgraph Fabric["Fabric 适配层"]
+        H["FabricBlockAccess"]
+        I["FabricLevelAccess"]
+        J["FabricRuntimeInformation"]
+        K["FabricModelAccess"]
+        L["FabricMixinOverrides"]
+        M["FluidRendererImpl"]
+    end
+    
+    subgraph NeoForge["NeoForge 适配层"]
+        N["NeoForgeBlockAccess"]
+        O["NeoForgeLevelAccess"]
+        P["NeoForgeRuntimeInformation"]
+        Q["NeoForgeModelAccess"]
+        R["ForgeMixinOverrides"]
+        S["FluidRendererImpl"]
+    end
+    
+    B --> H
+    B --> N
+    C --> I
+    C --> O
+    D --> J
+    D --> P
+    E --> K
+    E --> Q
+    F --> L
+    F --> R
+    G --> M
+    G --> S
+```
+
+> **关键概念**：平台抽象层使得公共代码可以通过统一接口调用平台特定功能，无需关心当前运行在哪个模组加载器上。
+
+---
+
+## SPI 机制
+
+### ServiceLoader 原理
+
+Sodium 使用 Java 标准库中的 **ServiceLoader** 机制实现服务发现与加载。这是 JDK 6+ 内置的 **SPI（Service Provider Interface）** 框架。
+
+```mermaid
+sequenceDiagram
+    participant App as 应用代码
+    participant SL as ServiceLoader
+    participant CP as ClassPath
+    participant Impl as 服务实现
+    
+    App->>SL: load(ServiceInterface.class)
+    SL->>CP: 查找 META-INF/services/
+    CP-->>SL: 返回实现类名
+    SL->>Impl: newInstance()
+    Impl-->>App: 返回实现实例
+```
+
+### Services.java 核心实现
+
+```12:30:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/Services.java
 public class Services {
-    private static final Map<Class<?>, Object> cache = new ConcurrentHashMap<>();
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger("Sodium (Service)");
+
     public static <T> T load(Class<T> clazz) {
-        return cache.computeIfAbsent(clazz, Services::loadInternal);
+        final T loadedService = ServiceLoader.load(clazz)
+                .findFirst()
+                .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
+        LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
+        return loadedService;
     }
-    
-    private static <T> T loadInternal(Class<T> clazz) {
-        // 获取服务加载器
-        ServiceLoader<T> loader = ServiceLoader.load(clazz, clazz.getClassLoader());
-        
-        // 遍历所有实现
-        Iterator<T> iterator = loader.iterator();
-        if (!iterator.hasNext()) {
-            throw new ServiceConfigurationError("No provider for " + clazz.getName());
-        }
-        
-        T service = iterator.next();
-        
-        // 检查是否有多个实现
-        if (iterator.hasNext()) {
-            throw new ServiceConfigurationError("Multiple providers for " + clazz.getName());
-        }
-        
-        return service;
+
+    public static <T> T loadOr(Class<T> clazz, Supplier<T> supplier) {
+        final T loadedService = ServiceLoader.load(clazz)
+                .findFirst()
+                .orElse(supplier.get());
+        LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
+        return loadedService;
     }
 }
 ```
 
-### 2.2 服务接口定义
+**两种加载模式**：
+- `load()` - 必须找到实现，否则抛出异常
+- `loadOr()` - 可选的兜底实现
 
-**PlatformBlockAccess**：
+### 服务配置文件
 
-```startLine:1:60:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformBlockAccess.java
+每个平台需要在 `META-INF/services/` 目录下放置服务配置文件：
+
+```
+META-INF/services/
+├── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess
+├── net.caffeinemc.mods.sodium.client.services.PlatformLevelAccess
+├── net.caffeinemc.mods.sodium.client.services.PlatformRuntimeInformation
+├── net.caffeinemc.mods.sodium.client.services.PlatformModelAccess
+├── net.caffeinemc.mods.sodium.client.services.PlatformMixinOverrides
+├── net.caffeinemc.mods.sodium.client.services.FluidRendererFactory
+└── ...
+```
+
+配置文件内容只需一行：**实现类的全限定名**。
+
+---
+
+## 核心服务接口
+
+### 1. PlatformBlockAccess - 方块访问接口
+
+定义方块渲染相关的平台特定操作：
+
+```16:94:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformBlockAccess.java
 public interface PlatformBlockAccess {
     PlatformBlockAccess INSTANCE = Services.load(PlatformBlockAccess.class);
-    
+
     /**
      * 获取方块的光照发射值
      */
     int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos);
-    
+
     /**
-     * 检查方块是否应该跳过渲染
+     * 检查是否应跳过渲染特定面
      */
-    boolean shouldSkipRender(BlockState state);
-    
+    boolean shouldSkipRender(BlockGetter level, BlockState selfState, BlockState otherState, 
+                             BlockPos selfPos, BlockPos otherPos, Direction facing);
+
     /**
-     * 获取方块的纹理
+     * 检查流体覆盖层是否应显示
      */
-    BlockRenderProperties getRenderProperties(BlockState state);
-    
+    boolean shouldShowFluidOverlay(BlockState block, BlockAndTintGetter level, 
+                                   BlockPos pos, FluidState fluidState);
+
     /**
-     * 检查方块是否有大型碰撞形状
+     * 平台是否支持方块实体数据
      */
-    boolean hasLargeCollisionShape(BlockState state);
+    boolean platformHasBlockData();
+
+    /**
+     * 获取法向量着色值
+     */
+    float getNormalVectorShade(ModelQuadView quad, BlockAndTintGetter level, boolean shade);
+
+    /**
+     * 环境光遮蔽模式
+     */
+    AmbientOcclusionMode usesAmbientOcclusion(BlockModelPart model, BlockState state, 
+                                             ChunkSectionLayer renderType, 
+                                             BlockAndTintGetter level, BlockPos pos);
+
+    /**
+     * 方块实体是否应发光
+     */
+    boolean shouldBlockEntityGlow(BlockEntity blockEntity, LocalPlayer player);
+
+    /**
+     * 检查方块是否应遮挡相邻流体
+     */
+    boolean shouldOccludeFluid(Direction adjDirection, BlockState adjBlockState, FluidState fluid);
 }
 ```
 
-**PlatformLevelAccess**：
+### 2. PlatformLevelAccess - 维度访问接口
 
-```startLine:1:50:D:/Projects/sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformLevelAccess.java
+```9:31:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformLevelAccess.java
 public interface PlatformLevelAccess {
     PlatformLevelAccess INSTANCE = Services.load(PlatformLevelAccess.class);
-    
+
     /**
-     * 获取世界类型标识
+     * 获取方块实体的渲染数据
      */
-    WorldType getWorldType(ClientWorld world);
-    
+    @Nullable
+    Object getBlockEntityData(BlockEntity blockEntity);
+
     /**
-     * 获取维度类型
+     * 获取区块的光照管理器
      */
-    DimensionType getDimensionType(ClientWorld world);
-    
-    /**
-     * 检查是否是过度世界
-     */
-    boolean isNether(ClientWorld world);
+    @Nullable SodiumAuxiliaryLightManager getLightManager(LevelChunk chunk, SectionPos pos);
 }
 ```
 
-### 2.3 服务配置文件
+### 3. PlatformRuntimeInformation - 运行时信息接口
 
-**Fabric META-INF/services**：
+```9:50:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformRuntimeInformation.java
+public interface PlatformRuntimeInformation {
+    PlatformRuntimeInformation INSTANCE = Services.load(PlatformRuntimeInformation.class);
 
-```
-fabric/src/main/resources/META-INF/services/
-└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess
+    /**
+     * 是否为开发环境
+     */
+    boolean isDevelopmentEnvironment();
+
+    /**
+     * 获取游戏目录路径
+     */
+    Path getGameDirectory();
+
+    /**
+     * 获取配置目录路径
+     */
+    Path getConfigDirectory();
+
+    /**
+     * 平台是否有早期加载画面
+     */
+    boolean platformHasEarlyLoadingScreen();
+
+    /**
+     * 平台是否使用 refmap
+     */
+    boolean platformUsesRefmap();
+
+    /**
+     * 检查模组是否在加载列表中
+     */
+    boolean isModInLoadingList(String modId);
+
+    /**
+     * 是否使用顶点 alpha 乘法
+     */
+    boolean usesAlphaMultiplication();
+}
 ```
 
-文件内容：
-```
-net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess
-# 或
-net.caffeinemc.mods.sodium.client.platform.linux.LinuxBlockAccess
+### 4. PlatformModelAccess - 模型访问接口
+
+```21:59:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformModelAccess.java
+public interface PlatformModelAccess {
+    PlatformModelAccess INSTANCE = Services.load(PlatformModelAccess.class);
+
+    /**
+     * 获取模型使用的四边形列表
+     */
+    List<BakedQuad> getQuads(BlockAndTintGetter level, BlockPos pos, BlockModelPart model, 
+                             BlockState state, Direction face, RandomSource random, 
+                             ChunkSectionLayer renderType);
+
+    /**
+     * 获取区块的模型数据容器
+     */
+    SodiumModelDataContainer getModelDataContainer(Level level, SectionPos sectionPos);
+
+    /**
+     * 获取空的模型数据
+     */
+    SodiumModelData getEmptyModelData();
+
+    /**
+     * 获取部件渲染类型
+     */
+    ChunkSectionLayer getPartRenderType(BlockModelPart part, BlockState state, 
+                                        ChunkSectionLayer defaultType);
+
+    /**
+     * 收集方块状态模型的部件
+     */
+    List<BlockModelPart> collectPartsOf(BlockStateModel blockStateModel, 
+                                        BlockAndTintGetter blockView, BlockPos pos, 
+                                        BlockState state, RandomSource random, 
+                                        @Nullable ListStorage emitter);
+}
 ```
 
-**NeoForge META-INF/services**：
+### 5. PlatformMixinOverrides - Mixin 配置接口
 
-```
-neoforge/src/main/resources/META-INF/services/
-└── net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess
-```
+```5:16:assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/services/PlatformMixinOverrides.java
+public interface PlatformMixinOverrides {
+    PlatformMixinOverrides INSTANCE = Services.load(PlatformMixinOverrides.class);
 
-文件内容：
-```
-net.caffeinemc.mods.sodium.client.platform.windows.WindowsBlockAccess
+    /**
+     * 应用第三方模组的 Mixin 配置覆盖
+     */
+    List<MixinOverride> applyModOverrides();
+
+    record MixinOverride(String modId, String option, boolean enabled) {}
+}
 ```
 
 ---
 
-## 3. Fabric 集成
+## Fabric 平台实现
 
-### 3.1 Mod 入口
+### FabricBlockAccess
 
-```startLine:1:80:D:/Projects/sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/SodiumFabricMod.java
-@Environment(EnvType.CLIENT)
-public class SodiumFabricMod implements ClientModInitializer {
-    private static final String MOD_ID = "sodium";
-    private static String version;
-    
-    @Override
-    public void onInitializeClient() {
-        version = FabricLoader.getInstance()
-            .getModContainer(MOD_ID)
-            .map(ModContainer::getMetadata)
-            .map(Version::getFriendlyString)
-            .orElse("unknown");
-        
-        // 初始化核心模块
-        SodiumClientMod.onInitialization(version);
-        
-        // 收集配置入口点
-        ConfigLoaderFabric.collectConfigEntryPoints();
-        
-        // 注册 FRAPI
-        FRAPIProvider.getInstance().register();
-        
-        // 注册 Flawless Frames
-        FabricLoader.getInstance()
-            .getEntrypoints("frex_flawless_frames", FlawlessFramesEntryPoint.class)
-            .forEach(ep -> ep.accept(FlawlessFrames.getProvider()));
-        
-        SodiumFabricMod.LOGGER.info("Sodium initialized on Fabric");
-    }
-}
-```
-
-### 3.2 Fabric 特定实现
-
-```startLine:1:80:D:/Projects/sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/FabricBlockAccess.java
+```19:96:assets/Sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/block/FabricBlockAccess.java
 public class FabricBlockAccess implements PlatformBlockAccess {
-    
     @Override
     public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
-        // Fabric 实现
-        return state.getLightEmission(level, pos);
+        return state.getLightEmission();  // 简单调用
     }
-    
+
     @Override
-    public boolean shouldSkipRender(BlockState state) {
-        // 检查方块是否透明
-        return state.isSolid() && state.getRenderShape() == RenderShape.INVISIBLE;
+    public boolean shouldSkipRender(BlockGetter level, BlockState selfState, 
+                                   BlockState otherState, BlockPos selfPos, 
+                                   BlockPos otherPos, Direction facing) {
+        return false;  // Fabric 不支持外部面隐藏
     }
-    
+
     @Override
-    public BlockRenderProperties getRenderProperties(BlockState state) {
-        RenderShape shape = state.getRenderShape();
-        return new BlockRenderProperties(
-            shape == RenderShape.SOLID,
-            shape == RenderShape.TRANSLUCENT,
-            state.isSolid()
-        );
+    public boolean shouldShowFluidOverlay(BlockState block, BlockAndTintGetter level, 
+                                         BlockPos pos, FluidState fluidState) {
+        return FluidRenderHandlerRegistry.INSTANCE.isBlockTransparent(block.getBlock());
+    }
+
+    @Override
+    public float getNormalVectorShade(ModelQuadView quad, BlockAndTintGetter level, boolean shade) {
+        // 自定义法向量着色计算（来自 Indigo）
+        return normalShade(level, NormI8.unpackX(quad.getFaceNormal()), ...);
+    }
+
+    @Override
+    public AmbientOcclusionMode usesAmbientOcclusion(...) {
+        return model.useAmbientOcclusion() ? AmbientOcclusionMode.DEFAULT 
+                                           : AmbientOcclusionMode.DISABLED;
+    }
+
+    @Override
+    public boolean shouldBlockEntityGlow(BlockEntity blockEntity, LocalPlayer player) {
+        return false;  // Fabric 不支持自定义轮廓渲染
     }
 }
 ```
 
-### 3.3 Fabric Mixin 配置
+### FabricLevelAccess
 
-```json
-{
-  "required": true,
-  "package": "net.caffeinemc.mods.sodium.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "client": [
-    "core.render.world.LevelRendererMixin",
-    "core.render.world.sky.LevelSkyMixin",
-    "core.render.world.clouds.CloudRendererMixin",
-    "features.render.entity.EntityRendererMixin",
-    "features.options.GameOptionsMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+```26:36:assets/Sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/level/FabricLevelAccess.java
+public class FabricLevelAccess implements PlatformLevelAccess {
+    @Override
+    public @Nullable Object getBlockEntityData(BlockEntity blockEntity) {
+        return blockEntity.getRenderData();  // 使用 Fabric API
+    }
+
+    @Override
+    public @Nullable SodiumAuxiliaryLightManager getLightManager(LevelChunk chunk, SectionPos pos) {
+        return null;  // Fabric 不支持辅助光照
+    }
 }
 ```
 
-### 3.4 LevelRenderer Mixin
+### FabricRuntimeInformation
 
-```startLine:1:100:D:/Projects/sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/mixin/core/render/world/LevelRendererMixin.java
-@Mixin(LevelRenderer.class)
-public abstract class LevelRendererMixin implements WorldRenderer {
-    
-    @Shadow
-    @Final
-    private Minecraft client;
-    
-    @Inject(at = @At("HEAD"), method = "renderLevel")
-    private void onRenderLevel(PoseStack matrices, 
-                               float tickDelta, 
-                               long limitTimeNano,
-                               boolean renderBlockOutline,
-                               Camera camera,
-                               GameRenderer gameRenderer,
-                               Matrix4f projectionMatrix,
-                               CallbackInfo ci) {
-        // 在渲染开始前调用 Sodium
-        SodiumWorldRenderer.getInstance()
-            .onRenderStarted((LevelRenderer)(Object)this, camera);
+```8:43:assets/Sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/FabricRuntimeInformation.java
+public class FabricRuntimeInformation implements PlatformRuntimeInformation {
+    @Override
+    public boolean isDevelopmentEnvironment() {
+        return FabricLoader.getInstance().isDevelopmentEnvironment();
     }
-    
-    @Inject(at = @At("RETURN"), method = "renderLevel")
-    private void onRenderLevelEnd(CallbackInfo ci) {
-        // 渲染结束后清理
-        SodiumWorldRenderer.getInstance().onRenderEnded();
+
+    @Override
+    public Path getGameDirectory() {
+        return FabricLoader.getInstance().getGameDir();
     }
-    
-    @Redirect(method = "renderLevel",
-              at = @At(value = "INVOKE", 
-                       target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;compileChunks()V"))
-    private void redirectCompileChunks(ChunkRenderDispatcher dispatcher) {
-        // 重定向到 Sodium 的异步编译
-        // 原版编译被禁用
+
+    @Override
+    public Path getConfigDirectory() {
+        return FabricLoader.getInstance().getConfigDir();
+    }
+
+    @Override
+    public boolean platformHasEarlyLoadingScreen() {
+        return false;  // Fabric 默认不支持
+    }
+
+    @Override
+    public boolean platformUsesRefmap() {
+        return true;  // Fabric 使用 refmap
+    }
+
+    @Override
+    public boolean usesAlphaMultiplication() {
+        return false;  // Fabric 不需要
     }
 }
+```
+
+### 服务配置文件
+
+```1:1:assets/Sodium/fabric/src/main/resources/META-INF/services/net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess
+net.caffeinemc.mods.sodium.fabric.block.FabricBlockAccess
 ```
 
 ---
 
-## 4. NeoForge 集成
+## NeoForge 平台实现
 
-### 4.1 Mod 入口
+### NeoForgeBlockAccess
 
-```startLine:1:80:D:/Projects/sodium/neoforge/src/main/java/net/caffeinemc/mods/sodium/neoforge/SodiumForgeMod.java
-@Mod(value = Sodium.MOD_ID, dist = Dist.CLIENT)
-public class SodiumForgeMod {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    
-    public SodiumForgeMod(IEventBus modBus, ModContainer modContainer) {
-        // 注册配置屏幕
-        modContainer.registerExtensionPoint(IConfigScreenFactory.class, 
-            (minecraft, parent) -> VideoSettingsScreen.createScreen(parent));
-        
-        // 初始化核心
-        SodiumClientMod.onInitialization(modContainer.getVersion());
-        
-        // 注册事件处理器
-        modBus.addListener(this::onClientSetup);
-        
-        // 注册 FRAPI
-        FRAPIProvider.getInstance().register();
-        
-        LOGGER.info("Sodium initialized on NeoForge");
-    }
-    
-    private void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            // 配置加载
-            ConfigLoaderForge.collectConfigEntryPoints();
-        });
-    }
-}
-```
-
-### 4.2 NeoForge 特定实现
-
-```startLine:1:80:D:/Projects/sodium/neoforge/src/main/java/net/caffeinemc/mods/sodium/neoforge/NeoForgeBlockAccess.java
+```19:63:assets/Sodium/neoforge/src/mod/java/net/caffeinemc/mods/sodium/neoforge/block/NeoForgeBlockAccess.java
 public class NeoForgeBlockAccess implements PlatformBlockAccess {
-    
     @Override
     public int getLightEmission(BlockState state, BlockAndTintGetter level, BlockPos pos) {
-        // NeoForge 实现
-        if (state.hasEmissiveLighting(level, pos)) {
-            return state.getEmissiveLight(level, pos);
-        }
-        return state.getLightEmission();
+        return state.getLightEmission(level, pos);  // NeoForge 支持上下文参数
     }
-    
+
     @Override
-    public boolean shouldSkipRender(BlockState state) {
-        // NeoForge 的跳过渲染逻辑
-        return state.is(Blocks.AIR) || 
-               state.getRenderShape() == VoxelShape.EMPTY;
+    public boolean shouldSkipRender(BlockGetter level, BlockState selfState, 
+                                   BlockState otherState, BlockPos selfPos, 
+                                   BlockPos otherPos, Direction facing) {
+        // NeoForge 支持外部面隐藏 API
+        return selfState.supportsExternalFaceHiding() && 
+               (otherState.hidesNeighborFace(level, otherPos, selfState, 
+                                            DirectionUtil.getOpposite(facing)));
     }
-    
+
     @Override
-    public BlockRenderProperties getRenderProperties(BlockState state) {
-        VoxelShape shape = state.getOcclusionShape();
-        return new BlockRenderProperties(
-            !shape.isEmpty(),
-            state.useNeighborBrightness(),
-            state.isSolid()
-        );
+    public boolean shouldShowFluidOverlay(BlockState block, BlockAndTintGetter level, 
+                                         BlockPos pos, FluidState fluidState) {
+        return block.shouldDisplayFluidOverlay(level, pos, fluidState);  // NeoForge API
     }
-}
-```
 
-### 4.3 NeoForge Mixin 配置
-
-```json
-{
-  "required": true,
-  "package": "net.caffeinemc.mods.sodium.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "client": [
-    "platform.neoforge.LevelRendererMixin",
-    "platform.neoforge.GameRendererMixin",
-    "platform.neoforge.LevelSliceMixin"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
-}
-```
-
----
-
-## 5. Mixin 系统
-
-### 5.1 Mixin 优先级
-
-```java
-// 高优先级确保在 Minecraft 之前执行
-@Mixin(value = Minecraft.class, priority = 1000)
-public class MinecraftMixin { ... }
-
-// 默认优先级
-@Mixin(ChunkRenderDispatcher.class)
-public class ChunkRenderDispatcherMixin { ... }
-
-// 低优先级确保在其他 Mixin 之后执行
-@Mixin(value = BlockColors.class, priority = 999)
-public class BlockColorsMixin { ... }
-```
-
-### 5.2 注入点类型
-
-| 注解 | 用途 |
-|------|------|
-| `@At("HEAD")` | 方法执行前 |
-| `@At("RETURN")` | 方法正常返回后 |
-| `@At("TAIL")` | 方法执行后（包括异常） |
-| `@At("INVOKE")` | 调用特定方法时 |
-| `@At("FIELD")` | 访问字段时 |
-
-### 5.3 修改器类型
-
-| 注解 | 用途 |
-|------|------|
-| `@Inject` | 插入新代码 |
-| `@Redirect` | 重定向方法调用 |
-| `@ModifyArg` | 修改方法参数 |
-| `@ModifyVariable` | 修改局部变量 |
-| `@WrapOperation` | 包装方法调用 |
-| `@Shadow` | 引用目标类的方法/字段 |
-
----
-
-## 6. Access Widener
-
-### 6.1 用途
-
-Access Widener 允许 mod 访问 Minecraft 类的私有成员：
-
-```
-# sodium-common.accesswidener
-accessWidener v2 named
-
-# 访问类
-accessible class net/minecraft/world/level/BlockAndTintGetter
-accessible class net/minecraft/world/level/Level
-accessible class net/minecraft/client/renderer/chunk/ChunkRenderDispatcher
-
-# 访问字段
-accessible field net/minecraft/world/level/Level watching
-accessible field net/minecraft/client/renderer/chunk/ChunkRenderDispatcher builtSections
-
-# 访问方法
-accessible method net/minecraft/world/level/Level getBlockState (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
-```
-
-### 6.2 注册
-
-```kotlin
-// build.gradle.kts
-accessWidener("src/main/resources/sodium-${platform}.accesswidener")
-```
-
----
-
-## 7. FRAPI 集成
-
-### 7.1 FRAPI 是什么
-
-FRAPI (Fabric Renderer API) 允许第三方 mod 使用 Sodium 的渲染系统。
-
-### 7.2 FRAPIProvider
-
-```startLine:1:50:D:/Projects/sodium/frapi/src/main/java/net/caffeinemc/mods/sodium/client/render/frapi/FRAPIProvider.java
-public class FRAPIProvider {
-    private static final FRAPIProvider INSTANCE = new FRAPIProvider();
-    private boolean registered = false;
-    
-    public static FRAPIProvider getInstance() {
-        return INSTANCE;
-    }
-    
-    public void register() {
-        if (registered) return;
-        
-        // 注册到 FRAPI
-        Loader.instance().extend(
-            SodiumRenderer.INSTANCE,
-            SodiumWorldRendererAccessor.getInstance()
-        );
-        
-        registered = true;
-    }
-}
-```
-
-### 7.3 Renderer 实现
-
-```startLine:1:80:D:/Projects/sodium/frapi/src/main/java/net/caffeinemc/mods/sodium/client/render/frapi/SodiumRenderer.java
-public class SodiumRenderer implements Renderer {
-    public static final SodiumRenderer INSTANCE = new SodiumRenderer();
-    
-    private SodiumRenderer() {}
-    
     @Override
-    public MutableMesh mutableMesh() {
-        return new MutableMeshImpl();
+    public float getNormalVectorShade(ModelQuadView quad, BlockAndTintGetter level, boolean shade) {
+        // 使用 Level 的 getShade 方法
+        return level.getShade(NormI8.unpackX(quad.getFaceNormal()), ...);
     }
-    
+
     @Override
-    public MutableMesh mutableMesh(MeshBuilder<?> builder) {
-        return new MutableMeshImpl(builder);
+    public AmbientOcclusionMode usesAmbientOcclusion(...) {
+        return switch (model.ambientOcclusion()) {
+            case TRUE -> AmbientOcclusionMode.ENABLED;
+            case FALSE -> AmbientOcclusionMode.DISABLED;
+            case DEFAULT -> AmbientOcclusionMode.DEFAULT;
+        };
     }
-    
+
     @Override
-    public MeshBuilder<?> meshBuilder() {
-        return SodiumMeshBuilder.INSTANCE;
+    public boolean shouldBlockEntityGlow(BlockEntity blockEntity, LocalPlayer player) {
+        return blockEntity.hasCustomOutlineRendering(player);  // NeoForge API
     }
-    
+}
+```
+
+### NeoForgeLevelAccess
+
+```10:20:assets/Sodium/neoforge/src/mod/java/net/caffeinemc/mods/sodium/neoforge/level/NeoForgeLevelAccess.java
+public class NeoForgeLevelAccess implements PlatformLevelAccess {
     @Override
-    public void render(ModelBlockRenderer renderer, 
-                       BakedModel model,
-                       BlockState state,
-                       BlockPos pos,
-                       Level level,
-                       PoseStack matrixStack,
-                       RenderType renderType) {
-        // 使用 Sodium 的渲染管道
+    public @Nullable Object getBlockEntityData(BlockEntity blockEntity) {
+        return null;  // NeoForge 没有等效 API
+    }
+
+    @Override
+    public @Nullable SodiumAuxiliaryLightManager getLightManager(LevelChunk chunk, SectionPos pos) {
+        // NeoForge 支持辅助光照管理器
+        return (SodiumAuxiliaryLightManager) chunk.getAuxLightManager(pos.origin());
     }
 }
+```
+
+### NeoForgeRuntimeInformation
+
+```10:45:assets/Sodium/neoforge/src/mod/java/net/caffeinemc/mods/sodium/neoforge/NeoForgeRuntimeInformation.java
+public class NeoForgeRuntimeInformation implements PlatformRuntimeInformation {
+    @Override
+    public boolean isDevelopmentEnvironment() {
+        return !FMLLoader.getCurrent().isProduction();
+    }
+
+    @Override
+    public Path getGameDirectory() {
+        return FMLPaths.GAMEDIR.get();
+    }
+
+    @Override
+    public Path getConfigDirectory() {
+        return FMLPaths.CONFIGDIR.get();
+    }
+
+    @Override
+    public boolean platformHasEarlyLoadingScreen() {
+        return true;  // NeoForge 支持早期加载画面
+    }
+
+    @Override
+    public boolean platformUsesRefmap() {
+        return false;  // NeoForge 不使用 refmap
+    }
+
+    @Override
+    public boolean usesAlphaMultiplication() {
+        return true;  // NeoForge 需要顶点 alpha 乘法
+    }
+}
+```
+
+### 服务配置文件
+
+```1:1:assets/Sodium/neoforge/src/mod/resources/META-INF/services/net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess
+net.caffeinemc.mods.sodium.neoforge.block.NeoForgeBlockAccess
 ```
 
 ---
 
-## 8. 配置系统
+## 平台差异对比
 
-### 8.1 Fabric 配置加载
+| 功能特性 | Fabric 实现 | NeoForge 实现 | 差异说明 |
+|---------|-----------|--------------|---------|
+| **光照获取** | `state.getLightEmission()` | `state.getLightEmission(level, pos)` | NeoForge 支持上下文参数 |
+| **面隐藏检测** | 始终返回 `false` | 使用 `hidesNeighborFace()` API | NeoForge 支持更精细控制 |
+| **流体覆盖层** | `FluidRenderHandlerRegistry` | `shouldDisplayFluidOverlay()` | 两者使用不同 API |
+| **法向量着色** | 自定义 `normalShade()` 方法 | 直接使用 `level.getShade()` | NeoForge 可直接获取 |
+| **环境光遮蔽** | 仅 `DEFAULT/DISABLED` | 支持 `TRUE/FALSE/DEFAULT` | NeoForge 支持强制启用 |
+| **方块发光轮廓** | 不支持（返回 `false`） | `hasCustomOutlineRendering()` | NeoForge 独有功能 |
+| **流体遮挡** | 比较流体类型 | `shouldHideAdjacentFluidFace()` | 两者逻辑相似 |
+| **辅助光照** | 不支持（返回 `null`） | 使用 `getAuxLightManager()` | NeoForge 支持完整功能 |
+| **模型数据** | 使用空容器 | 使用 `ModelData` 系统 | NeoForge 有完整实现 |
+| **渲染类型检测** | 返回默认类型 | `part.getRenderType(state)` | NeoForge 可动态判断 |
 
-```startLine:1:60:D:/Projects/sodium/fabric/src/main/java/net/caffeinemc/mods/sodium/fabric/config/ConfigLoaderFabric.java
-public class ConfigLoaderFabric {
-    public static void collectConfigEntryPoints() {
-        // 收集所有配置选项
-        SodiumConfig.collectOptions(new FabricConfigOptions());
-        
-        // 监听配置变化
-        FabricLoader.getInstance().getConfigDir();
+```mermaid
+classDiagram
+    class PlatformBlockAccess {
+        <<interface>>
+        +getLightEmission()
+        +shouldSkipRender()
+        +shouldShowFluidOverlay()
+        +usesAmbientOcclusion()
     }
-}
-```
-
-### 8.2 NeoForge 配置加载
-
-```startLine:1:60:D:/Projects/sodium/neoforge/src/main/java/net/caffeinemc/mods/sodium/neoforge/config/ConfigLoaderForge.java
-public class ConfigLoaderForge {
-    public static void collectConfigEntryPoints() {
-        // 收集配置
-        SodiumConfig.collectOptions(new ForgeConfigOptions());
-        
-        // 注册配置ChangedListener
-        ModLoadingContext.get().registerExtensionPoint(
-            IConfigScreenFactory.class,
-            (mc, parent) -> VideoSettingsScreen.createScreen(parent)
-        );
-    }
-}
-```
-
----
-
-## 9. 平台检测
-
-```java
-// 检测当前平台
-public enum Platform {
-    FABRIC,
-    NEOFORGE;
     
-    public static Platform getCurrent() {
-        // 通过类存在性检测
-        if (Class.forName("net.fabricmc.api.EnvType") != null) {
-            return FABRIC;
-        }
-        return NEOFORGE;
+    class FabricBlockAccess {
+        +getLightEmission() state.getLightEmission()
+        +shouldSkipRender() false
+        +usesAmbientOcclusion() DEFAULT/DISABLED
     }
-}
+    
+    class NeoForgeBlockAccess {
+        +getLightEmission() state.getLightEmission(level, pos)
+        +shouldSkipRender() hidesNeighborFace()
+        +usesAmbientOcclusion() TRUE/FALSE/DEFAULT
+    }
+    
+    PlatformBlockAccess <|.. FabricBlockAccess
+    PlatformBlockAccess <|.. NeoForgeBlockAccess
 ```
 
 ---
 
-## 10. 相关文档
+## 服务加载流程
 
-- [01-architecture-overview.md](01-architecture-overview.md) - 整体架构
-- [02-chunk-render-system.md](02-chunk-render-system.md) - 区块渲染系统
-- [04-render-pipeline.md](04-render-pipeline.md) - 渲染管线
+```mermaid
+flowchart LR
+    A["启动游戏"] --> B["加载 Sodium 模组"]
+    B --> C["ServiceLoader 扫描"]
+    C --> D["META-INF/services/"]
+    D --> E{检测平台}
+    
+    E -->|Fabric| F["读取 fabric.services 文件"]
+    E -->|NeoForge| G["读取 neoforge.services 文件"]
+    
+    F --> H["加载 Fabric 实现类"]
+    G --> I["加载 NeoForge 实现类"]
+    
+    H --> J["实例化单例"]
+    I --> J
+    
+    J --> K["公共代码调用"]
+    K --> L["平台特定实现"]
+```
+
+### 初始化时序
+
+1. **模组加载阶段**：Fabric/NeoForge 启动器加载模组 JAR
+2. **SPI 扫描**：JVM 通过 `ServiceLoader.load()` 扫描 `META-INF/services/`
+3. **配置读取**：读取服务配置文件获取实现类名
+4. **类加载**：通过反射加载实现类
+5. **实例化**：创建单例实例存储在 `INSTANCE` 字段
+6. **运行时调用**：公共代码通过 `PlatformXXX.INSTANCE.method()` 调用
 
 ---
 
-*生成时间: 2026-03-19*
+## 课后自查
+
+- [ ] 理解 SPI（Service Provider Interface）机制及其在 Sodium 中的应用
+- [ ] 能够绘制 Sodium 平台抽象层的架构图
+- [ ] 掌握 `Services.load()` 和 `Services.loadOr()` 的区别
+- [ ] 了解 Fabric 和 NeoForge 在 `PlatformBlockAccess` 接口上的主要差异
+- [ ] 能够解释为什么 NeoForge 支持辅助光照而 Fabric 不支持
+
+---
+
+## 参考源码
+
+- `Services.java` - 服务加载器核心
+- `PlatformBlockAccess.java` - 方块访问接口
+- `PlatformLevelAccess.java` - 维度访问接口
+- `PlatformRuntimeInformation.java` - 运行时信息接口
+- `FabricBlockAccess.java` - Fabric 方块实现
+- `NeoForgeBlockAccess.java` - NeoForge 方块实现
+- `META-INF/services/` - SPI 配置文件目录

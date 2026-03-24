@@ -19,6 +19,29 @@
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * 从生成的 HTML 文件路径计算站点根目录（含 index.html 的目录）的相对前缀，如 ../../../../
+ */
+function relativePathToWebsiteRoot(websiteRoot, htmlOutputFile) {
+    const dir = path.dirname(path.resolve(htmlOutputFile));
+    const root = path.resolve(websiteRoot);
+    const rel = path.relative(root, dir);
+    if (!rel || rel === '.') return './';
+    const depth = rel.split(path.sep).filter(Boolean).length;
+    return '../'.repeat(depth);
+}
+
+/**
+ * 从当前 HTML 文件到模块版本索引目录（docs/mc/1.21/ 或 docs/iris/）的相对路径，用于「返回概述」面包屑
+ */
+function relativePathToModuleIndexDir(htmlOutputFile, moduleIndexDir) {
+    const fromDir = path.dirname(path.resolve(htmlOutputFile));
+    const toDir = path.resolve(moduleIndexDir);
+    let r = path.relative(fromDir, toDir);
+    if (!r || r === '.') return '.';
+    return r.replace(/\\/g, '/');
+}
+
 // ============================================================================
 // 自动扫描模块配置
 // ============================================================================
@@ -172,6 +195,24 @@ function parseFrontmatter(content) {
     };
 }
 
+/**
+ * 从 ## 标题文案生成锚点 id，与教程内「目录」中的 (#xxx) 链接对齐。
+ * （旧逻辑用整段标题作 id，与手写目录链不一致，导致页内跳转无效。）
+ */
+function headingAnchorId(rawTitle) {
+    let s = String(rawTitle).trim();
+    s = s.replace(/[：:]/g, '');
+    s = s.replace(/（([^）]*)）/g, '$1');
+    s = s.replace(/\s*\(([A-Za-z0-9]+)\)/g, (_, w) => '-' + w.toLowerCase());
+    s = s.replace(/[？。．，、！!？]/g, '');
+    s = s.replace(/^(\d+)\.\s+/, '$1-');
+    s = s.replace(/\s+/g, '-');
+    s = s.replace(/[A-Z]/g, c => c.toLowerCase());
+    s = s.replace(/[^0-9a-z\u4e00-\u9fff\-]/gi, '');
+    s = s.replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return s || 'section';
+}
+
 function parseMarkdown(text) {
     let html = text;
 
@@ -259,7 +300,10 @@ function parseMarkdown(text) {
     // 标题
     html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>\n');
     html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>\n');
-    html = html.replace(/^## (.+)$/gm, '<h2 id="$1">$1</h2>\n');
+    html = html.replace(/^## (.+)$/gm, (_, title) => {
+        const id = headingAnchorId(title);
+        return `<h2 id="${id}">${title}</h2>\n`;
+    });
     html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>\n');
 
     // 粗体和斜体
@@ -313,7 +357,7 @@ function parseMarkdown(text) {
         const placeholder = `<!--CODEBLOCK_${index}-->`;
 
         if (block.type === 'mermaid') {
-            html = html.replace(placeholder, `<div class="mermaid">${block.code}</div>`);
+            html = html.replace(placeholder, `<div class="mermaid-wrapper mermaid-container">\n<div class="mermaid">${block.code}</div>\n</div>`);
         } else {
             const escapedCode = block.code
                 .replace(/&/g, '&amp;')
@@ -347,32 +391,150 @@ function themeNavbarActionsHtml() {
 }
 
 // ============================================
+// 教程导航：Part 归一化、排序、侧边栏分组（Fabric / MC 分目录教程）
+// ============================================
+
+/** 将 nav 中的 part 转为分组键：'0'..'n' 或 'Other'（兼容旧数据 Part-0） */
+function normalizeTutorialPartKey(part) {
+    if (part == null || part === '' || part === 'Other') return 'Other';
+    const s = String(part);
+    const m = s.match(/^Part-(\d+)$/i) || s.match(/^(\d+)$/);
+    return m ? m[1] : 'Other';
+}
+
+/** 教程导航排序：先按 Part 序号，再按文件名 */
+function sortTutorialNavItems(items) {
+    if (!items || !items.length) return items || [];
+    const partNum = (p) => {
+        const k = normalizeTutorialPartKey(p);
+        if (k === 'Other') return 999;
+        const n = parseInt(k, 10);
+        return Number.isFinite(n) ? n : 999;
+    };
+    return [...items].sort((a, b) => {
+        const na = partNum(a.part);
+        const nb = partNum(b.part);
+        if (na !== nb) return na - nb;
+        const fa = String(a.file || a.id || '');
+        const fb = String(b.file || b.id || '');
+        return fa.localeCompare(fb, 'zh-CN', { numeric: true });
+    });
+}
+
+/** 导航项 file 是否与当前文档 slug 指同一篇（支持完整路径或仅 basename，兼容手写 config + 自动扫描） */
+function tutorialNavItemMatchesSlug(item, slug) {
+    if (!item || item.file == null || slug == null) return false;
+    const f = String(item.file).replace(/\\/g, '/');
+    const s = String(slug).replace(/\\/g, '/');
+    if (f === s) return true;
+    if (s.endsWith('/' + f)) return true;
+    if (path.posix.basename(s) === f) return true;
+    return false;
+}
+
+/**
+ * 教程页内链：从当前文档 slug（相对 tutorials 根，无扩展名）到目标条目的相对 URL（含 .html）。
+ * 自动扫描后 item.file 常为「Part-0-Prerequisites/03-project-intro」；若在子目录内写死该绝对式路径，
+ * 浏览器会解析成 当前目录/Part-0/...，出现重复文件夹（ERR_FILE_NOT_FOUND）。
+ */
+function tutorialRelativeHref(fromSlug, toFileOrSlug) {
+    const fromNorm = String(fromSlug || '').replace(/\\/g, '/');
+    const toRaw = String(toFileOrSlug || '').replace(/\\/g, '/');
+    if (!toRaw) return '#';
+    const fromDir = path.posix.dirname(fromNorm);
+    const baseDir = fromDir && fromDir !== '.' ? fromDir : '.';
+    let toSlug;
+    if (toRaw.includes('/')) {
+        toSlug = toRaw;
+    } else {
+        toSlug = baseDir === '.' ? toRaw : path.posix.join(baseDir, toRaw);
+    }
+    let rel = path.posix.relative(baseDir, toSlug);
+    if (!rel || rel === '') {
+        rel = path.posix.basename(toSlug);
+    }
+    return rel.split(path.sep).join('/') + '.html';
+}
+
+/** 教程页左侧栏：按 Part 分组（多 Part 时）；否则扁平列表 */
+function buildTutorialSidebarHtml(navItems, activeSlug, module) {
+    const sorted = sortTutorialNavItems(navItems);
+    const keys = [...new Set(sorted.map(i => normalizeTutorialPartKey(i.part)))];
+    // 任一文档落在 part-0 / Part-1 等子目录时启用分组（单 Part 也显示 Part 标题，避免与文内「第x章」混淆）
+    const useGrouped = keys.some(k => k !== 'Other');
+
+    if (!useGrouped) {
+        return sorted.map(item => {
+            const isActive = tutorialNavItemMatchesSlug(item, activeSlug);
+            const icon = item.icon || 'book';
+            const href = tutorialRelativeHref(activeSlug, item.file);
+            return `<a href="${href}" class="${isActive ? 'active' : ''}">
+            <i class="fas fa-${icon}"></i>
+            ${item.title}
+        </a>`;
+        }).join('\n');
+    }
+
+    const groups = groupByPart(
+        sorted.map(it => ({ ...it, part: normalizeTutorialPartKey(it.part) }))
+    );
+    const partKeys = Object.keys(groups);
+    const numbered = sortParts(partKeys.filter(pk => pk !== 'Other'));
+    const orderedParts = groups.Other ? [...numbered, 'Other'] : numbered;
+    return orderedParts.map(partKey => {
+        const items = groups[partKey];
+        const label = partDisplayNames[partKey] || (partKey === 'Other' ? '其他' : `Part ${partKey}`);
+        const links = items.map(item => {
+            const isActive = tutorialNavItemMatchesSlug(item, activeSlug);
+            const icon = item.icon || 'book';
+            const href = tutorialRelativeHref(activeSlug, item.file);
+            return `<a href="${href}" class="sidebar-nav-link ${isActive ? 'active' : ''}">
+            <i class="fas fa-${icon}"></i>
+            <span>${item.title}</span>
+        </a>`;
+        }).join('\n');
+        return `<div class="sidebar-part">
+            <div class="sidebar-part-label">${label}</div>
+            ${links}
+        </div>`;
+    }).join('\n');
+}
+
+// ============================================
 // HTML 生成器
 // ============================================
 
-function generateDocHTML(doc, module, navItems, version = null, docType = 'analysis') {
-    // 输出路径：docs/{docsDir...}/[{version}/]{tutorials|analysis}/xxx.html → 回到 website 根目录
+function generateDocHTML(doc, module, navItems, version = null, docType = 'analysis', layoutOptions = {}) {
+    // 输出路径：docs/{docsDir...}/[{version}/]{tutorials|analysis}/[子目录/]xxx.html
+    // 嵌套子目录时必须传入 layoutOptions.relativePathToWebsite / baseDirToModuleIndex，否则资源与「返回概述」链接会错
     const docsDirDepth = module.docsDir.split(/[/\\]/).filter(Boolean).length;
-    const pathDepthToWebsite = docsDirDepth + (version ? 1 : 0) + 1; // + tutorials|analysis
-    const relativePath = '../'.repeat(pathDepthToWebsite);
-    const baseDir = '..'; // 上一级：版本目录或模组 docs 根（与 tutorials|analysis 同级的 index.html）
+    const pathDepthToWebsite = docsDirDepth + (version ? 1 : 0) + 1; // + tutorials|analysis（仅一层子目录时的默认深度）
+    const relativePath = layoutOptions.relativePathToWebsite != null
+        ? layoutOptions.relativePathToWebsite
+        : '../'.repeat(pathDepthToWebsite);
+    const baseDir = layoutOptions.baseDirToModuleIndex != null ? layoutOptions.baseDirToModuleIndex : '..';
 
-    const sidebarLinks = navItems.map(item => {
-        const isActive = doc.slug === item.file;
-        return `<a href="${item.file}.html" class="${isActive ? 'active' : ''}">
-            <i class="fas fa-${item.icon}"></i>
+    const navForPage = docType === 'tutorials' ? sortTutorialNavItems(navItems) : navItems;
+    const sidebarLinks = docType === 'tutorials'
+        ? buildTutorialSidebarHtml(navItems, doc.slug, module)
+        : navForPage.map(item => {
+            const isActive = tutorialNavItemMatchesSlug(item, doc.slug);
+            const icon = item.icon || 'book';
+            const href = tutorialRelativeHref(doc.slug, item.file);
+            return `<a href="${href}" class="${isActive ? 'active' : ''}">
+            <i class="fas fa-${icon}"></i>
             ${item.title}
         </a>`;
-    }).join('\n');
+        }).join('\n');
 
-    const prevNext = generatePrevNext(navItems, doc.slug);
+    const prevNext = generatePrevNext(navForPage, doc.slug);
 
     // 文档类型标识
     const docTypeLabel = docType === 'tutorials' ? '教程' : '源码分析';
     const docTypeIcon = docType === 'tutorials' ? 'graduation-cap' : 'microscope';
 
     return `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:${module.color};">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -388,34 +550,22 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     ${config.features.syntaxHighlight ? `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">` : ''}
     <style>
-        /* 主题样式 */
-        .docs-nav { background: ${module.color}; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: ${module.colorGradient.replace('0%', '0').replace('100%', '15%')}; }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: ${module.color}; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: ${module.color}; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid ${module.color}; background: ${module.color}15; }
-        .info-box i { color: ${module.color}; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -446,25 +596,22 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid ${module.color}; }
-        .docs-body h2 i { color: ${module.color}; }
-        .data-table th { background: ${module.colorGradient}; }
-        .prev-next .next { background: ${module.colorGradient}; }
-        .prev-next .next:hover { box-shadow: 0 4px 15px ${module.color}66; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: ${module.color};
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -478,7 +625,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, ${module.color}, ${module.color}99);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -487,7 +634,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -513,11 +660,16 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>${module.name}</h3>
-                <span class="doc-badge">${docType === 'tutorials' ? '教程' : '分析'}</span>
+                <div class="sidebar-header-text">
+                    <h3>${module.name}</h3>
+                    <span class="doc-badge">${docType === 'tutorials' ? '教程' : '分析'}</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 ${sidebarLinks}
@@ -529,6 +681,11 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -564,6 +721,7 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
 
     <script src="${relativePath}script.js"></script>
     <script src="${relativePath}scripts/theme.js"></script>
+    <script src="${relativePath}scripts/docs-sidebar.js"></script>
     ${config.features.syntaxHighlight ? `<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -585,7 +743,8 @@ function generateDocHTML(doc, module, navItems, version = null, docType = 'analy
     </script>` : ''}
     ${config.features.mermaid ? `
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>` : ''}
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="${relativePath}scripts/mermaid-controls.js"></script>` : ''}
 </body>
 </html>`;
 }
@@ -600,14 +759,15 @@ function generateModuleDropdown(relativePath) {
 }
 
 function generatePrevNext(navItems, currentSlug) {
-    const currentIndex = navItems.findIndex(item => item.file === currentSlug);
+    const currentIndex = navItems.findIndex(item => tutorialNavItemMatchesSlug(item, currentSlug));
 
     let prev = '';
     let next = '';
 
     if (currentIndex > 0) {
         const prevItem = navItems[currentIndex - 1];
-        prev = `<a href="${prevItem.file}.html" class="prev">
+        const prevHref = tutorialRelativeHref(currentSlug, prevItem.file);
+        prev = `<a href="${prevHref}" class="prev">
             <i class="fas fa-arrow-left"></i>
             ${prevItem.title}
         </a>`;
@@ -615,9 +775,10 @@ function generatePrevNext(navItems, currentSlug) {
         prev = `<span class="prev"><i class="fas fa-arrow-left"></i></span>`;
     }
 
-    if (currentIndex < navItems.length - 1) {
+    if (currentIndex >= 0 && currentIndex < navItems.length - 1) {
         const nextItem = navItems[currentIndex + 1];
-        next = `<a href="${nextItem.file}.html" class="next">
+        const nextHref = tutorialRelativeHref(currentSlug, nextItem.file);
+        next = `<a href="${nextHref}" class="next">
             ${nextItem.title}
             <i class="fas fa-arrow-right"></i>
         </a>`;
@@ -1525,21 +1686,23 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
             // 获取该版本的导航
             const versionNavItems = navConfig[moduleKey] || [];
 
-            // 获取该版本的源目录
-            const versionSourceDir = path.resolve(websiteRoot, '..', 'content', module.slug, version, docType);
+            // 获取该版本的源目录（与 content 对齐，勿使用错误的父目录）
+            const versionSourceDir = path.resolve(websiteRoot, 'content', module.slug, version, docType);
 
-            // 转换该版本的所有文档
+            // 转换该版本的所有文档（保留 tutorials|analysis 下的子目录结构，与 MC Part-* 等一致）
             if (fs.existsSync(versionSourceDir)) {
                 const files = getMarkdownFiles(versionSourceDir);
+                const moduleIndexDir = path.join(outputDir, version);
 
                 files.forEach(fileInfo => {
                     const sourcePath = fileInfo.path;
                     const content = fs.readFileSync(sourcePath, 'utf-8');
                     const { metadata, content: markdownContent } = parseFrontmatter(content);
 
-                    // 使用文件名（不含路径）作为 slug
-                    const slug = fileInfo.name.replace(/\.(md|markdown)$/, '');
-                    const title = metadata.title || slug.replace(/-/g, ' ');
+                    const slug = path.relative(versionSourceDir, fileInfo.path)
+                        .replace(/\\/g, '/')
+                        .replace(/\.(md|markdown)$/, '');
+                    const title = metadata.title || path.basename(slug).replace(/-/g, ' ');
                     const readingTime = metadata.readingTime || config.defaults.readingTime;
 
                     const doc = {
@@ -1549,8 +1712,16 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
                         content: parseMarkdown(markdownContent)
                     };
 
-                    const html = generateDocHTML(doc, module, versionNavItems, version, docType);
-                    fs.writeFileSync(path.join(typeDir, `${slug}.html`), html);
+                    const outPath = path.join(typeDir, `${slug}.html`);
+                    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+                    const layoutOptions = {
+                        relativePathToWebsite: relativePathToWebsiteRoot(websiteRoot, outPath),
+                        baseDirToModuleIndex: relativePathToModuleIndexDir(outPath, moduleIndexDir)
+                    };
+
+                    const html = generateDocHTML(doc, module, versionNavItems, version, docType, layoutOptions);
+                    fs.writeFileSync(outPath, html);
                     console.log(`  - ${docType}/${slug}.html`);
                 });
             }
@@ -1572,9 +1743,10 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
             const content = fs.readFileSync(sourcePath, 'utf-8');
             const { metadata, content: markdownContent } = parseFrontmatter(content);
 
-            // 使用文件名（不含路径）作为 slug
-            const slug = fileInfo.name.replace(/\.(md|markdown)$/, '');
-            const title = metadata.title || slug.replace(/-/g, ' ');
+            const slug = path.relative(sourceDir, fileInfo.path)
+                .replace(/\\/g, '/')
+                .replace(/\.(md|markdown)$/, '');
+            const title = metadata.title || path.basename(slug).replace(/-/g, ' ');
             const readingTime = metadata.readingTime || config.defaults.readingTime;
 
             const doc = {
@@ -1584,8 +1756,16 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
                 content: parseMarkdown(markdownContent)
             };
 
-            const html = generateDocHTML(doc, module, navItems, null, docType);
-            fs.writeFileSync(path.join(typeDir, `${slug}.html`), html);
+            const outPath = path.join(typeDir, `${slug}.html`);
+            fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+            const layoutOptions = {
+                relativePathToWebsite: relativePathToWebsiteRoot(websiteRoot, outPath),
+                baseDirToModuleIndex: relativePathToModuleIndexDir(outPath, outputDir)
+            };
+
+            const html = generateDocHTML(doc, module, navItems, null, docType, layoutOptions);
+            fs.writeFileSync(outPath, html);
             console.log(`  - ${docType}/${slug}.html`);
         });
     }
@@ -1615,7 +1795,9 @@ function generateModuleIndexPage(moduleKey) {
             // MC 教程：与 config 合并，补充 title/icon/topics 用于课程卡片展示
             const navConfig = tutorialsNavigation.mc || [];
             const tutorialsWithConfig = actualTutorials.map(t => {
-                const fromConfig = navConfig.find(n => n.file === t.file);
+                const fromConfig = navConfig.find(n => n.file === t.file)
+                    || navConfig.find(n => t.file.endsWith('/' + n.file) || t.file.endsWith('\\' + n.file))
+                    || navConfig.find(n => t.file === n.id);
                 if (!fromConfig) return t;
                 return { ...t, title: fromConfig.title, icon: fromConfig.icon || t.icon, topics: fromConfig.topics };
             });
@@ -1643,8 +1825,9 @@ function generateModuleIndexPage(moduleKey) {
 function getActualDocFiles(sourceDir, recursive = true) {
     const files = getMarkdownFiles(sourceDir, recursive);
     return files.map(f => {
-        const slug = f.name.replace(/\.(md|markdown)$/, '');
-        let title = slug.replace(/-/g, ' ');
+        // 相对 sourceDir 的路径，含 Part-* / part-* 子目录，与 converter 输出的 HTML 路径一致
+        const slug = f.relativePath.replace(/\\/g, '/').replace(/\.(md|markdown)$/, '');
+        let title = path.basename(slug).replace(/-/g, ' ');
         let icon = 'file-alt';
         let part = 'Other';
 
@@ -1653,11 +1836,6 @@ function getActualDocFiles(sourceDir, recursive = true) {
         if (partMatch) {
             part = partMatch[1];
         }
-
-        // 计算相对路径（只保留文件名，因为 HTML 输出到 tutorials/ 根目录）
-        const relativePath = f.path.replace(/\\/g, '/');
-        const parts = relativePath.split('/');
-        const tutorialsIndex = parts.indexOf('tutorials');
 
         try {
             const content = fs.readFileSync(f.path, 'utf-8');
@@ -1669,7 +1847,6 @@ function getActualDocFiles(sourceDir, recursive = true) {
             // 忽略读取错误
         }
 
-        // htmlPath：直接使用文件名（不含子目录），因为 HTML 输出到 tutorials/ 根目录
         const htmlPath = slug;
 
         return {

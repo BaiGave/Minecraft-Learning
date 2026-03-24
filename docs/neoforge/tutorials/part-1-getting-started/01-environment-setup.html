@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>01 environment setup - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-environment-setup.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 1.21.x 环境搭建与第一个 Mod</span>
+        </a>
+<a href="02-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：注册系统 - DeferredRegister 完全指南</span>
+        </a>
+<a href="03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-blocks-and-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>方块与物品开发完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 实体系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-networking/01-network-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 网络通信完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-world-gen/01-world-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 世界生成与区块系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-recipes/01-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配方与酿造系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-config/01-config-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配置系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>魔法水晶方块 - NeoForge 实战项目</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-getting-started.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 入门指南</span>
+        </a>
+<a href="02-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>01 environment setup</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    01 environment setup
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>NeoForge 1.21.x 环境搭建与第一个 Mod</h1>
+<blockquote><p><strong>面向读者</strong>：想学习 NeoForge mod 开发的零基础新手</p></blockquote>
+>
+<blockquote><p><strong>目标</strong>：从零开始搭建开发环境，创建并运行你的第一个 NeoForge mod</p></blockquote>
+<blockquote><p>⚠️ <strong>NeoForge vs Forge</strong>：NeoForge 是 Forge 的社区分支，专为 Minecraft 1.20.4+ 设计，提供更快的更新速度和更现代的代码架构。如果你想开发 1.20.4 以下版本，请使用传统 Forge。</p></blockquote>
+<p><hr></p>
+<h2 id="目标">目标</h2>
+<p>学完本章后，你将理解：</p>
+<pre class="code-block"><code class="language-text">✅ NeoForge 是什么，以及它与 Minecraft Forge 的关系
+✅ 搭建完整的 NeoForge 开发环境（JDK + Gradle + IDEA）
+✅ 使用 NeoForge MDK 创建新项目
+✅ 理解项目结构和 build.gradle 配置
+✅ 编写并运行你的第一个 Mod（@Mod 注解）
+✅ 掌握常用的开发工具和调试技巧</code></pre>
+<p><hr></p>
+<h2 id="前置知识">前置知识</h2>
+<pre class="code-block"><code class="language-text">☕ Java 基础（会写简单的类和方法）
+💻 电脑操作（会解压文件、使用命令行）
+📦 16GB 以上可用内存（跑 Minecraft 很吃内存）
+💾 30GB 以上可用磁盘空间（IDE + 项目 + Minecraft）
+⏱️ 30-60 分钟的空闲时间</code></pre>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#什么是-neoforge">🎮 什么是 NeoForge？</a></li>
+<li><a href="#开发环境要求">🛠️ 开发环境要求</a></li>
+<li><a href="#创建第一个项目">📦 创建第一个项目</a></li>
+<li><a href="#项目结构解析">🏗️ 项目结构解析</a></li>
+<li><a href="#编写第一个-mod">💻 编写第一个 Mod</a></li>
+<li><a href="#运行和调试">▶️ 运行和调试</a></li>
+<li><a href="#常用开发工具推荐">🧰 常用开发工具推荐</a></li>
+<li><a href="#小结与练习">📝 小结与练习</a></li></ul></p>
+<p><hr></p>
+<h2 id="什么是-neoforge">什么是 NeoForge？</h2>
+<h3>Forge 的前世今生</h3>
+<blockquote><p><strong>NeoForge</strong> 是 <strong>Minecraft Forge</strong> 的社区分支（fork），你可以理解为"Forge 2.0"。</p></blockquote>
+<pre class="code-block"><code class="language-text">传统 Forge 时间线：
+Forge 1.12 ──→ Forge 1.16 ──→ Forge 1.18 ──→ (发展停滞)
+
+NeoForge 时间线：
+Forge 1.20.4 ──→ NeoForge 1.20.4 ──→ NeoForge 1.21.x ──→ ...</code></pre>
+<h3>为什么选择 NeoForge？</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>传统 Forge</th><th>NeoForge</th></tr></thead><tbody><tr><td>Minecraft 版本</td><td>1.12 - 1.20.x</td><td>1.20.4+</td></tr><tr><td>更新速度</td><td>较慢</td><td>快速跟进新版本</td></tr><tr><td>代码风格</td><td>传统</td><td>现代化、类型安全</td></tr><tr><td>社区支持</td><td>减少中</td><td>活跃发展</td></tr><tr><td>推荐程度</td><td>⭐⭐ (老项目)</td><td>⭐⭐⭐⭐⭐ (新项目)</td></tr></tbody></table>
+<h3>NeoForge 核心优势</h3>
+<blockquote><p>💡 <strong>强类型事件系统</strong> - 比传统 Forge 的反射方式更安全、更高效</p></blockquote>
+> 
+<blockquote><p>💡 <strong>现代化的 API</strong> - 使用 <code>DeferredRegister</code> 等新特性</p></blockquote>
+> 
+<blockquote><p>💡 <strong>更快的编译</strong> - 改进的 Gradle 配置</p></blockquote>
+<p><hr></p>
+<h2 id="开发环境要求">开发环境要求</h2>
+<h3>组件架构图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 硬件层["🖥️ 硬件要求"]
+        RAM["内存: 16GB+"]
+        DISK["磁盘: 30GB+"]
+        CPU["CPU: 4核+"]
+    end
+
+    subgraph 开发工具["🛠️ 开发工具"]
+        JDK["JDK 21<br/>Java 开发工具包"]
+        IDEA["IntelliJ IDEA<br/>代码编辑器"]
+        GRADLE["Gradle 8.x<br/>项目构建工具"]
+    end
+
+    subgraph Minecraft运行时["🎮 Minecraft 运行时"]
+        NEOFORGE["NeoForge 1.21.x<br/>Mod 加载器"]
+        MC["Minecraft 1.21.x"]
+    end
+
+    JDK --> IDEA
+    GRADLE --> IDEA
+    IDEA --> NEOFORGE
+    NEOFORGE --> MC
+
+    style JDK fill:#f39c12,color:#fff
+    style IDEA fill:#3498db,color:#fff
+    style NEOFORGE fill:#27ae60,color:#fff</div>
+</div>
+<h3>1. 安装 JDK 21</h3>
+<blockquote><p><strong>JDK（Java Development Kit）</strong> 是 Java 程序的运行环境，没有它，Java 代码就是一堆普通文本。</p></blockquote>
+<pre class="code-block"><code class="language-text">下载地址：
+https://adoptium.net/temurin/releases/?version=21
+
+安装步骤：
+1. 下载 Windows x64 Installer (.msi)
+2. 双击运行安装程序
+3. 记住安装路径（默认：C:\Program Files\Eclipse Adoptium\jdk-21...）
+4. 配置环境变量：
+   - 新建 JAVA_HOME = C:\Program Files\Eclipse Adoptium\jdk-21...
+   - 编辑 Path，添加 %JAVA_HOME%\bin
+5. 验证：打开 PowerShell，输入：
+   java -version</code></pre>
+<p>验证成功会看到类似输出：</p>
+<pre class="code-block"><code class="language-text">openjdk version &quot;21.0.x&quot; ...
+Java HotSpot(TM) 64-Bit Server VM ...</code></pre>
+<h3>2. 安装 IntelliJ IDEA</h3>
+<blockquote><p><strong>IntelliJ IDEA</strong> 是 JetBrains 公司出品的 Java 专用编辑器，比 VS Code 更适合 Java 开发。</p></blockquote>
+<pre class="code-block"><code class="language-text">下载地址：
+https://www.jetbrains.com/idea/download/
+推荐：IntelliJ IDEA Community Edition（免费开源）
+
+安装步骤：
+1. 下载 Community 版
+2. 运行安装程序
+3. 勾选&quot;创建桌面快捷方式&quot;
+4. 勾选&quot;.java 文件关联&quot;（方便双击打开）
+5. 完成后启动 IDEA</code></pre>
+<h3>3. Gradle（内置在 MDK 中）</h3>
+<blockquote><p><strong>Gradle</strong> 是项目构建工具，负责下载依赖、编译代码、打包 Mod。</p></blockquote>
+<pre class="code-block"><code class="language-text">好消息：NeoForge MDK 已经内置了 Gradle Wrapper
+坏消息：你不需要手动安装它
+
+但是！如果你的网络较慢，可以配置国内镜像：
+在 gradle.properties 中添加阿里云镜像源</code></pre>
+<p><hr></p>
+<h2 id="创建第一个项目">创建第一个项目</h2>
+<h3>使用 NeoForge MDK</h3>
+<blockquote><p><strong>MDK（Mod Development Kit）</strong> 是官方提供的 mod 开发模板，包含所有必要的配置文件。</p></blockquote>
+<h3>下载 MDK</h3>
+<pre class="code-block"><code class="language-text">1. 访问 NeoForge 官方下载页面：
+   https://github.com/neoforged/NeoForge/releases
+
+2. 找到对应 Minecraft 1.21.x 版本的 MDK 下载
+   例如：neoforge-1.21.1-53.0.27-mdk.zip
+
+3. 解压到你的工作目录，例如：
+   D:\MinecraftMods\my-first-mod</code></pre>
+<h3>命令行方式（推荐）</h3>
+<pre class="code-block"><code class="language-bash"># 如果你安装了 Git Bash 或 WSL，可以直接用命令行创建
+# 克隆 MDK 模板（需要先 fork 或下载）
+
+# 解压后进入目录
+cd neoforge-1.21.1-53.0.27-mdk
+
+# 初始化项目（自动下载依赖）
+./gradlew</code></pre>
+<h3>项目创建流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    A["📥 下载 MDK"] --> B["📂 解压到本地"]
+    B --> C["📝 重命名为你的 Mod 名"]
+    C --> D["💻 用 IDEA 打开项目"]
+    D --> E["⏳ 等待 Gradle 同步"]
+    E --> F["✅ 项目创建完成!"]
+
+    style A fill:#3498db,color:#fff
+    style F fill:#27ae60,color:#fff</div>
+</div>
+<p><hr></p>
+<h2 id="项目结构解析">项目结构解析</h2>
+<h3>完整目录结构</h3>
+<pre class="code-block"><code class="language-text">my-first-mod/
+├── build.gradle                 # 📦 项目构建配置
+├── gradle.properties            # ⚙️ Gradle 属性（JVM 参数等）
+├── settings.gradle              # 🔧 项目设置（模块名、仓库）
+├── gradlew / gradlew.bat        # 🚀 Gradle 包装脚本
+├── src/
+│   ├── main/
+│   │   ├── java/                # ☕ Java 源代码
+│   │   │   └── com/example/
+│   │   │       └── mymod/
+│   │   │           └── ExampleMod.java
+│   │   └── resources/
+│   │       ├── META-INF/
+│   │       │   └── neoforge.mods.toml    # 📋 Mod 元信息
+│   │       └── pack.mcmeta               # 📦 资源包配置
+│   └── test/                     # 🧪 测试代码（可选）
+└── .gradle/                      # (自动生成) Gradle 缓存</code></pre>
+<h3>关键文件解析</h3>
+<h4>build.gradle - 构建配置</h4>
+<pre class="code-block"><code class="language-java">plugins {
+    // 应用 NeoForge 开发插件
+    id &#39;neoforge&#39;
+}
+
+version = &#39;1.0.0&#39;
+group = &#39;com.example.mymod&#39;
+
+// Minecraft 和 NeoForge 版本
+base {
+    // 格式：NeoForge_MC版本-Forge版本
+    archivesName = &#39;mymod-1.21.1&#39;
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// 依赖配置
+dependencies {
+    // NeoForge 运行时（运行时可用，编译时也可用）
+    implementation fg.deobf(&quot;net.neoforged:neoforge:21.1.69&quot;)
+}
+
+repositories {
+    // 添加第三方依赖仓库（如果需要）
+    maven {
+        name = &quot;ModMaven&quot;
+        url = &quot;https://maven.example.com/releases&quot;
+    }
+}
+
+// 运行配置
+tasks.withType(JavaExec).configureEach {
+    // 分配更多内存给 Minecraft 客户端
+    jvmArgs = [&#39;-Xmx4G&#39;]
+}</code></pre>
+<h4>neoforge.mods.toml - Mod 信息清单</h4>
+<pre class="code-block"><code class="language-toml">modLoader = &quot;javafml&quot;                    # 固定值
+loaderVersion = &quot;[53,)&quot;                  # NeoForge 版本范围
+license = &quot;MIT&quot;                          # 许可证（MIT/CC0/GPL 等）
+
+[[mods]]
+modId = &quot;mymod&quot;                          # Mod 唯一标识符
+version = &quot;${version}&quot;                   # 版本号（引用 build.gradle）
+displayName = &quot;My First Mod&quot;             # 显示名称
+description = &#39;&#39;&#39;
+这是我的第一个 NeoForge Mod！
+用来学习 NeoForge 开发基础。
+&#39;&#39;&#39;                                       # 描述（支持多行）
+
+# 依赖声明
+[[dependencies.mymod]]
+modId = &quot;neoforge&quot;
+type = &quot;required&quot;                        # required / optional / transitive
+versionRange = &quot;[21.0,)&quot;
+ordering = &quot;NONE&quot;
+side = &quot;BOTH&quot;                            # BOTH / CLIENT / SERVER</code></pre>
+<h3>文件对应关系图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 元信息层["📋 配置文件"]
+        MODS_TOML["neoforge.mods.toml<br/>Mod 标识、依赖"]
+        BUILD["build.gradle<br/>构建规则"]
+        SETTINGS["settings.gradle<br/>模块配置"]
+    end
+
+    subgraph 代码层["☕ Java 代码"]
+        MOD_ANNOTATION["@Mod 注解<br/>Mod 入口点"]
+        REGISTRY["DeferredRegister<br/>注册方块/物品"]
+        EVENT["@SubscribeEvent<br/>事件处理"]
+    end
+
+    subgraph 资源层["📦 资源文件"]
+        LANG["lang/zh_cn.json<br/>中文翻译"]
+        MODEL["models/block/xxx.json<br/>方块模型"]
+        TEXTURE["textures/xxx.png<br/>贴图"]
+    end
+
+    MODS_TOML --> MOD_ANNOTATION
+    BUILD --> MOD_ANNOTATION
+    REGISTRY -->|注册到| MOD_ANNOTATION
+    EVENT -->|监听| MOD_ANNOTATION
+    LANG -->|提供| MODEL
+    TEXTURE -->|配合| MODEL
+
+    style MOD_ANNOTATION fill:#e74c3c,color:#fff
+    style MODS_TOML fill:#3498db,color:#fff</div>
+</div>
+<p><hr></p>
+<h2 id="编写第一个-mod">编写第一个 Mod</h2>
+<h3>创建 Mod 入口类</h3>
+<blockquote><p><strong>@Mod 注解</strong> 是 NeoForge 识别你的 Mod 的关键，没有它，NeoForge 就不知道这是一个 Mod。</p></blockquote>
+<p>在 <code>src/main/java/com/example/mymod/</code> 目录下创建 <code>ExampleMod.java</code>：</p>
+<pre class="code-block"><code class="language-java">package com.example.mymod;
+
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+// 定义 Mod 唯一标识符（要与 neoforge.mods.toml 中的 modId 一致）
+@Mod(ExampleMod.MOD_ID)
+public class ExampleMod {
+    // 定义一个日志记录器，用于在控制台输出信息
+    public static final Logger LOGGER = LoggerFactory.getLogger(&quot;MyFirstMod&quot;);
+    
+    // Mod ID 常量
+    public static final String MOD_ID = &quot;mymod&quot;;
+
+    // Mod 构造方法
+    public ExampleMod() {
+        // 注册到 NeoForge 事件总线
+        // 事件总线会自动发现 @SubscribeEvent 注解的方法
+        NeoForge.EVENT_BUS.register(this);
+        
+        // 初始化完成，打印日志
+        LOGGER.info(&quot;🎮 My First Mod 已加载！&quot;);
+        LOGGER.info(&quot;NeoForge 版本: &quot; + NeoForge.class.getPackage().getImplementationVersion());
+    }
+
+    // 监听事件：当玩家打开创造模式物品栏时触发
+    @SubscribeEvent
+    public void buildContents(BuildCreativeModeTabContentsEvent event) {
+        // 稍后我们会在这个方法里添加自定义物品
+        LOGGER.info(&quot;正在构建创造模式物品栏...&quot;);
+    }
+}</code></pre>
+<h3>添加依赖到 neoforge.mods.toml</h3>
+<p>确保你的 <code>neoforge.mods.toml</code> 中声明了正确的依赖：</p>
+<pre class="code-block"><code class="language-toml">[[dependencies.mymod]]
+modId = &quot;neoforge&quot;
+type = &quot;required&quot;
+versionRange = &quot;[21.0,)&quot;
+ordering = &quot;NONE&quot;
+side = &quot;BOTH&quot;</code></pre>
+<h3>验证 Mod 加载</h3>
+<p>运行游戏后，打开日志文件（位于 <code>.gradle/loom-cache/logs/</code> 或游戏日志），搜索 "My First Mod"，如果看到以下输出，说明 Mod 加载成功：</p>
+<pre class="code-block"><code class="language-text">[MyFirstMod/INFO] [MyFirstMod]: 🎮 My First Mod 已加载！
+[MyFirstMod/INFO] [MyFirstMod]: 正在构建创造模式物品栏...</code></pre>
+<p><hr></p>
+<h2 id="运行和调试">运行和调试</h2>
+<h3>在 IDEA 中运行</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    A["🔄 运行 Gradle 同步"] --> B["📂 打开 Gradle 面板"]
+    B --> C["🎮 运行任务"]
+    C --> D{"选择运行目标"}
+    D -->|"想要玩游戏"| E["🚀 runClient"]
+    D -->|"服务器测试"| F["🖥️ runServer"]
+    D -->|"打包发布"| G["📦 build"]
+
+    E --> H["Minecraft 客户端启动"]
+    F --> I["Minecraft 服务器启动"]
+    G --> J["生成 .jar 文件"]
+
+    style E fill:#27ae60,color:#fff
+    style F fill:#3498db,color:#fff
+    style G fill:#9b59b6,color:#fff</div>
+</div>
+<h3>运行步骤</h3>
+<pre class="code-block"><code class="language-text">1. 在 IDEA 右侧打开 Gradle 面板（可能需要点击右侧的&quot;大象&quot;图标）
+
+2. 找到以下任务：
+   → mymod
+     → Tasks
+       → forge
+         → runClient    ← 双击这个！
+         → runServer    ← 或者这个（测试服务器）
+
+3. 等待 Minecraft 启动...
+   首次运行可能需要 5-10 分钟下载资源
+
+4. 游戏启动后，你应该能在主菜单看到你的 Mod</code></pre>
+<h3>配置运行参数</h3>
+<p>如果你觉得游戏太卡，可以在 <code>build.gradle</code> 中调整 JVM 参数：</p>
+<pre class="code-block"><code class="language-java">tasks.named(&#39;runClient&#39;, type: RunGame) {
+    jvmArgs = [
+        &#39;-Xmx4G&#39;,           // 最大 4GB 内存
+        &#39;-Xms2G&#39;,           // 初始 2GB 内存
+        &#39;-XX:+UseG1GC&#39;,     // 使用 G1 垃圾回收器
+        &#39;-XX:+ParallelRefProcEnabled&#39;
+    ]
+}</code></pre>
+<h3>常见运行问题</h3>
+<table class="data-table"><thead><tr><th>问题</th><th>解决方案</th></tr></thead><tbody><tr><td>Gradle 同步失败</td><td>检查网络，使用代理或国内镜像</td></tr><tr><td>游戏启动报错</td><td>查看错误日志，搜索解决方案</td></tr><tr><td>内存不足</td><td>减少 jvmArgs 中的 -Xmx 值</td></tr><tr><td>Mod 未加载</td><td>检查 modId 是否匹配，文件是否放对位置</td></tr></tbody></table>
+<hr></p>
+<h2 id="常用开发工具推荐">常用开发工具推荐</h2>
+<h3>IDEA 插件</h3>
+<pre class="code-block"><code class="language-text">安装方法：File → Settings → Plugins → Marketplace
+
+推荐插件清单：
+┌─────────────────────────────────────────────────────────┐
+│ 1. Minecraft Development                                │
+│    ├─ 识别 .mcfunction 文件                              │
+│    ├─ 命令补全 &amp; 高亮                                    │
+│    ├─ 数据包支持                                        │
+│    └─ 推荐指数：⭐⭐⭐⭐⭐                                  │
+├─────────────────────────────────────────────────────────┤
+│ 2. Minecraft Bytecode Viewer                            │
+│    ├─ 查看编译后的字节码                                 │
+│    ├─ 理解 Java 编译细节                                │
+│    └─ 推荐指数：⭐⭐⭐⭐                                   │
+├─────────────────────────────────────────────────────────┤
+│ 3. Rainbow Brackets                                    │
+│    ├─ 彩虹括号，方便匹配括号                              │
+│    └─ 推荐指数：⭐⭐⭐                                     │
+├─────────────────────────────────────────────────────────┤
+│ 4. Translation (或 anytrans)                           │
+│    ├─ 翻译插件，方便查文档                               │
+│    └─ 推荐指数：⭐⭐⭐                                     │
+└─────────────────────────────────────────────────────────┘</code></pre>
+<h3>国内镜像配置</h3>
+<p>如果下载依赖太慢，可以在 <code>settings.gradle</code> 中添加阿里云镜像：</p>
+<pre class="code-block"><code class="language-groovy">pluginManagement {
+    repositories {
+        mavenLocal()
+        maven { url = &#39;https://maven.aliyun.com/repository/central&#39; }
+        maven { url = &#39;https://maven.aliyun.com/repository/public&#39; }
+        maven { url = &#39;https://maven.aliyun.com/repository/forge&#39; }
+        gradlePluginPortal()
+        maven { url = &#39;https://maven.neoforged.net/releases&#39; }
+    }
+}</code></pre>
+<h3>常用快捷键</h3>
+<table class="data-table"><thead><tr><th>快捷键</th><th>功能</th></tr></thead><tbody><tr><td><code>Ctrl + Shift + N</code></td><td>全局搜索文件</td></tr><tr><td><code>Ctrl + Shift + F</code></td><td>全局搜索文本</td></tr><tr><td><code>Ctrl + 点击</code></td><td>跳转到定义</td></tr><tr><td><code>Ctrl + Alt + 左箭头</code></td><td>返回上一个位置</td></tr><tr><td><code>两下 Shift</code></td><td>快速搜索（文件名/类名）</td></tr><tr><td><code>Ctrl + /</code></td><td>注释/取消注释</td></tr><tr><td><code>Alt + Enter</code></td><td>快速修复建议</td></tr></tbody></table>
+<hr></p>
+<h2 id="小结与练习">小结与练习</h2>
+<h3>本章知识点回顾</h3>
+<pre class="code-block"><code class="language-text">✅ NeoForge 是 Forge 的现代化分支，专为 MC 1.20.4+
+✅ JDK 21 是必须的运行环境
+✅ IDEA + Gradle 是标准开发工具组合
+✅ @Mod 注解是 Mod 入口点
+✅ build.gradle 和 neoforge.mods.toml 是核心配置文件
+✅ runClient 用于测试客户端 Mod
+✅ 国内镜像可以加速依赖下载</code></pre>
+<h3>课后自查清单</h3>
+<pre class="code-block"><code class="language-text">□ 1. 成功安装 JDK 21 并验证版本
+□ 2. 成功安装 IntelliJ IDEA Community
+□ 3. 下载并解压 NeoForge MDK
+□ 4. 用 IDEA 打开项目并完成 Gradle 同步
+□ 5. 创建了 ExampleMod.java 并添加了 @Mod 注解
+□ 6. 运行 runClient 成功启动 Minecraft
+□ 7. 在游戏日志中看到 Mod 加载信息
+□ 8. 安装了 Minecraft Development 插件</code></pre>
+<h3>思考题</h3>
+<p><ul><li><strong>NeoForge 和传统 Forge 最大的区别是什么？</strong></li>
+</ul>   - 为什么 NeoForge 要重新创建而不是继续在 Forge 上开发？</p>
+<p><ul><li><strong>@Mod 注解的作用是什么？</strong></li>
+</ul>   - 如果没有这个注解，Mod 还能被加载吗？</p>
+<p><ul><li><strong>build.gradle 中的 <code>implementation</code> 和 <code>modImplementation</code> 有什么区别？</strong></li>
+</ul>   - 什么时候该用哪一个？</p>
+<h3>行动清单</h3>
+<pre class="code-block"><code class="language-text">下一步行动：
+□ 在 Mod 中添加一个自定义方块（参考官方教程）
+□ 添加方块到创造模式物品栏
+□ 为方块创建简单的纹理
+□ 尝试运行 runServer 测试服务器端
+□ 查看 NeoForge 源码中的示例 Mod</code></pre>
+<p><hr></p>
+<h2 id="相关链接">相关链接</h2>
+<table class="data-table"><thead><tr><th>内容</th><th>链接</th></tr></thead><tbody><tr><td>NeoForge 官方文档</td><td>https://docs.neoforged.net/</td></tr><tr><td>NeoForge GitHub</td><td>https://github.com/neoforged/NeoForge</td></tr><tr><td>MDK 下载地址</td><td>https://github.com/neoforged/NeoForge/releases</td></tr><tr><td>JDK 21 下载</td><td>https://adoptium.net/temurin/releases/?version=21</td></tr><tr><td>IDEA 下载</td><td>https://www.jetbrains.com/idea/download/</td></tr><tr><td>源码路径</td><td><code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src</code></td></tr></tbody></table>
+<hr></p>
+<blockquote><p><strong>下一章预告</strong>：<a href="./02-event-system.html">NeoForge 事件系统</a> - 深入理解强类型事件总线，学会监听和处理各种游戏事件</p></blockquote>
+<p><hr></p>
+<p><em>文档更新时间: 2026-03-24</em></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><span class="prev"><i class="fas fa-arrow-left"></i></span><a href="02-registry-system.html" class="next">
+            第二章：注册系统 - DeferredRegister 完全指南
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

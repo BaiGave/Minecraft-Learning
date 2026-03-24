@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,24 +136,29 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Sodium 优化</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Sodium 优化</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 整体架构分析
+            Sodium 架构概述
         </a>
 <a href="02-chunk-render-system.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 区块渲染系统
+            Sodium 区块渲染系统 (Chunk Render System)
         </a>
 <a href="03-occlusion-culling.html" class="active">
             <i class="fas fa-microscope"></i>
-            Sodium 遮挡剔除系统
+            Sodium 遮挡剔除系统 (Occlusion Culling)
         </a>
 <a href="04-render-pipeline.html" class="">
             <i class="fas fa-microscope"></i>
@@ -180,7 +170,19 @@
         </a>
 <a href="06-platform-integration.html" class="">
             <i class="fas fa-microscope"></i>
-            Sodium 平台集成机制
+            Sodium 平台集成 (Platform Integration)
+        </a>
+<a href="07-mixin-injection.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium Mixin 注入机制分析
+        </a>
+<a href="08-configuration-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Sodium 配置系统分析
+        </a>
+<a href="09-performance-optimization.html" class="">
+            <i class="fas fa-microscope"></i>
+            性能优化技术
         </a>
             </nav>
             <div class="sidebar-footer">
@@ -190,6 +192,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -214,314 +221,579 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>Sodium 遮挡剔除系统</h1>
-<blockquote><p>可见性判断与方向优化算法</p></blockquote>
-<h2 id="1. 概述">1. 概述</h2>
-<p>遮挡剔除（Occlusion Culling）是 Sodium 最重要的优化之一。通过判断区块之间的可见性，避免渲染被其他区块遮挡的区块。</p>
-<p><strong>核心文件</strong>：</p>
-<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>OcclusionCuller</code></td><td><code>common/.../render/chunk/occlusion/OcclusionCuller.java</code></td></tr><tr><td><code>VisibilityEncoding</code></td><td><code>common/.../render/chunk/occlusion/VisibilityEncoding.java</code></td></tr><tr><td><code>GraphDirection</code></td><td><code>common/.../render/chunk/occlusion/GraphDirection.java</code></td></tr><tr><td><code>VisibilityData</code></td><td><code>common/.../render/chunk/occlusion/VisibilityData.java</code></td></tr></tbody></table>
+                <h1>Sodium 遮挡剔除系统 (Occlusion Culling)</h1>
+<blockquote><p>分析 Sodium 的遮挡剔除系统，包括可见性传播算法、位掩码编码和角度优化策略</p></blockquote>
+<h2 id="基本信息">基本信息</h2>
+<table class="data-table"><thead><tr><th>属性</th><th>值</th></tr></thead><tbody><tr><td>源文件目录</td><td><code>assets/Sodium/common/src/main/java/net/caffeinemc/mods/sodium/client/render/chunk/occlusion/</code></td></tr><tr><td>核心类</td><td><code>OcclusionCuller.java</code>, <code>VisibilityEncoding.java</code>, <code>GraphDirection.java</code></td></tr><tr><td>分析版本</td><td>Sodium v0.8.6</td></tr><tr><td>预估阅读时间</td><td>25 分钟</td></tr></tbody></table>
 <hr></p>
-<h2 id="2. 核心概念">2. 核心概念</h2>
-<h3>2.1 什么是遮挡剔除？</h3>
-<pre class="code-block"><code class="language-text">        Camera
-           │
-           ▼
-    ┌──────────────┐
-    │   Chunk A    │ ← 可见（相机所在区块）
-    └──────┬───────┘
-           │
-    ┌──────┴───────┐
-    │   Chunk B    │ ← 可见（被 A 遮挡？不）
-    └──────┬───────┘
-           │
-    ┌──────┴───────┐
-    │   Chunk C    │ ← 不可见（被 A 遮挡）
-    └──────────────┘</code></pre>
-<h3>2.2 方向编码</h3>
-<p>每个区块有 6 个方向（X+, X-, Y+, Y-, Z+, Z-），使用 36 位（6×6）编码方向之间的可见性：</p>
-<pre class="code-block"><code class="language-java">    // 每个方向使用 6 位
-    // TOTAL_DIRECTIONS = 6 (立方体的面)
-    // DIRECTION_BITS = 6 (每个方向需要 6 位来编码与其他方向的关系)
-    // TOTAL_BITS = 36
-    
-    public static final int TOTAL_BITS = DIRECTION_BITS * TOTAL_DIRECTIONS;  // 36
-    public static final long DIRECTION_MASK = (1L &lt;&lt; DIRECTION_BITS) - 1;     // 0x3F
-    
-    // 创建从给定方向进入的可见性掩码
-    public static long createMask(Direction direction) {
-        int offset = getDirectionIndex(direction) * DIRECTION_BITS;
-        return DIRECTION_MASK &lt;&lt; offset;
+<h2 id="目录">目录</h2>
+<p><a href="#系统概述">系统概述</a>
+<a href="#核心数据结构">核心数据结构</a>
+<a href="#可见性传播算法">可见性传播算法</a>
+<a href="#位掩码编码机制">位掩码编码机制</a>
+<a href="#角度优化策略">角度优化策略</a>
+<a href="#运行时性能考虑">运行时性能考虑</a>
+<a href="#与渲染系统集成">与渲染系统集成</a>
+<a href="#课后自查">课后自查</a></p>
+<p><hr></p>
+<h2 id="系统概述">系统概述</h2>
+<h3>什么是遮挡剔除？</h3>
+<p><strong>遮挡剔除（Occlusion Culling）</strong> 是一种渲染优化技术，通过判断物体是否被其他物体遮挡来决定是否需要渲染。在 Minecraft 区块渲染场景中，当玩家看向一堵墙时，墙后面的所有区块理论上都不需要被渲染。</p>
+<h3>Sodium 的实现特点</h3>
+<p>Sodium 的遮挡剔除系统采用<strong>基于图的广度优先搜索（BFS）</strong>算法，而非传统的硬件遮挡查询或深度缓冲检测。这种方法的优势在于：</p>
+<p><ul><li><strong>可预测的性能</strong>：算法复杂度与可见区块数量成正比</li>
+<li><strong>缓存友好</strong>：使用位操作而非条件分支</li>
+<li><strong>增量更新</strong>：只在区块内容改变时重建可见性数据</li></ul></p>
+<h3>核心文件一览</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody><tr><td><code>OcclusionCuller.java</code></td><td>主剔除器，实现 BFS 可见性传播</td></tr><tr><td><code>VisibilityEncoding.java</code></td><td>可见性位掩码编码与解码</td></tr><tr><td><code>GraphDirection.java</code></td><td>6 个方向常量定义</td></tr><tr><td><code>GraphDirectionSet.java</code></td><td>方向集合位运算工具</td></tr><tr><td><code>BlockOcclusionCache.java</code></td><td>方块面遮挡判断缓存</td></tr></tbody></table>
+<hr></p>
+<h2 id="核心数据结构">核心数据结构</h2>
+<h3>图的表示</h3>
+<p>Sodium 将世界划分为 16x16x16 的<strong>区块切片（Chunk Section）</strong>，每个切片在剔除系统中表示为一个<strong>节点</strong>。节点之间通过 6 个方向的邻接关系形成一张稀疏图。</p>
+<pre class="code-block"><code class="language-java">    // Occlusion Culling State
+    private long visibilityData = VisibilityEncoding.NULL;
+
+    private int incomingDirections;
+    private int lastVisibleFrame = -1;
+
+    private int adjacentMask;
+    public RenderSection
+            adjacentDown,
+            adjacentUp,
+            adjacentNorth,
+            adjacentSouth,
+            adjacentWest,
+            adjacentEast;</code></pre>
+<p>每个 <code>RenderSection</code> 维护以下遮挡相关状态：</p>
+<p><ul><li><strong><code>visibilityData</code></strong>：64 位长整型，编码该区块的可见性信息</li>
+<li><strong><code>incomingDirections</code></strong>：记录当前帧中有哪些方向"看到"了这个区块</li>
+<li><strong><code>lastVisibleFrame</code></strong>：该区块最近一次被判定为可见的帧编号</li>
+<li><strong><code>adjacentMask</code></strong>：位掩码，标记哪些方向的邻居区块存在</li></ul></p>
+<h3>方向枚举</h3>
+<pre class="code-block"><code class="language-java">    public static final int DOWN    = 0;
+    public static final int UP      = 1;
+    public static final int NORTH   = 2;
+    public static final int SOUTH   = 3;
+    public static final int WEST    = 4;
+    public static final int EAST    = 5;
+
+    public static final int COUNT   = 6;</code></pre>
+<p>6 个方向使用 0-5 的整数索引，配合 <code>GraphDirectionSet</code> 进行位运算：</p>
+<pre class="code-block"><code class="language-java">    public static final int NONE    = 0;
+    public static final int ALL     = (1 &lt;&lt; GraphDirection.COUNT) - 1;  // = 0b111111 = 63</code></pre>
+<h3>区块邻接关系</h3>
+<p>区块的 6 个邻居通过 <code>setAdjacentNode</code> 方法设置，同时更新 <code>adjacentMask</code>：</p>
+<pre class="code-block"><code class="language-java">    if (node == null) {
+        this.adjacentMask &amp;= ~GraphDirectionSet.of(direction);
+    } else {
+        this.adjacentMask |= GraphDirectionSet.of(direction);
     }
-    
-    // 获取区块 A 的给定方向能看到区块 B 的哪些方向
-    public static int getConnections(long visibilityData, Direction incoming) {
-        int offset = getDirectionIndex(incoming) * DIRECTION_BITS;
-        return (int)((visibilityData &gt;&gt; offset) &amp; DIRECTION_MASK);
-    }
-    
-    // 折叠所有方向的可见性
-    public static int foldOutgoingDirections(long visibilityData) {
-        int connections = 0;
-        for (int i = 0; i &lt; TOTAL_DIRECTIONS; i++) {
-            int direction = (int)((visibilityData &gt;&gt; (i * DIRECTION_BITS)) &amp; DIRECTION_MASK);
-            connections |= (1 &lt;&lt; i) &amp; ~direction;
-        }
-        return connections;
+
+    switch (direction) {
+        case GraphDirection.DOWN -&gt; this.adjacentDown = node;
+        case GraphDirection.UP -&gt; this.adjacentUp = node;
+        // ... 其他方向
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="3. 遮挡剔除算法">3. 遮挡剔除算法</h2>
-<h3>3.1 图遍历实现</h3>
-<pre class="code-block"><code class="language-java">    private final OcclusionResolver resolver;
-    private final ChunkVisibility solver;
-    
-    // 双缓冲队列，避免分配
-    private final Int2IntMap[] queues = new Int2IntMap[2];
-    private int currentQueue = 0;
-    
-    public void findVisible(RenderSectionVisitor visitor,
-                           Viewport viewport,
-                           float searchDistance,
-                           boolean useOcclusionCulling,
-                           int frame) {
-        // 1. 初始化
-        Int2IntMap queue = queues[currentQueue];
-        queue.clear();
-        
-        RenderSection cameraSection = getCameraSection(viewport);
-        if (cameraSection == null) return;
-        
-        // 2. 将相机所在区块加入队列
-        queue.put(cameraSection.getSectionIndex(), INCOMING_UNASSIGNED);
-        
-        // 3. 图遍历
-        int queueOffset = 0;
-        int queueSize = queue.size();
-        
-        while (queueOffset &lt; queueSize) {
-            int index = queue.get(queueOffset++);
-            RenderSection section = getSectionByIndex(index);
-            
-            if (section == null || !isInRange(section, viewport, searchDistance)) {
-                continue;
+<h2 id="可见性传播算法">可见性传播算法</h2>
+<h3>算法流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[开始: 从相机所在区块出发] --> B{区块是否可见<br/>距离 & 视锥体检测}
+    B -->|否| Z[跳过]
+    B -->|是| C[标记为可见<br/>visit callback]
+    C --> D{启用遮挡剔除?}
+    D -->|否| E[允许向所有方向传播]
+    D -->|是| F[计算角度遮挡掩码]
+    F --> G[根据入射方向计算<br/>可连通的方向]
+    E --> H[应用外向过滤<br/>排除朝向相机反方向]
+    G --> H
+    H --> I[访问所有有效邻居]
+    I --> J{邻居是否首次访问?}
+    J -->|是| K[初始化状态<br/>加入处理队列]
+    J -->|否| L[仅更新入射方向]
+    K --> M{处理队列为空?}
+    L --> M
+    M -->|否| B
+    M -->|是| N[添加附近区块<br/>处理大型模型]
+    N --> O[结束]</div>
+</div>
+<h3>BFS 核心实现</h3>
+<pre class="code-block"><code class="language-java">                        Viewport viewport,
+                        float searchDistance,
+                        boolean useOcclusionCulling,
+                        int frame)
+{
+    final var queues = this.queue;
+    queues.reset();
+
+    var initWriteQueue = this.queue.write();
+    this.init(visitor, initWriteQueue, viewport, useOcclusionCulling, frame);
+
+    // 处理相机在世界高度范围外的情况（钻石螺旋初始化）
+    if (this.outOfWorldRadius == 0) {
+        while (initWriteQueue.isEmpty() &amp;&amp; this.initOutsideWorldHeight(initWriteQueue, viewport, searchDistance, frame)) {
+            this.outOfWorldRadius++;
+        }
+    }
+
+    // 双缓冲队列：读写交替执行
+    while (queues.flip()) {
+        if (this.outOfWorldRadius &gt; 0) {
+            this.initOutsideWorldHeight(queues.write(), viewport, searchDistance, frame);
+            this.outOfWorldRadius++;
+        }
+
+        processQueue(visitor, viewport, searchDistance, useOcclusionCulling, frame, queues.read(), queues.write());
+    }
+
+    // 处理相机附近可能有大型模型的区块
+    this.addNearbySections(visitor, viewport, frame);
+}</code></pre>
+<h3>双缓冲队列机制</h3>
+<p>Sodium 使用<strong>双缓冲队列</strong>避免在遍历过程中修改数据结构：</p>
+<pre class="code-block"><code class="language-java">    private QueueImpl&lt;E&gt; read, write;
+
+    public boolean flip() {
+        if (this.write.size() == 0) {
+            return false;
+        }
+
+        var tmp = this.read;
+        this.read = this.write;
+        this.write = tmp;
+
+        this.write.clear();
+
+        return true;
+    }</code></pre>
+<p>流程：
+<ul><li>初始时，所有节点入队到 <code>write</code> 队列</li>
+<li><code>flip()</code> 交换读写队列</li>
+<li>从 <code>read</code> 队列出队处理，将新发现的邻居入队到 <code>write</code> 队列</li>
+<li>重复直到 <code>write</code> 队列为空</li></ul></p>
+<h3>处理队列主循环</h3>
+<pre class="code-block"><code class="language-java">                                 Viewport viewport,
+                                 float searchDistance,
+                                 boolean useOcclusionCulling,
+                                 int frame,
+                                 ReadQueue&lt;RenderSection&gt; readQueue,
+                                 WriteQueue&lt;RenderSection&gt; writeQueue)
+{
+    RenderSection section;
+
+    while ((section = readQueue.dequeue()) != null) {
+        if (!isSectionVisible(section, viewport, searchDistance)) {
+            continue;
+        }
+
+        visitor.visit(section);
+
+        int connections;
+
+        {
+            if (useOcclusionCulling) {
+                var sectionVisibilityData = section.getVisibilityData();
+
+                // 应用角度优化：排除不可能被看到的相反方向
+                sectionVisibilityData &amp;= getAngleVisibilityMask(viewport, section);
+
+                // 计算连通方向：根据入射方向和可见性数据获取可传播的方向
+                connections = VisibilityEncoding.getConnections(
+                    sectionVisibilityData, 
+                    section.getIncomingDirections()
+                );
+            } else {
+                // 未启用遮挡剔除：允许向所有方向传播
+                connections = GraphDirectionSet.ALL;
             }
-            
-            // 4. 检查可见性
-            if (!useOcclusionCulling || !isOccluded(section, frame)) {
-                // 5. 标记为可见并通知访问者
-                visitor.visit(section);
-                
-                // 6. 将邻居加入队列
-                long mask = section.getVisibilityData();
-                for (Direction dir : DIRECTIONS) {
-                    if (isDirectionVisible(mask, dir)) {
-                        int neighborIndex = getNeighborIndex(section, dir);
-                        if (!queue.containsKey(neighborIndex)) {
-                            queue.put(neighborIndex, getIncomingDirection(dir));
-                            queueSize++;
-                        }
-                    }
+
+            // 过滤：只允许从相机位置向外传播
+            connections &amp;= getOutwardDirections(viewport.getChunkCoord(), section);
+        }
+
+        visitNeighbors(writeQueue, section, connections, frame);
+    }
+}</code></pre>
+<h3>入射方向与可见性传播</h3>
+<p>关键洞察：当光从方向 A 进入一个区块后，可能会从多个方向出去。这通过 <strong><code>incomingDirections</code></strong> 累积实现：</p>
+<pre class="code-block"><code class="language-java">    if (render.getLastVisibleFrame() != frame) {
+        // 首次访问：初始化状态并加入队列
+        render.setLastVisibleFrame(frame);
+        render.setIncomingDirections(GraphDirectionSet.NONE);
+
+        queue.enqueue(render);
+    }
+
+    // 累积入射方向（可能有多个方向同时&quot;看到&quot;这个区块）
+    render.addIncomingDirections(incoming);
+}</code></pre>
+<h3>外向过滤</h3>
+<p>外向过滤确保搜索只从相机位置向外扩散，不会往回走：</p>
+<pre class="code-block"><code class="language-java">    int planes = 0;
+
+    planes |= section.getChunkX() &lt;= origin.getX() ? 1 &lt;&lt; GraphDirection.WEST  : 0;
+    planes |= section.getChunkX() &gt;= origin.getX() ? 1 &lt;&lt; GraphDirection.EAST  : 0;
+
+    planes |= section.getChunkY() &lt;= origin.getY() ? 1 &lt;&lt; GraphDirection.DOWN  : 0;
+    planes |= section.getChunkY() &gt;= origin.getY() ? 1 &lt;&lt; GraphDirection.UP    : 0;
+
+    planes |= section.getChunkZ() &lt;= origin.getZ() ? 1 &lt;&lt; GraphDirection.NORTH : 0;
+    planes |= section.getChunkZ() &gt;= origin.getZ() ? 1 &lt;&lt; GraphDirection.SOUTH : 0;
+
+    return planes;
+}</code></pre>
+<p><hr></p>
+<h2 id="位掩码编码机制">位掩码编码机制</h2>
+<h3>6x6 可见性矩阵</h3>
+<p>每个区块维护一个 <strong>6x6 的可见性矩阵</strong>，表示"从方向 X 可以看到方向 Y"的关系：</p>
+<pre class="code-block"><code class="language-text">       → 能看到的方向 (to)
+       DOWN  UP  NORTH SOUTH WEST EAST
+       ┌─────┬─────┬─────┬─────┬─────┬─────┐
+ DOWN  │  0  │  1  │  0  │  0  │  0  │  0  │
+       ├─────┼─────┼─────┼─────┼─────┼─────┤
+ UP    │  1  │  0  │  0  │  0  │  0  │  0  │
+       ├─────┼─────┼─────┼─────┼─────┼─────┤
+FROM   NORTH│  0  │  0  │  0  │  1  │  0  │  0  │
+       ├─────┼─────┼─────┼─────┼─────┼─────┤
+       │  0  │  0  │  1  │  0  │  0  │  0  │
+       ├─────┼─────┼─────┼─────┼─────┼─────┤
+ WEST  │  0  │  0  │  0  │  0  │  0  │  1  │
+       ├─────┼─────┼─────┼─────┼─────┼─────┤
+ EAST  │  0  │  0  │  0  │  0  │  1  │  0  │
+       └─────┴─────┴─────┴─────┴─────┴─────┘</code></pre>
+<p>例如：
+<ul><li>石头方块（实心）：只有主对角线为 1（完全阻挡视线）</li>
+<li>树叶方块：几乎所有方向都可以通过</li>
+<li>玻璃方块：可能只有部分方向阻挡</li></ul></p>
+<h3>位打包方式</h3>
+<p>Sodium 使用 <strong>64 位长整型</strong> 打包 36 个布尔值（6x6），每个位置占 1 位：</p>
+<pre class="code-block"><code class="language-java">    return (from * 8) + to;
+}</code></pre>
+<p><strong>位索引计算</strong>：<code>bit(from, to) = from * 8 + to</code></p>
+<pre class="code-block"><code class="language-text">方向索引:  DOWN=0, UP=1, NORTH=2, SOUTH=3, WEST=4, EAST=5
+
+位分布：
+┌────────────────────────────────────────────────────────────────────────────┐
+│ Bit 63-56 │ Bit 55-48 │ Bit 47-40 │ Bit 39-32 │ Bit 31-24 │ Bit 23-16 │ B15-8 │ B7-0 │
+│   FROM=6  │  FROM=5   │  FROM=4   │  FROM=3   │  FROM=2   │  FROM=1   │FROM=0 │  --   │
+│  (unused) │  (EAST)   │  (WEST)  │  (SOUTH)  │  (NORTH) │   (UP)   │(DOWN) │       │
+└────────────────────────────────────────────────────────────────────────────┘
+
+实际使用 36 位，每组 8 位，但只使用前 6 位
+
+DOWN 行 (from=0):  bit 0-5  存储 [DOWN→D, DOWN→U, DOWN→N, DOWN→S, DOWN→W, DOWN→E]
+UP 行 (from=1):    bit 8-13 存储 [UP→D, UP→U, UP→N, UP→S, UP→W, UP→E]
+NORTH 行 (from=2): bit 16-21
+SOUTH 行 (from=3): bit 24-29
+WEST 行 (from=4):  bit 32-37
+EAST 行 (from=5):  bit 40-45</code></pre>
+<h3>从 Minecraft VisibilitySet 编码</h3>
+<p>Minecraft 原版使用 <code>VisibilitySet</code> 存储方向集合，Sodium 将其编码为位掩码：</p>
+<pre class="code-block"><code class="language-java">    long visibilityData = 0;
+
+    for (int from = 0; from &lt; GraphDirection.COUNT; from++) {
+        for (int to = 0; to &lt; GraphDirection.COUNT; to++) {
+            if (occlusionData.visibilityBetween(GraphDirection.toEnum(from), GraphDirection.toEnum(to))) {
+                visibilityData |= 1L &lt;&lt; bit(from, to);
+            }
+        }
+    }
+
+    return visibilityData;
+}</code></pre>
+<h3>连接计算：折叠算法</h3>
+<p>给定入射方向集合，计算所有可能的出射方向：</p>
+<pre class="code-block"><code class="language-java">public static int getConnections(long visibilityData, int incoming) {
+    return foldOutgoingDirections(visibilityData &amp; createMask(incoming));
+}
+
+// Returns a merged bit-field of any possible outgoing directions
+public static int getConnections(long visibilityData) {
+    return foldOutgoingDirections(visibilityData);
+}</code></pre>
+<h3>折叠算法详解</h3>
+<p><code>createMask</code> 将入射方向的 6 位扩展为 36 位的掩码：</p>
+<pre class="code-block"><code class="language-java">    // 扩展：每个入射方向复制 6 次
+    var expanded = (0b0000001_0000001_0000001_0000001_0000001_0000001L * Integer.toUnsignedLong(incoming));
+    // 掩码：只保留每组的前 6 位
+    return (expanded &amp; 0b00000001_00000001_00000001_00000001_00000001_00000001L) * 0xFF;
+}</code></pre>
+<p>示例：假设 <code>incoming = 0b001010</code>（UP 和 NORTH 方向）</p>
+<pre class="code-block"><code class="language-text">expanded = 0b001010001010001010001010001010001010001010
+mask     = 0b00000001_00000001_00000001_00000001_00000001_00000001
+结果 = 每组只有 bit 0 被置位</code></pre>
+<p>折叠操作将 6 个方向列压缩为 1 个方向位：</p>
+<pre class="code-block"><code class="language-java">    long folded = data;
+    folded |= folded &gt;&gt; 32; // 折叠高 32 位到低 32 位
+    folded |= folded &gt;&gt; 16; // 折叠高 16 位到低 16 位
+    folded |= folded &gt;&gt; 8;  // 折叠高 8 位到低 8 位
+
+    return (int) (folded &amp; GraphDirectionSet.ALL); // 只取低 6 位
+}</code></pre>
+<p><strong>折叠过程可视化</strong>：</p>
+<pre class="code-block"><code class="language-text">折叠前 (36 位，分 6 组):
+┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ GROUP_5  │ GROUP_4  │ GROUP_3  │ GROUP_2  │ GROUP_1  │ GROUP_0  │
+│ EAST     │ WEST     │ SOUTH    │ NORTH    │ UP       │ DOWN     │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+ 001010      000000      000000      100100      000000      000000
+
+折叠后:
+Step 1: &gt;&gt;= 32
+        [GROUP_5+4]    [GROUP_3+2]    [GROUP_1+0]
+        001010          100100         000000
+        OR 001010       OR 100100      = 100100
+        
+Step 2: &gt;&gt;= 16  
+        [top 16]        [bottom 16]
+        100100          100100
+        OR = 100100
+        
+Step 3: &gt;&gt;= 8
+        [top 8]         [bottom 8]
+        100100          100100
+        OR = 100100
+
+最终结果 = 0b100100 = NORTH | SOUTH</code></pre>
+<p><hr></p>
+<h2 id="角度优化策略">角度优化策略</h2>
+<h3>核心思想</h3>
+<p>当相机偏离区块中心时，某些相反方向（如正北和正南）不可能同时被看到。角度优化通过<strong>预计算并排除不可能的视线路径</strong>来减少搜索空间。</p>
+<h3>实现逻辑</h3>
+<pre class="code-block"><code class="language-java">    var transform = viewport.getTransform();
+    var dx = Math.abs(transform.x - section.getCenterX());
+    var dy = Math.abs(transform.y - section.getCenterY());
+    var dz = Math.abs(transform.z - section.getCenterZ());
+
+    var angleOcclusionMask = 0L;
+    
+    // Y 轴距离最大：排除上下方向
+    if (dx &gt; dy || dz &gt; dy) {
+        angleOcclusionMask |= UP_DOWN_OCCLUDED;
+    }
+    
+    // Z 轴距离最大：排除南北方向
+    if (dx &gt; dz || dy &gt; dz) {
+        angleOcclusionMask |= NORTH_SOUTH_OCCLUDED;
+    }
+    
+    // X 轴距离最大：排除东西方向
+    if (dy &gt; dx || dz &gt; dx) {
+        angleOcclusionMask |= WEST_EAST_OCCLUDED;
+    }
+
+    return ~angleOcclusionMask; // 返回保留的方向
+}</code></pre>
+<h3>预定义遮挡掩码</h3>
+<pre class="code-block"><code class="language-java">    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.DOWN, GraphDirection.UP)) | 
+    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.UP, GraphDirection.DOWN));
+private static final long NORTH_SOUTH_OCCLUDED = 
+    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.NORTH, GraphDirection.SOUTH)) | 
+    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.SOUTH, GraphDirection.NORTH));
+private static final long WEST_EAST_OCCLUDED = 
+    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.WEST, GraphDirection.EAST)) | 
+    (1L &lt;&lt; VisibilityEncoding.bit(GraphDirection.EAST, GraphDirection.WEST));</code></pre>
+<h3>几何解释</h3>
+<pre class="code-block"><code class="language-text">相机位置与区块中心的关系：
+
+情况 1: dy 最大（相机在上方或下方）
+         相机
+           ▼
+    ┌───────────┐
+    │           │
+    │    ███    │  ← 区块
+    │           │
+    └───────────┘
+    不能同时看到 DOWN→UP 或 UP→DOWN
+
+情况 2: dz 最大（相机在正北或正南）
+    相机在北 → 不能同时看到 NORTH→SOUTH
+    相机在南 → 不能同时看到 SOUTH→NORTH
+
+情况 3: dx 最大（相机在正东或正西）
+    相机在东 → 不能同时看到 EAST→WEST
+    相机在西 → 不能同时看到 WEST→EAST</code></pre>
+<h3>优化效果</h3>
+<p>假设相机在区块正上方附近：
+<ul><li><code>dx ≈ 0, dz ≈ 0, dy >> 0</code></li>
+<li>触发 <code>UP<em>DOWN</em>OCCLUDED</code></li>
+<li>所有经过上下方向的可见性路径被排除</li></ul></p>
+<p><hr></p>
+<h2 id="运行时性能考虑">运行时性能考虑</h2>
+<h3>距离计算优化</h3>
+<p>使用<strong>圆柱形雾距</strong>算法（vanilla 风格）：</p>
+<pre class="code-block"><code class="language-java">    // 计算区块边界到相机位置的最近点
+    int ox = section.getOriginX() - camera.intX;
+    int oy = section.getOriginY() - camera.intY;
+    int oz = section.getOriginZ() - camera.intZ;
+
+    float dx = nearestToZero(ox - 1, ox + 17) - camera.fracX;
+    float dy = nearestToZero(oy - 1, oy + 17) - camera.fracY;
+    float dz = nearestToZero(oz - 1, oz + 17) - camera.fracZ;
+
+    // 圆柱距离 = max(水平距离, 垂直距离)
+    return (((dx * dx) + (dz * dz)) &lt; (maxDistance * maxDistance)) &amp;&amp; (Math.abs(dy) &lt; maxDistance);
+}</code></pre>
+<h3>早期退出</h3>
+<pre class="code-block"><code class="language-java">    // 只处理存在的邻居
+    outgoing &amp;= section.getAdjacentMask();
+
+    // 快速退出：没有有效连接
+    if (outgoing == GraphDirectionSet.NONE) {
+        return;
+    }
+
+    // 帮助编译器优化：预分配容量
+    queue.ensureCapacity(6);</code></pre>
+<h3>视锥体剔除集成</h3>
+<p>在 BFS 之前先做视锥体检测：</p>
+<pre class="code-block"><code class="language-java">    return isWithinRenderDistance(viewport.getTransform(), section, maxDistance) &amp;&amp; isWithinFrustum(viewport, section);
+}</code></pre>
+<h3>大型模型特殊处理</h3>
+<p>对于附近可能有大型模型的区块（如大型建筑、植物），使用更宽松的包围盒检测：</p>
+<pre class="code-block"><code class="language-java">    var origin = viewport.getChunkCoord();
+
+    // 检查相机所在区块周围的 26 个邻居（3x3x3 减 1）
+    for (var dx = -1; dx &lt;= 1; dx++) {
+        for (var dy = -1; dy &lt;= 1; dy++) {
+            for (var dz = -1; dz &lt;= 1; dz++) {
+                if (dx == 0 &amp;&amp; dy == 0 &amp;&amp; dz == 0) {
+                    continue;
+                }
+
+                var section = this.getRenderSection(originX + dx, originY + dy, originZ + dz);
+
+                // 使用宽松视锥体检测（更大的边距）
+                if (section != null &amp;&amp; section.getLastVisibleFrame() != frame 
+                    &amp;&amp; isWithinNearbySectionFrustum(viewport, section)) {
+                    section.setLastVisibleFrame(frame);
+                    visitor.visit(section);
                 }
             }
         }
     }
-    
-    private boolean isDirectionVisible(long visibilityData, Direction dir) {
-        // 检查给定方向的可见性位
-        return ((visibilityData &gt;&gt; getBitOffset(dir)) &amp; 1L) == 0;
-    }
-}</code></pre>
-<h3>3.2 可见性数据存储</h3>
-<pre class="code-block"><code class="language-java">    // 36 位掩码编码该区块的可见性
-    // 每一位表示：从某个方向看，该方向是否被遮挡
-    private volatile long visibilityData;
-    
-    // 邻居的可见性数据聚合
-    private volatile long neighborVisibilityData;
-    
-    // 更新可见性数据
-    public void updateVisibility(ChunkOcclusionData[] neighbors) {
-        long data = 0;
-        
-        for (Direction dir : DIRECTIONS) {
-            ChunkOcclusionData neighbor = neighbors[dir.get3DDataValue()];
-            if (neighbor != null) {
-                // 合并邻居的可见性信息
-                data |= neighbor.getDirectionMask(dir.getOpposite());
-            }
-        }
-        
-        this.visibilityData = data;
-    }
 }</code></pre>
 <p><hr></p>
-<h2 id="4. 方向优化">4. 方向优化</h2>
-<h3>4.1 角度可见性优化</h3>
-<p>基于几何原理，某些方向对不可能同时可见：</p>
-<pre class="code-block"><code class="language-java">    // 计算相机到区块中心的距离分量
-    double dx = Math.abs(transform.x - section.getCenterX());
-    double dy = Math.abs(transform.y - section.getCenterY());
-    double dz = Math.abs(transform.z - section.getCenterZ());
-    
-    long mask = 0L;
-    
-    // 优化规则：
-    // 1. 如果 X 或 Z 距离大于 Y 距离，则上下方向相互遮挡
-    if (dx &gt; dy || dz &gt; dy) {
-        mask |= GraphDirection.UP_DOWN_OCCLUDED;
-    }
-    
-    // 2. 如果 X 距离大于 Z 距离，则南北方向相互遮挡
-    if (dx &gt; dz) {
-        mask |= GraphDirection.NORTH_SOUTH_OCCLUDED;
-    }
-    
-    // 3. 如果 Z 距离大于 X 距离，则东西方向相互遮挡
-    if (dz &gt; dx) {
-        mask |= GraphDirection.EAST_WEST_OCCLUDED;
-    }
-    
-    return mask;
-}</code></pre>
-<h3>4.2 方向常量定义</h3>
-<pre class="code-block"><code class="language-java">    // 基本方向掩码（对应 Direction 枚举）
-    public static final int POS_X = 1 &lt;&lt; 0;   // 1  (East)
-    public static final int NEG_X = 1 &lt;&lt; 1;   // 2  (West)
-    public static final int POS_Y = 1 &lt;&lt; 2;   // 4  (Up)
-    public static final int NEG_Y = 1 &lt;&lt; 3;   // 8  (Down)
-    public static final int POS_Z = 1 &lt;&lt; 4;   // 16 (South)
-    public static final int NEG_Z = 1 &lt;&lt; 5;   // 32 (North)
-    
-    // 方向对遮挡掩码
-    public static final long UP_DOWN_OCCLUDED = 
-        ((long) POS_Y &lt;&lt; 32) | ((long) NEG_Y &lt;&lt; 0);
-    
-    public static final long NORTH_SOUTH_OCCLUDED = 
-        ((long) POS_Z &lt;&lt; 32) | ((long) NEG_Z &lt;&lt; 0);
-    
-    public static final long EAST_WEST_OCCLUDED = 
-        ((long) POS_X &lt;&lt; 32) | ((long) NEG_X &lt;&lt; 0);
-}</code></pre>
-<h3>4.3 优化效果示意</h3>
-<pre class="code-block"><code class="language-text">相机位置假设: (100, 70, 100)
-当前区块位置: (96, 64, 96)
+<h2 id="与渲染系统集成">与渲染系统集成</h2>
+<h3>调用流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant RSM as RenderSectionManager
+    participant OC as OcclusionCuller
+    participant OSC as OcclusionSectionCollector
+    participant RS as RenderSection
 
-dx = |100-100| = 0   ← X 距离最小
-dz = |100-104| = 4   ← Z 距离中等
-dy = |70-72| = 2     ← Y 距离中等
+    RSM->>OC: findVisible(visitor, viewport, searchDistance, useOcclusionCulling, frame)
+    
+    OC->>OSC: visit(chunk) [BFS 过程中]
+    
+    Note over OC,OSC: 可见性传播
+    
+    loop 每个可见区块
+        OC->>RS: 检查 visibilityData, incomingDirections
+        RS-->>OC: 返回可见性信息
+    end
 
-判断:
-- X 距离(0) &lt; Z 距离(4) → 东西方向不相互遮挡 ✓
-- X 距离(0) &lt; Y 距离(2) → 上下方向不相互遮挡 ✓
-- Y 距离(2) &lt; Z 距离(4) → 南北方向不相互遮挡 ✓
+    OC->>OSC: 构建渲染列表和任务队列
+    
+    RSM->>RS: scheduleRebuild / scheduleSort</div>
+</div>
+<h3>渲染管理器集成</h3>
+<pre class="code-block"><code class="language-java">    this.resetRenderLists();
 
-结论: 三个方向对都没有遮挡关系</code></pre>
-<p><hr></p>
-<h2 id="5. 区块遮挡追踪">5. 区块遮挡追踪</h2>
-<h3>5.1 ChunkOcclusionTracker</h3>
-<pre class="code-block"><code class="language-java">    private static final int MAX_TRACKED_CHUNKS = 64;
-    
-    // LRU 缓存追踪的区块
-    private final Long2IntMap trackingMap;
-    private final IntList trackingList;
-    
-    // 区块遮挡数据
-    private final ChunkOcclusionData[] data;
-    
-    public void markDirty(int sectionX, int sectionY, int sectionZ) {
-        long key = encodeKey(sectionX, sectionY, sectionZ);
-        
-        if (!trackingMap.containsKey(key)) {
-            // 添加到追踪列表
-            if (trackingList.size() &gt;= MAX_TRACKED_CHUNKS) {
-                long removed = trackingList.removeInt(trackingList.size() - 1);
-                trackingMap.remove(removed);
-            }
-            trackingList.add(key);
-            trackingMap.put(key, trackingList.size() - 1);
-        }
-        
-        // 标记需要重新计算
-        setDirty(encodeSectionIndex(sectionX, sectionY, sectionZ));
+    final var searchDistance = this.getSearchDistance(fogParameters);
+    final var useOcclusionCulling = this.shouldUseOcclusionCulling(camera, spectator);
+
+    if (this.isOutOfGraph(viewport.getChunkCoord())) {
+        // 图不完整：使用树遍历
+        var visitor = new TreeSectionCollector(...);
+        this.renderableSectionTree.traverse(visitor, viewport, searchDistance);
+    } else {
+        // 图完整：使用遮挡剔除
+        var visitor = new OcclusionSectionCollector(frame, importantRebuildQueueType, importantSortQueueType);
+        this.occlusionCuller.findVisible(visitor, viewport, searchDistance, useOcclusionCulling, frame);
     }
-    
-    public ChunkOcclusionData getData(int sectionX, int sectionY, int sectionZ) {
-        int index = encodeSectionIndex(sectionX, sectionY, sectionZ);
-        return data[index];
-    }
+
+    this.sectionCollector = visitor;
+    this.taskLists = this.sectionCollector.getTaskLists();
+
+    return this.sectionCollector.needsRevisitForPendingUpdates();
 }</code></pre>
-<h3>5.2 ChunkOcclusionData</h3>
-<pre class="code-block"><code class="language-java">    private final long[] directionMasks = new long[6];
-    
-    // 获取从给定方向观察时，哪个方向是可见的
-    public long getDirectionMask(Direction from) {
-        return directionMasks[from.get3DDataValue()];
+<h3>遮挡数据生成</h3>
+<p>区块网格构建时生成可见性数据：</p>
+<pre class="code-block"><code class="language-java">                         @NonNull Collection&lt;BlockEntity&gt; globalBlockEntities,
+                         @NonNull Collection&lt;BlockEntity&gt; culledBlockEntities,
+                         @NonNull Collection&lt;TextureAtlasSprite&gt; animatedSprites,
+                         @NonNull VisibilitySet occlusionData) {
+    // ...
+
+    this.visibilityData = VisibilityEncoding.encode(occlusionData);
+}</code></pre>
+<h3>区块面遮挡判断</h3>
+<p><code>BlockOcclusionCache</code> 负责判断单个方块的面是否应该被渲染：</p>
+<pre class="code-block"><code class="language-java">    BlockPos.MutableBlockPos neighborPos = this.cachedPositionObject;
+    neighborPos.setWithOffset(selfPos, facing);
+
+    BlockState neighborBlockState = view.getBlockState(neighborPos);
+    VoxelShape neighborShape = neighborBlockState.getFaceOcclusionShape(DirectionUtil.getOpposite(facing));
+
+    // 完全遮挡：邻居是完全方块
+    if (isFullShape(neighborShape)) {
+        return false;
     }
-    
-    // 合并两个区块的遮挡数据
-    public void merge(ChunkOcclusionData other, Direction connectionDir) {
-        for (int i = 0; i &lt; 6; i++) {
-            Direction dir = Direction.from3DDataValue(i);
-            if (isDirectionBlocked(connectionDir, dir)) {
-                directionMasks[i] |= (1L &lt;&lt; connectionDir.get3DDataValue());
-            }
-        }
+
+    // 跳过渲染：特殊方块行为（如树叶内部面）
+    if (selfBlockState.skipRendering(neighborBlockState, facing)) {
+        return false;
     }
-    
-    private boolean isDirectionBlocked(Direction from, Direction to) {
-        // 检查两个方向是否相互遮挡
-        return isOpposite(from, to) || hasSolidConnection(from, to);
+
+    // 透明邻居：不能遮挡任何东西
+    if (isEmptyShape(neighborShape) || !neighborBlockState.canOcclude()) {
+        return true;
     }
+
+    // 需要精确形状比较
+    return this.lookup(selfShape, neighborShape);
 }</code></pre>
 <p><hr></p>
-<h2 id="6. 可见性判断流程">6. 可见性判断流程</h2>
-<h3>6.1 完整流程图</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
-│                    可见性判断流程                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  1. 获取相机位置和朝向                                       │
-│           │                                                 │
-│           ▼                                                 │
-│  2. 计算角度可见性掩码                                        │
-│     (基于 X/Y/Z 距离分量)                                    │
-│           │                                                 │
-│           ▼                                                 │
-│  3. 从相机所在区块开始 BFS                                   │
-│           │                                                 │
-│           ▼                                                 │
-│  ┌─────────────────────────────────────┐                   │
-│  │ 对每个访问的区块:                     │                   │
-│  │  - 检查是否在渲染距离内               │                   │
-│  │  - 检查是否被当前帧内其他区块遮挡      │                   │
-│  │  - 应用角度优化掩码                   │                   │
-│  │  - 标记为可见/不可见                  │                   │
-│  │  - 将可见邻居加入队列                 │                   │
-│  └─────────────────────────────────────┘                   │
-│           │                                                 │
-│           ▼                                                 │
-│  4. 返回所有可见区块列表                                     │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘</code></pre>
-<h3>6.2 性能考量</h3>
-<table class="data-table"><thead><tr><th>优化项</th><th>实现方式</th><th>效果</th></tr></thead><tbody><tr><td><strong>双缓冲队列</strong></td><td>避免每帧分配新队列</td><td>减少 GC</td></tr><tr><td><strong>位掩码运算</strong></td><td>36 位编码方向可见性</td><td>O(1) 判断</td></tr><tr><td><strong>角度优化</strong></td><td>利用几何关系提前排除</td><td>减少遍历</td></tr><tr><td><strong>增量更新</strong></td><td>只追踪变更的区块</td><td>减少计算</td></tr></tbody></table>
-<hr></p>
-<h2 id="7. 与 Minecraft 原版的区别">7. 与 Minecraft 原版的区别</h2>
-<table class="data-table"><thead><tr><th>特性</th><th>原版 Minecraft</th><th>Sodium</th></tr></thead><tbody><tr><td>剔除方式</td><td>简单距离判断</td><td>完整图遍历</td></tr><tr><td>方向优化</td><td>无</td><td>角度掩码优化</td></tr><tr><td>缓存策略</td><td>无</td><td>LRU 区块追踪</td></tr><tr><td>可见性编码</td><td>无</td><td>36 位掩码</td></tr></tbody></table>
-<hr></p>
-<h2 id="8. 相关文档">8. 相关文档</h2>
-<p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
+<h2 id="算法复杂度分析">算法复杂度分析</h2>
+<h3>时间复杂度</h3>
+<table class="data-table"><thead><tr><th>阶段</th><th>复杂度</th><th>说明</th></tr></thead><tbody><tr><td>BFS 遍历</td><td>O(V + E)</td><td>V=可见区块数, E=邻接边数</td></tr><tr><td>角度优化</td><td>O(1)</td><td>简单的距离比较和位运算</td></tr><tr><td>位掩码操作</td><td>O(1)</td><td>固定大小的位运算</td></tr></tbody></table>
+最坏情况下 V 接近渲染距离内的所有区块数，E ≈ 6V（每个区块最多 6 条边）。</p>
+<h3>空间复杂度</h3>
+<table class="data-table"><thead><tr><th>数据结构</th><th>空间</th><th>说明</th></tr></thead><tbody><tr><td>双缓冲队列</td><td>O(W)</td><td>W = 当前帧处理的区块数</td></tr><tr><td>可见性矩阵</td><td>O(1)</td><td>每区块 64 位</td></tr><tr><td>方向集合</td><td>O(1)</td><td>每区块 1 个 int</td></tr></tbody></table>
+<h3>性能优化技巧</h3>
+<p><ul><li><strong>位操作代替分支</strong>：方向检测使用 <code>GraphDirectionSet.contains()</code> 而非 switch</li>
+<li><strong>缓存友好</strong>：BFS 按层遍历，访问模式连续</li>
+<li><strong>早期退出</strong>：无效方向立即跳过</li>
+<li><strong>零分配</strong>：使用 <code>DoubleBufferedQueue</code> 避免 GC</li></ul></p>
+<p><hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p>完成本章节学习后，请确认你能够：</p>
+<p><ul><li>[ ] 解释 Sodium 遮挡剔除系统使用 BFS 而非硬件遮挡查询的原因</li>
+<li>[ ] 描述 6x6 可见性矩阵中 <code>visibilityBetween(from, to)</code> 的含义</li>
+<li>[ ] 计算位掩码索引：<code>bit(Direction.NORTH, Direction.SOUTH)</code> 返回多少？</li>
+<li>[ ] 解释双缓冲队列 <code>flip()</code> 的作用，为什么不能直接用单个队列？</li>
+<li>[ ] 说明角度优化 <code>getAngleVisibilityMask</code> 如何排除不可能的视线路径</li>
+<li>[ ] 追踪从 <code>RenderSectionManager.update()</code> 到 <code>OcclusionCuller.findVisible()</code> 的调用链</li>
+<li>[ ] 分析当 <code>useOcclusionCulling = false</code> 时，算法退化为简单的什么搜索？</li></ul></p>
+<p><hr></p>
+<h2 id="相关文档">相关文档</h2>
+<p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - Sodium 整体架构</li>
 <li><a href="02-chunk-render-system.html">02-chunk-render-system</a> - 区块渲染系统</li>
-<li><a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线</li></ul></p>
+<li><a href="04-render-pipeline.html">04-render-pipeline</a> - 渲染管线流程</li></ul></p>
 <p><hr></p>
-<p><em>生成时间: 2026-03-19</em>
+<p><em>生成时间: 2026-03-24</em>
+<em>基于 Sodium v0.8.6 源码分析</em>
 </p>
             </div>
 
             <div class="docs-footer">
                 <div class="prev-next"><a href="02-chunk-render-system.html" class="prev">
             <i class="fas fa-arrow-left"></i>
-            Sodium 区块渲染系统
+            Sodium 区块渲染系统 (Chunk Render System)
         </a><a href="04-render-pipeline.html" class="next">
             Sodium 渲染管线
             <i class="fas fa-arrow-right"></i>
@@ -532,6 +804,7 @@ dy = |70-72| = 2     ← Y 距离中等
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -554,5 +827,6 @@ dy = |70-72| = 2     ← Y 距离中等
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

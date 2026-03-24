@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>05 resource data system - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>05 resource data system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    05 resource data system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>资源与数据系统</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-资源系统">2. 资源系统</a></li>
+</ul>  - <a href="#21-resourcepackloader">2.1 ResourcePackLoader</a>
+  - <a href="#22-emptypackresources">2.2 EmptyPackResources</a>
+  - <a href="#23-jarcontentspackresources">2.3 JarContentsPackResources</a>
+  - <a href="#24-addpackfindersevent">2.4 AddPackFindersEvent</a>
+<ul><li><a href="#3-数据系统">3. 数据系统</a></li>
+</ul>  - <a href="#31-gatherdataevent">3.1 GatherDataEvent</a>
+  - <a href="#32-dataprovider-类型详解">3.2 DataProvider 类型详解</a>
+  - <a href="#33-neoforge-内置数据生成器">3.3 NeoForge 内置数据生成器</a>
+<ul><li><a href="#4-工作流程图">4. 工作流程图</a></li>
+<li><a href="#5-api-使用示例">5. API 使用示例</a></li>
+<li><a href="#6-与其他系统交互">6. 与其他系统交互</a></li>
+<li><a href="#7-总结">7. 总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>NeoForge 1.21.x 的资源与数据系统是模组加载框架的核心组成部分，负责管理游戏资源的加载和数据文件的生成。该系统分为两大子系统：</p>
+<table class="data-table"><thead><tr><th>子系统</th><th>职责</th><th>PackType</th></tr></thead><tbody><tr><td><strong>资源系统</strong></td><td>加载模组的资源包（纹理、模型、翻译等）</td><td><code>CLIENT<em>RESOURCES</code></td></tr><tr><td><strong>数据系统</strong></td><td>生成数据文件（标签、配方、战利品表等）</td><td><code>SERVER</em>DATA</code></td></tr></tbody></table>
+<strong>核心设计理念</strong>：</p>
+<p><ul><li><strong>资源包加载器</strong> (<code>ResourcePackLoader</code>)：将模组 JAR 文件的内容作为资源包暴露给游戏</li>
+<li><strong>数据生成框架</strong> (<code>GatherDataEvent</code>)：提供声明式 API，让开发者以编程方式生成数据 JSON 文件</li>
+<li><strong>统一的事件系统</strong>：通过 <code>AddPackFindersEvent</code> 和 <code>GatherDataEvent</code> 允许模组扩展资源包和数据生成行为</li></ul></p>
+<p><hr></p>
+<h2 id="2-资源系统">2. 资源系统</h2>
+<h3>2.1 ResourcePackLoader</h3>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\resource\ResourcePackLoader.java</code></p>
+<h4>类职责</h4>
+<p><code>ResourcePackLoader</code> 是资源包加载的核心管理器，负责：
+<ul><li>扫描所有已加载模组的 JAR 文件</li>
+<li>为每个包含 <code>resources</code> 或 <code>data</code> 目录的模组创建资源包</li>
+<li>管理资源包排序和子包层级</li></ul></p>
+<h4>关键常量</h4>
+<pre class="code-block"><code class="language-java">public static final String MOD_DATA_ID = &quot;mod_data&quot;;        // 数据包标识符
+public static final String MOD_RESOURCES_ID = &quot;mod_resources&quot;; // 资源包标识符</code></pre>
+<h4>核心方法</h4>
+<table class="data-table"><thead><tr><th>方法</th><th>作用</th></tr></thead><tbody><tr><td><code>populatePackRepository()</code></td><td>填充资源包仓库，触发 <code>AddPackFindersEvent</code></td></tr><tr><td><code>findResourcePacks()</code></td><td>同步扫描并缓存所有模组资源包</td></tr><tr><td><code>getPackFor(modId)</code></td><td>根据模组 ID 获取对应的资源包</td></tr><tr><td><code>buildPackFinder()</code></td><td>构建 <code>RepositorySource</code> 用于包发现</td></tr><tr><td><code>createPackForMod()</code></td><td>为模组创建 <code>Pack.ResourcesSupplier</code></td></tr></tbody></table>
+<h4>工作机制</h4>
+<pre class="code-block"><code class="language-java">public static void populatePackRepository(PackRepository resourcePacks, PackType packType, boolean trusted) {
+    findResourcePacks();  // Step 1: 扫描所有模组 JAR
+    // Step 2: 首先添加模组内置包
+    resourcePacks.addPackFinder(buildPackFinder(modResourcePacks, packType));
+    // Step 3: 触发事件，允许其他模组添加更多包查找器
+    ModLoader.postEvent(new AddPackFindersEvent(packType, resourcePacks::addPackFinder, trusted));
+}</code></pre>
+<p><strong>关键特性</strong>：
+<ul><li><strong>懒加载</strong>：资源包扫描使用同步机制，确保只扫描一次</li>
+<li><strong>多层包结构</strong>：支持隐藏包（<code>hiddenPacks</code>）作为子包聚合</li>
+<li><strong>版本兼容处理</strong>：通过 <code>PackFormat</code> 处理不同版本间的兼容性</li></ul></p>
+<h4>Pack 命名规范</h4>
+<pre class="code-block"><code class="language-java">final String name = &quot;mod/&quot; + e.getKey().getModInfos().stream()
+    .map(IModInfo::getModId)
+    .collect(Collectors.joining(&quot;,&quot;));</code></pre>
+<p><hr></p>
+<h3>2.2 EmptyPackResources</h3>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\resource\EmptyPackResources.java</code></p>
+<h4>类职责</h4>
+<p><code>EmptyPackResources</code> 是一个<strong>空资源包实现</strong>，用于：
+<ul><li>创建不含实际资源的"虚拟"资源包</li>
+<li>作为模组隐藏包的聚合容器</li>
+<li>提供元数据（<code>pack.mcmeta</code>）而不暴露任何资源</li></ul></p>
+<h4>关键实现</h4>
+<pre class="code-block"><code class="language-java">public class EmptyPackResources extends AbstractPackResources {
+    private final PackMetadataSection packMeta;
+
+    @Override
+    public Set&lt;String&gt; getNamespaces(PackType type) {
+        return Collections.emptySet();  // 空命名空间
+    }
+
+    @Nullable
+    @Override
+    public IoSupplier&lt;InputStream&gt; getResource(PackType type, Identifier location) {
+        return null;  // 不提供任何资源
+    }
+
+    public static class EmptyResourcesSupplier implements Pack.ResourcesSupplier {
+        @Override
+        public PackResources openPrimary(PackLocationInfo id) {
+            return new EmptyPackResources(id, packMeta);
+        }
+    }
+}</code></pre>
+<p><strong>使用场景</strong>：
+<ul><li><code>ResourcePackLoader.makePack()</code> 创建 "Mod Resources" / "Mod Data" 聚合包</li>
+<li>这些聚合包将所有隐藏的模组包作为子包包含</li></ul></p>
+<p><hr></p>
+<h3>2.3 JarContentsPackResources</h3>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\resource\JarContentsPackResources.java</code></p>
+<h4>类职责</h4>
+<p><code>JarContentsPackResources</code> 将 <strong>JAR 文件内容</strong>（模组 JAR）直接暴露为 <code>PackResources</code>，支持：</p>
+<p><ul><li>从 <code>resources/</code> 和 <code>data/</code> 目录读取资源</li>
+<li>处理资源覆盖（Overlay）机制</li>
+<li>命名空间枚举</li></ul></p>
+<h4>关键实现</h4>
+<pre class="code-block"><code class="language-java">public class JarContentsPackResources extends AbstractPackResources {
+    private final JarContents contents;
+    private final String prefix;
+
+    // 路径转换: PackType/namespace/path -&gt; prefix/PackType/namespace/path
+    private static String getPathFromLocation(PackType packType, Identifier location) {
+        return String.format(Locale.ROOT, &quot;%s/%s/%s&quot;, 
+            packType.getDirectory(), location.getNamespace(), location.getPath());
+    }
+
+    @Override
+    public Set&lt;String&gt; getNamespaces(PackType packType) {
+        Set&lt;String&gt; namespaces = Sets.newHashSet();
+        String prefix = this.addPrefix(packType.getDirectory() + &quot;/&quot;);
+        // 遍历内容，提取命名空间
+        contents.visitContent(prefix, (relativePath, resource) -&gt; { ... });
+        return namespaces;
+    }
+}</code></pre>
+<h4>资源路径映射</h4>
+<pre class="code-block"><code class="language-text">JAR 文件结构:
+  mymod.jar
+  ├── META-INF/
+  └── resources/
+      └── assets/
+          └── mymod/
+              ├── textures/block/example.png
+              └── models/item/example.json
+
+通过 JarContentsPackResources 访问:
+  资源路径: assets/mymod/textures/block/example.png
+  访问标识符: new Identifier(&quot;mymod&quot;, &quot;textures/block/example.png&quot;)</code></pre>
+<p><hr></p>
+<h3>2.4 AddPackFindersEvent</h3>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\event\AddPackFindersEvent.java</code></p>
+<h4>类职责</h4>
+<p><code>AddPackFindersEvent</code> 是在 <strong>Mod Bus</strong> 上触发的事件，允许模组：
+<ul><li>添加自定义包查找器（<code>RepositorySource</code>）</li>
+<li>注册内置资源包</li>
+<li>控制资源包优先级</li></ul></p>
+<h4>事件属性</h4>
+<table class="data-table"><thead><tr><th>属性</th><th>类型</th><th>说明</th></tr></thead><tbody><tr><td><code>packType</code></td><td><code>PackType</code></td><td>当前操作的包类型</td></tr><tr><td><code>sources</code></td><td><code>Consumer<RepositorySource></code></td><td>包查找器注册器</td></tr><tr><td><code>trusted</code></td><td><code>boolean</code></td><td>是否为可信仓库（避免服务端同步）</td></tr></tbody></table>
+<h4>核心方法</h4>
+<pre class="code-block"><code class="language-java">public class AddPackFindersEvent extends Event implements IModBusEvent {
+    /**
+     * 添加新的资源包查找器
+     * @param source 包查找器
+     */
+    public void addRepositorySource(RepositorySource source) {
+        sources.accept(source);
+    }
+
+    /**
+     * 便捷方法：注册 resources/ 目录下的内置包
+     */
+    public void addPackFinders(
+        Identifier packLocation,      // 资源位置，如 new Identifier(&quot;mymod&quot;, &quot;mypack&quot;)
+        PackType packType,             // 资源包或数据包
+        Component packNameDisplay,     // 显示名称
+        PackSource packSource,         // 启用策略
+        boolean alwaysActive,          // 是否始终启用
+        Pack.Position packPosition     // 优先级位置
+    ) {
+        // 创建 Pack 并注册...
+    }
+}</code></pre>
+<h4>事件触发时机</h4>
+<pre class="code-block"><code class="language-text">游戏启动流程:
+  └─ PackRepository 初始化
+      └─ ResourcePackLoader.populatePackRepository()
+          └─ 触发 AddPackFindersEvent (Mod Bus)
+              └─ 模组注册额外包查找器</code></pre>
+<p><hr></p>
+<h2 id="3-数据系统">3. 数据系统</h2>
+<h3>3.1 GatherDataEvent</h3>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\data\event\GatherDataEvent.java</code></p>
+<h4>类职责</h4>
+<p><code>GatherDataEvent</code> 是数据生成的核心事件，提供：
+<ul><li>注册 <code>DataProvider</code> 的入口</li>
+<li>配置数据生成选项</li>
+<li>访问 <code>HolderLookup.Provider</code> 进行数据查询</li></ul></p>
+<h4>事件子类</h4>
+<table class="data-table"><thead><tr><th>子类</th><th>触发场景</th></tr></thead><tbody><tr><td><code>GatherDataEvent.Server</code></td><td>服务端数据生成（配方、标签等）</td></tr><tr><td><code>GatherDataEvent.Client</code></td><td>客户端数据生成（语言、模型等）</td></tr></tbody></table>
+<h4>关键方法</h4>
+<pre class="code-block"><code class="language-java">public abstract class GatherDataEvent extends Event implements IModBusEvent {
+    // 注册数据提供者
+    public &lt;T extends DataProvider&gt; T addProvider(T provider) {
+        return dataGenerator.addProvider(true, provider);
+    }
+
+    // 使用输出创建提供者
+    public &lt;T extends DataProvider&gt; T createProvider(DataProviderFromOutput&lt;T&gt; builder) {
+        return addProvider(builder.create(dataGenerator.getPackOutput()));
+    }
+
+    // 创建带有 HolderLookup 的提供者
+    public &lt;T extends DataProvider&gt; T createProvider(DataProviderFromOutputLookup&lt;T&gt; builder) {
+        return addProvider(builder.create(dataGenerator.getPackOutput(), this.getLookupProvider()));
+    }
+
+    // 创建标签提供者（自动处理依赖）
+    public void createBlockAndItemTags(
+        DataProviderFromOutputLookup&lt;TagsProvider&lt;Block&gt;&gt; blockTagsProvider,
+        ItemTagsProvider itemTagsProvider
+    ) { ... }
+
+    // 创建数据包内置条目
+    public void createDatapackRegistryObjects(RegistrySetBuilder datapackEntriesBuilder) {
+        var registries = this.createProvider((output, lookupProvider) -&gt; 
+            new DatapackBuiltinEntriesProvider(output, lookupProvider, datapackEntriesBuilder, Set.of(this.modContainer.getModId())));
+        this.registriesWithModdedEntries = registries.getRegistryProvider();
+    }
+}</code></pre>
+<h4>配置选项</h4>
+<pre class="code-block"><code class="language-java">public boolean includeDev()      // 是否包含开发工具数据
+public boolean includeReports()   // 是否生成报告
+public boolean validate()         // 是否验证数据
+public ResourceManager getResourceManager(PackType packType)  // 获取资源管理器</code></pre>
+<p><hr></p>
+<h3>3.2 DataProvider 类型详解</h3>
+<h4>BlockTagsProvider / ItemTagsProvider</h4>
+<p><strong>基类</strong>：<code>IntrinsicHolderTagsProvider<T></code></p>
+<pre class="code-block"><code class="language-java">public abstract class BlockTagsProvider extends IntrinsicHolderTagsProvider&lt;Block&gt; {
+    public BlockTagsProvider(PackOutput output, CompletableFuture&lt;HolderLookup.Provider&gt; lookupProvider, String modId) {
+        super(output, Registries.BLOCK, lookupProvider, 
+              block -&gt; block.builtInRegistryHolder().key(), modId);
+    }
+}</code></pre>
+<p><strong>用法示例</strong>：</p>
+<pre class="code-block"><code class="language-java">public class MyBlockTagsProvider extends BlockTagsProvider {
+    public MyBlockTagsProvider(PackOutput output, CompletableFuture&lt;HolderLookup.Provider&gt; lookupProvider) {
+        super(output, lookupProvider, &quot;mymod&quot;);
+    }
+
+    @Override
+    public void addTags(HolderLookup.Provider provider) {
+        // 定义标签
+        tag(Tags.Blocks.ORES).addTag(Tags.Blocks.ORES_COPPER);
+        tag(Tags.Blocks.STORAGE_BLOCKS).add(Blocks.DIAMOND_BLOCK);
+        
+        // 可选标签（向后兼容）
+        tag(tag(&quot;my_custom_tag&quot;)).addOptionalTag(Tags.Blocks.ORES);
+    }
+}</code></pre>
+<h4>LanguageProvider</h4>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\common\data\LanguageProvider.java</code></p>
+<pre class="code-block"><code class="language-java">public abstract class LanguageProvider implements DataProvider {
+    private final Map&lt;String, Component&gt; data = new TreeMap&lt;&gt;();
+    
+    protected abstract void addTranslations();
+    
+    public void addBlock(Supplier&lt;? extends Block&gt; key, String name) { ... }
+    public void addItem(Supplier&lt;? extends Item&gt; key, String name) { ... }
+    public void addEffect(Supplier&lt;? extends MobEffect&gt; key, String name) { ... }
+    public void add(String key, String value) { ... }
+}</code></pre>
+<p><strong>输出路径</strong>：</p>
+<pre class="code-block"><code class="language-text">resources/assets/&lt;modid&gt;/lang/&lt;locale&gt;.json</code></pre>
+<h4>GlobalLootModifierProvider</h4>
+<p><strong>用途</strong>：生成 <code>data/<modid>/loot<em>modifiers/</code> 和 <code>data/neoforge/loot</em>modifiers/global<em>loot</em>modifiers.json</code></p>
+<pre class="code-block"><code class="language-java">public abstract class GlobalLootModifierProvider implements DataProvider {
+    protected abstract void start();
+    
+    public &lt;T extends IGlobalLootModifier&gt; void add(
+        String modifier,    // 修改器名称（文件名）
+        T instance,         // 修改器实例
+        ICondition... conditions  // 条件
+    ) { ... }
+}</code></pre>
+<h4>SoundDefinitionsProvider</h4>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\common\data\SoundDefinitionsProvider.java</code></p>
+<pre class="code-block"><code class="language-java">public abstract class SoundDefinitionsProvider implements DataProvider {
+    public abstract void registerSounds();
+    
+    protected void add(Holder&lt;SoundEvent&gt; soundEvent, SoundDefinition definition) { ... }
+    
+    // 便捷方法
+    protected static SoundDefinition definition() { ... }
+    protected static SoundDefinition.Sound sound(Identifier name, SoundType type) { ... }
+}</code></pre>
+<p><strong>SoundDefinition 示例</strong>：</p>
+<pre class="code-block"><code class="language-java">@Override
+protected void registerSounds() {
+    add(MY_SOUND_EVENT, definition()
+        .subtitle(&quot;mymod.subtitle.my_sound&quot;)
+        .with(sound(&quot;mymod:my_sound&quot;, SoundDefinition.SoundType.SOUND)
+            .volume(0.8f)
+            .pitch(1.2f)
+            .weight(2)
+        )
+        .with(sound(&quot;mymod:my_sound_alt&quot;))  // 备选声音
+        .replace(true)
+    );
+}</code></pre>
+<h4>DataMapProvider</h4>
+<p><strong>文件位置</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\common\data\DataMapProvider.java</code></p>
+<p>NeoForge 数据映射（DataMap）允许为注册表条目附加元数据：</p>
+<pre class="code-block"><code class="language-java">public abstract class DataMapProvider implements DataProvider {
+    protected abstract void gather(HolderLookup.Provider provider);
+    
+    public &lt;T, R&gt; Builder&lt;T, R&gt; builder(DataMapType&lt;R, T&gt; type) { ... }
+    
+    public static class Builder&lt;T, R&gt; {
+        public Builder&lt;T, R&gt; add(ResourceKey&lt;R&gt; key, T value, boolean replace, ICondition... conditions) { ... }
+        public Builder&lt;T, R&gt; add(TagKey&lt;R&gt; tag, T value, boolean replace, ICondition... conditions) { ... }
+        public Builder&lt;T, R&gt; remove(Identifier id) { ... }
+        public Builder&lt;T, R&gt; replace(boolean replace) { ... }
+    }
+}</code></pre>
+<p><strong>输出结构</strong>：</p>
+<pre class="code-block"><code class="language-text">data/&lt;modid&gt;/datamaps/&lt;registry_name&gt;/&lt;datamap_id&gt;.json</code></pre>
+<p><hr></p>
+<h3>3.3 NeoForge 内置数据生成器</h3>
+<h4>目录位置</h4>
+<p><code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\common\data\internal\</code></p>
+<h4>NeoForgeBlockTagsProvider</h4>
+<p>定义 NeoForge 标准的方块标签：</p>
+<pre class="code-block"><code class="language-java">public final class NeoForgeBlockTagsProvider extends BlockTagsProvider {
+    @Override
+    public void addTags(HolderLookup.Provider p_256380_) {
+        // 矿物标签
+        tag(Tags.Blocks.ORES).addTags(Tags.Blocks.ORES_COAL, Tags.Blocks.ORES_COPPER, ...);
+        tag(Tags.Blocks.ORES_IN_GROUND_DEEPSLATE).add(Blocks.DEEPSLATE_COAL_ORE, ...);
+        
+        // 存储方块
+        tag(Tags.Blocks.STORAGE_BLOCKS).addTags(
+            Tags.Blocks.STORAGE_BLOCKS_DIAMOND,
+            Tags.Blocks.STORAGE_BLOCKS_GOLD, ...
+        );
+        
+        // 可染色方块
+        addColored(Tags.Blocks.DYED, &quot;{color}_wool&quot;);
+        addColored(Tags.Blocks.DYED, &quot;{color}_concrete&quot;);
+    }
+}</code></pre>
+<h4>NeoForgeAdvancementProvider</h4>
+<p>处理 NeoForge 特定的前进进度条件：</p>
+<pre class="code-block"><code class="language-java">public class NeoForgeAdvancementProvider extends AdvancementProvider {
+    // 替换剪刀工具检查为物品能力检查
+    // 处理猪林防具安全、冻土靴等 NeoForge 特定逻辑
+}</code></pre>
+<h4>NeoForgeDataMapsProvider</h4>
+<p>为 NeoForge 内置数据映射生成数据：</p>
+<pre class="code-block"><code class="language-java">public class NeoForgeDataMapsProvider extends DataMapProvider {
+    @Override
+    protected void gather(HolderLookup.Provider provider) {
+        // 村民类型映射
+        builder(NeoForgeDataMaps.VILLAGER_TYPES).add(...);
+        
+        // 可堆肥物品
+        builder(NeoForgeDataMaps.COMPOSTABLES).add(...);
+        
+        // 熔炉燃料
+        builder(NeoForgeDataMaps.FURNACE_FUELS).add(...);
+        
+        // 可氧化/打蜡方块
+        builder(NeoForgeDataMaps.OXIDIZABLES).add(...);
+        builder(NeoForgeDataMaps.WAXABLES).add(...);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4-工作流程图">4. 工作流程图</h2>
+<h3>资源包加载流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Game as 游戏客户端/服务端
+    participant Repository as PackRepository
+    participant Loader as ResourcePackLoader
+    participant Event as AddPackFindersEvent
+    participant ModA as 模组 A
+    participant ModB as 模组 B
+    participant Jar as JAR 文件
+
+    Game->>Repository: 创建资源包仓库
+    Repository->>Loader: populatePackRepository(packType)
+    Loader->>Jar: 扫描所有模组 JAR
+    Note over Loader: 缓存 modResourcePacks
+    Loader->>Repository: addPackFinder(内置查找器)
+    Loader->>Event: 触发 Mod Bus 事件
+    Event->>ModA: AddPackFindersEvent
+    ModA->>Event: addRepositorySource(自定义查找器)
+    Event->>ModB: AddPackFindersEvent
+    ModB->>Event: addPackFinders(内置包)
+    Event-->>Repository: 收集所有查找器
+    Repository->>Repository: 遍历查找器发现包
+    Note over Repository: 按优先级排序
+    Repository-->>Game: 资源包加载完成</div>
+</div>
+<h3>数据生成流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 启动阶段
+        A[runData] --> B[创建 GatherDataEvent]
+        B --> C{事件类型}
+        C -->|Server| D[GatherDataEvent.Server]
+        C -->|Client| E[GatherDataEvent.Client]
+    end
+
+    subgraph 提供者注册
+        D --> F[模组注册 DataProvider]
+        E --> F
+        F --> G[BlockTagsProvider]
+        F --> H[ItemTagsProvider]
+        F --> I[LanguageProvider]
+        F --> J[RecipeProvider]
+        F --> K[自定义 Provider]
+    end
+
+    subgraph 数据生成
+        L[DataGenerator.runAll] --> M{遍历生成器}
+        M -->|BlockTags| N[生成 tags/blocks/*.json]
+        M -->|ItemTags| O[生成 tags/items/*.json]
+        M -->|Recipes| P[生成 recipes/*.json]
+        M -->|Languages| Q[生成 lang/*.json]
+    end
+
+    subgraph 输出
+        N --> R[data/modid/tags/]
+        O --> R
+        P --> S[data/modid/recipes/]
+        Q --> T[resources/modid/lang/]
+    end</div>
+</div>
+<h3>数据包覆盖机制</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class ResourcePackLoader {
+        +MOD_DATA_ID: String
+        +MOD_RESOURCES_ID: String
+        -modResourcePacks: Map
+        +populatePackRepository()
+        +createPackForMod()
+    }
+
+    class Pack {
+        -children: List~Pack~
+        +isHidden(): boolean
+        +getChildren(): List
+    }
+
+    class JarContentsPackResources {
+        -contents: JarContents
+        -prefix: String
+        +getResource()
+        +getNamespaces()
+    }
+
+    class EmptyPackResources {
+        -packMeta: PackMetadataSection
+        +getResource(): null
+    }
+
+    ResourcePackLoader --> Pack : 创建
+    Pack --> Pack : 聚合子包
+    Pack --> JarContentsPackResources : 包含
+    Pack --> EmptyPackResources : 用于聚合</div>
+</div>
+<p><hr></p>
+<h2 id="5-api-使用示例">5. API 使用示例</h2>
+<h3>示例 1：注册自定义资源包</h3>
+<pre class="code-block"><code class="language-java">@ModEventBusSubscriber(modid = &quot;mymod&quot;, bus = ModEventBusSubscriber.Bus.MOD)
+public class MyPackFinder {
+    @SubscribeEvent
+    public static void onAddPackFinders(AddPackFindersEvent event) {
+        if (event.getPackType() == PackType.CLIENT_RESOURCES) {
+            // 注册 resources/mypack 目录作为资源包
+            event.addPackFinders(
+                new Identifier(&quot;mymod&quot;, &quot;mypack&quot;),  // 资源位置
+                PackType.CLIENT_RESOURCES,
+                Component.literal(&quot;My Pack&quot;),        // 显示名称
+                PackSource.DEFAULT,                  // 启用策略
+                false,                               // 非始终启用
+                Pack.Position.TOP                    // 高优先级
+            );
+        }
+    }
+}</code></pre>
+<h3>示例 2：创建自定义数据提供者</h3>
+<pre class="code-block"><code class="language-java">public class MyDataGenerator {
+    @SubscribeEvent
+    public static void onGatherData(GatherDataEvent.Server event) {
+        PackOutput output = event.getGenerator().getPackOutput();
+        CompletableFuture&lt;HolderLookup.Provider&gt; lookup = event.getLookupProvider();
+        
+        // 创建方块标签
+        event.createProvider(output -&gt; new BlockTagsProvider(output, lookup, &quot;mymod&quot;) {
+            @Override
+            public void addTags(HolderLookup.Provider provider) {
+                tag(Tags.Blocks.ORES).add(Blocks.DEEPSLATE_COPPER_ORE);
+                tag(Tags.Blocks.STORAGE_BLOCKS).add(Blocks.COPPER_BLOCK);
+            }
+        });
+
+        // 创建物品标签（依赖方块标签）
+        event.createBlockAndItemTags(
+            (out, prov) -&gt; new BlockTagsProvider(out, prov, &quot;mymod&quot;) { /* ... */ },
+            (out, prov, blockTags) -&gt; new ItemTagsProvider(out, prov, &quot;mymod&quot;) {
+                @Override
+                protected void addTags(HolderLookup.Provider provider) {
+                    copy(Tags.Blocks.ORES, Tags.Items.ORES);
+                }
+            }
+        );
+
+        // 创建语言文件
+        event.createProvider(output -&gt; new LanguageProvider(output, &quot;mymod&quot;, &quot;en_us&quot;) {
+            @Override
+            protected void addTranslations() {
+                add(&quot;block.mymod.example&quot;, &quot;Example Block&quot;);
+                add(&quot;item.mymod.tool&quot;, &quot;Magic Tool&quot;);
+            }
+        });
+    }
+}</code></pre>
+<h3>示例 3：使用 DataMapProvider</h3>
+<pre class="code-block"><code class="language-java">public class MyDataMapsProvider extends DataMapProvider {
+    @Override
+    protected void gather(HolderLookup.Provider provider) {
+        // 为物品添加自定义数据
+        builder(NeoForgeDataMaps.COMPOSTABLES)
+            .add(Items.MAGIC_DUST, new Compostable(0.8f, false), false)
+            .add(Tags.Items.DUSTS, new Compostable(0.3f, false), false);
+
+        // 添加强制覆盖
+        builder(NeoForgeDataMaps.FURNACE_FUELS)
+            .add(Items.BLAZE_ROD, new FurnaceFuel(2400), true);
+    }
+}</code></pre>
+<h3>示例 4：创建自定义数据包条目</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onGatherData(GatherDataEvent.Server event) {
+    RegistrySetBuilder builder = new RegistrySetBuilder();
+    
+    // 添加自定义维度的数据包条目
+    builder.add(Registries.DIMENSION, bootstrap -&gt; {
+        ResourceKey&lt;Level&gt; myDim = ResourceKey.create(
+            Registries.DIMENSION, 
+            new Identifier(&quot;mymod&quot;, &quot;my_dimension&quot;)
+        );
+        
+        return ContextfulRegistryBootstrap.create(
+            myDim,
+            new DimensionType(
+                OptionalLong.of(12000), // 无限时长
+                true,                   // skylight
+                true,                   // 模拟光源
+                false,                 // 无自然光
+                0.0,                   // 固定时间
+                6000,                  // 白天时间
+                18000,                 // 夜晚时间
+                -64,                   // 最小 Y
+                384,                   // 最大 Y
+                384,                   // 高度
+                BlockTags.INFINIBREAK,
+                DimensionType.DEFAULT_GENERATION,
+                -1.0,
+                new LegacyDiscSectionSampler(),
+                false,                 // 无无限桶
+                OsmiumClimateSettings.END
+            )
+        );
+    });
+    
+    event.createDatapackRegistryObjects(builder, Set.of(&quot;mymod&quot;));
+}</code></pre>
+<p><hr></p>
+<h2 id="6-与其他系统交互">6. 与其他系统交互</h2>
+<h3>6.1 与注册表系统集成</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 注册表系统
+        A[RegistrySetBuilder] --> B[HolderLookup.Provider]
+    end
+    
+    subgraph 资源系统
+        C[ResourcePackLoader] --> D[JarContentsPackResources]
+    end
+    
+    subgraph 数据系统
+        E[GatherDataEvent] --> F[DataProvider]
+        F --> |查询| B
+        B --> |提供数据| F
+    end
+
+    E --> |生成| G[数据 JSON 文件]
+    C --> |提供资源| H[资源文件]</div>
+</div>
+<h3>6.2 与 Mod 加载系统集成</h3>
+<table class="data-table"><thead><tr><th>组件</th><th>交互方式</th></tr></thead><tbody><tr><td><code>ModList</code></td><td>获取所有已加载模组，扫描资源包</td></tr><tr><td><code>ModLoadingIssue</code></td><td>报告损坏的资源包元数据</td></tr><tr><td><code>IModFileInfo</code></td><td>获取模组 JAR 内容</td></tr></tbody></table>
+<h3>6.3 与条件系统集成</h3>
+<p>NeoForge 数据系统支持<strong>条件生成</strong>：</p>
+<pre class="code-block"><code class="language-java">public void add(String modifier, T instance, ICondition... conditions) {
+    this.toSerialize.put(modifier, new WithConditions&lt;&gt;(conditions, instance));
+}
+
+// 常见条件类型
+- `NotCondition`: 取反
+- `AndCondition`: 与运算
+- `OrCondition`: 或运算
+- `FalseCondition`: 始终为假</code></pre>
+<p><hr></p>
+<h2 id="7-总结">7. 总结</h2>
+<h3>架构优势</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>说明</th></tr></thead><tbody><tr><td><strong>声明式 API</strong></td><td>通过 Provider 模式，开发者只需声明数据，无需手动写入 JSON</td></tr><tr><td><strong>自动依赖解析</strong></td><td>标签提供者自动处理块标签与物品标签的依赖关系</td></tr><tr><td><strong>懒加载扫描</strong></td><td>资源包扫描只在首次访问时执行，且仅执行一次</td></tr><tr><td><strong>灵活的事件扩展</strong></td><td><code>AddPackFindersEvent</code> 允许任意模组添加自定义包查找器</td></tr><tr><td><strong>版本兼容性</strong></td><td>通过 <code>PackFormat</code> 处理不同版本间的资源包兼容性</td></tr></tbody></table>
+<h3>核心类图</h3>
+<pre class="code-block"><code class="language-text">IModBusEvent
+    ├── AddPackFindersEvent
+    │       └── PackType, RepositorySource
+    └── GatherDataEvent (abstract)
+            ├── Server
+            └── Client
+                    └── DataGenerator
+
+AbstractPackResources
+    ├── EmptyPackResources
+    └── JarContentsPackResources
+
+DataProvider
+    ├── BlockTagsProvider
+    ├── ItemTagsProvider
+    ├── LanguageProvider
+    ├── RecipeProvider
+    ├── GlobalLootModifierProvider
+    ├── SoundDefinitionsProvider
+    ├── DataMapProvider
+    └── DatapackBuiltinEntriesProvider</code></pre>
+<h3>学习要点</h3>
+<p><ul><li><strong>理解 PackType</strong>：区分 <code>CLIENT<em>RESOURCES</code>（资源包）和 <code>SERVER</em>DATA</code>（数据包）</li>
+<li><strong>掌握 Provider 继承链</strong>：大多数 Provider 继承自 Minecraft 基类，NeoForge 提供了便捷的扩展</li>
+<li><strong>熟悉数据生成流程</strong>：<code>GatherDataEvent</code> → 注册 Provider → <code>DataGenerator.runAll()</code> → 输出 JSON</li>
+<li><strong>善用 DataMap</strong>：这是 NeoForge 1.21 新增的强大功能，允许为注册表条目附加元数据</li></ul></p>
+<p><hr></p>
+<p><strong>课后自查</strong></p>
+<p><ul><li>[ ] 能说出 <code>ResourcePackLoader</code> 的三大职责</li>
+<li>[ ] 理解 <code>AddPackFindersEvent</code> 的触发时机和用途</li>
+<li>[ ] 掌握如何创建自定义 <code>BlockTagsProvider</code></li>
+<li>[ ] 了解 <code>LanguageProvider</code> 的输出路径格式</li>
+<li>[ ] 知道如何使用 <code>DataMapProvider</code> 为注册表条目添加元数据</li>
+<li>[ ] 理解资源包优先级和子包机制</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-network-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            网络系统
+        </a><a href="06-world-chunk-system.html" class="next">
+            世界与区块系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
@@ -199,6 +189,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -224,12 +219,12 @@
             <div class="docs-body doc-content">
                 <h1>Iris 着色器包系统</h1>
 <blockquote><p>加载、解析、预处理与程序管理</p></blockquote>
-<h2 id="1. 概述">1. 概述</h2>
+<h2 id="1-概述">1. 概述</h2>
 <p>Iris 的着色器包系统负责加载、解析和预处理第三方光影包，实现与 OptiFine shadersmod 的兼容性。</p>
 <p><strong>核心文件</strong>：</p>
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>ShaderPack</code></td><td><code>shaderpack/ShaderPack.java</code></td></tr><tr><td><code>ProgramSet</code></td><td><code>shaderpack/programs/ProgramSet.java</code></td></tr><tr><td><code>ProgramSource</code></td><td><code>shaderpack/programs/ProgramSource.java</code></td></tr><tr><td><code>IdMap</code></td><td><code>shaderpack/IdMap.java</code></td></tr><tr><td><code>ShaderProperties</code></td><td><code>shaderpack/properties/ShaderProperties.java</code></td></tr><tr><td><code>IncludeProcessor</code></td><td><code>shaderpack/include/IncludeProcessor.java</code></td></tr><tr><td><code>JcppProcessor</code></td><td><code>shaderpack/preprocessor/JcppProcessor.java</code></td></tr></tbody></table>
 <hr></p>
-<h2 id="2. ShaderPack 核心结构">2. ShaderPack 核心结构</h2>
+<h2 id="2-shaderpack-核心结构">2. ShaderPack 核心结构</h2>
 <pre class="code-block"><code class="language-java">    // 程序集
     private final ProgramSet base;
     
@@ -292,7 +287,7 @@
     this.idMap = new IdMap(root, shaderPackOptions, environmentDefines);
 }</code></pre>
 <p><hr></p>
-<h2 id="3. 程序管理">3. 程序管理</h2>
+<h2 id="3-程序管理">3. 程序管理</h2>
 <h3>3.1 ProgramSet</h3>
 <pre class="code-block"><code class="language-java">    private final AbsolutePackPath basePath;
     private final Function&lt;AbsolutePackPath, String&gt; sourceProvider;
@@ -352,7 +347,7 @@
     // ...
 }</code></pre>
 <p><hr></p>
-<h2 id="4. Include 处理器">4. Include 处理器</h2>
+<h2 id="4-include-处理器">4. Include 处理器</h2>
 <h3>4.1 IncludeGraph</h3>
 <pre class="code-block"><code class="language-java">    private final Map&lt;AbsolutePackPath, FileNode&gt; nodes = new HashMap&lt;&gt;();
     private final Map&lt;AbsolutePackPath, IOException&gt; failures = new HashMap&lt;&gt;();
@@ -411,7 +406,7 @@
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="5. GLSL 预处理器">5. GLSL 预处理器</h2>
+<h2 id="5-glsl-预处理器">5. GLSL 预处理器</h2>
 <h3>5.1 JcppProcessor</h3>
 <pre class="code-block"><code class="language-java">    private static final JCPP pp = new JCPP();
     
@@ -450,7 +445,7 @@
 <li><code>#version</code> - GLSL 版本</li>
 <li><code>#extension</code> - 扩展声明</li></ul></p>
 <p><hr></p>
-<h2 id="6. ID 映射">6. ID 映射</h2>
+<h2 id="6-id-映射">6. ID 映射</h2>
 <h3>6.1 IdMap</h3>
 <pre class="code-block"><code class="language-java">    // 方块属性
     private final Int2ObjectMap&lt;Properties&gt; blockProperties;
@@ -504,7 +499,7 @@
     itemIdMap = parseIdMap(itemProps);
 }</code></pre>
 <p><hr></p>
-<h2 id="7. ShaderProperties">7. ShaderProperties</h2>
+<h2 id="7-shaderproperties">7. ShaderProperties</h2>
 <h3>7.1 属性文件格式</h3>
 <pre class="code-block"><code class="language-text"># shaders.properties
 shadowMapResolution=2048
@@ -533,7 +528,7 @@ oldLighting=true</code></pre>
     private final Map&lt;TextureStage, Map&lt;String, String&gt;&gt; customTextures;
 }</code></pre>
 <p><hr></p>
-<h2 id="8. 维度支持">8. 维度支持</h2>
+<h2 id="8-维度支持">8. 维度支持</h2>
 <h3>8.1 维度属性</h3>
 <pre class="code-block"><code class="language-text"># dimension.properties
 dimension.overworld=world0
@@ -561,7 +556,7 @@ dimension.end=world1</code></pre>
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="9. 功能标志">9. 功能标志</h2>
+<h2 id="9-功能标志">9. 功能标志</h2>
 <pre class="code-block"><code class="language-java">    // 必需标志
     SSBO,           // Shader Storage Buffer Objects
     CULL,           // 背面剔除
@@ -579,7 +574,7 @@ dimension.end=world1</code></pre>
     HAND_TRANSLUCENT;   // 手部半透明
 }</code></pre>
 <p><hr></p>
-<h2 id="10. 相关文档">10. 相关文档</h2>
+<h2 id="10-相关文档">10. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
 <li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线</li>
 <li><a href="04-shadow-system.html">04-shadow-system</a> - 阴影系统</li>
@@ -604,6 +599,7 @@ dimension.end=world1</code></pre>
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -626,5 +622,6 @@ dimension.end=world1</code></pre>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

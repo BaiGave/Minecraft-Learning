@@ -61,6 +61,19 @@
     --radius-md: 12px;
     --radius-lg: 20px;
     --transition: all 0.3s ease;
+
+    /* 代码编辑器深色主题色（深色固定，不随浅色模式切换） */
+    --code-bg: #16161a;
+    --code-text: #e3e3e3;
+    --code-border: rgba(255, 255, 255, 0.06);
+    --code-shadow: rgba(0, 0, 0, 0.45);
+    --code-ref-bg: #1a1a1a;
+    --code-ref-border: rgba(255, 255, 255, 0.06);
+    --code-ref-header-bg: rgba(255, 255, 255, 0.04);
+    --code-ref-filename: #b0b0b0;
+    --code-ref-copy-bg: rgba(255, 255, 255, 0.08);
+    --code-ref-copy-hover-bg: rgba(255, 255, 255, 0.18);
+    --code-table-row-hover: rgba(64, 64, 64, 0.05);
 }
 
 /* ============================================
@@ -259,7 +272,7 @@ img {
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: white;
+    background: var(--bg-elevated);
     min-width: 200px;
     box-shadow: var(--shadow-lg);
     border-radius: var(--radius-md);
@@ -270,7 +283,7 @@ img {
     display: block;
     z-index: 1001;
     margin-top: 10px;
-    border: 1px solid var(--gray-light);
+    border: 1px solid var(--border-default);
     overflow: visible;
 }
 
@@ -291,7 +304,7 @@ img {
 }
 
 .dropdown-content a:hover {
-    background: var(--gray-light);
+    background: var(--bg-tertiary);
     color: var(--primary-color);
 }
 
@@ -1710,12 +1723,12 @@ img {
 
 .doc-type-badge.tutorial {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-    color: white;
+    color: var(--text-inverse);
 }
 
 .doc-type-badge.analysis {
     background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
-    color: white;
+    color: var(--text-inverse);
 }
 
 /* 空状态 */
@@ -1858,24 +1871,76 @@ img {
    文档页面样式 (Docs Layout)
    ============================================ */
 
+:root {
+    --docs-sidebar-width: 400px;
+    /* 相对侧栏后剩余区域占满，避免再用 92vw 造成「中间一条、两侧死黑」 */
+    --docs-content-max: min(1280px, 100%);
+}
+
 .docs-layout {
     display: flex;
     min-height: calc(100vh - 70px);
     margin-top: 70px;
     padding-top: 0;
+    --docs-sidebar-width: 400px;
 }
 
 .docs-sidebar {
-    width: 280px;
-    background: linear-gradient(180deg, #0a0a0a 0%, #171717 100%);
-    color: white;
+    width: var(--docs-sidebar-width);
+    /* 与主画布同一令牌：仅用细线分隔，消灭「纯黑顶栏 / 靛蓝侧栏 / 灰卡片」三色割裂 */
+    background: var(--bg-elevated);
+    color: var(--text-primary);
     position: fixed;
     top: 70px;
     left: 0;
     bottom: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     z-index: 100;
-    transition: transform 0.3s ease;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--border-default);
+    box-shadow: none;
+}
+
+[data-theme="light"] .docs-sidebar {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-default);
+    box-shadow: none;
+}
+
+/* 深色文档页：侧栏再压半档，与主区同属一块「阅读画布」 */
+[data-theme="dark"] .docs-sidebar {
+    background: color-mix(in srgb, var(--bg-secondary) 88%, var(--bg-elevated) 12%);
+    border-right-color: var(--border-strong);
+}
+
+/* 浅色文档页：侧栏文字/图标强制跟令牌走（防止历史内联样式残留时仍可兜底） */
+[data-theme="light"] body.docs-page .docs-sidebar {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-header h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a i {
+    color: var(--text-tertiary);
+}
+
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a:hover,
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a.active {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a:hover i,
+[data-theme="light"] body.docs-page .docs-sidebar .sidebar-nav a.active i {
+    color: var(--module-accent);
 }
 
 .docs-sidebar::before {
@@ -1884,106 +1949,293 @@ img {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-light), var(--primary-color));
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 55%, transparent) 22%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 40%, transparent) 50%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 55%, transparent) 78%,
+        transparent 100%);
+    opacity: 0.85;
+    pointer-events: none;
 }
 
 .sidebar-header {
-    padding: 25px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 1.15rem 1rem 1.05rem 1.15rem;
+    border-bottom: 1px solid var(--border-default);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.sidebar-header-text {
+    flex: 1;
+    min-width: 0;
 }
 
 .sidebar-header h3 {
-    font-size: 1.2rem;
-    margin: 0;
+    font-size: 1.15rem;
+    margin: 0 0 0.35rem 0;
+    line-height: 1.3;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .sidebar-header {
+    border-bottom-color: var(--border-default);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: var(--border-default);
+}
+
+[data-theme="light"] .docs-sidebar .doc-badge {
+    background: color-mix(in srgb, var(--module-accent, var(--primary-color)) 12%, var(--bg-tertiary));
+    color: var(--text-primary);
+    border-color: var(--border-default);
+}
+
+/* 桌面端：收起侧栏 */
+.docs-sidebar-pin-btn {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.docs-sidebar-pin-btn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .docs-sidebar-pin-btn {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border-color: var(--border-default);
+}
+
+.docs-sidebar-pin-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-color: var(--border-default);
+}
+
+/* 侧栏收起后：展开按钮 */
+.docs-sidebar-floating-open {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 99;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.65rem 0.55rem 0.5rem;
+    border: 1px solid var(--border-default);
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: background 0.2s ease, left 0.32s ease;
+}
+
+.docs-sidebar-floating-open:hover {
+    background: var(--bg-tertiary);
+}
+
+.docs-sidebar-floating-open i {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+@media (min-width: 993px) {
+    body.docs-sidebar-collapsed .docs-sidebar {
+        transform: translateX(calc(-1 * var(--docs-sidebar-width)));
+    }
+
+    body.docs-sidebar-collapsed .docs-content {
+        margin-left: 0 !important;
+        /* 沉浸式阅读：左右留白略增、正文列再放宽 */
+        padding-left: clamp(28px, 5vw, 80px);
+        padding-right: clamp(28px, 5vw, 80px);
+    }
+
+    body.docs-sidebar-collapsed .docs-content > * {
+        max-width: min(1440px, 100%);
+    }
+
+    body.docs-sidebar-collapsed .docs-sidebar-floating-open {
+        display: flex;
+    }
+}
+
+@media (max-width: 992px) {
+    .docs-sidebar-pin-btn {
+        display: none;
+    }
+
+    .docs-sidebar-floating-open {
+        display: none !important;
+    }
 }
 
 .doc-badge {
-    background: rgba(255,255,255,0.2);
+    background: color-mix(in srgb, var(--module-accent, var(--primary-color)) 16%, var(--bg-tertiary));
+    color: var(--text-primary);
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 0.75rem;
+    border: 1px solid var(--border-default);
 }
 
 .sidebar-nav {
-    padding: 20px 0;
+    padding: 16px 0 24px;
 }
 
 .sidebar-nav a {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px;
-    color: rgba(255,255,255,0.75);
-    transition: all 0.3s ease;
+    padding: 12px 22px 12px 18px;
+    color: var(--text-secondary);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     border-left: 3px solid transparent;
-    margin: 2px 0;
+    margin: 1px 0;
     position: relative;
+    font-size: 0.9375rem;
+    line-height: 1.35;
 }
 
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border-left-color: var(--primary-color);
+    background: color-mix(in srgb, var(--module-accent, var(--primary-color)) 10%, var(--bg-tertiary));
+    color: var(--text-primary);
+    border-left-color: color-mix(in srgb, var(--module-accent, var(--primary-color)) 72%, var(--border-strong));
 }
 
 .sidebar-nav a:hover::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--primary-color);
-    box-shadow: 0 0 10px var(--primary-color);
+    display: none;
 }
 
 .sidebar-nav a i {
-    width: 20px;
+    width: 22px;
     text-align: center;
-    color: rgba(255,255,255,0.6);
+    color: var(--text-tertiary);
+    flex-shrink: 0;
 }
 
 .sidebar-nav a.active i,
 .sidebar-nav a:hover i {
-    color: white;
+    color: var(--module-accent, var(--primary-color));
 }
 
 .sidebar-footer {
-    padding: 20px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 18px 20px 24px;
+    border-top: 1px solid var(--border-default);
 }
 
 .sidebar-footer a {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: rgba(255,255,255,0.7);
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
 .sidebar-footer a:hover {
-    color: white;
+    color: var(--text-primary);
 }
 
 .docs-content {
     flex: 1;
-    margin-left: 280px;
-    padding: 40px;
-    background: var(--light-color);
+    margin-left: var(--docs-sidebar-width);
+    padding: clamp(22px, 3.2vw, 44px) clamp(18px, 2.8vw, 40px);
+    /* 随主题切换（勿写死浅色，否则黑夜模式主区域仍为白底） */
+    background: var(--bg-secondary);
     min-height: calc(100vh - 70px);
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: margin-left 0.32s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, color 0.2s ease, padding 0.32s ease;
 }
 
 .docs-content > * {
     width: 100%;
-    max-width: 900px;
+    max-width: var(--docs-content-max);
+}
+
+/* 文档阅读区：左对齐正文列（类技术文档站），避免大块「右侧死区」观感 */
+body.docs-page .docs-content {
+    align-items: flex-start;
+}
+
+body.docs-page .docs-content > * {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* 顶栏与文档主画布同色，避免与侧栏/正文形成第三条「纯黑带」 */
+body.docs-page .navbar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-default);
+}
+
+/* 文档页顶栏背景随主题变化；链字须用 token（site-shell 里 .nav-links a 写死浅色，浅底上会看不见） */
+body.docs-page .navbar .nav-logo,
+body.docs-page .navbar .nav-logo i {
+    color: var(--text-primary) !important;
+}
+
+body.docs-page .navbar .nav-links a,
+body.docs-page .navbar .site-nav-links a {
+    color: var(--text-secondary);
+}
+
+body.docs-page .navbar .nav-links a:hover,
+body.docs-page .navbar .site-nav-links a:hover,
+body.docs-page .navbar .nav-links a.active,
+body.docs-page .navbar .site-nav-links a.active {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.docs-page .navbar .mobile-menu-btn,
+body.docs-page .navbar .site-nav-menu-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.docs-page .nav-container .theme-toggle {
+    background: var(--bg-tertiary);
+}
+
+body.docs-page .nav-container .theme-btn {
+    color: var(--text-secondary);
+}
+
+body.docs-page .nav-container .theme-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+body.docs-page .nav-container .theme-btn.active {
+    color: var(--text-inverse);
+    background: var(--text-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .docs-header {
@@ -2010,8 +2262,8 @@ img {
 
 .breadcrumb i {
     font-size: 0.65rem;
-    color: #ccc;
-    opacity: 0.65;
+    color: var(--text-tertiary);
+    opacity: 0.85;
     padding: 0 0.25em;
     flex-shrink: 0;
 }
@@ -2036,13 +2288,16 @@ img {
 }
 
 .docs-body {
-    background: white;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
     padding: 50px;
     box-shadow: var(--shadow-md);
     line-height: 1.8;
     position: relative;
     overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .docs-body::before {
@@ -2075,6 +2330,19 @@ img {
 
 .docs-body h2 i {
     color: var(--primary-color);
+}
+
+/* 仅教程/分析文档页：用模块强调色（与侧栏、顶栏呼应，避免过艳） */
+.docs-page .docs-body h2 {
+    border-bottom-color: color-mix(in srgb, var(--module-accent, var(--primary-color)) 45%, var(--border-default));
+}
+
+.docs-page .docs-body h2 i {
+    color: var(--module-accent, var(--primary-color));
+}
+
+[data-theme="dark"] .docs-page .docs-body h2 {
+    border-bottom-color: color-mix(in srgb, var(--module-accent, var(--primary-color)) 32%, var(--border-strong));
 }
 
 .docs-body h3 {
@@ -2204,7 +2472,7 @@ img {
 
 /* Info Boxes */
 .info-box {
-    background: #f8f9fa;
+    background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     padding: 20px;
     margin-bottom: 25px;
@@ -2220,7 +2488,7 @@ img {
 
 .info-box.warning {
     border-left: 4px solid var(--accent-color);
-    background: rgba(224, 122, 95, 0.05);
+    background: color-mix(in srgb, var(--accent-color) 8%, var(--bg-tertiary));
 }
 
 .info-box.warning i {
@@ -2245,17 +2513,20 @@ img {
 /* Code Blocks：HTML 为 <pre class="code-block"><code>（pre 即容器，勿用 .code-block pre） */
 pre.code-block,
 .code-block:not(pre) {
-    background: #16161a;
+    background: var(--code-bg);
     border-radius: 8px;
     padding: 0;
     margin: 28px 0;
     overflow-x: auto;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--code-border);
+    box-shadow: 0 4px 24px var(--code-shadow);
     position: relative;
     font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
     tab-size: 4;
     -moz-tab-size: 4;
+}
+    border-color: var(--code-border);
+    box-shadow: 0 4px 24px var(--code-shadow);
 }
 
 pre.code-block::after,
@@ -2266,7 +2537,7 @@ pre.code-block::after,
 pre.code-block {
     margin: 28px 0;
     padding: 16px 52px 18px 44px;
-    color: #e3e3e3;
+    color: var(--code-text);
     font-size: 0.875rem;
     line-height: 1.7;
     white-space: pre;
@@ -2280,7 +2551,7 @@ pre.code-block::before {
     position: absolute;
     left: 18px;
     top: 16px;
-    color: #ffffff !important;
+    color: var(--text-inverse) !important;
     font-weight: 500;
     font-size: inherit;
     line-height: inherit;
@@ -2307,7 +2578,7 @@ pre.code-block code.hljs {
 
 /* 代码引用样式 - Minecraft Style（无外框绿色描边） */
 .code-reference {
-    background: #1a1a1a !important;
+    background: var(--code-ref-bg) !important;
     border-radius: 0 !important;
     margin: 30px 0;
     overflow: hidden;
@@ -2327,15 +2598,15 @@ pre.code-block code.hljs {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px !important;
-    background: rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--code-ref-header-bg);
+    border-bottom: 1px solid var(--code-ref-border);
     padding-left: 16px !important;
     position: relative;
 }
 
 .code-reference-header::before {
     content: '> ' !important;
-    color: #ffffff !important;
+    color: var(--text-inverse) !important;
     font-weight: normal;
     margin-right: 8px;
     display: inline !important;
@@ -2348,15 +2619,15 @@ pre.code-block code.hljs {
 .code-reference-filename {
     font-family: 'Courier New', 'Consolas', monospace;
     font-size: 0.85rem;
-    color: #b0b0b0;
+    color: var(--code-ref-filename);
     flex: 1;
     font-weight: 500;
 }
 
 .code-reference-copy {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e0e0e0;
+    background: var(--code-ref-copy-bg);
+    border: 1px solid var(--code-ref-border);
+    color: var(--code-text);
     padding: 6px 12px;
     border-radius: 0;
     cursor: pointer;
@@ -2366,14 +2637,14 @@ pre.code-block code.hljs {
 }
 
 .code-reference-copy:hover {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
+    background: var(--code-ref-copy-hover-bg);
+    color: var(--text-inverse);
 }
 
 .code-reference pre {
     margin: 0;
     padding: 14px 52px 16px 16px; /* 头部已有 >，代码区不再重复提示符 */
-    color: #e0e0e0;
+    color: var(--code-text);
     font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
     font-size: 0.9rem;
     line-height: 1.65;
@@ -2411,7 +2682,7 @@ pre.code-block code.hljs {
     right: 10px !important;
     background: rgba(40, 40, 40, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    color: #fff !important;
+    color: var(--text-inverse) !important;
 }
 
 /* Data Tables */
@@ -2436,6 +2707,24 @@ pre.code-block code.hljs {
     font-size: 0.95rem;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+}
+
+/* 文档页表格表头：模块色与灰底混合，黑夜模式更协调 */
+.docs-page .data-table th {
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 72%, #334155) 0%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 48%, #1e293b) 100%);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.9rem;
+}
+
+[data-theme="light"] .docs-page .data-table th {
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 25%, #f1f5f9) 0%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 15%, #e2e8f0) 100%);
+    color: #0f172a;
+    border-bottom: 2px solid color-mix(in srgb, var(--module-accent, var(--primary-color)) 55%, transparent);
 }
 
 .data-table th:first-child {
@@ -2465,7 +2754,7 @@ pre.code-block code.hljs {
 }
 
 .data-table tr:hover td {
-    background: rgba(64, 64, 64, 0.05);
+    background: var(--code-table-row-hover);
 }
 
 /* Link List */
@@ -2504,13 +2793,13 @@ pre.code-block code.hljs {
 
 /* Mermaid Diagrams */
 .mermaid {
-    background: white;
+    background: var(--bg-elevated);
     border-radius: var(--radius-md);
     padding: 30px;
     margin: 30px 0;
     text-align: center;
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--gray-light);
+    border: 1px solid var(--border-default);
     position: relative;
     overflow: hidden;
 }
@@ -2521,10 +2810,169 @@ pre.code-block code.hljs {
     top: 10px;
     right: 15px;
     font-size: 0.75rem;
-    color: var(--text-secondary);
-    background: var(--gray-light);
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
     padding: 3px 10px;
     border-radius: 20px;
+}
+
+/* ─────────────────────────────────────────────
+   Mermaid 全屏/缩放工具栏
+   （由 scripts/mermaid-controls.js 生成，converter.js 自动注入每个图表）
+   ───────────────────────────────────────────── */
+
+/* 外层 wrapper：工具栏 + 图表叠在一起 */
+.mermaid-wrapper {
+    position: relative;
+    margin: 30px 0;
+    border-radius: var(--radius-md);
+    overflow: visible;
+    border: 1px solid var(--border-default);
+}
+
+/* 工具栏 — 右上角小圆角矩形 */
+.mermaid-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    gap: 4px;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 4px 6px;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.mermaid-wrapper:hover .mermaid-toolbar {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* 每个按钮 */
+.mermaid-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+}
+
+.mermaid-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.mermaid-btn i {
+    font-size: 0.82rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* 右下角百分比标签 */
+.mermaid-zoom-label {
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    background: var(--bg-overlay);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid var(--border-default);
+    border-radius: 20px;
+    padding: 2px 8px;
+    pointer-events: none;
+    z-index: 5;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── 全屏模式 ── */
+.mermaid-wrapper.mermaid-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: var(--bg-overlay) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px 32px;
+    overflow: hidden;
+}
+
+/* 全屏时隐藏 docs-sidebar / navbar / docs-footer */
+.mermaid-wrapper.mermaid-fullscreen ~ *,
+.mermaid-wrapper.mermaid-fullscreen + * {
+    display: none !important;
+}
+
+/* 全屏模式下让内部 .mermaid 撑满且可交互 */
+.mermaid-wrapper.mermaid-fullscreen .mermaid {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 24px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.mermaid-wrapper.mermaid-fullscreen .mermaid svg {
+    cursor: grab;
+    max-width: none;
+    max-height: none;
+}
+
+/* 全屏时工具栏始终显示，位置微调 */
+.mermaid-wrapper.mermaid-fullscreen .mermaid-toolbar {
+    top: 14px;
+    right: 20px;
+    opacity: 1;
+    pointer-events: all;
+    background: var(--bg-overlay);
+    border-color: var(--border-strong);
+}
+
+.mermaid-wrapper.mermaid-fullscreen .mermaid-btn {
+    color: var(--text-secondary);
+}
+
+.mermaid-wrapper.mermaid-fullscreen .mermaid-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.mermaid-wrapper.mermaid-fullscreen .mermaid-zoom-label {
+    bottom: 16px;
+    right: 22px;
+    background: var(--bg-overlay);
+    color: var(--text-tertiary);
 }
 
 /* Docs Footer */
@@ -2550,30 +2998,201 @@ pre.code-block code.hljs {
 }
 
 .prev-next .prev {
-    background: var(--gray-light);
+    background: var(--bg-tertiary);
     color: var(--text-secondary);
 }
 
 .prev-next .prev:hover {
-    background: var(--gray-dark);
-    color: white;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
 }
 
 .prev-next .next {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    color: white;
+    color: var(--text-inverse);
     justify-content: flex-end;
-    box-shadow: 0 4px 15px rgba(64, 64, 64, 0.3);
+    box-shadow: var(--shadow-md);
     border: none;
+}
+
+.docs-page .prev-next .next {
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 88%, var(--bg-secondary) 100%) 0%,
+        color-mix(in srgb, var(--module-accent, var(--primary-color)) 65%, var(--bg-tertiary) 100%);
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--module-accent, var(--primary-color)) 25%, transparent);
+}
+
+.docs-page .prev-next .next:hover {
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--module-accent, var(--primary-color)) 35%, transparent);
 }
 
 .prev-next .next:hover {
     transform: translateX(5px);
-    box-shadow: 0 6px 20px rgba(64, 64, 64, 0.4);
+    box-shadow: var(--shadow-lg);
 }
 
 .prev-next .prev:hover {
     transform: translateX(-5px);
+}
+
+/* ============================================
+   教程/分析页：深色模式 + 侧栏 Part 分组美化
+   ============================================ */
+
+[data-theme="dark"] .docs-layout {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .docs-content {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .docs-body {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .docs-body p,
+[data-theme="dark"] .docs-body li {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .docs-header h1 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .docs-meta {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .breadcrumb {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .breadcrumb a {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .breadcrumb a:hover {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .breadcrumb i.fa-chevron-right {
+    color: var(--text-disabled);
+    opacity: 0.9;
+}
+
+[data-theme="dark"] .info-box {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .info-box strong {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .data-table {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+}
+
+[data-theme="dark"] .data-table td {
+    border-bottom-color: var(--border-default);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .mermaid {
+    background: var(--bg-tertiary);
+    border-color: var(--border-default);
+}
+
+[data-theme="dark"] .mermaid::before {
+    background: var(--bg-elevated);
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .prev-next .prev {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+}
+
+[data-theme="dark"] .prev-next .prev:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+/* 侧栏：Part 分组标题（与模块色顶栏搭配，全局可读性） */
+.docs-sidebar .sidebar-part {
+    margin-bottom: 1rem;
+}
+
+.docs-sidebar .sidebar-part-label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--text-primary);
+    padding: 0.6rem 1rem 0.45rem;
+    margin: 0.5rem 0 0.25rem;
+    line-height: 1.4;
+    border-left: 4px solid color-mix(in srgb, var(--module-accent, var(--primary-color)) 55%, var(--border-strong));
+    background: var(--bg-tertiary);
+    border-radius: 0 8px 0 0;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem 0.55rem 1rem;
+    margin: 0.12rem 0;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link i {
+    flex-shrink: 0;
+    margin-top: 0.2em;
+    opacity: 0.9;
+    color: var(--text-tertiary);
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link span {
+    flex: 1;
+    min-width: 0;
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link:hover {
+    background: color-mix(in srgb, var(--module-accent, var(--primary-color)) 10%, var(--bg-tertiary));
+    color: var(--text-primary);
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link:hover i {
+    color: var(--module-accent, var(--primary-color));
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link.active {
+    background: color-mix(in srgb, var(--module-accent, var(--primary-color)) 14%, var(--bg-tertiary));
+    color: var(--text-primary);
+    border-left-color: color-mix(in srgb, var(--module-accent, var(--primary-color)) 70%, var(--border-strong));
+}
+
+.docs-sidebar .sidebar-nav .sidebar-nav-link.active i {
+    color: var(--module-accent, var(--primary-color));
 }
 
 /* Mobile Sidebar Toggle */

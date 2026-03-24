@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">教程</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="00-introduction.html" class="">
@@ -168,11 +158,7 @@
         </a>
 <a href="02-iris-setup.html" class="active">
             <i class="fas fa-book"></i>
-            第二章：Iris 开发环境搭建
-        </a>
-<a href="03-create-simple-shader.html" class="">
-            <i class="fas fa-book"></i>
-            第三章：创建第一个 Shader
+            ⚙️ 第二章：开发环境搭建
         </a>
 <a href="03-first-color.html" class="">
             <i class="fas fa-book"></i>
@@ -180,23 +166,19 @@
         </a>
 <a href="04-shaderpack-structure.html" class="">
             <i class="fas fa-book"></i>
-            第四章：ShaderPack 结构详解
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
         </a>
 <a href="05-uniform-animation.html" class="">
             <i class="fas fa-book"></i>
             ✨ 第五章：Uniform 变量 - 让世界动起来！
         </a>
-<a href="05-uniform-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第五章：Uniform 入门
-        </a>
-<a href="06-postprocessing-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第六章：后处理效果入门
-        </a>
 <a href="06-postprocessing.html" class="">
             <i class="fas fa-book"></i>
             🔮 第六章：后处理魔法 - 全屏特效！
+        </a>
+<a href="07-create-shaderpack.html" class="">
+            <i class="fas fa-book"></i>
+            🏆 最终章：创造你的第一个光影包！
         </a>
             </nav>
             <div class="sidebar-footer">
@@ -206,6 +188,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -230,158 +217,292 @@
             </div>
 
             <div class="docs-body doc-content">
-                <h1>第二章：Iris 开发环境搭建</h1>
-<blockquote><p>搭建完整的 Iris 光影开发环境</p></blockquote>
+                <h1>⚙️ 第二章：开发环境搭建</h1>
+<blockquote><p>🎮 <em>准备好你的工具！</em></p></blockquote>
 <p><hr></p>
-<h2 id="环境要求">环境要求</h2>
-<h3>软件需求</h3>
-<table class="data-table"><thead><tr><th>软件</th><th>版本</th><th>说明</th></tr></thead><tbody><tr><td>Java Development Kit (JDK)</td><td>21+</td><td>必须，Minecraft 1.21 需要</td></tr><tr><td>Integrated Development Environment</td><td>-</td><td>推荐 IntelliJ IDEA</td></tr><tr><td>Git</td><td>-</td><td>用于克隆源码</td></tr><tr><td>Minecraft Launcher</td><td>-</td><td>游戏启动器</td></tr></tbody></table>
-<h3>可选软件</h3>
-<table class="data-table"><thead><tr><th>软件</th><th>用途</th></tr></thead><tbody><tr><td>Iris Mod</td><td>测试你的 ShaderPack</td></tr><tr><td>Sodium</td><td>搭配 Iris 使用</td></tr><tr><td>VSCode / IDEA</td><td>代码编辑</td></tr><tr><td>VSCode GLSL 插件</td><td>语法高亮</td></tr></tbody></table>
+<h2 id="本章目标">🎯 本章目标</h2>
+<pre class="code-block"><code class="language-text">完成本章后，你将：
+├── 💻 安装 JDK（Java 开发工具包）
+├── 📁 创建你的第一个 ShaderPack
+├── 🎮 在 Minecraft 中测试效果
+└── 🐛 学会调试常见问题</code></pre>
+<p><hr></p>
+<h2 id="你需要什么">🤔 你需要什么？</h2>
+<h3>工具清单</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 必需
+        A[JDK 21+] --> D[开始开发]
+    end
+
+    subgraph 可选但推荐
+        B[VSCode 或 IDEA] --> E[更好的开发体验]
+    end
+
+    subgraph 游戏
+        C[Minecraft + Iris] --> F[查看效果]
+    end
+
+    style A fill:#ffcccc
+    style B fill:#ccffcc
+    style C fill:#ccccff</div>
+</div>
+<table class="data-table"><thead><tr><th>工具</th><th>必须？</th><th>用途</th></tr></thead><tbody><tr><td>JDK 21+</td><td>✅ 是</td><td>运行 Minecraft</td></tr><tr><td>代码编辑器</td><td>推荐</td><td>写代码更方便</td></tr><tr><td>Minecraft + Iris</td><td>✅ 是</td><td>看效果</td></tr></tbody></table>
 <hr></p>
-<h2 id="第一步：安装 JDK 21">第一步：安装 JDK 21</h2>
-<h3>Windows</h3>
-<p><ul><li>访问 <a href="https://adoptium.net/" target="_blank" rel="noopener noreferrer">Adoptium</a> 下载 JDK 21</li>
-<li>运行安装程序</li>
-<li>设置环境变量：</li></ul></p>
-<pre class="code-block"><code class="language-powershell"># 在 PowerShell 中验证
-java -version</code></pre>
-<h3>验证安装</h3>
-<pre class="code-block"><code class="language-bash">$ java -version
-openjdk version &quot;21.0.x&quot; ...</code></pre>
-<p><hr></p>
-<h2 id="第二步：安装 IntelliJ IDEA">第二步：安装 IntelliJ IDEA</h2>
-<p><ul><li>访问 <a href="https://www.jetbrains.com/idea/" target="_blank" rel="noopener noreferrer">JetBrains</a> 下载 IDEA</li>
-<li>安装并启动</li>
-<li>安装 GLSL 插件：</li>
-</ul>   - <code>File</code> → <code>Settings</code> → <code>Plugins</code>
-   - 搜索 "GLSL" 并安装</p>
-<p><hr></p>
-<h2 id="第三步：克隆 Iris 源码">第三步：克隆 Iris 源码</h2>
-<h3>方法一：使用 Git</h3>
-<pre class="code-block"><code class="language-bash"># 克隆仓库
-git clone https://github.com/IrisShaders/Iris.git
+<h2 id="第一步安装-jdk">💻 第一步：安装 JDK</h2>
+<h3>什么是 JDK？</h3>
+<pre class="code-block"><code class="language-text">JDK = Java Development Kit
+     Java 开发工具包
 
-# 进入目录
-cd Iris
-
-# 查看分支
-git branch -a</code></pre>
-<h3>方法二：直接下载</h3>
-<p><ul><li>访问 <a href="https://github.com/IrisShaders/Iris/releases" target="_blank" rel="noopener noreferrer">Iris GitHub Releases</a></li>
-<li>下载源码包</li>
-<li>解压到本地目录</li></ul></p>
-<p><hr></p>
-<h2 id="第四步：导入项目">第四步：导入项目</h2>
-<h3>使用 IDEA 导入</h3>
-<p><ul><li><code>File</code> → <code>Open</code></li>
-<li>选择 Iris 项目根目录</li>
-<li>选择 "Import as Gradle project"</li>
-<li>等待依赖下载完成（约 5-10 分钟）</li></ul></p>
-<h3>目录结构</h3>
-<pre class="code-block"><code class="language-text">Iris/
-├── src/
-│   ├── main/
-│   │   ├── java/           # Java 源代码
-│   │   └── resources/      # 资源文件 (shader, mixin配置)
-│   └── sodiumCompatibility/ # Sodium 兼容代码
-├── build.gradle.kts         # Gradle 构建配置
-├── settings.gradle.kts      # 项目设置
-└── gradle.properties       # Gradle 属性</code></pre>
-<p><hr></p>
-<h2 id="第五步：运行开发版本">第五步：运行开发版本</h2>
-<h3>配置运行目标</h3>
-<p><ul><li>在 IDEA 中打开 Gradle 面板</li>
-<li>展开 <code>iris</code> → <code>Tasks</code> → <code>minecraft</code></li>
-<li>双击 <code>runClient</code> 运行测试客户端</li></ul></p>
-<h3>或使用命令行</h3>
-<pre class="code-block"><code class="language-bash"># Windows
-.\gradlew.bat runClient
-
-# macOS / Linux
-./gradlew runClient</code></pre>
-<p><hr></p>
-<h2 id="第六步：安装测试 Mod">第六步：安装测试 Mod</h2>
-<h3>必需 Mod</h3>
-<table class="data-table"><thead><tr><th>Mod</th><th>版本</th><th>用途</th></tr></thead><tbody><tr><td>Fabric Loader</td><td>0.15.x</td><td>Mod 加载器</td></tr><tr><td>Fabric API</td><td>0.100.x</td><td>Fabric API</td></tr><tr><td>Sodium</td><td>0.5.9+</td><td>渲染优化</td></tr><tr><td>Iris</td><td>1.7.3+</td><td>光影支持</td></tr></tbody></table>
+┌─────────────────────────────────────┐
+│                                     │
+│   你写的代码 (.java)               │
+│           ↓                         │
+│   JDK 编译器 (javac)               │
+│           ↓                         │
+│   字节码 (.class)                  │
+│           ↓                         │
+│   JVM 虚拟机运行                    │
+│                                     │
+└─────────────────────────────────────┘</code></pre>
+<h3>下载 JDK</h3>
+<p><ul><li>打开浏览器访问：<a href="https://adoptium.net/" target="_blank" rel="noopener noreferrer">Adoptium.net</a></li>
+<li>点击 "Download"</li>
+<li>选择 "JDK 21"（LTS 版本）</li>
+<li>下载 Windows x64 安装包</li></ul></p>
 <h3>安装步骤</h3>
-<p><ul><li>安装 Fabric Loader（如果未安装）</li>
-<li>启动一次游戏生成 <code>.minecraft/mods</code> 目录</li>
-<li>将上述 Mod 的 <code>.jar</code> 文件放入 <code>mods</code> 目录</li>
-<li>重新启动游戏</li></ul></p>
-<p><hr></p>
-<h2 id="第七步：创建测试 ShaderPack">第七步：创建测试 ShaderPack</h2>
-<h3>项目结构</h3>
-<pre class="code-block"><code class="language-text">MyShaderPack/
-├── shaderpacks/                    # 放入 Minecraft 目录
-│   └── my-shaderpack/
-│       ├── shaders.properties       # 配置文件
-│       └── shaders/
-│           ├── gbuffers_terrain.vsh
-│           ├── gbuffers_terrain.fsh
-│           ├── gbuffers_water.vsh
-│           ├── gbuffers_water.fsh
-│           ├── composite1.vsh
-│           ├── composite1.fsh
-│           └── ...
-└── build.gradle.kts               # 可选：自动化构建</code></pre>
-<h3>放入游戏目录</h3>
-<pre class="code-block"><code class="language-bash"># Windows
-C:\Users\你的用户名\AppData\Roaming\.minecraft\shaderpacks\
+<pre class="code-block"><code class="language-text">📦 安装向导
 
-# macOS
-~/Library/Application Support/minecraft/shaderpacks/
-
-# Linux
-~/.minecraft/shaderpacks/</code></pre>
+1️⃣ 欢迎界面 ──▶ 点击 &quot;Next&quot;
+       │
+       ▼
+2️⃣ 安装路径 ──▶ 建议：C:\Program Files\Eclipse Adoptium\jdk-21
+       │
+       ▼
+3️⃣ 完成 ──▶ 点击 &quot;Close&quot;</code></pre>
+<h3>验证安装</h3>
+<p>打开 PowerShell，输入：</p>
+<pre class="code-block"><code class="language-powershell">java -version</code></pre>
+<p>应该看到类似输出：</p>
+<pre class="code-block"><code class="language-text">openjdk version &quot;21.0.x&quot; ...</code></pre>
 <p><hr></p>
-<h2 id="常见问题">常见问题</h2>
-<h3>1. Gradle 同步失败</h3>
-<pre class="code-block"><code class="language-text">问题：Could not resolve net.fabricmc:fabric-loader:...
-解决：检查网络连接，或配置国内镜像</code></pre>
-<p>在 <code>build.gradle.kts</code> 中添加：</p>
-<pre class="code-block"><code class="language-kotlin">repositories {
-    maven(&quot;https://maven.aliyun.com/repository/public&quot;)
+<h2 id="第二步创建-shaderpack-骨架">📁 第二步：创建 ShaderPack 骨架</h2>
+<h3>你的第一个 ShaderPack</h3>
+<pre class="code-block"><code class="language-text">📁 shaderpacks/                          ← 放到 Minecraft 目录
+ └── 📁 my-awesome-shaders/            ← 你给光影包起的名字
+      └── 📁 shaders/                   ← 固定名字！
+           └── 📄 gbuffers_terrain.fsh  ← 关键文件！</code></pre>
+<h3>创建步骤</h3>
+<pre class="code-block"><code class="language-text">🎮 Windows 操作
+
+1️⃣ 打开文件资源管理器
+       │
+       ▼
+2️⃣ 导航到：C:\Users\你的用户名\AppData\Roaming\.minecraft
+       │     （如果看不到 AppData，勾选&quot;显示隐藏文件&quot;）
+       │
+       ▼
+3️⃣ 创建 shaderpacks 文件夹（如果没有）
+       │
+       ▼
+4️⃣ 在 shaderpacks 里创建你的文件夹
+       │
+       ▼
+5️⃣ 在里面创建 shaders 文件夹
+       │
+       ▼
+6️⃣ 在 shaders 里创建 gbuffers_terrain.fsh</code></pre>
+<h3>快速命令（PowerShell）</h3>
+<pre class="code-block"><code class="language-powershell"># 一条命令搞定！
+mkdir &quot;$env:APPDATA\.minecraft\shaderpacks\my-awesome-shaders\shaders&quot;
+cd &quot;$env:APPDATA\.minecraft\shaderpacks\my-awesome-shaders\shaders&quot;
+
+# 创建文件
+New-Item -Name &quot;gbuffers_terrain.fsh&quot; -ItemType File</code></pre>
+<p><hr></p>
+<h2 id="第三步写第一行代码">✍️ 第三步：写第一行代码</h2>
+<h3>用记事本打开文件</h3>
+<pre class="code-block"><code class="language-powershell"># 用记事本打开
+notepad &quot;$env:APPDATA\.minecraft\shaderpacks\my-awesome-shaders\shaders\gbuffers_terrain.fsh&quot;</code></pre>
+<h3>输入这个代码</h3>
+<pre class="code-block"><code class="language-glsl">#version 330 core
+
+in vec2 TexCoord;
+uniform sampler2D DiffuseSampler;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 texColor = texture(DiffuseSampler, TexCoord);
+    fragColor = texColor * 1.5;
 }</code></pre>
-<h3>2. JDK 版本不匹配</h3>
-<pre class="code-block"><code class="language-text">问题：Unsupported class file major version 65
-解决：确保使用 JDK 21</code></pre>
-<p>在 IDEA 中设置：
-<code>File</code> → <code>Project Structure</code> → <code>Project SDK</code> → 选择 21</p>
-<h3>3. 运行客户端无反应</h3>
-<p>检查 IDEA 控制台是否有错误日志，常见原因：
-<ul><li>显存不足（降低游戏分辨率）</li>
-<li>Mod 版本冲突</li>
-<li>Java 内存不足</li></ul></p>
+<h3>保存文件</h3>
+<pre class="code-block"><code class="language-text">Ctrl + S  ──▶  保存</code></pre>
 <p><hr></p>
-<h2 id="验证环境">验证环境</h2>
-<p>运行成功应该看到：</p>
-<pre class="code-block"><code class="language-text">&gt; Configure project :
-&gt; Task :runClient
-[游戏窗口打开]</code></pre>
-<p>在游戏中：
-<ul><li>进入 "Options" → "Video Settings" → "Shaders"</li>
-<li>选择你的测试 ShaderPack</li>
-<li>点击 "Done"</li></ul></p>
-<p><hr></p>
-<h2 id="下一步">下一步</h2>
-<p><ul><li><a href="03-create-simple-shader.html">第三章：创建第一个 Shader</a> - 编写你的第一个着色器</li>
-<li><a href="01-shader-basics.html">第一章：Shader 基础</a> - 复习 GLSL 基础</li></ul></p>
-<p><hr></p>
-<h2 id="附录：快捷命令">附录：快捷命令</h2>
-<pre class="code-block"><code class="language-bash"># 运行客户端
-./gradlew runClient
+<h2 id="第四步在游戏中测试">🎮 第四步：在游戏中测试</h2>
+<h3>启动 Minecraft</h3>
+<p><ul><li>打开 Minecraft Launcher</li>
+<li>确保使用 Fabric 1.21 版本</li>
+<li>进入游戏</li></ul></p>
+<h3>加载 ShaderPack</h3>
+<pre class="code-block"><code class="language-text">🎮 操作步骤
 
-# 构建发布版本
-./gradlew build
+主菜单
+  │
+  ▼
+选项 (Options)
+  │
+  ▼
+视频设置 (Video Settings)
+  │
+  ▼
+着色器 (Shaders)
+  │
+  ▼
+🎨 我的着色器列表
+  │
+  ▼
+选择 &quot;my-awesome-shaders&quot;
+  │
+  ▼
+点击 &quot;完成&quot; (Done)</code></pre>
+<h3>查看效果</h3>
+<pre class="code-block"><code class="language-text">✅ 成功指标
 
-# 清理并重新构建
-./gradlew clean build
+┌─────────────────────────────┐
+│                             │
+│   世界变亮了！              │
+│   (亮度增加 50%)           │
+│                             │
+│   草更绿，天更蓝          │
+│   整体更明亮              │
+│                             │
+└─────────────────────────────┘
 
-# 只编译 Java
-./gradlew compileJava</code></pre>
+❌ 失败标志
+
+- 世界全黑 → 检查代码是否写错
+- 世界全白 → 检查 * 1.5 是否太大
+- 报错信息 → 查看下面的常见问题</code></pre>
 <p><hr></p>
-<p><em>教程版本：Iris 1.7.x / Minecraft 1.21</em>
+<h2 id="第五步常见问题排解">🐛 第五步：常见问题排解</h2>
+<h3>问题 1：找不到 AppData 文件夹</h3>
+<pre class="code-block"><code class="language-text">📂 显示隐藏文件
+
+Windows 11:
+资源管理器 → 查看 → 显示 → ☑ 隐藏的项目
+
+Windows 10:
+资源管理器 → 查看 → 选项 → 查看 → ☑ 显示隐藏文件</code></pre>
+<h3>问题 2：世界全黑/全白</h3>
+<pre class="code-block"><code class="language-diff"># 如果全黑，检查是否乘了 0
+- fragColor = texColor * 0.0;  // ❌ 乘以0 = 全黑
+
+# 如果全白，检查是否乘得太大
+- fragColor = texColor * 100.0;  // ❌ 太大 = 全白
+
+# 正确的做法
++ fragColor = texColor * 1.5;  // ✅ 1.5 = 亮50%
++ fragColor = texColor;  // ✅ 1.0 = 原色
++ fragColor = texColor * 0.5;  // ✅ 0.5 = 暗一半</code></pre>
+<h3>问题 3：ShaderPack 不在列表里</h3>
+<pre class="code-block"><code class="language-text">检查清单：
+
+☐ 文件夹在正确位置？(shaderpacks/)
+☐ shaders 文件夹存在？
+☐ gbuffers_terrain.fsh 存在？
+☐ 扩展名是 .fsh 不是 .txt？
+☐ 名称拼写正确？</code></pre>
+<h3>问题 4：游戏崩溃</h3>
+<pre class="code-block"><code class="language-diff"># 最简单的测试代码
++ #version 330 core
++
++ in vec2 TexCoord;
++ uniform sampler2D DiffuseSampler;
++
++ out vec4 fragColor;
++
++ void main() {
++     fragColor = vec4(1.0, 0.0, 0.0, 1.0);
++ }
+# 这会显示纯红色，如果能显示说明基本功能正常</code></pre>
+<p><hr></p>
+<h2 id="推荐安装代码编辑器">🛠️ 推荐：安装代码编辑器</h2>
+<h3>为什么用代码编辑器？</h3>
+<table class="data-table"><thead><tr><th>功能</th><th>记事本</th><th>VSCode</th></tr></thead><tbody><tr><td>语法高亮</td><td>❌</td><td>✅</td></tr><tr><td>括号匹配</td><td>❌</td><td>✅</td></tr><tr><td>自动补全</td><td>❌</td><td>✅</td></tr><tr><td>代码折叠</td><td>❌</td><td>✅</td></tr><tr><td>错误提示</td><td>❌</td><td>✅</td></tr></tbody></table>
+<h3>安装 VSCode</h3>
+<p><ul><li>访问 <a href="https://code.visualstudio.com/" target="_blank" rel="noopener noreferrer">code.visualstudio.com</a></li>
+<li>下载 Windows 版本</li>
+<li>安装（默认设置即可）</li></ul></p>
+<h3>安装 GLSL 插件</h3>
+<pre class="code-block"><code class="language-text">1️⃣ 打开 VSCode
+       │
+       ▼
+2️⃣ 点击左侧扩展图标（或 Ctrl+Shift+X）
+       │
+       ▼
+3️⃣ 搜索 &quot;GLSL&quot;
+       │
+       ▼
+4️⃣ 安装 &quot;GLSL Linter&quot; 或类似插件</code></pre>
+<p><hr></p>
+<h2 id="环境检查清单">📊 环境检查清单</h2>
+<pre class="code-block"><code class="language-text">✅ 完成清单
+
+☐ JDK 21 已安装
+☐ java -version 能显示版本
+☐ shaderpacks 文件夹已创建
+☐ my-awesome-shaders 已创建
+☐ shaders 文件夹已创建
+☐ gbuffers_terrain.fsh 已创建
+☐ 第一行代码已写入
+☐ Minecraft + Fabric 已安装
+☐ Iris Mod 已安装
+☐ ShaderPack 已加载
+☐ 效果已显示</code></pre>
+<p><hr></p>
+<h2 id="小挑战">🎯 小挑战</h2>
+<h3>挑战 1：变暗</h3>
+<p>修改代码，让世界变暗而不是变亮。</p>
+<p><details>
+<summary>👆 答案</summary></p>
+<pre class="code-block"><code class="language-glsl">fragColor = texColor * 0.5;  // 0.5 = 暗一半</code></pre>
+<p></details></p>
+<h3>挑战 2：反向颜色</h3>
+<p>让颜色反相（红色变青色等）</p>
+<p><details>
+<summary>👆 提示</summary></p>
+<pre class="code-block"><code class="language-glsl"># 1.0 - 原色 = 反相
+fragColor = vec4(1.0 - texColor.rgb, texColor.a);</code></pre>
+<p></details></p>
+<p><hr></p>
+<h2 id="本章总结">📊 本章总结</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">mindmap
+  root((第二章))
+    安装JDK
+      adoptium.net下载
+      JDK21 LTS
+      验证java -version
+    创建结构
+      shaderpacks目录
+      shaders文件夹
+      gbuffers_terrain.fsh
+    写代码
+      #version 330 core
+      texture采样
+      调整输出
+    测试运行
+      Minecraft加载
+      效果验证
+      问题调试</div>
+</div>
+<p><hr></p>
+<h2 id="下一步">🚀 下一步</h2>
+<p>👉 <a href="03-first-color.html">🎨 第三章：第一个颜色魔法 - 让世界变亮/变暗/变色！</a></p>
+<p><hr></p>
+<p><em>🎉 恭喜你完成环境搭建！</em></p>
+<p><em>下一章我们将学习如何调整颜色！</em>
 </p>
             </div>
 
@@ -389,8 +510,8 @@ C:\Users\你的用户名\AppData\Roaming\.minecraft\shaderpacks\
                 <div class="prev-next"><a href="01-shader-basics.html" class="prev">
             <i class="fas fa-arrow-left"></i>
             🚀 第一章：Shader 是什么？
-        </a><a href="03-create-simple-shader.html" class="next">
-            第三章：创建第一个 Shader
+        </a><a href="03-first-color.html" class="next">
+            🎨 第三章：第一个颜色魔法
             <i class="fas fa-arrow-right"></i>
         </a></div>
             </div>
@@ -399,6 +520,7 @@ C:\Users\你的用户名\AppData\Roaming\.minecraft\shaderpacks\
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -421,5 +543,6 @@ C:\Users\你的用户名\AppData\Roaming\.minecraft\shaderpacks\
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

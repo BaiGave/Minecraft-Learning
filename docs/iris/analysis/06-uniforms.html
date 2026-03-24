@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
@@ -199,6 +189,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -224,12 +219,12 @@
             <div class="docs-body doc-content">
                 <h1>Iris Uniform 系统</h1>
 <blockquote><p>统一变量管理与更新机制</p></blockquote>
-<h2 id="1. 概述">1. 概述</h2>
+<h2 id="1-概述">1. 概述</h2>
 <p>Iris 的 Uniform 系统负责向着色器提供各种游戏状态数据，包括相机、生物群系、时间、光照等。</p>
 <p><strong>核心文件</strong>：</p>
 <table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td><code>CommonUniforms</code></td><td><code>uniforms/CommonUniforms.java</code></td></tr><tr><td><code>CameraUniforms</code></td><td><code>uniforms/CameraUniforms.java</code></td></tr><tr><td><code>BiomeUniforms</code></td><td><code>uniforms/BiomeUniforms.java</code></td></tr><tr><td><code>MatrixUniforms</code></td><td><code>uniforms/MatrixUniforms.java</code></td></tr><tr><td><code>CustomUniforms</code></td><td><code>uniforms/custom/CustomUniforms.java</code></td></tr></tbody></table>
 <hr></p>
-<h2 id="2. Uniform 更新频率">2. Uniform 更新频率</h2>
+<h2 id="2-uniform-更新频率">2. Uniform 更新频率</h2>
 <pre class="code-block"><code class="language-java">    /** 仅设置一次 */
     ONCE,
     
@@ -243,7 +238,7 @@
     CUSTOM
 }</code></pre>
 <p><hr></p>
-<h2 id="3. CommonUniforms">3. CommonUniforms</h2>
+<h2 id="3-commonuniforms">3. CommonUniforms</h2>
 <p>提供着色器需要的所有通用 Uniform：</p>
 <pre class="code-block"><code class="language-java">                                    PackDirectives directives, FrameUpdateNotifier updateNotifier, 
                                     FogMode fogMode) {
@@ -318,7 +313,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
         StateUpdateNotifiers.phaseChangeNotifier);
 }</code></pre>
 <p><hr></p>
-<h2 id="4. 相机 Uniform">4. 相机 Uniform</h2>
+<h2 id="4-相机-uniform">4. 相机 Uniform</h2>
 <pre class="code-block"><code class="language-java">    public static void addCameraUniforms(UniformHolder uniforms, FrameUpdateNotifier updateNotifier) {
         // 世界空间相机位置
         uniforms.uniform3d(PER_FRAME, &quot;cameraPosition&quot;, CameraUniforms::getCameraPosition);
@@ -344,7 +339,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="5. 天体 Uniform">5. 天体 Uniform</h2>
+<h2 id="5-天体-uniform">5. 天体 Uniform</h2>
 <pre class="code-block"><code class="language-java">    private final float sunPathRotation;
     
     public void addCelestialUniforms(UniformHolder uniforms) {
@@ -386,7 +381,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="6. 矩阵 Uniform">6. 矩阵 Uniform</h2>
+<h2 id="6-矩阵-uniform">6. 矩阵 Uniform</h2>
 <pre class="code-block"><code class="language-java">    public static void addMatrixUniforms(UniformHolder uniforms, PackDirectives directives) {
         // GBuffer 矩阵
         uniforms.uniformMatrix4f(PER_FRAME, false, &quot;gbufferModelView&quot;, 
@@ -406,7 +401,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="7. 自定义 Uniform">7. 自定义 Uniform</h2>
+<h2 id="7-自定义-uniform">7. 自定义 Uniform</h2>
 <h3>7.1 CustomUniforms</h3>
 <pre class="code-block"><code class="language-java">    private final Map&lt;String, CustomUniformHolder&gt; uniforms = new HashMap&lt;&gt;();
     private final Builder builder;
@@ -480,7 +475,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="8. CapturedRenderingState">8. CapturedRenderingState</h2>
+<h2 id="8-capturedrenderingstate">8. CapturedRenderingState</h2>
 <p>捕获的渲染状态：</p>
 <pre class="code-block"><code class="language-java">    public static final CapturedRenderingState INSTANCE = new CapturedRenderingState();
     
@@ -510,7 +505,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="9. UniformHolder">9. UniformHolder</h2>
+<h2 id="9-uniformholder">9. UniformHolder</h2>
 <h3>9.1 创建 Uniform</h3>
 <pre class="code-block"><code class="language-java">    // 单值 Uniform
     UniformHolder uniform1i(String name, Supplier&lt;Integer&gt; supplier, ...);
@@ -527,7 +522,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     UniformHolder uniformMatrix4f(boolean transpose, String name, Supplier&lt;Matrix4f&gt; supplier, ...);
 }</code></pre>
 <p><hr></p>
-<h2 id="10. Uniform 推送机制">10. Uniform 推送机制</h2>
+<h2 id="10-uniform-推送机制">10. Uniform 推送机制</h2>
 <pre class="code-block"><code class="language-java">    FullScreenQuadRenderer.INSTANCE.begin();
     
     for (Pass renderPass : passes) {
@@ -542,7 +537,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="11. 相关文档">11. 相关文档</h2>
+<h2 id="11-相关文档">11. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
 <li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线</li>
 <li><a href="03-shaderpack-system.html">03-shaderpack-system</a> - 着色器包系统</li>
@@ -567,6 +562,7 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -589,5 +585,6 @@ public static void addNonDynamicUniforms(UniformHolder uniforms, IdMap idMap,
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

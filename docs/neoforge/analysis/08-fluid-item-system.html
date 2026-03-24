@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>08 fluid item system - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>08 fluid item system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    08 fluid item system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>流体与物品系统</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-流体系统">2. 流体系统</a></li>
+</ul>  - <a href="#21-fluidtype">2.1 FluidType</a>
+  - <a href="#22-fluidstack">2.2 FluidStack</a>
+  - <a href="#23-fluidutil">2.3 FluidUtil</a>
+  - <a href="#24-baseflowingfluid">2.4 BaseFlowingFluid</a>
+  - <a href="#25-fluidinteractionregistry">2.5 FluidInteractionRegistry</a>
+  - <a href="#26-fluidtank">2.6 FluidTank</a>
+<ul><li><a href="#3-物品系统">3. 物品系统</a></li>
+</ul>  - <a href="#31-iitemhandler">3.1 IItemHandler</a>
+  - <a href="#32-invwrapper">3.2 InvWrapper</a>
+  - <a href="#33-playerinvwrapper">3.3 PlayerInvWrapper</a>
+<ul><li><a href="#4-工作流程图">4. 工作流程图</a></li>
+<li><a href="#5-api-使用示例">5. API 使用示例</a></li>
+<li><a href="#6-与其他系统交互">6. 与其他系统交互</a></li>
+<li><a href="#7-总结">7. 总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>NeoForge 1.21.x 的流体与物品系统是模组开发中最核心的基础设施之一。这两个系统共同构成了游戏中资源传输的基础架构。</p>
+<h3>核心设计理念</h3>
+<p><strong>流体系统</strong>负责管理游戏中液态资源的存储和传输，包括：
+<ul><li>自定义流体的创建和管理</li>
+<li>流体堆（FluidStack）的操作</li>
+<li>流体与方块/物品的交互</li>
+<li>流体之间的相互作用（如熔岩遇水凝固）</li></ul></p>
+<p><strong>物品系统</strong>则管理物品的存储和传输：
+<ul><li>物品处理器接口（IItemHandler）</li>
+<li>物品堆处理器（ItemStackHandler）</li>
+<li>背包包装器（InvWrapper、PlayerInvWrapper）</li></ul></p>
+<blockquote><p><strong>关键术语</strong>：</p></blockquote>
+<blockquote><p>- <strong>FluidStack</strong>：流体堆，类似 ItemStack，代表一定数量的流体</p></blockquote>
+<blockquote><p>- <strong>IItemHandler</strong>：物品处理器接口，定义了物品存储的标准方法</p></blockquote>
+<blockquote><p>- <strong>ResourceHandler</strong>：NeoForge 1.21.9 引入的新传输系统</p></blockquote>
+<h3>架构演进</h3>
+<p>值得注意的是，NeoForge 1.21.9 引入了全新的 <strong>Transfer API</strong>，原有的 <code>IFluidHandler</code> 和 <code>IItemHandler</code> 接口已被标记为 <code>@Deprecated</code>。新系统基于 <code>ResourceHandler<T></code> 泛型类，提供更统一的资源传输接口。</p>
+<p><hr></p>
+<h2 id="2-流体系统">2. 流体系统</h2>
+<h3>2.1 FluidType</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\fluids\FluidType.java</code></p>
+<p>FluidType 是流体类型的定义类，定义了流体的通用属性和方法。</p>
+<h4>类职责</h4>
+<p>FluidType 不代表具体的流体实例，而是为 <code>Fluid</code> 提供属性定义。这种设计将流体的视觉/行为属性与实际存储分离。</p>
+<h4>核心属性</h4>
+<pre class="code-block"><code class="language-java">public static final int BUCKET_VOLUME = 1000;
+
+// 物理属性
+private final int lightLevel;        // 光照等级 [0-15]
+private final int density;          // 密度 kg/m³
+private final int temperature;      // 温度 Kelvin
+private final int viscosity;        // 粘度 m/s²
+private final Rarity rarity;        // 稀有度
+
+// 行为属性
+private final boolean canPushEntity;    // 能否推动实体
+private final boolean canSwim;          // 能否游泳
+private final boolean canDrown;         // 能否溺水
+private final boolean supportsBoating;   // 能否划船
+private final boolean isWaterLike;      // 是否像水一样</code></pre>
+<h4>关键方法</h4>
+<table class="data-table"><thead><tr><th>方法</th><th>说明</th></tr></thead><tbody><tr><td><code>getLightLevel()</code></td><td>获取流体光照等级</td></tr><tr><td><code>getDensity()</code></td><td>获取流体密度</td></tr><tr><td><code>getTemperature()</code></td><td>获取流体温度</td></tr><tr><td><code>getViscosity()</code></td><td>获取流体粘度</td></tr><tr><td><code>canPushEntity(Entity)</code></td><td>判断流体能否推动实体</td></tr><tr><td><code>canSwim(Entity)</code></td><td>判断实体能否在流体中游泳</td></tr><tr><td><code>getBucket(FluidStack)</code></td><td>获取装有这个流体的桶</td></tr></tbody></table>
+<h4>创建自定义 FluidType</h4>
+<pre class="code-block"><code class="language-java">public static final FluidType EXAMPLE_TYPE = new FluidType(
+    FluidType.Properties.create()
+        .descriptionId(&quot;fluid.example&quot;)
+        .density(1000)
+        .temperature(300)
+        .viscosity(1000)
+        .rarity(Rarity.COMMON)
+        .isWaterLike(true)
+        .supportsBoating(true)
+        .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+        .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)
+) {};</code></pre>
+<h4>Dripstone 滴水机制</h4>
+<p>FluidType 支持滴水石（Pointed Dripstone）滴水到炼药锅的机制：</p>
+<pre class="code-block"><code class="language-java">public record DripstoneDripInfo(
+    float chance,                      // 每次刻触发的概率 [0.0-1.0]
+    @Nullable ParticleOptions dripParticle,  // 滴水粒子
+    Block filledCauldron                // 填充后的炼药锅
+) {}
+
+// 配置示例
+Properties.addDripstoneDripping(
+    0.2f,                        // 20% 概率
+    ParticleTypes.DRIPPING_WATER, // 滴水粒子
+    Blocks.WATER_CAULDRON,        // 填充后的炼药锅
+    SoundEvents.CAULDRON_DRIP     // 滴水音效
+);</code></pre>
+<p><hr></p>
+<h3>2.2 FluidStack</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\fluids\FluidStack.java</code></p>
+<p>FluidStack 是流体的堆叠表示，类似于 Minecraft 中的 ItemStack。</p>
+<h4>核心特性</h4>
+<p><ul><li><strong>必须有数量</strong>：与 ItemStack 不同，FluidStack 必须有 amount，不能默认为 1</li>
+<li><strong>支持数据组件</strong>：与物品系统一样支持 DataComponentPatch</li>
+<li><strong>不可变语义</strong>：某些操作返回新实例而非修改原实例</li></ul></p>
+<h4>序列化支持</h4>
+<pre class="code-block"><code class="language-java">public static final Codec&lt;FluidStack&gt; CODEC = ...
+public static final MapCodec&lt;FluidStack&gt; MAP_CODEC = ...
+
+// 可选编解码器（接受空堆，序列化时为空对象）
+public static final Codec&lt;FluidStack&gt; OPTIONAL_CODEC = ...
+
+// 网络传输流编解码器
+public static final StreamCodec&lt;RegistryFriendlyByteBuf, FluidStack&gt; STREAM_CODEC = ...
+
+// 固定数量的编解码器
+public static Codec&lt;FluidStack&gt; fixedAmountCodec(int amount) { ... }</code></pre>
+<h4>常用方法</h4>
+<pre class="code-block"><code class="language-java">FluidStack stack = new FluidStack(fluid, 1000);
+
+// 查询
+int amount = stack.getAmount();
+Fluid fluid = stack.getFluid();
+FluidType type = stack.getFluidType();
+boolean isEmpty = stack.isEmpty();
+
+// 修改
+stack.setAmount(500);
+stack.grow(100);      // 增加 100
+stack.shrink(50);     // 减少 50
+
+// 分割
+FluidStack split = stack.split(500);  // 分割出 500，返回新实例
+
+// 复制
+FluidStack copy = stack.copy();
+
+// 比较
+boolean same = FluidStack.isSameFluid(first, second);
+boolean sameWithComp = FluidStack.isSameFluidSameComponents(first, second);
+boolean matches = FluidStack.matches(first, second);  // 包含数量比较</code></pre>
+<h4>数据组件</h4>
+<pre class="code-block"><code class="language-java">DataComponentType&lt;CustomData&gt; type = DataComponents.CUSTOM_DATA;
+stack.set(type, customData);
+
+// 获取数据组件
+CustomData data = stack.getOrDefault(type, defaultValue);
+
+// 获取组件补丁
+DataComponentPatch patch = stack.getComponentsPatch();</code></pre>
+<p><hr></p>
+<h3>2.3 FluidUtil</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\fluids\FluidUtil.java</code></p>
+<blockquote><p><strong>注意</strong>：此类已在 1.21.9 标记为 <code>@Deprecated</code>，建议使用新的 Transfer API。</p></blockquote>
+<p>FluidUtil 提供了一系列处理流体交互的工具方法。</p>
+<h4>核心功能</h4>
+<p><strong>1. 玩家与流体处理器交互</strong></p>
+<pre class="code-block"><code class="language-java">boolean success = FluidUtil.interactWithFluidHandler(
+    player,      // 玩家
+    hand,        // 交互的手
+    level,       // 世界
+    pos,         // 方块位置
+    side         // 交互的面（可为 null）
+);</code></pre>
+<p><strong>2. 填充/排空容器</strong></p>
+<pre class="code-block"><code class="language-java">FluidActionResult result = FluidUtil.tryFillContainer(
+    emptyBucket,     // 空容器
+    fluidHandler,    // 流体源
+    1000,            // 最大量
+    player,          // 玩家（播放音效）
+    true             // 执行 vs 模拟
+);
+
+// 排空容器（到流体目标）
+FluidActionResult result = FluidUtil.tryEmptyContainer(
+    waterBucket,     // 水桶
+    tank,            // 流体罐
+    1000,
+    player,
+    true
+);
+
+// 带自动存储的版本（处理堆叠情况）
+FluidActionResult result = FluidUtil.tryFillContainerAndStow(
+    emptyContainer,  // 空容器
+    fluidSource,     // 流体源
+    inventory,       // 背包（存储多余的桶）
+    maxAmount,
+    player,
+    doFill
+);</code></pre>
+<p><strong>3. 流体传输</strong></p>
+<pre class="code-block"><code class="language-java">FluidStack transferred = FluidUtil.tryFluidTransfer(
+    destination,     // 目标处理器
+    source,         // 源处理器
+    1000,           // 最大量
+    true            // 执行
+);</code></pre>
+<p><strong>4. 获取流体处理器</strong></p>
+<pre class="code-block"><code class="language-java">Optional&lt;IFluidHandlerItem&gt; handler = FluidUtil.getFluidHandler(itemStack);
+
+// 获取方块的流体处理器
+Optional&lt;IFluidHandler&gt; handler = FluidUtil.getFluidHandler(level, pos, side);</code></pre>
+<p><strong>5. 放置流体</strong></p>
+<pre class="code-block"><code class="language-java">boolean success = FluidUtil.tryPlaceFluid(
+    player,
+    level,
+    hand,
+    pos,
+    container,
+    resource
+);</code></pre>
+<p><hr></p>
+<h3>2.4 BaseFlowingFluid</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\eoforged\neoforge\fluids\BaseFlowingFluid.java</code></p>
+<p>BaseFlowingFluid 是创建自定义流动流体的基础抽象类。</p>
+<h4>继承结构</h4>
+<pre class="code-block"><code class="language-text">FlowingFluid (Minecraft)
+    └── BaseFlowingFluid (NeoForge)
+            ├── Source (源流体，永远是满的)
+            └── Flowing (流动流体，有 level 属性)</code></pre>
+<h4>创建自定义流体</h4>
+<pre class="code-block"><code class="language-java">public static final Fluid SOURCE = new BaseFlowingFluid.Source(
+    new BaseFlowingFluid.Properties(
+        () -&gt; EXAMPLE_FLUID_TYPE,  // FluidType
+        () -&gt; SOURCE,              // 源流体自身
+        () -&gt; FLOWING               // 流动变体
+    )
+    .bucket(() -&gt; EXAMPLE_BUCKET)           // 桶物品
+    .block(() -&gt; EXAMPLE_FLUID_BLOCK)       // 方块
+    .slopeFindDistance(4)                   // 斜坡寻找距离
+    .levelDecreasePerBlock(1)               // 每格下降量
+    .tickRate(5)                            // 刻更新频率
+    .explosionResistance(1.0f)              // 爆炸抗性
+);
+
+// 2. 定义流动变体
+public static final Fluid FLOWING = new BaseFlowingFluid.Flowing(
+    new BaseFlowingFluid.Properties(
+        () -&gt; EXAMPLE_FLUID_TYPE,
+        () -&gt; SOURCE,
+        () -&gt; FLOWING
+    )
+    .bucket(() -&gt; EXAMPLE_BUCKET)
+    .block(() -&gt; EXAMPLE_FLUID_BLOCK)
+);</code></pre>
+<h4>关键方法覆盖</h4>
+<pre class="code-block"><code class="language-java">@Override
+public FluidType getFluidType() {
+    return this.fluidType.get();
+}
+
+@Override
+public boolean isSame(Fluid fluidIn) {
+    return fluidIn == SOURCE || fluidIn == FLOWING;
+}
+
+@Override
+protected int getSlopeFindDistance(LevelReader worldIn) {
+    return slopeFindDistance;
+}</code></pre>
+<p><hr></p>
+<h3>2.5 FluidInteractionRegistry</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\fluids\FluidInteractionRegistry.java</code></p>
+<p>流体交互注册表允许定义流体之间的化学反应。</p>
+<h4>内置交互</h4>
+<pre class="code-block"><code class="language-java">static {
+    // 熔岩 + 水 = 黑曜石（源熔岩）/ 圆石（流动熔岩）
+    addInteraction(NeoForgeMod.LAVA_TYPE.value(), new InteractionInformation(
+        NeoForgeMod.WATER_TYPE.value(),
+        fluidState -&gt; fluidState.isSource() ? Blocks.OBSIDIAN.defaultBlockState() 
+                                            : Blocks.COBBLESTONE.defaultBlockState()
+    ));
+
+    // 熔岩 + 灵魂土（下方）+ 蓝冰 = 玄武岩
+    addInteraction(NeoForgeMod.LAVA_TYPE.value(), new InteractionInformation(
+        (level, currentPos, relativePos, currentState) -&gt; 
+            level.getBlockState(currentPos.below()).is(Blocks.SOUL_SOIL) &amp;&amp; 
+            level.getBlockState(relativePos).is(Blocks.BLUE_ICE),
+        Blocks.BASALT.defaultBlockState()
+    ));
+}</code></pre>
+<h4>自定义交互</h4>
+<pre class="code-block"><code class="language-java">FluidInteractionRegistry.addInteraction(
+    MY_FLUID_TYPE,
+    new InteractionInformation(
+        TARGET_FLUID_TYPE,
+        Blocks.MY_RESULT_BLOCK.defaultBlockState()
+    )
+);
+
+// 方式2：自定义条件
+FluidInteractionRegistry.addInteraction(
+    MY_FLUID_TYPE,
+    new InteractionInformation(
+        (level, currentPos, relativePos, currentState) -&gt; {
+            // 自定义判断逻辑
+            return level.getBlockState(relativePos).is(Blocks.CAULDRON);
+        },
+        Blocks.MAGMA_BLOCK.defaultBlockState()
+    )
+);
+
+// 方式3：基于流体状态的动态结果
+FluidInteractionRegistry.addInteraction(
+    MY_FLUID_TYPE,
+    new InteractionInformation(
+        TARGET_FLUID_TYPE,
+        fluidState -&gt; fluidState.isSource() ? RESULT_A : RESULT_B
+    )
+);</code></pre>
+<p><hr></p>
+<h3>2.6 FluidTank</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\fluids\capability\templates\FluidTank.java</code></p>
+<blockquote><p><strong>注意</strong>：此类已在 1.21.9 标记为 <code>@Deprecated</code>。</p></blockquote>
+<p>FluidTank 是流体存储的实现模板类。</p>
+<h4>构造方法</h4>
+<pre class="code-block"><code class="language-java">FluidTank tank = new FluidTank(10000);  // 容量 10000
+
+// 带验证器
+FluidTank tank = new FluidTank(10000, stack -&gt; {
+    // 只接受水
+    return stack.is(Fluids.WATER);
+});</code></pre>
+<h4>核心操作</h4>
+<pre class="code-block"><code class="language-java">int filled = tank.fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+
+// 排空
+FluidStack drained = tank.drain(1000, IFluidHandler.FluidAction.EXECUTE);
+
+// 查询
+FluidStack contents = tank.getFluid();
+int amount = tank.getFluidAmount();
+int capacity = tank.getCapacity();
+int space = tank.getSpace();
+boolean isEmpty = tank.isEmpty();
+
+// 验证
+boolean valid = tank.isFluidValid(fluidStack);</code></pre>
+<h4>容量限制</h4>
+<pre class="code-block"><code class="language-java">tank.setCapacity(20000);
+
+// 链式调用
+new FluidTank(10000)
+    .setCapacity(20000)
+    .setValidator(stack -&gt; stack.is(Fluids.WATER));</code></pre>
+<p><hr></p>
+<h2 id="3-物品系统">3. 物品系统</h2>
+<h3>3.1 IItemHandler</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\items\IItemHandler.java</code></p>
+<blockquote><p><strong>注意</strong>：此类已在 1.21.9 标记为 <code>@Deprecated</code>，建议使用新的 Transfer API。</p></blockquote>
+<p>物品处理器接口定义了物品存储的标准方法。</p>
+<h4>接口方法</h4>
+<pre class="code-block"><code class="language-java">public interface IItemHandler {
+    // 槽位数量
+    int getSlots();
+    
+    // 获取槽位物品（不可修改！）
+    ItemStack getStackInSlot(int slot);
+    
+    // 插入物品，返回剩余
+    ItemStack insertItem(int slot, ItemStack stack, boolean simulate);
+    
+    // 提取物品
+    ItemStack extractItem(int slot, int amount, boolean simulate);
+    
+    // 槽位容量限制
+    int getSlotLimit(int slot);
+    
+    // 是否可以放置（不考虑当前状态）
+    boolean isItemValid(int slot, ItemStack stack);
+}</code></pre>
+<h4>适配器</h4>
+<pre class="code-block"><code class="language-java">IItemHandler wrapper = IItemHandler.of(resourceHandler);</code></pre>
+<h3>3.2 InvWrapper</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\items\wrapper\InvWrapper.java</code></p>
+<blockquote><p><strong>注意</strong>：此类已在 1.21.9 标记为 <code>@Deprecated</code>，建议使用 <code>VanillaContainerWrapper</code>。</p></blockquote>
+<p>InvWrapper 将 Minecraft 的 <code>Container</code> 适配为 <code>IItemHandler</code>。</p>
+<h4>使用方式</h4>
+<pre class="code-block"><code class="language-java">Container container = new SimpleContainer(9);  // 9 槽箱子
+IItemHandler handler = new InvWrapper(container);
+
+// 操作
+ItemStack stack = handler.getStackInSlot(0);
+ItemStack remaining = handler.insertItem(0, new ItemStack(Items.DIAMOND, 5), false);
+ItemStack extracted = handler.extractItem(0, 3, false);</code></pre>
+<h4>内部实现</h4>
+<pre class="code-block"><code class="language-java">@Override
+public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+    if (stack.isEmpty()) return ItemStack.EMPTY;
+    
+    ItemStack stackInSlot = getInv().getItem(slot);
+    
+    if (!stackInSlot.isEmpty()) {
+        // 槽位有物品，尝试堆叠
+        if (!ItemStack.isSameItemSameComponents(stack, stackInSlot)) {
+            return stack;  // 物品不同，无法堆叠
+        }
+        
+        int space = Math.min(stack.getMaxStackSize(), getSlotLimit(slot)) - stackInSlot.getCount();
+        if (stack.getCount() &lt;= space) {
+            // 全部可以放入
+            if (!simulate) {
+                ItemStack copy = stack.copy();
+                copy.grow(stackInSlot.getCount());
+                getInv().setItem(slot, copy);
+            }
+            return ItemStack.EMPTY;
+        }
+        // 部分放入
+        ...
+    } else {
+        // 槽位为空
+        int limit = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
+        if (stack.getCount() &lt;= limit) {
+            if (!simulate) getInv().setItem(slot, stack);
+            return ItemStack.EMPTY;
+        }
+        ...
+    }
+}</code></pre>
+<h3>3.3 PlayerInvWrapper</h3>
+<p><strong>源码路径</strong>：<code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\main\java\net\neoforged\neoforge\items\wrapper\PlayerInvWrapper.java</code></p>
+<p>PlayerInvWrapper 专门包装玩家背包，包含主物品栏、装备栏和副手栏。</p>
+<h4>结构</h4>
+<pre class="code-block"><code class="language-java">public class PlayerInvWrapper extends CombinedInvWrapper {
+    public PlayerInvWrapper(Inventory inv) {
+        super(
+            new PlayerMainInvWrapper(inv),   // 27 槽主物品栏
+            new PlayerArmorInvWrapper(inv),   // 4 槽装备栏
+            new PlayerOffhandInvWrapper(inv) // 1 槽副手
+        );
+    }
+}</code></pre>
+<h4>槽位索引</h4>
+<table class="data-table"><thead><tr><th>范围</th><th>内容</th></tr></thead><tbody><tr><td>0-26</td><td>主物品栏</td></tr><tr><td>27-30</td><td>装备栏（头盔、胸甲、护腿、靴子）</td></tr><tr><td>31</td><td>副手</td></tr></tbody></table>
+<hr></p>
+<h2 id="4-工作流程图">4. 工作流程图</h2>
+<h3>4.1 流体交互流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph 玩家操作
+        A[玩家右键点击] --> B{手持物品类型}
+    end
+    
+    subgraph 物品处理
+        B -->|流体容器| C[获取 IFluidHandlerItem]
+        B -->|普通物品| D[常规交互]
+    end
+    
+    subgraph 流体处理器
+        C --> E{处理器类型}
+        E -->|桶| F[BucketPickupHandler]
+        E -->|方块| G[BlockWrapper]
+        E -->|容器| H[VanillaContainerWrapper]
+    end
+    
+    subgraph 传输操作
+        F --> I{交互模式}
+        G --> I
+        H --> I
+        I -->|填充| J[tryFillContainer]
+        I -->|排空| K[tryEmptyContainer]
+    end
+    
+    J --> L[播放填充音效]
+    K --> M[播放排空音效]
+    L --> N[更新物品堆栈]
+    M --> N
+    
+    style A fill:#e1f5ff
+    style N fill:#c8e6c9</div>
+</div>
+<h3>4.2 物品插入流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Source as 源处理器
+    participant Target as 目标处理器
+    participant Slot as 目标槽位
+    
+    Source->>Target: insertItem(slot, stack, simulate=true)
+    
+    alt 槽位为空
+        Target->>Target: 检查 canPlaceItem
+        alt 可以放置
+            Target-->>Source: 返回 EMPTY
+        else 无法放置
+            Target-->>Source: 返回原 stack
+        end
+    else 槽位有物品
+        Target->>Target: 检查 isSameItemSameComponents
+        alt 物品相同
+            Target->>Target: 计算剩余空间
+            alt 全部放入
+                Target-->>Source: 返回 EMPTY
+            else 部分放入
+                Target-->>Source: 返回剩余部分
+            end
+        else 物品不同
+            Target-->>Source: 返回原 stack
+        end
+    end
+    
+    Note over Source,Target: simulate=false 时执行实际修改</div>
+</div>
+<h3>4.3 流体类型与流体关系</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class FluidType {
+        +int lightLevel
+        +int density
+        +int temperature
+        +int viscosity
+        +Rarity rarity
+        +boolean isWaterLike
+        +getSound(SoundAction)
+        +canPushEntity(Entity)
+        +canSwim(Entity)
+        +getBucket(FluidStack)
+    }
+    
+    class Fluid {
+        <<Minecraft>>
+        +FluidType getFluidType()
+        +Fluid getFlowing()
+        +Fluid getSource()
+        +boolean isSource()
+    }
+    
+    class BaseFlowingFluid {
+        <<NeoForge>>
+        +Source
+        +Flowing
+    }
+    
+    class FluidStack {
+        +Fluid fluid
+        +int amount
+        +DataComponentPatch components
+        +getFluid()
+        +getAmount()
+        +split(int)
+        +copy()
+    }
+    
+    class IFluidHandler {
+        <<interface>>
+        +getTanks()
+        +fill(FluidStack, FluidAction)
+        +drain(FluidStack, FluidAction)
+    }
+    
+    class FluidTank {
+        +FluidStack fluid
+        +int capacity
+        +Predicate~FluidStack~ validator
+        +fill()
+        +drain()
+    }
+    
+    FluidType --> Fluid : provides properties
+    Fluid <|-- BaseFlowingFluid
+    BaseFlowingFluid --> BaseFlowingFluid.Source
+    BaseFlowingFluid --> BaseFlowingFluid.Flowing
+    FluidStack --> Fluid : contains
+    FluidStack --> FluidType : references
+    IFluidHandler <|.. FluidTank : implements</div>
+</div>
+<p><hr></p>
+<h2 id="5-api-使用示例">5. API 使用示例</h2>
+<h3>5.1 创建自定义流体</h3>
+<pre class="code-block"><code class="language-java">public static final FluidType MY_FLUID_TYPE = new FluidType(
+    FluidType.Properties.create()
+        .descriptionId(&quot;fluid.my_fluid&quot;)
+        .density(1100)
+        .temperature(350)
+        .viscosity(1200)
+        .rarity(Rarity.UNCOMMON)
+        .isWaterLike(true)
+        .lightLevel(4)
+        .addDripstoneDripping(
+            0.15f,
+            ParticleTypes.DRIPPING_LAVA,
+            Blocks.LAVA_CAULDRON,
+            SoundEvents.CAULDRON_DRIP
+        )
+) {};
+
+// 2. 创建流体方块
+public static final LiquidBlock MY_FLUID_BLOCK = new LiquidBlock(
+    RegistryObject&lt;FlowingFluid&gt; MY_FLUID,
+    BlockBehaviour.Properties.of(Material.WATER, Color.MAGENTA)
+) {};
+
+// 3. 创建流体
+public static final FlowingFluid MY_FLUID_SOURCE = new BaseFlowingFluid.Source(
+    new BaseFlowingFluid.Properties(
+        () -&gt; MY_FLUID_TYPE,
+        () -&gt; MY_FLUID_SOURCE,
+        () -&gt; MY_FLUID_FLOWING
+    )
+    .bucket(() -&gt; MY_FLUID_BUCKET.get())
+    .block(() -&gt; MY_FLUID_BLOCK.get())
+    .slopeFindDistance(4)
+    .tickRate(5)
+);
+
+// 4. 注册
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+public static class Registration {
+    @SubscribeEvent
+    public static void register(RegistryEvent.Register event) {
+        event.getRegistry().registerAll(
+            MY_FLUID_TYPE,
+            MY_FLUID_SOURCE,
+            MY_FLUID_FLOWING
+        );
+    }
+}</code></pre>
+<h3>5.2 使用 FluidUtil 操作流体</h3>
+<pre class="code-block"><code class="language-java">public class MyTankBlock extends Block {
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, 
+                                  Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide()) return InteractionResult.PASS;
+        
+        ItemStack held = player.getItemInHand(hand);
+        IFluidHandler tankHandler = ...; // 获取方块对应的处理器
+        
+        // 尝试填充玩家手中的容器
+        FluidActionResult fillResult = FluidUtil.tryFillContainerAndStow(
+            held,
+            tankHandler,
+            new PlayerInvWrapper(player.getInventory()),
+            Integer.MAX_VALUE,
+            player,
+            true
+        );
+        
+        if (fillResult.isSuccess()) {
+            player.setItemInHand(hand, fillResult.getResult());
+            return InteractionResult.SUCCESS;
+        }
+        
+        // 尝试从玩家手中排空到容器
+        FluidActionResult emptyResult = FluidUtil.tryEmptyContainerAndStow(
+            held,
+            tankHandler,
+            new PlayerInvWrapper(player.getInventory()),
+            Integer.MAX_VALUE,
+            player,
+            true
+        );
+        
+        if (emptyResult.isSuccess()) {
+            player.setItemInHand(hand, emptyResult.getResult());
+            return InteractionResult.SUCCESS;
+        }
+        
+        return InteractionResult.PASS;
+    }
+}</code></pre>
+<h3>5.3 创建物品处理器</h3>
+<pre class="code-block"><code class="language-java">public class CustomItemHandler implements IItemHandler {
+    private final ItemStack[] stacks;
+    private final int slots;
+    
+    public CustomItemHandler(int slots) {
+        this.slots = slots;
+        this.stacks = new ItemStack[slots];
+        for (int i = 0; i &lt; slots; i++) {
+            stacks[i] = ItemStack.EMPTY;
+        }
+    }
+    
+    @Override
+    public int getSlots() {
+        return slots;
+    }
+    
+    @Override
+    public ItemStack getStackInSlot(int slot) {
+        return stacks[slot];
+    }
+    
+    @Override
+    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+        if (stack.isEmpty() || !isItemValid(slot, stack)) {
+            return stack;
+        }
+        
+        ItemStack current = stacks[slot];
+        
+        if (current.isEmpty()) {
+            int limit = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
+            if (stack.getCount() &lt;= limit) {
+                if (!simulate) {
+                    stacks[slot] = stack.copy();
+                }
+                return ItemStack.EMPTY;
+            } else {
+                ItemStack toInsert = stack.copyWithCount(limit);
+                if (!simulate) {
+                    stacks[slot] = toInsert;
+                }
+                return stack.copyWithCount(stack.getCount() - limit);
+            }
+        } else if (ItemStack.isSameItemSameComponents(current, stack)) {
+            int space = getSlotLimit(slot) - current.getCount();
+            if (space &gt; 0) {
+                int toAdd = Math.min(space, stack.getCount());
+                if (!simulate) {
+                    stacks[slot].grow(toAdd);
+                }
+                return stack.copyWithCount(stack.getCount() - toAdd);
+            }
+        }
+        
+        return stack;
+    }
+    
+    @Override
+    public ItemStack extractItem(int slot, int amount, boolean simulate) {
+        if (amount == 0) return ItemStack.EMPTY;
+        
+        ItemStack current = stacks[slot];
+        if (current.isEmpty()) return ItemStack.EMPTY;
+        
+        int toExtract = Math.min(current.getCount(), amount);
+        if (!simulate) {
+            stacks[slot].shrink(toExtract);
+        }
+        return current.copyWithCount(toExtract);
+    }
+    
+    @Override
+    public int getSlotLimit(int slot) {
+        return 64;
+    }
+    
+    @Override
+    public boolean isItemValid(int slot, ItemStack stack) {
+        return true; // 自定义验证逻辑
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6-与其他系统交互">6. 与其他系统交互</h2>
+<h3>6.1 与 Capability 系统集成</h3>
+<p>NeoForge 的流体和物品系统通过 Capability 系统暴露功能：</p>
+<pre class="code-block"><code class="language-java">var capability = level.getCapability(Capabilities.Fluid.BLOCK, pos, side);
+if (capability != null) {
+    // 使用新的 Transfer API
+    ResourceHandler&lt;FluidResource&gt; handler = capability;
+}
+
+// 获取物品的流体能力
+var itemCapability = itemAccess.getCapability(Capabilities.Fluid.ITEM);
+if (itemCapability != null) {
+    ResourceHandler&lt;FluidResource&gt; handler = itemCapability;
+}</code></pre>
+<h3>6.2 与 Transfer API 集成</h3>
+<p>NeoForge 1.21.9 引入的新 Transfer API：</p>
+<pre class="code-block"><code class="language-java">ResourceHandler&lt;FluidResource&gt; tank = ...;
+ResourceHandler&lt;FluidResource&gt; source = ...;
+
+// 插入
+long inserted = tank.insert(FluidResource.of(myFluid, 1000));
+
+// 提取
+FluidResource extracted = source.extract(
+    FluidResource.of(myFluid), 
+    1000, 
+    Action.EXECUTE
+);
+
+// 移动
+ResourceHandlerUtil.move(
+    source,
+    tank,
+    filter -&gt; filter.withFluid(myFluid),
+    1000,
+    Action.EXECUTE
+);</code></pre>
+<h3>6.3 与数据组件系统集成</h3>
+<pre class="code-block"><code class="language-java">public static final DataComponentType&lt;CustomData&gt; CUSTOM_DATA = 
+    DataComponentType.&lt;CustomData&gt;builder()
+        .persistent(CustomData.CODEC)
+        .build();
+
+// 使用
+FluidStack stack = new FluidStack(MY_FLUID, 1000);
+stack.set(CUSTOM_DATA, new CustomData(&quot;value&quot;));
+
+// 读取
+CustomData data = stack.getOrDefault(CUSTOM_DATA, CustomData.DEFAULT);</code></pre>
+<p><hr></p>
+<h2 id="7-总结">7. 总结</h2>
+<h3>核心要点</h3>
+<p><ul><li><strong>FluidType vs Fluid</strong>：</li>
+</ul>   - <code>FluidType</code> 定义属性和行为
+   - <code>Fluid</code> 是实际的注册对象
+   - <code>FluidStack</code> 代表一定数量的流体实例</p>
+<p><ul><li><strong>传输接口演进</strong>：</li>
+</ul>   - 传统 API：<code>IFluidHandler</code>、<code>IItemHandler</code>
+   - 新 API：<code>ResourceHandler<T></code>（1.21.9+）
+   - 迁移策略：使用适配器进行过渡</p>
+<p><ul><li><strong>流体交互</strong>：</li>
+</ul>   - 通过 <code>FluidInteractionRegistry</code> 定义化学反应
+   - 内置熔岩+水=黑曜石/圆石</p>
+<p><ul><li><strong>物品处理器链</strong>：</li>
+</ul>   - <code>Container</code> → <code>InvWrapper</code> → <code>IItemHandler</code>
+   - <code>PlayerInvWrapper</code> 整合背包所有槽位</p>
+<h3>最佳实践</h3>
+<p><ul><li><strong>使用 Properties 构建器</strong>：FluidType 和 BaseFlowingFluid 都使用链式调用</li>
+<li><strong>模拟优先</strong>：操作前先用 <code>SIMULATE</code> 模式验证</li>
+<li><strong>音效反馈</strong>：填充/排空时播放对应音效</li>
+<li><strong>容量验证</strong>：确保流体类型只接受合法的流体</li>
+<li><strong>关注新 API</strong>：1.21.9+ 使用 Transfer API 获取更好性能</li></ul></p>
+<h3>相关文档</h3>
+<p><ul><li><a href="./09-transfer-system.html">Transfer API 系统</a></li>
+<li><a href="./04-capability-system.html">Capability 系统</a></li>
+<li><a href="./content/mc/1.21/tutorials/Part-2-Block-Item/02-creating-items.html">物品注册系统</a></li></ul></p>
+<p><hr></p>
+<p><strong>课后自查</strong>：</p>
+<p><ul><li>[ ] 能够创建自定义的 FluidType 和 FlowingFluid</li>
+<li>[ ] 理解 FluidStack 与 Fluid/FluidType 的关系</li>
+<li>[ ] 能够使用 FluidUtil 进行流体填充和排空操作</li>
+<li>[ ] 理解 IItemHandler 接口的核心方法</li>
+<li>[ ] 能够将 Container 包装为 IItemHandler</li>
+<li>[ ] 了解 Transfer API 与旧 API 的区别</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="07-entity-living-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            实体与生物系统
+        </a><a href="09-energy-system.html" class="next">
+            能量系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

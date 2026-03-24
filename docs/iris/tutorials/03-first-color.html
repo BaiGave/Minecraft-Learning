@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">教程</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="00-introduction.html" class="">
@@ -168,11 +158,7 @@
         </a>
 <a href="02-iris-setup.html" class="">
             <i class="fas fa-book"></i>
-            第二章：Iris 开发环境搭建
-        </a>
-<a href="03-create-simple-shader.html" class="">
-            <i class="fas fa-book"></i>
-            第三章：创建第一个 Shader
+            ⚙️ 第二章：开发环境搭建
         </a>
 <a href="03-first-color.html" class="active">
             <i class="fas fa-book"></i>
@@ -180,23 +166,19 @@
         </a>
 <a href="04-shaderpack-structure.html" class="">
             <i class="fas fa-book"></i>
-            第四章：ShaderPack 结构详解
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
         </a>
 <a href="05-uniform-animation.html" class="">
             <i class="fas fa-book"></i>
             ✨ 第五章：Uniform 变量 - 让世界动起来！
         </a>
-<a href="05-uniform-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第五章：Uniform 入门
-        </a>
-<a href="06-postprocessing-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第六章：后处理效果入门
-        </a>
 <a href="06-postprocessing.html" class="">
             <i class="fas fa-book"></i>
             🔮 第六章：后处理魔法 - 全屏特效！
+        </a>
+<a href="07-create-shaderpack.html" class="">
+            <i class="fas fa-book"></i>
+            🏆 最终章：创造你的第一个光影包！
         </a>
             </nav>
             <div class="sidebar-footer">
@@ -206,6 +188,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -233,14 +220,14 @@
                 <h1>🎨 第三章：第一个颜色魔法</h1>
 <blockquote><p>✨ <em>让 Minecraft 世界变亮、变暗、变色！</em></p></blockquote>
 <p><hr></p>
-<h2 id="🎯 本章目标">🎯 本章目标</h2>
+<h2 id="本章目标">🎯 本章目标</h2>
 <pre class="code-block"><code class="language-text">完成本章后，你将能够：
 ├── 🎨 让方块变亮或变暗
 ├── 🌈 调整颜色饱和度
 ├── 🔴🔵 改变世界的色调
 └── 🏗️ 创建你的第一个 ShaderPack</code></pre>
 <p><hr></p>
-<h2 id="🏗️ 创建你的第一个 ShaderPack">🏗️ 创建你的第一个 ShaderPack</h2>
+<h2 id="创建你的第一个-shaderpack">🏗️ 创建你的第一个 ShaderPack</h2>
 <h3>第一步：创建文件夹结构</h3>
 <pre class="code-block"><code class="language-text">📁 shaderpacks/                    ← 放到 Minecraft 目录
  └── 📁 my-awesome-shaders/       ← 你的光影包名字（随便取！）
@@ -274,7 +261,7 @@ void main() {
 <li>进入世界看看！</li></ul></p>
 <blockquote><p>🎉 如果世界正常显示，说明你成功了！</p></blockquote>
 <p><hr></p>
-<h2 id="🎮 实验 1：让世界变亮！">🎮 实验 1：让世界变亮！</h2>
+<h2 id="实验-1让世界变亮">🎮 实验 1：让世界变亮！</h2>
 <h3>修改代码</h3>
 <pre class="code-block"><code class="language-glsl">#version 330 core
 
@@ -302,7 +289,7 @@ void main() {
 <h3>不同倍数的效果</h3>
 <table class="data-table"><thead><tr><th>代码</th><th>效果</th><th>感觉</th></tr></thead><tbody><tr><td><code><em> 0.5</code></td><td>变暗</td><td>夜晚？</td></tr><tr><td><code></em> 1.0</code></td><td>原版</td><td>无变化</td></tr><tr><td><code><em> 1.5</code></td><td>变亮</td><td>阳光明媚</td></tr><tr><td><code></em> 2.0</code></td><td>很亮</td><td>HDR 效果</td></tr></tbody></table>
 <hr></p>
-<h2 id="🎮 实验 2：让世界变暗！">🎮 实验 2：让世界变暗！</h2>
+<h2 id="实验-2让世界变暗">🎮 实验 2：让世界变暗！</h2>
 <h3>变暗的不同方法</h3>
 <pre class="code-block"><code class="language-glsl">fragColor = texColor * 0.5;          // 整体暗一半
 
@@ -312,6 +299,7 @@ fragColor = texColor - vec4(0.2);   // 减去固定亮度
 // 方法 3：混合黑色
 fragColor = mix(texColor, vec4(0.0), 0.5);  // 50% 黑色混合</code></pre>
 <h3>可视化理解</h3>
+<div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart LR
     subgraph 乘法
         A[原色] --> B["* 0.5"]
@@ -327,6 +315,7 @@ fragColor = mix(texColor, vec4(0.0), 0.5);  // 50% 黑色混合</code></pre>
         G[原色] --> H["mix(color, 黑, 0.5)"]
         H --> I[暗色]
     end</div>
+</div>
 <h3>效果对比</h3>
 <pre class="code-block"><code class="language-text">乘法 (* 0.5)        减法 (- 0.2)         混合
 ┌───────────┐     ┌───────────┐     ┌───────────┐
@@ -338,7 +327,7 @@ fragColor = mix(texColor, vec4(0.0), 0.5);  // 50% 黑色混合</code></pre>
 │ 整体缩放   │     │ 整体平移   │     │ 颜色混合   │
 └───────────┘     └───────────┘     └───────────┘</code></pre>
 <p><hr></p>
-<h2 id="🎮 实验 3：给世界加滤镜！">🎮 实验 3：给世界加滤镜！</h2>
+<h2 id="实验-3给世界加滤镜">🎮 实验 3：给世界加滤镜！</h2>
 <h3>效果 1：复古电影感</h3>
 <pre class="code-block"><code class="language-glsl">#version 330 core
 
@@ -410,7 +399,7 @@ void main() {
     fragColor = vec4(cold, texColor.a);
 }</code></pre>
 <p><hr></p>
-<h2 id="🎮 实验 4：混合多种效果！">🎮 实验 4：混合多种效果！</h2>
+<h2 id="实验-4混合多种效果">🎮 实验 4：混合多种效果！</h2>
 <h3>组合代码</h3>
 <pre class="code-block"><code class="language-glsl">#version 330 core
 
@@ -437,7 +426,7 @@ void main() {
     fragColor = vec4(color, texColor.a);
 }</code></pre>
 <p><hr></p>
-<h2 id="🎨 常用颜色调整公式">🎨 常用颜色调整公式</h2>
+<h2 id="常用颜色调整公式">🎨 常用颜色调整公式</h2>
 <h3>饱和度调整</h3>
 <pre class="code-block"><code class="language-glsl">vec3 desaturate(vec3 color, float amount) {
     float gray = dot(color, vec3(0.299, 0.587, 0.114));
@@ -458,7 +447,7 @@ vec3 saturate(vec3 color, float amount) {
     return color * brightness;
 }</code></pre>
 <p><hr></p>
-<h2 id="🎯 小测验">🎯 小测验</h2>
+<h2 id="小测验">🎯 小测验</h2>
 <h3>挑战 1：创建"日落模式"</h3>
 <p>让世界呈现橙红色的日落效果</p>
 <p><details>
@@ -481,7 +470,7 @@ color.r *= 0.7;</code></pre>
 color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
 <p></details></p>
 <p><hr></p>
-<h2 id="🐛 常见问题">🐛 常见问题</h2>
+<h2 id="常见问题">🐛 常见问题</h2>
 <h3>问题 1：世界变成全黑/全白</h3>
 <pre class="code-block"><code class="language-diff">- fragColor = texColor * 0.0;  // ❌ 乘以 0 = 全黑
 + fragColor = texColor * 1.0;  // ✅ 乘以 1 = 原色</code></pre>
@@ -492,7 +481,8 @@ color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
 <pre class="code-block"><code class="language-text">这是正常的！gbuffers_terrain 只影响地形方块。
 其他物体需要其他着色器文件。</code></pre>
 <p><hr></p>
-<h2 id="📊 本章总结">📊 本章总结</h2>
+<h2 id="本章总结">📊 本章总结</h2>
+<div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">mindmap
   root((第三章))
     创建ShaderPack
@@ -511,13 +501,14 @@ color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
       链式操作
       mix混合
       公式封装</div>
+</div>
 <h3>记住这三个操作：</h3>
 <table class="data-table"><thead><tr><th>操作</th><th>代码</th><th>效果</th></tr></thead><tbody><tr><td>变亮</td><td><code><em> 1.5</code></td><td>整体乘以倍数</td></tr><tr><td>变暗</td><td><code></em> 0.5</code></td><td>整体除以倍数</td></tr><tr><td>改色</td><td><code>* vec3(1, 0.8, 0.6)</code></td><td>分别调整 RGB</td></tr></tbody></table>
 <hr></p>
-<h2 id="🚀 下一步">🚀 下一步</h2>
+<h2 id="下一步">🚀 下一步</h2>
 <p>👉 <a href="04-shaderpack-structure.html">🏗️ 第四章：ShaderPack 结构 - 理解完整的文件组织！</a></p>
 <p><hr></p>
-<h2 id="🎮 课外挑战">🎮 课外挑战</h2>
+<h2 id="课外挑战">🎮 课外挑战</h2>
 <h3>挑战任务：创造你的专属滤镜</h3>
 <p>创建以下效果之一：</p>
 <p><ul><li>🌑 <strong>黑夜模式</strong> - 让世界变暗加蓝</li>
@@ -532,11 +523,11 @@ color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
             </div>
 
             <div class="docs-footer">
-                <div class="prev-next"><a href="03-create-simple-shader.html" class="prev">
+                <div class="prev-next"><a href="02-iris-setup.html" class="prev">
             <i class="fas fa-arrow-left"></i>
-            第三章：创建第一个 Shader
+            ⚙️ 第二章：开发环境搭建
         </a><a href="04-shaderpack-structure.html" class="next">
-            第四章：ShaderPack 结构详解
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
             <i class="fas fa-arrow-right"></i>
         </a></div>
             </div>
@@ -545,6 +536,7 @@ color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -567,5 +559,6 @@ color = mix(vec3(gray), color, 1.5);  // 超过 100% 饱和度</code></pre>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

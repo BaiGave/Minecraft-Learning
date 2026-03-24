@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">教程</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="00-introduction.html" class="active">
@@ -168,11 +158,7 @@
         </a>
 <a href="02-iris-setup.html" class="">
             <i class="fas fa-book"></i>
-            第二章：Iris 开发环境搭建
-        </a>
-<a href="03-create-simple-shader.html" class="">
-            <i class="fas fa-book"></i>
-            第三章：创建第一个 Shader
+            ⚙️ 第二章：开发环境搭建
         </a>
 <a href="03-first-color.html" class="">
             <i class="fas fa-book"></i>
@@ -180,23 +166,19 @@
         </a>
 <a href="04-shaderpack-structure.html" class="">
             <i class="fas fa-book"></i>
-            第四章：ShaderPack 结构详解
+            🏗️ 第四章：ShaderPack 结构 - 理解完整文件组织
         </a>
 <a href="05-uniform-animation.html" class="">
             <i class="fas fa-book"></i>
             ✨ 第五章：Uniform 变量 - 让世界动起来！
         </a>
-<a href="05-uniform-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第五章：Uniform 入门
-        </a>
-<a href="06-postprocessing-basics.html" class="">
-            <i class="fas fa-book"></i>
-            第六章：后处理效果入门
-        </a>
 <a href="06-postprocessing.html" class="">
             <i class="fas fa-book"></i>
             🔮 第六章：后处理魔法 - 全屏特效！
+        </a>
+<a href="07-create-shaderpack.html" class="">
+            <i class="fas fa-book"></i>
+            🏆 最终章：创造你的第一个光影包！
         </a>
             </nav>
             <div class="sidebar-footer">
@@ -206,6 +188,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -233,7 +220,7 @@
                 <h1>🎮 从零开始的 Shader 冒险！</h1>
 <blockquote><p>欢迎来到 Iris 光影开发的世界！在这门教程中，你将学会如何创造酷炫的视觉效果。</p></blockquote>
 <p><hr></p>
-<h2 id="📖 课程介绍">📖 课程介绍</h2>
+<h2 id="课程介绍">📖 课程介绍</h2>
 <h3>你会学到什么？</h3>
 <p>完成本课程后，你将能够创造这样的效果：</p>
 <pre class="code-block"><code class="language-text">✨ 效果展示（学完课程后你能做到的）
@@ -248,6 +235,7 @@
 │                                                             │
 └─────────────────────────────────────────────────────────────┘</code></pre>
 <h3>学习路线图</h3>
+<div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph 入门
         A[🚀 第一章：Shader 是什么？] --> B[⚙️ 第二章：开发环境]
@@ -268,8 +256,9 @@
     A -.-> |"边玩边学| A
     C -.-> |"动手实验| C
     F -.-> |"创意发挥| F</div>
+</div>
 <p><hr></p>
-<h2 id="🎯 先来看看最终效果">🎯 先来看看最终效果</h2>
+<h2 id="先来看看最终效果">🎯 先来看看最终效果</h2>
 <p>在我们开始之前，先让你看看学完课程后能创造出什么：</p>
 <h3>效果 1：彩虹呼吸 🌈</h3>
 <pre class="code-block"><code class="language-glsl">vec4 rainbowBreath = vec4(
@@ -304,11 +293,12 @@ vec3 glowing = baseColor * pulse;</code></pre>
 │              🔮 赛 博 朋 克 霓虹 城 市                     │
 └────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
-<h2 id="📚 课程大纲">📚 课程大纲</h2>
+<h2 id="课程大纲">📚 课程大纲</h2>
 <table class="data-table"><thead><tr><th>章节</th><th>标题</th><th>你会做什么</th><th>难度</th></tr></thead><tbody><tr><td>01</td><td>Shader 是什么？</td><td>理解原理，看到可能性</td><td>⭐</td></tr><tr><td>02</td><td>开发环境搭建</td><td>准备好你的工具</td><td>⭐</td></tr><tr><td>03</td><td>第一个颜色魔法</td><td>让世界变亮/变暗</td><td>⭐</td></tr><tr><td>04</td><td>ShaderPack 结构</td><td>理解文件组织</td><td>⭐⭐</td></tr><tr><td>05</td><td>Uniform 变量</td><td>让画面动起来</td><td>⭐⭐</td></tr><tr><td>06</td><td>实战：彩虹呼吸</td><td>创建多彩效果</td><td>⭐⭐⭐</td></tr><tr><td>07</td><td>后处理魔法</td><td>全屏特效</td><td>⭐⭐⭐</td></tr><tr><td>08</td><td>你的第一个光影包</td><td>综合实战</td><td>⭐⭐⭐⭐</td></tr></tbody></table>
 <hr></p>
-<h2 id="🤔 为什么学 Shader？">🤔 为什么学 Shader？</h2>
+<h2 id="为什么学-shader">🤔 为什么学 Shader？</h2>
 <h3>传统编程 vs Shader 编程</h3>
+<div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart LR
     subgraph 传统编程
         A[输入] --> B[CPU 计算] --> C[输出]
@@ -324,9 +314,11 @@ vec3 glowing = baseColor * pulse;</code></pre>
     style A fill:#e1f5fe
     style D fill:#fff3e0
     style F fill:#e8f5e9</div>
+</div>
 <table class="data-table"><thead><tr><th>对比</th><th>CPU 程序</th><th>Shader</th></tr></thead><tbody><tr><td>同时处理</td><td>1 个任务</td><td>百万像素</td></tr><tr><td>擅长</td><td>逻辑判断</td><td>图形计算</td></tr><tr><td>速度</td><td>慢</td><td>超快</td></tr><tr><td>用途</td><td>游戏逻辑</td><td>视觉效果</td></tr></tbody></table>
 <hr></p>
-<h2 id="🎮 游戏般的学习体验">🎮 游戏般的学习体验</h2>
+<h2 id="游戏般的学习体验">🎮 游戏般的学习体验</h2>
+<div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">journey
     title Shader 冒险之旅
 
@@ -342,13 +334,14 @@ vec3 glowing = baseColor * pulse;</code></pre>
 
     section 最终 Boss
       完成光影包: 3: 大法师</div>
+</div>
 <p>每完成一章，你就升级一次！</p>
 <p><hr></p>
-<h2 id="🚀 准备好了吗？">🚀 准备好了吗？</h2>
+<h2 id="准备好了吗">🚀 准备好了吗？</h2>
 <p>让我们开始 Shader 冒险之旅！</p>
 <p>👉 <a href="01-shader-basics.html">第一章：Shader 是什么？让我们一探究竟！</a></p>
 <p><hr></p>
-<h2 id="💬 常见问题">💬 常见问题</h2>
+<h2 id="常见问题">💬 常见问题</h2>
 <p><strong>Q: 我需要会 Java 吗？</strong>
 A: 不需要！Shader 使用的是 GLSL 语言，和 Java 完全不一样。</p>
 <p><strong>Q: 我需要懂数学吗？</strong>
@@ -374,6 +367,7 @@ A: 任何能运行 Minecraft 的电脑都可以开发 Shader。</p>
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -396,5 +390,6 @@ A: 任何能运行 Minecraft 的电脑都可以开发 Shader。</p>
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

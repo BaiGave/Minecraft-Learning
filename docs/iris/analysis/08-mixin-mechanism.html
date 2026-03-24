@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
@@ -199,6 +189,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -230,7 +225,7 @@
 <h2 id="文档目录">文档目录</h2>
 <table class="data-table"><thead><tr><th>文档</th><th>说明</th></tr></thead><tbody><tr><td><a href="01-architecture-overview.html">01-architecture-overview</a></td><td>整体架构设计模式、模块划分</td></tr><tr><td><a href="02-rendering-pipeline.html">02-rendering-pipeline</a></td><td>渲染管线 - GBuffer、Composite Pass</td></tr><tr><td><a href="03-shaderpack-system.html">03-shaderpack-system</a></td><td>着色器包加载与解析</td></tr><tr><td><a href="04-shadow-system.html">04-shadow-system</a></td><td>阴影系统 - 视锥体剔除、阴影渲染</td></tr><tr><td><a href="05-framebuffer-texture.html">05-framebuffer-texture</a></td><td>帧缓冲与纹理系统</td></tr><tr><td><a href="06-uniforms.html">06-uniforms</a></td><td>Uniform 管理</td></tr><tr><td><a href="07-sodium-integration.html">07-sodium-integration</a></td><td>Sodium 集成系统</td></tr><tr><td><a href="08-mixin-mechanism.html">08-mixin-mechanism</a></td><td>Mixin 注入机制</td></tr><tr><td><a href="README.html">README</a></td><td>模块说明</td></tr><tr><td><a href="SUMMARY.html">SUMMARY</a></td><td>总结文档</td></tr></tbody></table>
 <hr></p>
-<h2 id="1. Mixin 配置架构">1. Mixin 配置架构</h2>
+<h2 id="1-mixin-配置架构">1. Mixin 配置架构</h2>
 <h3>1.1 配置文件结构</h3>
 <p>Iris 使用了多个 Mixin 配置文件来组织不同功能的注入：</p>
 <table class="data-table"><thead><tr><th>配置文件</th><th>用途</th></tr></thead><tbody><tr><td><code>mixins.iris.json</code></td><td>主配置，包含 100+ 个 Mixin 类</td></tr><tr><td><code>mixins.iris.vertexformat.json</code></td><td>顶点格式相关注入</td></tr><tr><td><code>mixins.iris.fantastic.json</code></td><td>粒子系统相关</td></tr><tr><td><code>mixins.iris.compat.sodium.json</code></td><td>Sodium 兼容层</td></tr><tr><td><code>mixins.iris.compat.indium.json</code></td><td>Indium 兼容层</td></tr></tbody></table>
@@ -256,7 +251,7 @@
   }
 }</code></pre>
 <p><hr></p>
-<h2 id="2. MixinGameRenderer - 游戏渲染钩子">2. MixinGameRenderer - 游戏渲染钩子</h2>
+<h2 id="2-mixingamerenderer-游戏渲染钩子">2. MixinGameRenderer - 游戏渲染钩子</h2>
 <h3>2.1 着色器覆盖注入模式</h3>
 <p>每个 <code>get*Shader</code> 方法都使用 <code>@Inject</code> 注入到 <strong>HEAD</strong> 位置，并设置 <code>cancellable = true</code>：</p>
 <pre class="code-block"><code class="language-java">@Inject(method = &quot;getPositionShader&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
@@ -306,7 +301,7 @@ private void iris$runColorSpace(DeltaTracker deltaTracker, CallbackInfo ci) {
     Iris.getPipelineManager().getPipeline().ifPresent(WorldRenderingPipeline::finalizeGameRendering);
 }</code></pre>
 <p><hr></p>
-<h2 id="3. MixinLevelRenderer - 世界渲染钩子">3. MixinLevelRenderer - 世界渲染钩子</h2>
+<h2 id="3-mixinlevelrenderer-世界渲染钩子">3. MixinLevelRenderer - 世界渲染钩子</h2>
 <h3>3.1 渲染管线初始化</h3>
 <p><strong>在 <code>renderLevel</code> 方法 HEAD 注入</strong>：</p>
 <pre class="code-block"><code class="language-java">@Inject(method = &quot;renderLevel&quot;, at = @At(&quot;HEAD&quot;))
@@ -378,7 +373,7 @@ private void iris$beginTranslucents(DeltaTracker deltaTracker, boolean bl, Camer
     pipeline.beginTranslucents();
 }</code></pre>
 <p><hr></p>
-<h2 id="4. MixinGlStateManager - OpenGL 状态管理钩子">4. MixinGlStateManager - OpenGL 状态管理钩子</h2>
+<h2 id="4-mixinglstatemanager-opengl-状态管理钩子">4. MixinGlStateManager - OpenGL 状态管理钩子</h2>
 <h3>4.1 纹理单元数量扩展</h3>
 <pre class="code-block"><code class="language-java">@ModifyConstant(method = &quot;&lt;clinit&gt;&quot;, constant = @Constant(intValue = 12), require = 1)
 private static int iris$increaseMaximumAllowedTextureUnits(int existingValue) {
@@ -386,7 +381,7 @@ private static int iris$increaseMaximumAllowedTextureUnits(int existingValue) {
     return 128;
 }</code></pre>
 <p><hr></p>
-<h2 id="5. 其他关键 Mixin 类">5. 其他关键 Mixin 类</h2>
+<h2 id="5-其他关键-mixin-类">5. 其他关键 Mixin 类</h2>
 <h3>5.1 MixinMinecraft_PipelineManagement - 管线生命周期管理</h3>
 <pre class="code-block"><code class="language-java">@Inject(method = &quot;clearClientLevel&quot;, at = @At(&quot;HEAD&quot;))
 public void iris$trackLastDimensionOnLeave(Screen arg, CallbackInfo ci) {
@@ -448,7 +443,7 @@ private static void restoreShadow(PoseStack pPoseStack0, MultiBufferSource pMult
     cachedId = 0;
 }</code></pre>
 <p><hr></p>
-<h2 id="6. 渲染管线交互流程">6. 渲染管线交互流程</h2>
+<h2 id="6-渲染管线交互流程">6. 渲染管线交互流程</h2>
 <pre class="code-block"><code class="language-text">Minecraft.render()
     │
     ├─► MixinGameRenderer.iris$startFrame()     [帧开始]
@@ -484,13 +479,13 @@ private static void restoreShadow(PoseStack pPoseStack0, MultiBufferSource pMult
                     - finalizeLevelRendering()
                     - HandRenderer.renderTranslucent()</code></pre>
 <p><hr></p>
-<h2 id="7. 注入类型总结">7. 注入类型总结</h2>
+<h2 id="7-注入类型总结">7. 注入类型总结</h2>
 <table class="data-table"><thead><tr><th>注入类型</th><th>用途</th><th>示例</th></tr></thead><tbody><tr><td><code>@Inject(at = HEAD)</code></td><td>在方法开始前执行</td><td>管线初始化、状态重置</td></tr><tr><td><code>@Inject(at = RETURN)</code></td><td>在方法返回前执行</td><td>清理、收尾工作</td></tr><tr><td><code>@Inject(at = INVOKE)</code></td><td>在特定调用前后</td><td>渲染阶段切换</td></tr><tr><td><code>@Redirect</code></td><td>替换方法调用</td><td>手持渲染禁用</td></tr><tr><td><code>@ModifyConstant</code></td><td>修改常量值</td><td>纹理单元数量</td></tr><tr><td><code>@ModifyArg</code></td><td>修改方法参数</td><td>雨雪深度写入</td></tr></tbody></table>
 <hr></p>
-<h2 id="8. WorldRenderingPhase 枚举">8. WorldRenderingPhase 枚举</h2>
+<h2 id="8-worldrenderingphase-枚举">8. WorldRenderingPhase 枚举</h2>
 <table class="data-table"><thead><tr><th>阶段</th><th>说明</th><th>Mixin 注入点</th></tr></thead><tbody><tr><td><code>NONE</code></td><td>无阶段</td><td>默认</td></tr><tr><td><code>SKY</code></td><td>天空渲染</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>SUNSET</code></td><td>日落</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>CUSTOM<em>SKY</code></td><td>自定义天空</td><td>特定注入点</td></tr><tr><td><code>SUN</code></td><td>太阳</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>MOON</code></td><td>月亮</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>STARS</code></td><td>星星</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>VOID</code></td><td>虚空</td><td><code>renderSky</code> 内部</td></tr><tr><td><code>TERRAIN</em>SOLID</code></td><td>固体地形</td><td><code>renderSectionLayer</code></td></tr><tr><td><code>TERRAIN<em>CUTOUT</em>MIPPED</code></td><td>裁剪地形(带Mipmap)</td><td><code>renderSectionLayer</code></td></tr><tr><td><code>TERRAIN<em>CUTOUT</code></td><td>裁剪地形</td><td><code>renderSectionLayer</code></td></tr><tr><td><code>ENTITIES</code></td><td>实体</td><td><code>renderEntities</code></td></tr><tr><td><code>BLOCK</em>ENTITIES</code></td><td>方块实体</td><td><code>renderBlockEntities</code></td></tr><tr><td><code>HAND<em>SOLID</code></td><td>手部(固体)</td><td><code>renderItemInHand</code></td></tr><tr><td><code>TERRAIN</em>TRANSLUCENT</code></td><td>半透明地形</td><td><code>renderSectionLayer</code></td></tr><tr><td><code>TRIPWIRE</code></td><td>绊线</td><td><code>renderSectionLayer</code></td></tr><tr><td><code>PARTICLES</code></td><td>粒子</td><td><code>renderSnowAndRain</code></td></tr><tr><td><code>CLOUDS</code></td><td>云</td><td><code>renderClouds</code></td></tr><tr><td><code>RAIN<em>SNOW</code></td><td>雨/雪</td><td><code>renderWeather</code></td></tr><tr><td><code>HAND</em>TRANSLUCENT</code></td><td>手部(半透明)</td><td><code>renderTranslucent</code></td></tr></tbody></table>
 <hr></p>
-<h2 id="9. 相关文档">9. 相关文档</h2>
+<h2 id="9-相关文档">9. 相关文档</h2>
 <p><ul><li><a href="01-architecture-overview.html">01-architecture-overview</a> - 整体架构</li>
 <li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线详解</li>
 <li><a href="07-sodium-integration.html">07-sodium-integration</a> - Sodium 集成</li></ul></p>
@@ -511,6 +506,7 @@ private static void restoreShadow(PoseStack pPoseStack0, MultiBufferSource pMult
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -533,5 +529,6 @@ private static void restoreShadow(PoseStack pPoseStack0, MultiBufferSource pMult
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

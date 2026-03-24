@@ -1,125 +1,132 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <!-- Primary Meta Tags -->
-    <title>13 - 高度图：快速查找地形高度 - Minecraft 原版 教程</title>
-    <meta name="title" content="13 - 高度图：快速查找地形高度 - Minecraft 原版 教程">
-    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
-    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
-    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/mc/1.21/tutorials/Part-2-World/13-heightmap.html">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/mc/1.21/tutorials/Part-2-World/13-heightmap.html">
-    <meta property="og:title" content="13 - 高度图：快速查找地形高度 - Minecraft 原版 教程">
-    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
-    <meta property="og:site_name" content="Minecraft Learning">
-    <meta property="og:locale" content="zh_CN">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="13 - 高度图：快速查找地形高度 - Minecraft 原版">
-    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
-
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "13 - 高度图：快速查找地形高度",
-        "description": "",
-        "author": {
-            "@type": "Person",
-            "name": "baigave"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "Minecraft Learning"
-        },
-        "datePublished": "2026-03-22T18:58:45.676Z",
-        "dateModified": "2026-03-22T18:58:45.676Z"
-    }
-    </script>
+    <title>13 heightmap - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
     <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="../../../../../scripts/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
 </head>
-<body>
-    <div class="reading-progress" id="readingProgress"></div>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="../../../../../index.html" class="navbar-logo">
-                <div class="navbar-logo-icon">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <span class="navbar-logo-text">Minecraft Learning</span>
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="navbar-links">
-                <a href="../../../../../index.html" class="navbar-link">首页</a>
-                
-                <div class="nav-dropdown">
-                    <span class="nav-dropdown-trigger">
-                        文档中心 <i class="fas fa-chevron-down"></i>
-                    </span>
-                    <div class="nav-dropdown-menu">
-                        
-                        <a href="../../../../../docs/fabric/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-box"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Fabric 模组</div>
-                                <div class="nav-dropdown-item-desc">Fabric 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/forge/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-hammer"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Forge 模组</div>
-                                <div class="nav-dropdown-item-desc">Forge 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/iris/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Iris 光影</div>
-                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
-                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/neoforge/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-fire"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">NeoForge 模组</div>
-                                <div class="nav-dropdown-item-desc">NeoForge 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/sodium/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Sodium 优化</div>
-                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
-                            </div>
-                        </a>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/neoforge/index.html">NeoForge 模组</a>
                     </div>
-                </div>
-                <a href="../../../../../about.html" class="navbar-link">关于</a>
-            </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
             <div class="navbar-actions">
                 <div class="theme-toggle" role="group" aria-label="主题切换">
                     <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
@@ -129,86 +136,418 @@
         </div>
     </nav>
 
-    <div class="tutorial-page">
-        <header class="tutorial-header">
-            <div class="container">
-                <div class="tutorial-nav">
-                    <div class="tutorial-breadcrumb">
-                        
-        <a href="../../../../../index.html">文档中心</a>
-        <span>/</span>
-    
-            <a href="../../index.html">Minecraft 原版 1.21</a>
-        
-            <span>/</span>
-            <span>教程</span>
-        
-            <span>/</span>
-            <span>Part-2-World</span>
-        
-        <span>/</span>
-        <span>13 - 高度图：快速查找地形高度</span>
-    
-                    </div>
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
                 </div>
-                <h1 class="tutorial-title">13 - 高度图：快速查找地形高度</h1>
-                
-                <div class="tutorial-meta">
-                    <span class="module-badge mc">Minecraft 原版</span>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="13-heightmap.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 9</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 10</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 11</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 12</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 13</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>13 heightmap</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    13 heightmap
+                </h1>
+                <div class="docs-meta">
                     <span><i class="fas fa-code-branch"></i> 1.21</span>
-                    <span><i class="fas fa-file"></i> 教程</span>
-                    <span><i class="fas fa-file"></i> 13-heightmap</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
             </div>
-        </header>
 
-        <div class="tutorial-container">
-            <aside class="tutorial-sidebar">
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
-                    <ul class="toc-list">
-                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#高度图是什么-">高度图是什么？</a></li><li class="h3"><a href="#为什么需要高度图-">为什么需要高度图？</a></li><li><a href="#四种高度图">四种高度图</a></li><li class="h3"><a href="#1-motion_blocking-运动阻挡-">1. MOTION_BLOCKING（运动阻挡）</a></li><li class="h3"><a href="#2-motion_blocking_no_leaves-不含树叶的运动阻挡-">2. MOTION_BLOCKING_NO_LEAVES（不含树叶的运动阻挡）</a></li><li class="h3"><a href="#3-ocean_floor-海底-">3. OCEAN_FLOOR（海底）</a></li><li class="h3"><a href="#4-world_surface-世界表面-">4. WORLD_SURFACE（世界表面）</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#heightmap-类">Heightmap 类</a></li><li class="h3"><a href="#存储结构">存储结构</a></li><li class="h3"><a href="#获取高度">获取高度</a></li><li class="h3"><a href="#更新高度">更新高度</a></li><li class="h3"><a href="#批量填充高度图">批量填充高度图</a></li><li><a href="#图解-高度图工作流程">图解：高度图工作流程</a></li><li class="h3"><a href="#高度图-vs-实时扫描">高度图 vs 实时扫描</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#高度图的典型应用">高度图的典型应用</a></li><li class="h3"><a href="#world-gettopy">World.getTopY</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#思考题">思考题</a></li><li class="h3"><a href="#动手题">动手题</a></li><li><a href="#源码文件位置">源码文件位置</a></li><li><a href="#相关链接">相关链接</a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
-                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
-                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Minecraft 原版</p>
-                        <p style="margin-bottom: var(--space-2);"><strong>版本：</strong>1.21</p>
-                        <p><strong>类型：</strong>教程</p>
-                    </div>
-                </div>
-            </aside>
-
-            <article class="tutorial-content article-content">
-                
+            <div class="docs-body doc-content">
+                <h1>13 - 高度图：快速查找地形高度</h1>
 <h2 id="目标">目标</h2>
-
-<p>学完本章后，你将理解：</p>
-<p>- 什么是高度图（Heightmap）</p>
-<p>- 四种高度图类型的区别和用途</p>
-<p>- 高度图是如何工作的</p>
-<p>- 为什么高度图能提升性能</p>
-
+<p>学完本章后，你将理解：
+<ul><li>什么是高度图（Heightmap）</li>
+<li>四种高度图类型的区别和用途</li>
+<li>高度图是如何工作的</li>
+<li>为什么高度图能提升性能</li></ul></p>
 <h2 id="前置知识">前置知识</h2>
-
-<p>- <a href="09-chunk-system.html">09-区块系统.md</a> - 理解 Chunk 的存储结构</p>
-<p>- <a href="11-terrain-gen.html">11-地形生成.md</a> - 了解地形生成过程</p>
-
+<p><ul><li><a href="./09-chunk-system.html">09-区块系统</a> - 理解 Chunk 的存储结构</li>
+<li><a href="./11-terrain-gen.html">11-地形生成</a> - 了解地形生成过程</li></ul></p>
 <h2 id="核心概念">核心概念</h2>
-
-<h3 id="高度图是什么-">高度图是什么？</h3>
-
+<h3>高度图是什么？</h3>
 <p><strong>生活比喻</strong>：</p>
-
 <p>想象你要在一张 <strong>16×16 的方格纸</strong> 上记录每个格子的"最高山有多高"：</p>
-
-<p>- <strong>没有高度图</strong>：每次想知道某个位置的最高点，必须翻遍整座山的所有石头</p>
-<p>- <strong>有高度图</strong>：看一眼记录表，马上就知道</p>
-
+<p><ul><li><strong>没有高度图</strong>：每次想知道某个位置的最高点，必须翻遍整座山的所有石头</li>
+<li><strong>有高度图</strong>：看一眼记录表，马上就知道</li></ul></p>
 <p><strong>高度图</strong> = 记录每个 (x, z) 位置最高非空气方块高度的数据结构</p>
-
-<pre class="code-block"><code>    地形侧视图（一个Column）
+<pre class="code-block"><code class="language-text">    地形侧视图（一个Column）
 
         高度
     Y=80   __
@@ -220,31 +559,23 @@
     Y=0    ▒▒
 
     高度图记录：(x=5, z=3) → 75</code></pre>
-
-<h3 id="为什么需要高度图-">为什么需要高度图？</h3>
-
+<h3>为什么需要高度图？</h3>
 <p><strong>性能优化的关键</strong>：</p>
-
-<p>想象你要做这些操作：</p>
-<p>1. 找一个地方放置 TNT（需要实体站立的地方）</p>
-<p>2. 确定玩家在哪里出生</p>
-<p>3. 计算天空光照</p>
-<p>4. 生成村庄</p>
-
-<p><strong>如果没有高度图</strong>：</p>
-<p>- 每次都要从下往上扫描整个列（可能几百个方块）💥</p>
-<p>- 100×100 = 10000 次扫描 = 爆炸</p>
-
-<p><strong>有高度图</strong>：</p>
-<p>- 直接查表，O(1) 时间复杂度</p>
-<p>- 瞬间返回结果！</p>
-
+<p>想象你要做这些操作：
+<ul><li>找一个地方放置 TNT（需要实体站立的地方）</li>
+<li>确定玩家在哪里出生</li>
+<li>计算天空光照</li>
+<li>生成村庄</li></ul></p>
+<p><strong>如果没有高度图</strong>：
+<ul><li>每次都要从下往上扫描整个列（可能几百个方块）💥</li>
+<li>100×100 = 10000 次扫描 = 爆炸</li></ul></p>
+<p><strong>有高度图</strong>：
+<ul><li>直接查表，O(1) 时间复杂度</li>
+<li>瞬间返回结果！</li></ul></p>
 <h2 id="四种高度图">四种高度图</h2>
-
 <p>Minecraft 中有 <strong>四种高度图</strong>，每种有不同的用途：</p>
-
-<div class="mermaid">
-flowchart LR
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
     subgraph Types["四种高度图"]
         M["MOTION_BLOCKING"]
         MNL["MOTION_BLOCKING_NO_LEAVES"]
@@ -257,67 +588,50 @@ flowchart LR
         MNL -->|导航| Nav["路径寻找"]
         O -->|结构| Struct["结构放置"]
         W -->|地表| Surface["地表生成"]
-    end
+    end</div>
 </div>
-
-<h3 id="1-motion_blocking-运动阻挡-">1. MOTION_BLOCKING（运动阻挡）</h3>
-
+<h3>1. MOTION_BLOCKING（运动阻挡）</h3>
 <p><strong>定义</strong>：阻挡运动的最顶层方块</p>
-
-<pre class="code-block"><code>132:    MOTION_BLOCKING(&quot;MOTION_BLOCKING&quot;, Purpose.CLIENT,
+<pre class="code-block"><code class="language-java">132:    MOTION_BLOCKING(&quot;MOTION_BLOCKING&quot;, Purpose.CLIENT,
 133:        state -&gt; state.blocksMovement() || !state.getFluidState().isEmpty())</code></pre>
-
-<p><strong>判断条件</strong>：</p>
-<p>- 方块 <code>blocksMovement() == true</code>（阻挡移动）</p>
-<p>- 或方块上有非空的流体</p>
-
-<p><strong>用途</strong>：</p>
-<p>- 实体站立位置</p>
-<p>- 玩家出生点</p>
-<p>- 实体移动检测</p>
-
-<pre class="code-block"><code>示例：
+<p><strong>判断条件</strong>：
+<ul><li>方块 <code>blocksMovement() == true</code>（阻挡移动）</li>
+<li>或方块上有非空的流体</li></ul></p>
+<p><strong>用途</strong>：
+<ul><li>实体站立位置</li>
+<li>玩家出生点</li>
+<li>实体移动检测</li></ul></p>
+<pre class="code-block"><code class="language-text">示例：
 
     🧍玩家    ← 站立在 MOTION_BLOCKING 上
 
     树叶 ░░    ← 不阻挡运动，不算
     石头 ▓▓    ← 阻挡运动，算！</code></pre>
-
-<h3 id="2-motion_blocking_no_leaves-不含树叶的运动阻挡-">2. MOTION_BLOCKING_NO_LEAVES（不含树叶的运动阻挡）</h3>
-
+<h3>2. MOTION<em>BLOCKING</em>NO_LEAVES（不含树叶的运动阻挡）</h3>
 <p><strong>定义</strong>：和 MOTION_BLOCKING 类似，但忽略树叶</p>
-
-<pre class="code-block"><code>133:    MOTION_BLOCKING_NO_LEAVES(&quot;MOTION_BLOCKING_NO_LEAVES&quot;, Purpose.LIVE_WORLD,
+<pre class="code-block"><code class="language-java">133:    MOTION_BLOCKING_NO_LEAVES(&quot;MOTION_BLOCKING_NO_LEAVES&quot;, Purpose.LIVE_WORLD,
 134:        state -&gt; (state.blocksMovement() || !state.getFluidState().isEmpty())
 135:                   &amp;&amp; !(state.getBlock() instanceof LeavesBlock))</code></pre>
-
-<p><strong>用途</strong>：</p>
-<p>- 路径寻找（生物导航时会穿过树叶）</p>
-<p>- 生物 AI 判断</p>
-
-<pre class="code-block"><code>示例：
+<p><strong>用途</strong>：
+<ul><li>路径寻找（生物导航时会穿过树叶）</li>
+<li>生物 AI 判断</li></ul></p>
+<pre class="code-block"><code class="language-text">示例：
 
     树叶 ░░    ← 忽略，不算
     石头 ▓▓    ← 算！
 
     生物导航时会穿过树叶</code></pre>
-
-<h3 id="3-ocean_floor-海底-">3. OCEAN_FLOOR（海底）</h3>
-
+<h3>3. OCEAN_FLOOR（海底）</h3>
 <p><strong>定义</strong>：海底的最顶层方块（考虑阻挡呼吸的方块）</p>
-
-<pre class="code-block"><code>131:    OCEAN_FLOOR(&quot;OCEAN_FLOOR&quot;, Purpose.LIVE_WORLD,
+<pre class="code-block"><code class="language-java">131:    OCEAN_FLOOR(&quot;OCEAN_FLOOR&quot;, Purpose.LIVE_WORLD,
 132:        SUFFOCATES)</code></pre>
-
-<p><strong>判断条件</strong>：</p>
-<p>- 方块 <code>blocksMovement()</code>（和活塞有关）</p>
-
-<p><strong>用途</strong>：</p>
-<p>- 结构放置（村庄不会建在水下太深的地方）</p>
-<p>- 海底地形生成</p>
-<p>- 海洋生物群系生成</p>
-
-<pre class="code-block"><code>示例：
+<p><strong>判断条件</strong>：
+<ul><li>方块 <code>blocksMovement()</code>（和活塞有关）</li></ul></p>
+<p><strong>用途</strong>：
+<ul><li>结构放置（村庄不会建在水下太深的地方）</li>
+<li>海底地形生成</li>
+<li>海洋生物群系生成</li></ul></p>
+<pre class="code-block"><code class="language-text">示例：
 
     沙子 ░░    ← 海底
 
@@ -325,40 +639,28 @@ flowchart LR
     💧💧💧💧
 
     石头 ▓▓    ← 不算</code></pre>
-
-<h3 id="4-world_surface-世界表面-">4. WORLD_SURFACE（世界表面）</h3>
-
+<h3>4. WORLD_SURFACE（世界表面）</h3>
 <p><strong>定义</strong>：非空气方块的最顶层</p>
-
-<pre class="code-block"><code>129:    WORLD_SURFACE(&quot;WORLD_SURFACE&quot;, Purpose.CLIENT,
+<pre class="code-block"><code class="language-java">129:    WORLD_SURFACE(&quot;WORLD_SURFACE&quot;, Purpose.CLIENT,
 130:        NOT_AIR)</code></pre>
-
-<p><strong>判断条件</strong>：</p>
-<p>- <code>!state.isAir()</code>（只要不是空气就行）</p>
-
-<p><strong>用途</strong>：</p>
-<p>- 发送给客户端的地形高度</p>
-<p>- 地形生成时的地表高度</p>
-<p>- 生物群系采样位置</p>
-
-<pre class="code-block"><code>示例：
+<p><strong>判断条件</strong>：
+<ul><li><code>!state.isAir()</code>（只要不是空气就行）</li></ul></p>
+<p><strong>用途</strong>：
+<ul><li>发送给客户端的地形高度</li>
+<li>地形生成时的地表高度</li>
+<li>生物群系采样位置</li></ul></p>
+<pre class="code-block"><code class="language-text">示例：
 
     草方块 ██  ← 算！
     空气 ░░    ← 不算
 
     所以 WORLD_SURFACE = 草方块的位置</code></pre>
-
 <h2 id="核心代码">核心代码</h2>
-
-<blockquote>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</blockquote>
-
-<h3 id="heightmap-类">Heightmap 类</h3>
-
-<blockquote>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</blockquote>
-
+<blockquote><p>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</p></blockquote>
+<h3>Heightmap 类</h3>
+<blockquote><p>⚠️ <strong>注意</strong>：以下代码基于 CFR 反编译，实际源码可能略有差异。建议结合 Minecraft 源码仓库交叉验证。</p></blockquote>
 <p>源码路径：<code>net/minecraft/world/Heightmap.java</code></p>
-
-<pre class="code-block"><code>25:public class Heightmap {
+<pre class="code-block"><code class="language-java">25:public class Heightmap {
 26:    // 存储空间（压缩的整数数组）
 27:    private final PaletteStorage storage;
 
@@ -368,10 +670,8 @@ flowchart LR
 32:    // 所属的 Chunk
 33:    private final Chunk chunk;
 34:}</code></pre>
-
-<h3 id="存储结构">存储结构</h3>
-
-<pre class="code-block"><code>36:    public Heightmap(Chunk chunk, Type type) {
+<h3>存储结构</h3>
+<pre class="code-block"><code class="language-java">36:    public Heightmap(Chunk chunk, Type type) {
 37:        this.blockPredicate = type.getBlockPredicate();
 38:        this.chunk = chunk;
 
@@ -381,16 +681,13 @@ flowchart LR
 43:        // 16×16 = 256 个位置，每个位置一个高度
 44:        this.storage = new PackedIntegerArray(bits, 256);
 45:    }</code></pre>
-
-<p><strong>存储计算</strong>：</p>
-<p>- 16×16 = 256 个位置</p>
-<p>- 每个位置存储一个高度值</p>
-<p>- 所需位数 = log2(世界高度)</p>
-<p>- 主世界：log2(384) ≈ 9 位</p>
-
-<h3 id="获取高度">获取高度</h3>
-
-<pre class="code-block"><code>92:    public int get(int x, int z) {
+<p><strong>存储计算</strong>：
+<ul><li>16×16 = 256 个位置</li>
+<li>每个位置存储一个高度值</li>
+<li>所需位数 = log2(世界高度)</li>
+<li>主世界：log2(384) ≈ 9 位</li></ul></p>
+<h3>获取高度</h3>
+<pre class="code-block"><code class="language-java">92:    public int get(int x, int z) {
 93:        // x, z 是 0-15 的局部坐标
 94:        return this.get(Heightmap.toIndex(x, z));
 95:    }
@@ -404,10 +701,8 @@ flowchart LR
 103:        // 从存储中读取，并加上 Chunk 的底部 Y 坐标
 104:        return this.storage.get(index) + this.chunk.getBottomY();
 105:    }</code></pre>
-
-<h3 id="更新高度">更新高度</h3>
-
-<pre class="code-block"><code>68:    public boolean trackUpdate(int x, int y, int z, BlockState state) {
+<h3>更新高度</h3>
+<pre class="code-block"><code class="language-java">68:    public boolean trackUpdate(int x, int y, int z, BlockState state) {
 69:        // 获取当前记录的高度
 70:        int currentHeight = this.get(x, z);
 
@@ -444,10 +739,8 @@ flowchart LR
 
 103:        return false;
 104:    }</code></pre>
-
-<h3 id="批量填充高度图">批量填充高度图</h3>
-
-<pre class="code-block"><code>40:    public static void populateHeightmaps(Chunk chunk, Set&lt;Type&gt; types) {
+<h3>批量填充高度图</h3>
+<pre class="code-block"><code class="language-java">40:    public static void populateHeightmaps(Chunk chunk, Set&lt;Type&gt; types) {
 41:        // 从区块最高点开始向下搜索
 42:        int startY = chunk.getHighestNonEmptySectionYOffset() + 16;
 
@@ -477,11 +770,9 @@ flowchart LR
 67:            }
 68:        }
 69:    }</code></pre>
-
-<h2 id="图解-高度图工作流程">图解：高度图工作流程</h2>
-
-<div class="mermaid">
-flowchart TD
+<h2 id="图解高度图工作流程">图解：高度图工作流程</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
     subgraph Creation["创建阶段"]
         A1["地形生成完成"] --> A2["创建 4 种 Heightmap"]
         A2 --> A3["批量填充高度值"]
@@ -505,12 +796,10 @@ flowchart TD
     end
 
     Creation --> Usage
-    Usage --> Update
+    Usage --> Update</div>
 </div>
-
-<h3 id="高度图-vs-实时扫描">高度图 vs 实时扫描</h3>
-
-<pre class="code-block"><code>场景：获取位置 (5, 64) 的 MOTION_BLOCKING 高度
+<h3>高度图 vs 实时扫描</h3>
+<pre class="code-block"><code class="language-text">场景：获取位置 (5, 64) 的 MOTION_BLOCKING 高度
 
 方式 1: 实时扫描（没有高度图）
 ─────────────────────────────────
@@ -530,34 +819,24 @@ y=64: 草方块     ← 是！阻挡运动！
 ─────────────────────────────────
 从存储中直接读取 (5, 3) 的值 → 64
 O(1) 时间复杂度！⚡</code></pre>
-
 <h2 id="实战演示">实战演示</h2>
-
-<h3 id="高度图的典型应用">高度图的典型应用</h3>
-
-<p>1. <strong>玩家出生点</strong></p>
-<p>   <code>`</code>java</p>
-<p>   BlockPos spawnPos = world.getTopPosition(</p>
-<p>       Heightmap.Type.MOTION_BLOCKING,  // 需要站立的地方</p>
-<p>       BlockPos.ofFloored(x, 0, z)</p>
-<p>   );</p>
-<p>   <code>`</code></p>
-
-<p>2. <strong>结构生成</strong></p>
-<p>   <code>`</code>java</p>
-<p>   int groundLevel = chunk.getHeightmap(Type.OCEAN_FLOOR).get(x, z);</p>
-<p>   // 确保结构不会建在海底太深的地方</p>
-<p>   <code>`</code></p>
-
-<p>3. <strong>天空光照计算</strong></p>
-<p>   <code>`</code>java</p>
-<p>   int skyLight = 15 - (world.getTopY() - y);</p>
-<p>   // 使用高度计算初始天空光照</p>
-<p>   <code>`</code></p>
-
-<h3 id="world-gettopy">World.getTopY</h3>
-
-<pre class="code-block"><code>363:    @Override
+<h3>高度图的典型应用</h3>
+<p><ul><li><strong>玩家出生点</strong></li>
+</ul>   
+<pre class="code-block"><code class="language-java">   BlockPos spawnPos = world.getTopPosition(
+       Heightmap.Type.MOTION_BLOCKING,  // 需要站立的地方
+       BlockPos.ofFloored(x, 0, z)
+   );</code></pre></p>
+<p><ul><li><strong>结构生成</strong></li>
+</ul>   
+<pre class="code-block"><code class="language-java">   int groundLevel = chunk.getHeightmap(Type.OCEAN_FLOOR).get(x, z);
+   // 确保结构不会建在海底太深的地方</code></pre></p>
+<p><ul><li><strong>天空光照计算</strong></li>
+</ul>   
+<pre class="code-block"><code class="language-java">   int skyLight = 15 - (world.getTopY() - y);
+   // 使用高度计算初始天空光照</code></pre></p>
+<h3>World.getTopY</h3>
+<pre class="code-block"><code class="language-java">363:    @Override
 364:    public int getTopY(Heightmap.Type heightmap, int x, int z) {
 365:        // 超出边界？返回海平面 + 1
 366:        if (x &lt; -30000000 || z &lt; -30000000
@@ -580,95 +859,77 @@ O(1) 时间复杂度！⚡</code></pre>
 383:        // Chunk 未加载，返回底部 Y
 384:        return this.getBottomY();
 385:    }</code></pre>
-
 <h2 id="小结">小结</h2>
-
-<table><thead><tr><th>高度图类型</th><th>判断条件</th><th>用途</th></tr></thead><tbody><tr><td>-----------</td><td>---------</td><td>------</td></tr><tr><td>MOTION_BLOCKING</td><td>阻挡移动/有流体</td><td>实体站立、移动检测</td></tr><tr><td>MOTION_BLOCKING_NO_LEAVES</td><td>同上，但忽略树叶</td><td>路径寻找、AI导航</td></tr><tr><td>OCEAN_FLOOR</td><td>blocksMovement</td><td>结构放置、海底生成</td></tr><tr><td>WORLD_SURFACE</td><td>非空气</td><td>地表、生物群系</td></tr></tbody></table>
-
-<p><strong>关键理解</strong>：</p>
-<p>- <strong>高度图是预计算的</strong>：不需要每次扫描</p>
-<p>- <strong>四种类型各有用途</strong>：不同场景需要不同的高度定义</p>
-<p>- <strong>每个 Chunk 维护自己的高度图</strong>：节省内存</p>
-
+<table class="data-table"><thead><tr><th>高度图类型</th><th>判断条件</th><th>用途</th></tr></thead><tbody><tr><td>MOTION<em>BLOCKING</td><td>阻挡移动/有流体</td><td>实体站立、移动检测</td></tr><tr><td>MOTION</em>BLOCKING<em>NO</em>LEAVES</td><td>同上，但忽略树叶</td><td>路径寻找、AI导航</td></tr><tr><td>OCEAN<em>FLOOR</td><td>blocksMovement</td><td>结构放置、海底生成</td></tr><tr><td>WORLD</em>SURFACE</td><td>非空气</td><td>地表、生物群系</td></tr></tbody></table>
+<strong>关键理解</strong>：
+<ul><li><strong>高度图是预计算的</strong>：不需要每次扫描</li>
+<li><strong>四种类型各有用途</strong>：不同场景需要不同的高度定义</li>
+<li><strong>每个 Chunk 维护自己的高度图</strong>：节省内存</li></ul></p>
 <h2 id="练习">练习</h2>
-
-<h3 id="思考题">思考题</h3>
-
-<p>1. 为什么需要四种高度图而不是一种？</p>
-<p>2. 如果你在树叶上放置一个告示牌，高度图会如何变化？</p>
-<p>3. 高度图的更新策略是什么？为什么不每次都完整重新计算？</p>
-
-<h3 id="动手题">动手题</h3>
-
-<p>1. <strong>在源码中找到</strong>：</p>
-<p>   - <code>Heightmap.java</code> 第 126-134 行：查看四种高度图的定义</p>
-<p>   - <code>Heightmap.java</code> 第 68-103 行：理解 <code>trackUpdate</code> 的逻辑</p>
-<p>   - <code>World.java</code> 第 363-385 行：理解 <code>getTopY</code> 方法</p>
-
-<p>2. <strong>游戏测试</strong>：</p>
-<p>   - 在森林中找到一棵树</p>
-<p>   - 比较 MOTION_BLOCKING 和 MOTION_BLOCKING_NO_LEAVES 的高度</p>
-<p>   - 验证树叶是否被 MOTION_BLOCKING_NO_LEAVES 忽略</p>
-
-<p>3. <strong>计算练习</strong>：</p>
-<p>   - 如果世界高度是 384（-64 到 320）</p>
-<p>   - 每个高度图条目需要多少位？</p>
-<p>   - 16×16 的高度图需要多少字节存储？</p>
-
+<h3>思考题</h3>
+<p><ul><li>为什么需要四种高度图而不是一种？</li>
+<li>如果你在树叶上放置一个告示牌，高度图会如何变化？</li>
+<li>高度图的更新策略是什么？为什么不每次都完整重新计算？</li></ul></p>
+<h3>动手题</h3>
+<p><ul><li><strong>在源码中找到</strong>：</li>
+</ul>   - <code>Heightmap.java</code> 第 126-134 行：查看四种高度图的定义
+   - <code>Heightmap.java</code> 第 68-103 行：理解 <code>trackUpdate</code> 的逻辑
+   - <code>World.java</code> 第 363-385 行：理解 <code>getTopY</code> 方法</p>
+<p><ul><li><strong>游戏测试</strong>：</li>
+</ul>   - 在森林中找到一棵树
+   - 比较 MOTION<em>BLOCKING 和 MOTION</em>BLOCKING<em>NO</em>LEAVES 的高度
+   - 验证树叶是否被 MOTION<em>BLOCKING</em>NO_LEAVES 忽略</p>
+<p><ul><li><strong>计算练习</strong>：</li>
+</ul>   - 如果世界高度是 384（-64 到 320）
+   - 每个高度图条目需要多少位？
+   - 16×16 的高度图需要多少字节存储？</p>
 <h2 id="源码文件位置">源码文件位置</h2>
-
-<table><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>------</td><td>----------</td><td>------</td></tr><tr><td>Heightmap.java</td><td>`net/minecraft/world/Heightmap.java`</td><td>高度图基类</td></tr><tr><td>WorldChunk.java</td><td>`net/minecraft/world/chunk/WorldChunk.java`</td><td>包含高度图管理</td></tr></tbody></table>
-
+<table class="data-table"><thead><tr><th>文件</th><th>源码路径</th><th>说明</th></tr></thead><tbody><tr><td>Heightmap.java</td><td><code>net/minecraft/world/Heightmap.java</code></td><td>高度图基类</td></tr><tr><td>WorldChunk.java</td><td><code>net/minecraft/world/chunk/WorldChunk.java</code></td><td>包含高度图管理</td></tr></tbody></table>
 <h2 id="相关链接">相关链接</h2>
+<p><ul><li><a href="./09-chunk-system.html">09-区块系统</a> - 高度图存储在 Chunk 中</li>
+<li><a href="./11-terrain-gen.html">11-地形生成</a> - 高度图在生成中的应用</li>
+<li><a href="./12-lighting-system.html">12-光照系统</a> - 高度图与天空光照</li>
+<li>Minecraft Wiki: <a href="https://minecraft.wiki/w/Heightmap" target="_blank" rel="noopener noreferrer">Heightmap</a></li>
+</ul></p>
+            </div>
 
-<p>- <a href="09-chunk-system.html">09-区块系统.md</a> - 高度图存储在 Chunk 中</p>
-<p>- <a href="11-terrain-gen.html">11-地形生成.md</a> - 高度图在生成中的应用</p>
-<p>- <a href="12-lighting-system.html">12-光照系统.md</a> - 高度图与天空光照</p>
-<p>- Minecraft Wiki: <a href="https://minecraft.wiki/w/Heightmap" target="_blank" rel="noopener noreferrer">Heightmap</a></p>
-
-
-            </article>
-        </div>
+            <div class="docs-footer">
+                <div class="prev-next"><a href="12-lighting-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            12 - 光照系统：明暗的艺术
+        </a><a href="../Part-3-Block-Item/14-block-basics.html" class="next">
+            14 - Block 类：方块的基础
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
-            </div>
-        </div>
-    </footer>
-
     <script src="../../../../../script.js"></script>
-    <script src="../../../../../tutorial.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose',
-            flowchart: { htmlLabels: true }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
         });
-
-        // Listen for theme changes to update Mermaid
-        window.addEventListener('themechange', (e) => {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
-                });
-            }
-        });
-
-        // Copy code function
-        function copyCode(btn) {
-            const codeBlock = btn.closest('.code-reference').querySelector('code');
-            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
-                }, 2000);
-            });
-        }
+        hljs.highlightAll();
+      });
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

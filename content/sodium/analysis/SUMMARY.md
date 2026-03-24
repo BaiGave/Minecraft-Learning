@@ -220,6 +220,9 @@ Sodium 通过 **FRAPI (Fabric Renderer API)** 为第三方 mod 提供渲染访�
 | 着色器管理 | `ChunkShader.java` |
 | 顶点编码 | `ChunkVertexEncoder.java` |
 | 平台抽象 | `PlatformBlockAccess.java` |
+| 配置系统 | `Config.java`, `StatefulOption.java`, `VideoSettingsScreen.java` |
+| 配置构建器 | `ConfigBuilderImpl.java`, `BooleanOptionBuilderImpl.java` |
+| 值类型与绑定 | `DynamicValue.java`, `AnonymousOptionBinding.java` |
 
 ---
 
@@ -242,6 +245,10 @@ Sodium 是一个优秀的开源项目，适合学习：
 - [04-render-pipeline.md](04-render-pipeline.md) - 渲染管线
 - [05-shader-system.md](05-shader-system.md) - 着色器系统
 - [06-platform-integration.md](06-platform-integration.md) - 平台集成
+- [07-mixin-injection.md](07-mixin-injection.md) - Mixin 注入机制
+- [08-configuration-system.md](08-configuration-system.md) - 配置系统
+- [09-performance-optimization.md](09-performance-optimization.md) - 性能优化技术
+- [08-configuration-system.md](08-configuration-system.md) - 配置系统
 
 ---
 

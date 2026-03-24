@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #9B59B6; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #9B59B6 0, #B370CF 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #9B59B6; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #9B59B6; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #9B59B6; background: #9B59B615; }
-        .info-box i { color: #9B59B6; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #9B59B6; }
-        .docs-body h2 i { color: #9B59B6; }
-        .data-table th { background: linear-gradient(135deg, #9B59B6 0%, #B370CF 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #9B59B6 0%, #B370CF 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #9B59B666; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #9B59B6;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #9B59B6, #9B59B699);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,21 +136,93 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>NeoForge 模组</h3>
-                <span class="doc-badge">教程</span>
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
-                <a href="01-getting-started.html" class="">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="part-1-getting-started/01-environment-setup.html" class="sidebar-nav-link ">
             <i class="fas fa-book"></i>
-            NeoForge 入门指南
+            <span>NeoForge 1.21.x 环境搭建与第一个 Mod</span>
         </a>
-<a href="02-event-system.html" class="active">
+<a href="part-1-getting-started/02-registry-system.html" class="sidebar-nav-link ">
             <i class="fas fa-book"></i>
-            NeoForge 事件系统
+            <span>第二章：注册系统 - DeferredRegister 完全指南</span>
         </a>
+<a href="part-1-getting-started/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="part-2-blocks-items/01-blocks-and-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>方块与物品开发完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="part-3-entities/01-entity-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 实体系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="part-4-networking/01-network-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 网络通信完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="part-5-world-gen/01-world-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 世界生成与区块系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="part-6-recipes/01-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配方与酿造系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="part-7-config/01-config-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配置系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="part-8-projects/01-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>魔法水晶方块 - NeoForge 实战项目</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-getting-started.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 入门指南</span>
+        </a>
+<a href="02-event-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统</span>
+        </a>
+        </div>
             </nav>
             <div class="sidebar-footer">
                 <a href="../index.html">
@@ -174,6 +231,11 @@
                 </a>
             </div>
         </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
 
         <main class="docs-content">
             <div class="docs-header">
@@ -258,6 +320,7 @@ public void onBlockPlace(BlockPlaceEvent event) {
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -280,5 +343,6 @@ public void onBlockPlace(BlockPlaceEvent event) {
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

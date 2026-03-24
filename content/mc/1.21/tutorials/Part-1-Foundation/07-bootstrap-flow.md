@@ -526,7 +526,7 @@ flowchart TB
 ```mermaid
 flowchart TB
     subgraph 核心要点["本章核心要点"]
-        E1["1. Bootstrap.initialize() 是游戏启动的"总开关""]
+        E1["1. Bootstrap.initialize() 是游戏启动的「总开关」"]
         E2["2. 所有注册表必须在启动时初始化完成"]
         E3["3. ItemGroups.collect() 收集创造模式物品栏"]
         E4["4. 各种Behavior.registerDefaults() 注册默认行为"]

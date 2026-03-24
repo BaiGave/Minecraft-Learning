@@ -1,125 +1,132 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-    <!-- Primary Meta Tags -->
-    <title>Minecraft 声音系统详解 - Minecraft 原版 教程</title>
-    <meta name="title" content="Minecraft 声音系统详解 - Minecraft 原版 教程">
-    <meta name="description" content="深入学习 Minecraft 原版 源码，理解其内部工作原理">
-    <meta name="keywords" content="Minecraft 原版, Minecraft, 源码教程, 教程, Java">
-    <link rel="canonical" href="https://baigave.github.io/Minecraft-Learning/docs/mc/1.21/tutorials/Part-13-Additional/sound-system.html">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="https://baigave.github.io/Minecraft-Learning/docs/mc/1.21/tutorials/Part-13-Additional/sound-system.html">
-    <meta property="og:title" content="Minecraft 声音系统详解 - Minecraft 原版 教程">
-    <meta property="og:description" content="深入学习 Minecraft 原版 源码">
-    <meta property="og:site_name" content="Minecraft Learning">
-    <meta property="og:locale" content="zh_CN">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Minecraft 声音系统详解 - Minecraft 原版">
-    <meta name="twitter:description" content="深入学习 Minecraft 原版 源码">
-
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": "Minecraft 声音系统详解",
-        "description": "",
-        "author": {
-            "@type": "Person",
-            "name": "baigave"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "Minecraft Learning"
-        },
-        "datePublished": "2026-03-22T18:58:45.658Z",
-        "dateModified": "2026-03-22T18:58:45.658Z"
-    }
-    </script>
+    <title>sound system - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
     <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script src="../../../../../scripts/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
 </head>
-<body>
-    <div class="reading-progress" id="readingProgress"></div>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
-        <div class="navbar-inner">
-            <a href="../../../../../index.html" class="navbar-logo">
-                <div class="navbar-logo-icon">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <span class="navbar-logo-text">Minecraft Learning</span>
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
             </a>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="navbar-links">
-                <a href="../../../../../index.html" class="navbar-link">首页</a>
-                
-                <div class="nav-dropdown">
-                    <span class="nav-dropdown-trigger">
-                        文档中心 <i class="fas fa-chevron-down"></i>
-                    </span>
-                    <div class="nav-dropdown-menu">
-                        
-                        <a href="../../../../../docs/fabric/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-box"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Fabric 模组</div>
-                                <div class="nav-dropdown-item-desc">Fabric 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/forge/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-hammer"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Forge 模组</div>
-                                <div class="nav-dropdown-item-desc">Forge 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/iris/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-sun"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Iris 光影</div>
-                                <div class="nav-dropdown-item-desc">Shader 开发教程</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/mc/1.21/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-cube"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Minecraft 原版</div>
-                                <div class="nav-dropdown-item-desc">MC 源码深度解析</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/neoforge/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-fire"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">NeoForge 模组</div>
-                                <div class="nav-dropdown-item-desc">NeoForge 模组开发</div>
-                            </div>
-                        </a>
-                        <a href="../../../../../docs/sodium/index.html" class="nav-dropdown-item">
-                            <div class="nav-dropdown-item-icon"><i class="fas fa-rocket"></i></div>
-                            <div class="nav-dropdown-item-content">
-                                <div class="nav-dropdown-item-title">Sodium 优化</div>
-                                <div class="nav-dropdown-item-desc">渲染引擎优化</div>
-                            </div>
-                        </a>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/neoforge/index.html">NeoForge 模组</a>
                     </div>
-                </div>
-                <a href="../../../../../about.html" class="navbar-link">关于</a>
-            </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
             <div class="navbar-actions">
                 <div class="theme-toggle" role="group" aria-label="主题切换">
                     <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
@@ -129,99 +136,429 @@
         </div>
     </nav>
 
-    <div class="tutorial-page">
-        <header class="tutorial-header">
-            <div class="container">
-                <div class="tutorial-nav">
-                    <div class="tutorial-breadcrumb">
-                        
-        <a href="../../../../../index.html">文档中心</a>
-        <span>/</span>
-    
-            <a href="../../index.html">Minecraft 原版 1.21</a>
-        
-            <span>/</span>
-            <span>教程</span>
-        
-            <span>/</span>
-            <span>Part-13-Additional</span>
-        
-        <span>/</span>
-        <span>Minecraft 声音系统详解</span>
-    
-                    </div>
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
                 </div>
-                <h1 class="tutorial-title">Minecraft 声音系统详解</h1>
-                
-                <div class="tutorial-meta">
-                    <span class="module-badge mc">Minecraft 原版</span>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Minecraft 源码入门教程 - 课程总览</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>☕ Java 基础速查</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>💻 开发环境搭建</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>📁 项目结构介绍</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附录：源码查找指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第六章：共享常量（Shared Constants）</span>
+        </a>
+<a href="../Part-1-Foundation/07-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第七章：启动流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../Part-2-World/08-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>08 - 世界核心：World 类</span>
+        </a>
+<a href="../Part-2-World/09-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>09 - 区块系统：Chunk 的奥秘</span>
+        </a>
+<a href="../Part-2-World/10-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>10 - 生物群系系统：Biome 的多彩世界</span>
+        </a>
+<a href="../Part-2-World/11-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>11 - 地形生成：从噪声到山川河流</span>
+        </a>
+<a href="../Part-2-World/12-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>12 - 光照系统：明暗的艺术</span>
+        </a>
+<a href="../Part-2-World/13-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>13 - 高度图：快速查找地形高度</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../Part-3-Block-Item/14-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>14 - Block 类：方块的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/15-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>15 - BlockState：方块的不同状态</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>16 - BlockEntity：需要存储数据的方块</span>
+        </a>
+<a href="../Part-3-Block-Item/17-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>17 - Item 类：物品的基础</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>18 - ItemStack：物品堆叠</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>19 - ComponentMap：1.21新版物品数据系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../Part-4-Entity/20-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第20章 Entity（实体）——游戏世界里的"活物"</span>
+        </a>
+<a href="../Part-4-Entity/21-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第21章 Entity 生命周期——实体的生老病死</span>
+        </a>
+<a href="../Part-4-Entity/22-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第22章 LivingEntity——有血有肉的活物</span>
+        </a>
+<a href="../Part-4-Entity/23-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第23章 MobEntity——会思考的生物</span>
+        </a>
+<a href="../Part-4-Entity/24-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第24章 实体属性系统——角色的能力数值</span>
+        </a>
+<a href="../Part-4-Entity/25-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第25章 伤害系统——攻击与防御的机制</span>
+        </a>
+<a href="../Part-4-Entity/26-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第26章 生成系统——生物是如何出现在世界上的</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../Part-5-AI/27-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第27章：AI大脑 - 生物的"思考中心"</span>
+        </a>
+<a href="../Part-5-AI/28-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第28章：记忆系统 - 生物的"记忆库"</span>
+        </a>
+<a href="../Part-5-AI/29-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二十九章：传感器系统 - 生物的"感官"</span>
+        </a>
+<a href="../Part-5-AI/30-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第30章：任务系统 - 生物的"行为动作"</span>
+        </a>
+<a href="../Part-5-AI/31-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第31章：活动与日程 - 生物的"作息表"</span>
+        </a>
+<a href="../Part-5-AI/32-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第32章：路径导航 - 生物的"GPS导航"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../Part-6-Network/33-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第33章 网络基础入门</span>
+        </a>
+<a href="../Part-6-Network/34-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第34章 数据包系统详解</span>
+        </a>
+<a href="../Part-6-Network/35-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第35章 协议状态机详解</span>
+        </a>
+<a href="../Part-6-Network/36-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第36章 同步机制详解</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../Part-7-Command/37-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第37章 命令系统入门 —— 理解 Minecraft 的指令世界</span>
+        </a>
+<a href="../Part-7-Command/38-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器</span>
+        </a>
+<a href="../Part-7-Command/39-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第39章 自定义命令 —— 创建你的第一个命令</span>
+        </a>
+<a href="../Part-7-Command/40-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第40章 命令进阶 —— 条件执行、子命令与重定向</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../Part-8-Resource/40-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>40 - 资源包：游戏的外观与音效</span>
+        </a>
+<a href="../Part-8-Resource/41-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>41 - 数据包：游戏数据定义</span>
+        </a>
+<a href="../Part-8-Resource/42-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>42 - 战利品表：掉落物定义</span>
+        </a>
+<a href="../Part-8-Resource/43-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>43 - 进度系统：成就与任务</span>
+        </a>
+<a href="../Part-8-Resource/44-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>44 - 配方系统：物品合成</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 9</div>
+            <a href="../Part-9-Client/45-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第45章 Minecraft 客户端核心</span>
+        </a>
+<a href="../Part-9-Client/46-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第46章 渲染系统</span>
+        </a>
+<a href="../Part-9-Client/47-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第47章 GUI系统</span>
+        </a>
+<a href="../Part-9-Client/48-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第48章 输入处理</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 10</div>
+            <a href="../Part-10-Server/49-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四十九章：Minecraft 服务器核心 - MinecraftServer</span>
+        </a>
+<a href="../Part-10-Server/50-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十章：玩家大管家 - PlayerManager</span>
+        </a>
+<a href="../Part-10-Server/51-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十一章：世界守护者 - 存档系统</span>
+        </a>
+<a href="../Part-10-Server/52-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第五十二章：双生子 - 独立服务器与整合服务器</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 11</div>
+            <a href="../Part-11-Advanced/53-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第53章 数据修复系统 (DataFixer)</span>
+        </a>
+<a href="../Part-11-Advanced/54-fluids.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第54章 流体系统 (Fluids)</span>
+        </a>
+<a href="../Part-11-Advanced/55-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第55章 村民系统 (Village System)</span>
+        </a>
+<a href="../Part-11-Advanced/56-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第56章 袭击系统 (Raid System)</span>
+        </a>
+<a href="../Part-11-Advanced/57-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第57章 结构系统 (Structure System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 12</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目1：添加新方块</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目2：添加新物品</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目3：添加新生物</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>项目4：创建数据包</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part 13</div>
+            <a href="enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统 (Enchantment System)</span>
+        </a>
+<a href="inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统 (Scoreboard System)</span>
+        </a>
+<a href="sound-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统 (Stats System)</span>
+        </a>
+<a href="text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统 (Text System)</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>sound system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    sound system
+                </h1>
+                <div class="docs-meta">
                     <span><i class="fas fa-code-branch"></i> 1.21</span>
-                    <span><i class="fas fa-file"></i> 教程</span>
-                    <span><i class="fas fa-file"></i> sound-system</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
                 </div>
             </div>
-        </header>
 
-        <div class="tutorial-container">
-            <aside class="tutorial-sidebar">
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-list"></i> 本章目录</h3>
-                    <ul class="toc-list">
-                        <li><a href="#目标">目标</a></li><li><a href="#前置知识">前置知识</a></li><li><a href="#核心概念">核心概念</a></li><li class="h3"><a href="#什么是声音系统-">什么是声音系统？</a></li><li class="h3"><a href="#生活比喻-声音系统-餐厅的背景音乐系统">生活比喻：声音系统 = 餐厅的背景音乐系统</a></li><li><a href="#图解-mermaid-">图解（Mermaid）</a></li><li class="h3"><a href="#声音播放流程图">声音播放流程图</a></li><li class="h3"><a href="#声音系统类关系图">声音系统类关系图</a></li><li class="h3"><a href="#声音播放时序图">声音播放时序图</a></li><li><a href="#核心代码">核心代码</a></li><li class="h3"><a href="#1-soundevent-声音事件">1. SoundEvent - 声音事件</a></li><li class="h3"><a href="#2-soundcategory-声音类别">2. SoundCategory - 声音类别</a></li><li class="h3"><a href="#3-blocksoundgroup-方块音效组">3. BlockSoundGroup - 方块音效组</a></li><li class="h3"><a href="#4-播放声音的常用方法">4. 播放声音的常用方法</a></li><li class="h3"><a href="#在服务端-world-中播放">在服务端/World 中播放</a></li><li class="h3"><a href="#在客户端播放-仅本地玩家能听到-">在客户端播放（仅本地玩家能听到）</a></li><li><a href="#实战演示">实战演示</a></li><li class="h3"><a href="#场景-创建一个自定义爆炸声音">场景：创建一个自定义爆炸声音</a></li><li class="h3"><a href="#第一步-定义声音事件-服务端注册-">第一步：定义声音事件（服务端注册）</a></li><li class="h3"><a href="#第二步-创建资源文件">第二步：创建资源文件</a></li><li class="h3"><a href="#第三步-放置实际的音频文件">第三步：放置实际的音频文件</a></li><li class="h3"><a href="#第四步-在代码中播放">第四步：在代码中播放</a></li><li class="h3"><a href="#场景-播放音符盒音乐">场景：播放音符盒音乐</a></li><li><a href="#常见问题与解决方案">常见问题与解决方案</a></li><li class="h3"><a href="#q1-为什么我的声音播放不出来-">Q1: 为什么我的声音播放不出来？</a></li><li class="h3"><a href="#q2-如何让声音只在特定条件下播放-">Q2: 如何让声音只在特定条件下播放？</a></li><li class="h3"><a href="#q3-声音音量是如何计算的-">Q3: 声音音量是如何计算的？</a></li><li><a href="#小结">小结</a></li><li><a href="#练习">练习</a></li><li class="h3"><a href="#练习-1-基础声音播放">练习 1：基础声音播放</a></li><li class="h3"><a href="#练习-2-不同类别的音量">练习 2：不同类别的音量</a></li><li class="h3"><a href="#练习-3-音符盒">练习 3：音符盒</a></li><li><a href="#相关链接">相关链接</a></li><li class="h3"><a href="#内部链接">内部链接</a></li><li class="h3"><a href="#外部资源">外部资源</a></li>
-                    </ul>
-                </div>
-                <div class="sidebar-section">
-                    <h3 class="sidebar-section-title"><i class="fas fa-info-circle"></i> 教程信息</h3>
-                    <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); font-size: var(--text-sm);">
-                        <p style="margin-bottom: var(--space-2);"><strong>模组：</strong>Minecraft 原版</p>
-                        <p style="margin-bottom: var(--space-2);"><strong>版本：</strong>1.21</p>
-                        <p><strong>类型：</strong>教程</p>
-                    </div>
-                </div>
-            </aside>
-
-            <article class="tutorial-content article-content">
-                
+            <div class="docs-body doc-content">
+                <h1>Minecraft 声音系统详解</h1>
 <h2 id="目标">目标</h2>
-
-<p>学完本教程后，你将能够：</p>
-<p>- 理解 Minecraft 声音系统的核心概念</p>
-<p>- 掌握 SoundEvent、SoundCategory 等关键类的作用</p>
-<p>- 学会在 mod 中注册和播放自定义声音</p>
-<p>- 了解声音如何与游戏世界交互</p>
-
+<p>学完本教程后，你将能够：
+<ul><li>理解 Minecraft 声音系统的核心概念</li>
+<li>掌握 SoundEvent、SoundCategory 等关键类的作用</li>
+<li>学会在 mod 中注册和播放自定义声音</li>
+<li>了解声音如何与游戏世界交互</li></ul></p>
 <h2 id="前置知识">前置知识</h2>
-
-<p>- Java 基础（类、接口、枚举）</p>
-<p>- Minecraft 资源包概念（resources/assets）</p>
-<p>- 游戏刻（tick）基础</p>
-<p>- <a href="../Part-4-Entity/20-entity-intro.html">实体系统</a></p>
-<p>- <a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a></p>
-
+<p><ul><li>Java 基础（类、接口、枚举）</li>
+<li>Minecraft 资源包概念（resources/assets）</li>
+<li>游戏刻（tick）基础</li>
+<li><a href="../Part-4-Entity/20-entity-intro.html">实体系统</a></li>
+<li><a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a></li></ul></p>
 <h2 id="核心概念">核心概念</h2>
-
-<h3 id="什么是声音系统-">什么是声音系统？</h3>
-
-<p>想象一下你在看一部电影：</p>
-<p>- <strong>画面</strong> = 游戏的视觉效果（方块、生物、粒子）</p>
-<p>- <strong>声音</strong> = 游戏的听觉反馈（脚步声、爆炸声、BGM）</p>
-
+<h3>什么是声音系统？</h3>
+<p>想象一下你在看一部电影：
+<ul><li><strong>画面</strong> = 游戏的视觉效果（方块、生物、粒子）</li>
+<li><strong>声音</strong> = 游戏的听觉反馈（脚步声、爆炸声、BGM）</li></ul></p>
 <p>Minecraft 的声音系统就像一个 <strong>音响调音台</strong>，负责管理和播放游戏中各种声音。每一个"音效"（比如挖掘石头、僵尸的呻吟）都对应一个 <code>SoundEvent</code> 对象。</p>
-
-<h3 id="生活比喻-声音系统-餐厅的背景音乐系统">生活比喻：声音系统 = 餐厅的背景音乐系统</h3>
-
-<p>想象你在餐厅里：</p>
-<p>- <strong>SoundEvent</strong> = 歌曲列表中的某一首歌（如"生日快乐"）</p>
-<p>- <strong>SoundCategory</strong> = 不同的音量通道（背景音乐、顾客谈话、厨房噪音）</p>
-<p>- <strong>SoundManager</strong> = 音响调音台，决定每首歌从哪个喇叭播放、音量多大</p>
-<p>- <strong>播放器</strong> = 服务员按按钮点歌</p>
-
-<h2 id="图解-mermaid-">图解（Mermaid）</h2>
-
-<h3 id="声音播放流程图">声音播放流程图</h3>
-
-<div class="mermaid">
-flowchart TD
+<h3>生活比喻：声音系统 = 餐厅的背景音乐系统</h3>
+<p>想象你在餐厅里：
+<ul><li><strong>SoundEvent</strong> = 歌曲列表中的某一首歌（如"生日快乐"）</li>
+<li><strong>SoundCategory</strong> = 不同的音量通道（背景音乐、顾客谈话、厨房噪音）</li>
+<li><strong>SoundManager</strong> = 音响调音台，决定每首歌从哪个喇叭播放、音量多大</li>
+<li><strong>播放器</strong> = 服务员按按钮点歌</li></ul></p>
+<h2 id="图解mermaid">图解（Mermaid）</h2>
+<h3>声音播放流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
     A[玩家触发事件<br/>如: 挖掘方块] --> B[获取 SoundEvent]
     B --> C[确定 SoundCategory]
     C --> D[调用 World#playSound]
@@ -241,13 +578,11 @@ flowchart TD
     
     style A fill:#e1f5fe
     style L fill:#fff3e0
-    style N fill:#e8f5e8
+    style N fill:#e8f5e8</div>
 </div>
-
-<h3 id="声音系统类关系图">声音系统类关系图</h3>
-
-<div class="mermaid">
-classDiagram
+<h3>声音系统类关系图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
     class SoundEvent {
         +Identifier id
         +float distanceToTravel
@@ -292,13 +627,11 @@ classDiagram
     
     note for SoundEvent "相当于'歌曲名'"
     note for SoundCategory "相当于'音量通道'"
-    note for BlockSoundGroup "相当于'一套地板音效'"
+    note for BlockSoundGroup "相当于'一套地板音效'"</div>
 </div>
-
-<h3 id="声音播放时序图">声音播放时序图</h3>
-
-<div class="mermaid">
-sequenceDiagram
+<h3>声音播放时序图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
     participant Player as 玩家
     participant World as World/服务端
     participant SM as SoundManager
@@ -312,17 +645,12 @@ sequenceDiagram
     SM->>Mixer: 发送音频数据
     Mixer->>Player: 播放 .ogg 文件
     
-    Note over Player,Mixer: 整个过程在几个 tick 内完成
+    Note over Player,Mixer: 整个过程在几个 tick 内完成</div>
 </div>
-
 <h2 id="核心代码">核心代码</h2>
-
-<h3 id="1-soundevent-声音事件">1. SoundEvent - 声音事件</h3>
-
+<h3>1. SoundEvent - 声音事件</h3>
 <p><code>SoundEvent</code> 是声音系统的核心类，代表一个具体的声音。</p>
-
-<pre class="code-block"><code>// 源码位置: net.minecraft.sound.SoundEvent
-public class SoundEvent {
+<pre class="code-block"><code class="language-java">public class SoundEvent {
     private final Identifier id;              // 声音的唯一标识
     private final float distanceToTravel;    // 声音能传播的距离
     private final boolean staticDistance;      // 是否使用固定距离
@@ -339,15 +667,10 @@ public class SoundEvent {
     
     public Identifier getId() { return this.id; }
 }</code></pre>
-
 <p><strong>萌新理解</strong>：SoundEvent 就像歌曲的"歌名"，告诉游戏"我要播放哪首歌"。</p>
-
-<h3 id="2-soundcategory-声音类别">2. SoundCategory - 声音类别</h3>
-
+<h3>2. SoundCategory - 声音类别</h3>
 <p><code>SoundCategory</code> 是一个枚举，定义了游戏中所有的音量通道。</p>
-
-<pre class="code-block"><code>// 源码位置: net.minecraft.sound.SoundCategory
-public enum SoundCategory {
+<pre class="code-block"><code class="language-java">public enum SoundCategory {
     MASTER(&quot;master&quot;),      // 总音量（所有声音的总开关）
     MUSIC(&quot;music&quot;),        // 背景音乐
     RECORDS(&quot;record&quot;),     // 唱片机音乐
@@ -361,19 +684,14 @@ public enum SoundCategory {
     
     private final String name;
 }</code></pre>
-
-<p><strong>生活比喻</strong>：</p>
-<p>- 想象你的电脑音量设置面板</p>
-<p>- "主音量"滑块 = MASTER</p>
-<p>- "音乐"滑块 = MUSIC</p>
-<p>- "系统音效"滑块 = BLOCKS</p>
-
-<h3 id="3-blocksoundgroup-方块音效组">3. BlockSoundGroup - 方块音效组</h3>
-
+<p><strong>生活比喻</strong>：
+<ul><li>想象你的电脑音量设置面板</li>
+<li>"主音量"滑块 = MASTER</li>
+<li>"音乐"滑块 = MUSIC</li>
+<li>"系统音效"滑块 = BLOCKS</li></ul></p>
+<h3>3. BlockSoundGroup - 方块音效组</h3>
 <p>每个方块都关联一个 <code>BlockSoundGroup</code>，定义方块相关的所有声音。</p>
-
-<pre class="code-block"><code>// 源码位置: net.minecraft.sound.BlockSoundGroup
-public class BlockSoundGroup {
+<pre class="code-block"><code class="language-java">public class BlockSoundGroup {
     public static final BlockSoundGroup STONE = new BlockSoundGroup(
         1.0f, 1.0f,                    // volume, pitch
         SoundEvents.BLOCK_STONE_BREAK, // 破坏声音
@@ -402,13 +720,9 @@ public class BlockSoundGroup {
         SoundEvents.BLOCK_METAL_FALL
     );
 }</code></pre>
-
-<h3 id="4-播放声音的常用方法">4. 播放声音的常用方法</h3>
-
-<h4 id="在服务端-world-中播放">在服务端/World 中播放</h4>
-
-<pre class="code-block"><code>// 在服务端播放声音（所有能听到的玩家都能听到）
-world.playSound(
+<h3>4. 播放声音的常用方法</h3>
+<h4>在服务端/World 中播放</h4>
+<pre class="code-block"><code class="language-java">world.playSound(
     player,                              // 可以为 null 表示对所有玩家播放
     x, y, z,                             // 声音播放的位置
     SoundEvents.ENTITY_ZOMBIE_AMBIENT,   // 要播放的声音
@@ -425,26 +739,18 @@ world.playSound(
     SoundCategory.HOSTILE,
     1.0f, 1.0f
 );</code></pre>
-
-<h4 id="在客户端播放-仅本地玩家能听到-">在客户端播放（仅本地玩家能听到）</h4>
-
-<pre class="code-block"><code>// 在客户端播放（本地音效）
-MinecraftClient.getInstance().getSoundManager()
+<h4>在客户端播放（仅本地玩家能听到）</h4>
+<pre class="code-block"><code class="language-java">MinecraftClient.getInstance().getSoundManager()
     .play(BackgroundMusicSelector);  // 播放背景音乐
 
 // 或者使用粒子/特效同时播放
 world.addParticle(ParticleTypes.EXPLOSION, x, y, z, 0, 0, 0);
 world.playSound(x, y, z, SoundEvents.ENTITY_GENERIC_EXPLODE, 
     SoundCategory.HOSTILE, 1.0f, 1.0f, true);  // 最后 true 表示随机偏移</code></pre>
-
 <h2 id="实战演示">实战演示</h2>
-
-<h3 id="场景-创建一个自定义爆炸声音">场景：创建一个自定义爆炸声音</h3>
-
-<h4 id="第一步-定义声音事件-服务端注册-">第一步：定义声音事件（服务端注册）</h4>
-
-<pre class="code-block"><code>// 在你的 Mod 初始化类中
-public static final SoundEvent MY_CUSTOM_EXPLOSION = 
+<h3>场景：创建一个自定义爆炸声音</h3>
+<h4>第一步：定义声音事件（服务端注册）</h4>
+<pre class="code-block"><code class="language-java">public static final SoundEvent MY_CUSTOM_EXPLOSION = 
     SoundEvents.register(&quot;my_mod.custom_explosion&quot;);
 
 // 或者使用辅助方法
@@ -455,13 +761,9 @@ private static SoundEvent register(String id) {
         SoundEvent.of(new Identifier(&quot;my_mod&quot;, id))
     );
 }</code></pre>
-
-<h4 id="第二步-创建资源文件">第二步：创建资源文件</h4>
-
+<h4>第二步：创建资源文件</h4>
 <p>在资源包中创建声音 JSON 文件：</p>
-
-<pre class="code-block"><code>// resources/assets/my_mod/sounds.json
-{
+<pre class="code-block"><code class="language-json">{
     &quot;my_mod.custom_explosion&quot;: {
         &quot;sounds&quot;: [
             &quot;my_mod:explosion/custom_boom&quot;
@@ -469,16 +771,11 @@ private static SoundEvent register(String id) {
         &quot;subtitle&quot;: &quot;my_mod.subtitle.custom_explosion&quot;
     }
 }</code></pre>
-
-<h4 id="第三步-放置实际的音频文件">第三步：放置实际的音频文件</h4>
-
-<pre class="code-block"><code>resources/assets/my_mod/sounds/explosion/
+<h4>第三步：放置实际的音频文件</h4>
+<pre class="code-block"><code class="language-text">resources/assets/my_mod/sounds/explosion/
     └── custom_boom.ogg  ← 必须是 OGG Vorbis 格式！</code></pre>
-
-<h4 id="第四步-在代码中播放">第四步：在代码中播放</h4>
-
-<pre class="code-block"><code>// 当玩家使用某个物品时爆炸
-public boolean use(ItemStack stack, World world, 
+<h4>第四步：在代码中播放</h4>
+<pre class="code-block"><code class="language-java">public boolean use(ItemStack stack, World world, 
                    PlayerEntity player) {
     if (!world.isClient) {
         // 播放爆炸声音
@@ -496,11 +793,8 @@ public boolean use(ItemStack stack, World world,
     }
     return true;
 }</code></pre>
-
-<h3 id="场景-播放音符盒音乐">场景：播放音符盒音乐</h3>
-
-<pre class="code-block"><code>// 播放一个音符
-public void playNote(BlockPos pos) {
+<h3>场景：播放音符盒音乐</h3>
+<pre class="code-block"><code class="language-java">public void playNote(BlockPos pos) {
     world.playSound(
         null,
         pos.getX(), pos.getY(), pos.getZ(),
@@ -516,24 +810,16 @@ float[] notePitches = {0.5f, 0.53f, 0.56f, 0.59f, ...};
 float pitch = notePitches[noteIndex];
 world.playSound(null, x, y, z, SoundEvents.BLOCK_NOTE_BLOCK_HARP, 
     SoundCategory.RECORDS, 1.0f, pitch);</code></pre>
-
 <h2 id="常见问题与解决方案">常见问题与解决方案</h2>
-
-<h3 id="q1-为什么我的声音播放不出来-">Q1: 为什么我的声音播放不出来？</h3>
-
-<p><strong>可能原因：</strong></p>
-<p>1. 声音文件格式不对 → 必须是 <code>.ogg</code> 格式</p>
-<p>2. sounds.json 配置错误 → 检查 JSON 语法</p>
-<p>3. 资源包没有正确加载 → 确认资源包在正确位置</p>
-
+<h3>Q1: 为什么我的声音播放不出来？</h3>
+<p><strong>可能原因：</strong>
+<ul><li>声音文件格式不对 → 必须是 <code>.ogg</code> 格式</li>
+<li>sounds.json 配置错误 → 检查 JSON 语法</li>
+<li>资源包没有正确加载 → 确认资源包在正确位置</li></ul></p>
 <p><strong>排查步骤：</strong></p>
-<pre class="code-block"><code>// 开启调试模式查看声音加载日志
-// 在启动参数添加: --debug的声音会显示在控制台</code></pre>
-
-<h3 id="q2-如何让声音只在特定条件下播放-">Q2: 如何让声音只在特定条件下播放？</h3>
-
-<pre class="code-block"><code>// 检查玩家设置
-if (world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
+<pre class="code-block"><code class="language-java">// 在启动参数添加: --debug的声音会显示在控制台</code></pre>
+<h3>Q2: 如何让声音只在特定条件下播放？</h3>
+<pre class="code-block"><code class="language-java">if (world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
     world.playSound(...);
 }
 
@@ -542,96 +828,78 @@ double distance = player.squaredDistanceTo(sourcePos);
 if (distance &lt; 256) {  // 16格的平方
     world.playSound(...);
 }</code></pre>
-
-<h3 id="q3-声音音量是如何计算的-">Q3: 声音音量是如何计算的？</h3>
-
-<pre class="code-block"><code>// 实际音量 = SoundEvent音量 × SoundCategory音量 × 游戏设置音量
-float actualVolume = baseVolume * categoryVolume * globalVolume;
+<h3>Q3: 声音音量是如何计算的？</h3>
+<pre class="code-block"><code class="language-java">float actualVolume = baseVolume * categoryVolume * globalVolume;
 actualVolume = Math.min(actualVolume, 1.0f);  // 最大1.0f</code></pre>
-
 <h2 id="小结">小结</h2>
-
-<table><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td>------</td><td>------</td><td>----------</td></tr><tr><td>`SoundEvent`</td><td>代表一个具体声音</td><td>歌曲名称</td></tr><tr><td>`SoundCategory`</td><td>控制不同类别的音量</td><td>音量调节旋钮</td></tr><tr><td>`BlockSoundGroup`</td><td>一组方块相关的音效</td><td>地板材质音效套装</td></tr><tr><td>`SoundEvents`</td><td>所有原版声音的注册表</td><td>歌曲库</td></tr><tr><td>`World#playSound`</td><td>播放声音的方法</td><td>按下播放键</td></tr></tbody></table>
-
-<p><strong>核心要点：</strong></p>
-<p>1. SoundEvent 是声音的"身份证"</p>
-<p>2. SoundCategory 控制声音属于哪个音量通道</p>
-<p>3. 播放声音需要：位置 + 声音事件 + 类别 + 音量 + 音调</p>
-<p>4. 声音文件必须是 <code>.ogg</code> 格式</p>
-
+<table class="data-table"><thead><tr><th>概念</th><th>作用</th><th>生活比喻</th></tr></thead><tbody><tr><td><code>SoundEvent</code></td><td>代表一个具体声音</td><td>歌曲名称</td></tr><tr><td><code>SoundCategory</code></td><td>控制不同类别的音量</td><td>音量调节旋钮</td></tr><tr><td><code>BlockSoundGroup</code></td><td>一组方块相关的音效</td><td>地板材质音效套装</td></tr><tr><td><code>SoundEvents</code></td><td>所有原版声音的注册表</td><td>歌曲库</td></tr><tr><td><code>World#playSound</code></td><td>播放声音的方法</td><td>按下播放键</td></tr></tbody></table>
+<strong>核心要点：</strong>
+<ul><li>SoundEvent 是声音的"身份证"</li>
+<li>SoundCategory 控制声音属于哪个音量通道</li>
+<li>播放声音需要：位置 + 声音事件 + 类别 + 音量 + 音调</li>
+<li>声音文件必须是 <code>.ogg</code> 格式</li></ul></p>
 <h2 id="练习">练习</h2>
-
-<h3 id="练习-1-基础声音播放">练习 1：基础声音播放</h3>
+<h3>练习 1：基础声音播放</h3>
 <p>创建一个 mod，在玩家右键点击你的方块时播放一个自定义声音。</p>
-
-<p><strong>提示：</strong></p>
-<p>1. 注册 SoundEvent</p>
-<p>2. 创建 sounds.json</p>
-<p>3. 放置 .ogg 文件</p>
-<p>4. 在 onUse 方法中调用 world.playSound()</p>
-
-<h3 id="练习-2-不同类别的音量">练习 2：不同类别的音量</h3>
+<p><strong>提示：</strong>
+<ul><li>注册 SoundEvent</li>
+<li>创建 sounds.json</li>
+<li>放置 .ogg 文件</li>
+<li>在 onUse 方法中调用 world.playSound()</li></ul></p>
+<h3>练习 2：不同类别的音量</h3>
 <p>尝试使用不同的 SoundCategory 播放同一个 SoundEvent，体验音量控制的效果。</p>
-
-<h3 id="练习-3-音符盒">练习 3：音符盒</h3>
+<h3>练习 3：音符盒</h3>
 <p>创建一个可以发出不同音符的方块，模拟 Minecraft 原版的音符盒功能。</p>
-
 <h2 id="相关链接">相关链接</h2>
+<h3>内部链接</h3>
+<p><ul><li><a href="../Part-4-Entity/20-entity-intro.html">实体系统基础</a> - 声音常与实体交互</li>
+<li><a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a> - 物品触发声音</li>
+<li><a href="./particle-system.html">粒子系统</a> - 声音与粒子配合使用</li>
+<li><a href="../Part-8-Resource/40-resource-pack.html">资源系统</a> - 声音文件配置</li></ul></p>
+<h3>外部资源</h3>
+<p><ul><li><a href="https://minecraft.fandom.com/wiki/Sounds.json" target="_blank" rel="noopener noreferrer">Minecraft Wiki: sounds.json</a></li>
+<li><a href="https://audio.online-convert.com/convert-to-ogg" target="_blank" rel="noopener noreferrer">OGG Vorbis 格式转换工具</a></li>
+<li><a href="https://minecraft.fandom.com/wiki/Sound_event" target="_blank" rel="noopener noreferrer">Fandom: Sound Events</a></li>
+</ul></p>
+            </div>
 
-<h3 id="内部链接">内部链接</h3>
-<p>- <a href="../Part-4-Entity/20-entity-intro.html">实体系统基础</a> - 声音常与实体交互</p>
-<p>- <a href="../Part-3-Block-Item/17-item-basics.html">物品系统</a> - 物品触发声音</p>
-<p>- <a href="particle-system.html">粒子系统</a> - 声音与粒子配合使用</p>
-<p>- <a href="../Part-8-Resource/40-resource-pack.html">资源系统</a> - 声音文件配置</p>
-
-<h3 id="外部资源">外部资源</h3>
-<p>- <a href="https://minecraft.fandom.com/wiki/Sounds.json" target="_blank" rel="noopener noreferrer">Minecraft Wiki: sounds.json</a></p>
-<p>- <a href="https://audio.online-convert.com/convert-to-ogg" target="_blank" rel="noopener noreferrer">OGG Vorbis 格式转换工具</a></p>
-<p>- <a href="https://minecraft.fandom.com/wiki/Sound_event" target="_blank" rel="noopener noreferrer">Fandom: Sound Events</a></p>
-
-
-            </article>
-        </div>
+            <div class="docs-footer">
+                <div class="prev-next"><a href="scoreboard-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            记分板系统 (Scoreboard System)
+        </a><a href="stats-system.html" class="next">
+            统计系统 (Stats System)
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
     </div>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2026 Minecraft 源码萌新教程 | 基于 Minecraft 1.21</p>
-            </div>
-        </div>
-    </footer>
-
     <script src="../../../../../script.js"></script>
-    <script src="../../../../../tutorial.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose',
-            flowchart: { htmlLabels: true }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
         });
-
-        // Listen for theme changes to update Mermaid
-        window.addEventListener('themechange', (e) => {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    theme: e.detail.theme === 'dark' ? 'dark' : 'default'
-                });
-            }
-        });
-
-        // Copy code function
-        function copyCode(btn) {
-            const codeBlock = btn.closest('.code-reference').querySelector('code');
-            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-copy"></i> 复制';
-                }, 2000);
-            });
-        }
+        hljs.highlightAll();
+      });
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

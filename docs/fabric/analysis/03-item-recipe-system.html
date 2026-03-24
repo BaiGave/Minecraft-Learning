@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #4A90D9; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #4A90D9 0, #5BA0E9 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #4A90D9; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #4A90D9; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #4A90D9; background: #4A90D915; }
-        .info-box i { color: #4A90D9; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #4A90D9; }
-        .docs-body h2 i { color: #4A90D9; }
-        .data-table th { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #4A90D966; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #4A90D9;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #4A90D9, #4A90D999);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Fabric 模组</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-fabric-api-base.html" class="">
@@ -211,6 +201,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -241,7 +236,7 @@
 <li><code>fabric-recipe-api-v1</code> - 配方 API 扩展</li>
 <li><code>fabric-item-group-api-v1</code> - 物品栏分组系统</li></ul></p>
 <p><hr></p>
-<h2 id="1. fabric-item-api-v1 模块">1. fabric-item-api-v1 模块</h2>
+<h2 id="1-fabric-item-api-v1-模块">1. fabric-item-api-v1 模块</h2>
 <h3>1.1 FabricItem 接口</h3>
 <pre class="code-block"><code class="language-java">public interface FabricItem {
     // 组件更新动画控制
@@ -291,7 +286,7 @@ public static class WeirdPick extends PickaxeItem {
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="2. fabric-recipe-api-v1 模块">2. fabric-recipe-api-v1 模块</h2>
+<h2 id="2-fabric-recipe-api-v1-模块">2. fabric-recipe-api-v1 模块</h2>
 <h3>2.1 CustomIngredient 接口</h3>
 <pre class="code-block"><code class="language-java">public interface CustomIngredient {
     // 测试物品堆栈是否匹配
@@ -322,7 +317,7 @@ public static class WeirdPick extends PickaxeItem {
     ]
 }</code></pre>
 <p><hr></p>
-<h2 id="3. fabric-item-group-api-v1 模块">3. fabric-item-group-api-v1 模块</h2>
+<h2 id="3-fabric-item-group-api-v1-模块">3. fabric-item-group-api-v1 模块</h2>
 <h3>3.1 创建自定义物品栏</h3>
 <pre class="code-block"><code class="language-java">Registry.register(Registries.ITEM_GROUP, ITEM_GROUP,
     FabricItemGroup.builder()
@@ -359,10 +354,10 @@ ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, content) -&gt; {
     content.prepend(new ItemStack(Items.DIAMOND_PICKAXE));
 });</code></pre>
 <p><hr></p>
-<h2 id="4. Mixin 注入点">4. Mixin 注入点</h2>
+<h2 id="4-mixin-注入点">4. Mixin 注入点</h2>
 <table class="data-table"><thead><tr><th>Mixin 类</th><th>注入目标</th><th>目的</th></tr></thead><tbody><tr><td><code>ItemMixin</code></td><td><code>Item</code></td><td>实现 <code>FabricItem</code> 接口</td></tr><tr><td><code>ItemStackMixin</code></td><td><code>ItemStack</code></td><td>拦截 damage 方法</td></tr><tr><td><code>ItemSettingsMixin</code></td><td><code>Item.Settings</code></td><td>实现 <code>FabricItem.Settings</code> 接口</td></tr><tr><td><code>EnchantmentHelperMixin</code></td><td><code>EnchantmentHelper</code></td><td>重定向附魔检查方法</td></tr><tr><td><code>ComponentMapBuilderMixin</code></td><td><code>ComponentMap.Builder</code></td><td>实现 <code>FabricComponentMapBuilder</code> 接口</td></tr><tr><td><code>ItemGroupMixin</code></td><td><code>ItemGroup</code></td><td>在 <code>updateEntries</code> 末尾触发事件</td></tr><tr><td><code>ItemGroupsMixin</code></td><td><code>ItemGroups</code></td><td>实现分页和冲突检测</td></tr><tr><td><code>IngredientMixin</code></td><td><code>Ingredient</code></td><td>注入自定义编解码器</td></tr></tbody></table>
 <hr></p>
-<h2 id="5. 完整使用示例">5. 完整使用示例</h2>
+<h2 id="5-完整使用示例">5. 完整使用示例</h2>
 <h3>5.1 创建带自定义伤害处理的物品</h3>
 <pre class="code-block"><code class="language-java">public class BatterySword extends SwordItem {
     private static final ComponentType&lt;Integer&gt; ENERGY = ...;
@@ -423,6 +418,7 @@ public void onInitialize() {
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -445,5 +441,6 @@ public void onInitialize() {
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

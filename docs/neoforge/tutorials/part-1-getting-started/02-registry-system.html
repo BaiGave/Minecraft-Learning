@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>02 registry system - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="01-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 1.21.x 环境搭建与第一个 Mod</span>
+        </a>
+<a href="02-registry-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第二章：注册系统 - DeferredRegister 完全指南</span>
+        </a>
+<a href="03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-blocks-and-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>方块与物品开发完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 实体系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-networking/01-network-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 网络通信完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-world-gen/01-world-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 世界生成与区块系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-recipes/01-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配方与酿造系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-config/01-config-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 配置系统完全指南</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>魔法水晶方块 - NeoForge 实战项目</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="01-getting-started.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 入门指南</span>
+        </a>
+<a href="02-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NeoForge 事件系统</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>02 registry system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    02 registry system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第二章：注册系统 - DeferredRegister 完全指南</h1>
+<blockquote><p>⭐ <strong>这是 NeoForge 模组开发的核心技能！学完这章，你就能像专业人士一样注册方块、物品和实体。</strong></p></blockquote>
+<p><hr></p>
+<h2 id="目标">目标</h2>
+<p>学完本章后，你将理解：</p>
+<p><ul><li><strong>为什么需要延迟注册</strong> - 理解注册时机的重要性</li>
+<li><strong>DeferredRegister 的核心概念</strong> - NeoForge 推荐的注册方式</li>
+<li><strong>如何注册各种内容</strong> - 方块、物品、方块实体、实体类型</li>
+<li><strong>DeferredHolder 的使用</strong> - 如何获取已注册的对象</li>
+<li><strong>常见错误与解决方案</strong> - 避免新手常犯的错误</li></ul></p>
+<p><hr></p>
+<h2 id="前置知识">前置知识</h2>
+<p><ul><li>了解 Java 的基本语法（类、接口、泛型、<code>Supplier</code>）</li>
+<li>知道什么是 <code>Registry</code>（注册表）- Minecraft 用来管理所有游戏内容的地方</li>
+<li>了解模组的 Mod ID 概念</li></ul></p>
+<p>💡 <strong>不知道什么是 Registry？</strong> 想象 Registry 就是一个超大的"图书馆目录"，里面记录了所有游戏里的方块、物品、生物...每个内容都有一个唯一的编号（ID），就像图书的 ISBN 一样。</p>
+<p><hr></p>
+<h2 id="为什么需要延迟注册">为什么需要延迟注册？</h2>
+<h3>古老的注册方式 vs 现代的延迟注册</h3>
+<p><strong>❌ 古老的直接注册方式</strong>（想象你在图书馆还没开门时就要借书）：</p>
+<pre class="code-block"><code class="language-java">public class MyMod {
+    // 游戏还没初始化好，你就想创建物品？
+    public static final Item MY_ITEM = new Item(new Item.Properties());
+    // 这时候注册表可能还没准备好，会出问题！
+}</code></pre>
+<p><strong>✅ 现代的延迟注册方式</strong>（等图书馆开门再去借书）：</p>
+<pre class="code-block"><code class="language-java">public class MyMod {
+    // 先&quot;预订&quot;一个物品位子
+    public static final DeferredItem&lt;Item&gt; MY_ITEM = ITEMS.register(&quot;my_item&quot;, 
+        () -&gt; new Item(new Item.Properties().durability(100)));
+    
+    // 等游戏准备好了，NeoForge 自动帮我们完成注册
+}</code></pre>
+<h3>为什么要这样做？</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 游戏启动["游戏启动过程"]
+        A["Mod 文件被加载"] --> B["静态字段初始化<br/>声明 DeferredHolder"]
+        B --> C["注册事件触发"]
+        C --> D["Supplier 被调用<br/>创建实际对象"]
+        D --> E["对象注册到注册表"]
+        E --> F["游戏可以使用内容了"]
+    end
+    
+    style A fill:#ffd93d,color:#000
+    style C fill:#4d96ff,color:#fff
+    style E fill:#6bcb77,color:#fff</div>
+</div>
+<p><strong>好处是什么？</strong></p>
+<table class="data-table"><thead><tr><th>好处</th><th>说明</th></tr></thead><tbody><tr><td>✅ 避免空指针</td><td>游戏完全启动后再创建对象</td></tr><tr><td>✅ 依赖管理</td><td>确保依赖的模组先完成注册</td></tr><tr><td>✅ 数据生成</td><td>可以在数据生成阶段正确引用</td></tr><tr><td>✅ 调试方便</td><td>出问题容易定位是注册阶段还是使用阶段</td></tr></tbody></table>
+<hr></p>
+<h2 id="deferredregister-核心概念">DeferredRegister 核心概念</h2>
+<h3>什么是 DeferredRegister？</h3>
+<p><code>DeferredRegister</code> 是 NeoForge 提供的一个<strong>注册助手类</strong>，它帮你：</p>
+<p><ul><li><strong>收集</strong> 所有要注册的内容（不用马上创建）</li>
+<li><strong>等待</strong> 游戏注册阶段</li>
+<li><strong>注册</strong> 所有内容到正确的注册表</li>
+<li><strong>返回</strong> 一个 <code>DeferredHolder</code> 供后续使用</li></ul></p>
+<h3>核心类图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class DeferredRegister~T~ {
+        +ResourceKey registryKey
+        +String namespace
+        +register(String, Supplier) DeferredHolder~T, I~
+        +register(IEventBus) void
+    }
+    
+    class DeferredHolder~R, T extends R~ {
+        +ResourceKey~R~ key
+        +value() T
+        +get() T
+        +isBound() boolean
+        +getId() Identifier
+    }
+    
+    class DeferredBlock~T extends Block~ {
+        +toStack() ItemStack
+        +asItem() Item
+    }
+    
+    class DeferredItem~T extends Item~ {
+        +toStack() ItemStack
+    }
+    
+    DeferredRegister~T~ --> DeferredHolder : creates
+    DeferredHolder --> DeferredBlock : extends
+    DeferredHolder --> DeferredItem : extends</div>
+</div>
+<h3>创建 DeferredRegister 的方法</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+public static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(MODID);
+
+// 方法2：通过已存在的注册表
+public static final DeferredRegister&lt;BlockEntityType&lt;?&gt;&gt; BLOCK_ENTITIES = 
+    DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, MODID);
+
+// 方法3：通过 ResourceKey
+public static final DeferredRegister&lt;SoundEvent&gt; SOUNDS = 
+    DeferredRegister.create(Registries.SOUND_EVENT, MODID);
+
+// 方法4：通过 Identifier
+public static final DeferredRegister&lt;CustomData&gt; CUSTOM_DATA = 
+    DeferredRegister.create(new Identifier(MODID, &quot;custom_data&quot;), MODID);</code></pre>
+<p><hr></p>
+<h2 id="注册方块">注册方块</h2>
+<h3>基本注册流程</h3>
+<pre class="code-block"><code class="language-java">public class ExampleMod {
+    // 1. 创建 DeferredRegister
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(ExampleMod.MODID);
+    
+    // 2. 注册方块
+    public static final DeferredBlock&lt;Block&gt; MAGIC_BLOCK = BLOCKS.register(&quot;magic_block&quot;,
+        () -&gt; new Block(BlockBehaviour.Properties.of()
+            .strength(3.0f)
+            .requiresCorrectToolForDrops()
+            .sound(SoundType.METAL)));
+    
+    // 3. 在 mod 构造函数中注册到事件总线
+    public ExampleMod(IEventBus modBus) {
+        BLOCKS.register(modBus);  // 重要！不调用就不会注册
+    }
+}</code></pre>
+<h3>注册带自定义类的方块</h3>
+<pre class="code-block"><code class="language-java">public class MagicBlock extends Block {
+    public MagicBlock(Properties properties) {
+        super(properties);
+    }
+    
+    // 你的方块逻辑...
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        // 村民被吓到时会变成铁傀儡！（开玩笑的）
+        level.levelEvent(2001, pos, Block.getId(state));
+    }
+}
+
+// 2. 使用泛型注册
+public static final DeferredBlock&lt;MagicBlock&gt; MAGIC_BLOCK = BLOCKS.register(&quot;magic_block&quot;,
+    MagicBlock::new,  // 构造函数引用
+    BlockBehaviour.Properties.of()
+        .strength(2.0f)
+        .lightLevel(state -&gt; 7));  // 发光的方块！</code></pre>
+<h3>注册简单方块（一行搞定）</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredBlock&lt;Block&gt; SIMPLE_BLOCK = BLOCKS.registerSimpleBlock(
+    &quot;simple_stone&quot;,
+    BlockBehaviour.Properties.of()
+        .strength(1.5f)
+        .sound(SoundType.STONE));</code></pre>
+<p><hr></p>
+<h2 id="注册物品">注册物品</h2>
+<h3>基本注册流程</h3>
+<pre class="code-block"><code class="language-java">public class ExampleMod {
+    // 1. 创建 DeferredRegister
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ExampleMod.MODID);
+    
+    // 2. 注册普通物品
+    public static final DeferredItem&lt;Item&gt; COOL_ITEM = ITEMS.register(&quot;cool_item&quot;,
+        () -&gt; new Item(new Item.Properties()
+            .durability(64)
+            .stacksTo(16)));
+    
+    // 3. 注册到事件总线
+    public ExampleMod(IEventBus modBus) {
+        ITEMS.register(modBus);
+    }
+}</code></pre>
+<h3>注册带自定义类的物品</h3>
+<pre class="code-block"><code class="language-java">public class MagicWandItem extends Item {
+    private final int magicPower;
+    
+    public MagicWandItem(Properties properties, int magicPower) {
+        super(properties.durability(100));
+        this.magicPower = magicPower;
+    }
+    
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return true;
+    }
+    
+    @Override
+    public int getEnchantmentValue() {
+        return this.magicPower;
+    }
+    
+    // 右键使用时的逻辑
+    @Override
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.STAFF;
+    }
+    
+    @Override
+    public UseOnContext releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeCharged) {
+        // 释放魔法！
+        if (!level.isClientSide) {
+            level.explode(null, entity.getX(), entity.getY(), entity.getZ(), 
+                2.0f, Level.ExplosionInteraction.NONE);
+        }
+        stack.hurtAndBreak(1, entity, LivingEntity.getSlotForHand(entity.getUsedItemHand()));
+        return stack;
+    }
+}
+
+// 2. 注册
+public static final DeferredItem&lt;MagicWandItem&gt; MAGIC_WAND = ITEMS.register(&quot;magic_wand&quot;,
+    () -&gt; new MagicWandItem(new Item.Properties().stacksTo(1), 15));</code></pre>
+<h3>注册方块物品（自动创建对应的物品）</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredItem&lt;BlockItem&gt; MAGIC_BLOCK_ITEM = ITEMS.registerSimpleBlockItem(MAGIC_BLOCK);
+
+// 方式2：指定自定义名称
+public static final DeferredItem&lt;BlockItem&gt; CUSTOM_NAMED_ITEM = ITEMS.registerSimpleBlockItem(
+    &quot;custom_name&quot;,  // 可以和方块名不同
+    MAGIC_BLOCK::get);
+
+// 方式3：带属性的方块物品
+public static final DeferredItem&lt;BlockItem&gt; FANCY_BLOCK_ITEM = ITEMS.registerSimpleBlockItem(
+    MAGIC_BLOCK,
+    props -&gt; props.fireResistant());  // 添加防火属性</code></pre>
+<p><hr></p>
+<h2 id="注册方块实体blockentity">注册方块实体（BlockEntity）</h2>
+<h3>什么是方块实体？</h3>
+<p>方块实体就像方块的"大脑"——普通的方块只是静态的，但带有方块实体的方块可以：</p>
+<p><ul><li><strong>存储数据</strong>（比如箱子里的物品、命令方块里的命令）</li>
+<li><strong>定时更新</strong>（比如红石更新、蜡烛熄灭）</li>
+<li><strong>和玩家交互</strong>（比如打开 GUI）</li></ul></p>
+<h3>注册流程</h3>
+<pre class="code-block"><code class="language-java">public class ExampleMod {
+    // 1. 创建 DeferredRegister
+    public static final DeferredRegister&lt;BlockEntityType&lt;?&gt;&gt; BLOCK_ENTITIES = 
+        DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, ExampleMod.MODID);
+    
+    // 2. 定义自定义方块实体
+    public static class MagicChestBlockEntity extends BlockEntity {
+        private NonNullList&lt;ItemStack&gt; items = NonNullList.withSize(27, ItemStack.EMPTY);
+        
+        public MagicChestBlockEntity(BlockPos pos, BlockState state) {
+            super(BLOCK_ENTITY_TYPE.get(), pos, state);
+        }
+        
+        // 你的逻辑...
+        public NonNullList&lt;ItemStack&gt; getItems() {
+            return items;
+        }
+    }
+    
+    // 3. 注册方块实体类型
+    public static final Supplier&lt;BlockEntityType&lt;MagicChestBlockEntity&gt;&gt; MAGIC_CHEST_BE = 
+        BLOCK_ENTITIES.register(&quot;magic_chest&quot;,
+            () -&gt; BlockEntityType.Builder.of(MagicChestBlockEntity::new, MAGIC_BLOCK.get())
+                .build(null));
+    
+    // 4. 注册到事件总线
+    public ExampleMod(IEventBus modBus) {
+        BLOCK_ENTITIES.register(modBus);
+    }
+}</code></pre>
+<p>💡 <strong>注意</strong>：注册 <code>BlockEntityType</code> 时，需要传入方块的引用。使用 <code>MAGIC_BLOCK.get()</code> 可以获取实际注册的方块对象。</p>
+<p><hr></p>
+<h2 id="注册实体类型">注册实体类型</h2>
+<pre class="code-block"><code class="language-java">public class ExampleMod {
+    public static final DeferredRegister&lt;EntityType&lt;?&gt;&gt; ENTITIES = 
+        DeferredRegister.createEntities(ExampleMod.MODID);
+    
+    // 注册一个自定义实体（这里是魔法史莱姆）
+    public static final DeferredHolder&lt;EntityType&lt;?&gt;, EntityType&lt;MagicSlime&gt;&gt; MAGIC_SLIME = 
+        ENTITIES.registerEntityType(&quot;magic_slime&quot;,
+            MagicSlime::new,                    // 实体工厂方法
+            MobCategory.CREATURE,                // 生物类别
+            builder -&gt; builder
+                .sized(1.2f, 1.2f)              // 碰撞箱大小
+                .clientTrackingRange(8)         // 客户端追踪范围
+        );
+    
+    public ExampleMod(IEventBus modBus) {
+        ENTITIES.register(modBus);
+    }
+}
+
+// 自定义实体类
+public class MagicSlime extends Mob {
+    public MagicSlime(EntityType&lt;? extends MagicSlime&gt; type, Level level) {
+        super(type, level);
+    }
+    
+    // 你的逻辑...
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new RandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(2, new NearestAttackableTargetGoal&lt;&gt;(this, Player.class, true));
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="deferredholder-的使用">DeferredHolder 的使用</h2>
+<h3>什么是 DeferredHolder？</h3>
+<p><code>DeferredHolder</code> 就像是注册内容的"预订券"——它包含了：
+<ul><li>这个东西叫什么名字（ResourceKey）</li>
+<li>怎么找到它（Registry 信息）</li></ul></p>
+<p>等你需要用的时候，再"兑换"成真正的对象。</p>
+<h3>基本操作</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredBlock&lt;MagicBlock&gt; MAGIC_BLOCK = BLOCKS.register(&quot;magic_block&quot;, MagicBlock::new);
+public static final DeferredItem&lt;MagicWandItem&gt; MAGIC_WAND = ITEMS.register(&quot;magic_wand&quot;, () -&gt; new MagicWandItem());
+
+// 获取实际对象（会触发绑定）
+Block block = MAGIC_BLOCK.get();        // 获取方块
+Block block2 = MAGIC_BLOCK.value();     // 和 get() 一样
+Item item = MAGIC_WAND.get();           // 获取物品
+
+// 检查是否已绑定
+boolean ready = MAGIC_BLOCK.isBound(); // true = 已注册
+
+// 获取 ID 信息
+Identifier id = MAGIC_BLOCK.getId();   // &quot;modid:magic_block&quot;
+ResourceKey&lt;Block&gt; key = MAGIC_BLOCK.getKey();  // 完整的 ResourceKey</code></pre>
+<h3>在事件中使用</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onItemUse(PlayerInteractEvent.RightClickItem event) {
+    // 使用 DeferredHolder 获取实际物品
+    if (event.getItemStack().is(MAGIC_WAND.get())) {
+        // 玩家手里拿着魔法杖！
+        event.getPlayer().displayClientMessage(
+            Component.literal(&quot;你挥舞着魔法杖！&quot;), true);
+    }
+}</code></pre>
+<h3>在数据包中使用</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRegisterRecipes(RegisterEvent event) {
+    event.register(Registries.RECIPE_TYPE, &quot;crafting_shaped&quot;, () -&gt; new ShapedRecipe(
+        ShapedRecipe.Pattern.of(
+            &quot; M &quot;,
+            &quot;MIM&quot;,
+            &quot; I &quot;
+        ),
+        ShapedRecipe.Ingredient.of(MAGIC_WAND),      // 引用物品
+        new ItemStack(MAGIC_WAND.get(), 1)
+    ));
+}</code></pre>
+<h3>便捷方法</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredBlock&lt;MagicBlock&gt; MAGIC_BLOCK = BLOCKS.register(&quot;magic_block&quot;, MagicBlock::new);
+public static final DeferredItem&lt;MagicWandItem&gt; MAGIC_WAND = ITEMS.register(&quot;magic_wand&quot;, () -&gt; new MagicWandItem());
+
+// 直接创建物品堆栈（超方便！）
+ItemStack stack1 = MAGIC_WAND.toStack();              // 1个
+ItemStack stack8 = MAGIC_WAND.toStack(8);             // 8个
+ItemStack stack2 = MAGIC_BLOCK.get().asItem().getDefaultInstance();  // 这个也可以
+stack2.setCount(2);</code></pre>
+<p><hr></p>
+<h2 id="完整示例创建一个自定义物品">完整示例：创建一个自定义物品</h2>
+<p>让我们来一个完整的例子，创建一个"火焰宝石"物品：</p>
+<pre class="code-block"><code class="language-java">public class ExampleMod {
+    // ===== Mod 信息 =====
+    public static final String MODID = &quot;examplemod&quot;;
+    public static final Logger LOGGER = LogManager.getLogger(MODID);
+    
+    // ===== DeferredRegisters =====
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+    public static final DeferredRegister&lt;BlockEntityType&lt;?&gt;&gt; BLOCK_ENTITIES = 
+        DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, MODID);
+    
+    // ===== 注册方块：火焰宝石矿石 =====
+    public static final DeferredBlock&lt;OreBlock&gt; FLAME_ORE = BLOCKS.register(&quot;flame_ore&quot;,
+        () -&gt; new OreBlock(
+            BlockBehaviour.Properties.of()
+                .strength(3.0f)
+                .requiresCorrectToolForDrops()
+                .lightLevel(state -&gt; 5),  // 发光！
+            UniformInt.of(3, 7));          // 掉落 3-7 个火焰宝石
+    
+    // ===== 注册物品：火焰宝石 =====
+    public static final DeferredItem&lt;Item&gt; FLAME_GEM = ITEMS.register(&quot;flame_gem&quot;,
+        () -&gt; new Item(new Item.Properties()
+            .stacksTo(64)
+            .fireResistant()  // 防火
+            .rarity(Rarity.RARE)));
+    
+    // ===== 注册物品：火焰宝石块 =====
+    public static final DeferredBlock&lt;Block&gt; FLAME_BLOCK = BLOCKS.register(&quot;flame_block&quot;,
+        () -&gt; new Block(BlockBehaviour.Properties.of()
+            .strength(5.0f)
+            .lightLevel(state -&gt; 15)  // 超亮！
+            .sound(SoundType.METAL)));
+    
+    // 注册方块物品（自动创建对应的物品）
+    public static final DeferredItem&lt;BlockItem&gt; FLAME_BLOCK_ITEM = ITEMS.registerSimpleBlockItem(FLAME_BLOCK);
+    
+    // ===== 构造函数 =====
+    public ExampleMod(IEventBus modBus) {
+        LOGGER.info(&quot;ExampleMod 正在初始化...&quot;);
+        
+        // 注册所有内容
+        ITEMS.register(modBus);
+        BLOCKS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
+        
+        LOGGER.info(&quot;ExampleMod 初始化完成！&quot;);
+    }
+}</code></pre>
+<h3>在 resources 文件夹添加语言文件</h3>
+<p><code>src/main/resources/assets/examplemod/lang/zh_cn.json</code>:</p>
+<pre class="code-block"><code class="language-json">{
+    &quot;item.examplemod.flame_gem&quot;: &quot;火焰宝石&quot;,
+    &quot;block.examplemod.flame_ore&quot;: &quot;火焰矿石&quot;,
+    &quot;block.examplemod.flame_block&quot;: &quot;火焰宝石块&quot;
+}</code></pre>
+<h3>完整的项目结构</h3>
+<pre class="code-block"><code class="language-text">src/main/java/com/example/examplemod/
+├── ExampleMod.java              # 主类
+├── item/
+│   ├── FlameGemItem.java        # 自定义物品
+│   └── FlameWandItem.java       # 魔法杖
+├── block/
+│   ├── FlameOreBlock.java       # 自定义矿石
+│   └── FlameLampBlock.java      # 自定义灯
+└── blockentity/
+    └── FlameFurnaceBlockEntity.java
+
+src/main/resources/assets/examplemod/
+├── lang/
+│   ├── zh_cn.json
+│   └── en_us.json
+├── models/
+│   ├── item/
+│   │   ├── flame_gem.json
+│   │   └── flame_wand.json
+│   └── block/
+│       ├── flame_ore.json
+│       └── flame_lamp.json
+└── textures/
+    ├── item/
+    │   ├── flame_gem.png
+    │   └── flame_wand.png
+    └── block/
+        ├── flame_ore.png
+        └── flame_lamp.png</code></pre>
+<p><hr></p>
+<h2 id="常见错误与解决方案">常见错误与解决方案</h2>
+<h3>错误 1：忘记注册到事件总线</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredItem&lt;Item&gt; MY_ITEM = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item());
+
+// ✅ 正确：别忘了在构造函数中注册！
+public ExampleMod(IEventBus modBus) {
+    ITEMS.register(modBus);  // 这行很重要！
+}</code></pre>
+<h3>错误 2：Mod ID 不匹配</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(&quot;modid1&quot;);
+public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(&quot;modid2&quot;);
+
+// ✅ 正确：保持一致的 Mod ID
+public static final String MODID = &quot;examplemod&quot;;
+public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);</code></pre>
+<h3>错误 3：在声明时就获取对象</h3>
+<pre class="code-block"><code class="language-java">public static final Item MY_ITEM = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item());
+public static final ItemStack STACK = new ItemStack(MY_ITEM.get());  // 可能为 null！
+
+// ✅ 正确：等游戏完全启动后再使用
+public static final DeferredItem&lt;Item&gt; MY_ITEM = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item());
+// 在事件处理器中使用
+@SubscribeEvent
+public static void onItemCrafted(ItemCraftedEvent event) {
+    ItemStack STACK = MY_ITEM.toStack();  // 安全获取
+}</code></pre>
+<h3>错误 4：Duplicate Registration</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredItem&lt;Item&gt; ITEM1 = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item());
+public static final DeferredItem&lt;Item&gt; ITEM2 = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item()); // 同名！
+
+// ✅ 正确：每个注册项使用唯一的名称
+public static final DeferredItem&lt;Item&gt; ITEM1 = ITEMS.register(&quot;my_item&quot;, () -&gt; new Item());
+public static final DeferredItem&lt;Item&gt; ITEM2 = ITEMS.register(&quot;another_item&quot;, () -&gt; new Item());</code></pre>
+<h3>错误 5：在注册前访问 BlockEntityType</h3>
+<pre class="code-block"><code class="language-java">public static final Supplier&lt;BlockEntityType&lt;MyBE&gt;&gt; BE_TYPE = BLOCK_ENTITIES.register(&quot;my_be&quot;, ...);
+public static final DeferredBlock&lt;MyBlock&gt; MY_BLOCK = BLOCKS.register(&quot;my_block&quot;,
+    () -&gt; new MyBlock(..., BE_TYPE.get()));  // 错误！
+
+// ✅ 正确：在方块的构造函数中延迟获取
+public static final Supplier&lt;BlockEntityType&lt;MyBE&gt;&gt; BE_TYPE = BLOCK_ENTITIES.register(&quot;my_be&quot;, ...);
+public static final DeferredBlock&lt;MyBlock&gt; MY_BLOCK = BLOCKS.register(&quot;my_block&quot;,
+    () -&gt; new MyBlock(..., BE_TYPE));  // 传入 Supplier</code></pre>
+<p><hr></p>
+<h2 id="注册系统工作流程图">注册系统工作流程图</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 声明阶段["1. 声明阶段 - Mod 类加载时"]
+        A["static final DeferredRegister"] --> B["static final DeferredHolder.register()"]
+        B --> C["收集到 DeferredRegister.entries"]
+        C --> D["注册器准备好，但不触发注册"]
+    end
+    
+    subgraph 构造函数["2. 构造函数 - Mod 初始化"]
+        D --> E["new MyMod(IEventBus)"]
+        E --> F["deferredRegister.register(modBus)"]
+        F --> G["向事件总线注册监听器"]
+    end
+    
+    subgraph 注册事件["3. 注册事件 - RegisterEvent 触发"]
+        G --> H["RegisterEvent 触发"]
+        H --> I["遍历所有 DeferredHolder"]
+        I --> J["调用 Supplier 创建对象"]
+        J --> K["Registry.register(id, object)"]
+        K --> L["对象绑定到 Holder"]
+    end
+    
+    subgraph 使用阶段["4. 使用阶段 - 游戏运行时"]
+        L --> M["模组代码调用 get()"]
+        M --> N["返回实际对象"]
+    end
+    
+    style 声明阶段 fill:#fff3e0
+    style 构造函数 fill:#e3f2fd
+    style 注册事件 fill:#e8f5e9
+    style 使用阶段 fill:#fce4ec</div>
+</div>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 核心要点["本章核心要点"]
+        E1["1. DeferredRegister = 注册助手<br/>帮你管理所有要注册的内容"]
+        E2["2. DeferredHolder = 延迟引用<br/>等注册完成后才能获取对象"]
+        E3["3. DeferredBlock / DeferredItem = 特化持有者<br/>提供便捷方法如 toStack()"]
+        E4["4. 记住！必须调用 register(modBus)<br/>否则什么都不会注册"]
+        E5["5. Supplier 延迟创建<br/>等你需要时再实例化对象"]
+    end
+    
+    style E1 fill:#ffd93d,color:#000
+    style E2 fill:#4d96ff,color:#fff
+    style E3 fill:#6bcb77,color:#fff
+    style E4 fill:#ff6b6b,color:#fff
+    style E5 fill:#9b59b6,color:#fff</div>
+</div>
+<h3>记住这个顺序</h3>
+<pre class="code-block"><code class="language-text">声明静态字段 (DeferredRegister + register)
+         ↓
+在构造函数中调用 register(modBus)
+         ↓
+RegisterEvent 触发
+         ↓
+Supplier 被调用 → 对象创建
+         ↓
+对象注册到注册表
+         ↓
+你的代码调用 get() → 获取实际对象</code></pre>
+<p><hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p>完成本章学习后，请检查你是否能够：</p>
+<p><ul><li>[ ] <strong>理解原理</strong>：解释为什么需要延迟注册，而不是直接创建对象</li>
+<li>[ ] <strong>创建注册器</strong>：使用 <code>DeferredRegister.createBlocks()</code> 和 <code>DeferredRegister.createItems()</code> 创建注册器</li>
+<li>[ ] <strong>注册物品</strong>：使用 <code>ITEMS.register()</code> 注册普通物品和自定义物品</li>
+<li>[ ] <strong>注册方块</strong>：使用 <code>BLOCKS.register()</code> 注册普通方块和自定义方块</li>
+<li>[ ] <strong>注册 BlockEntity</strong>：创建并注册 <code>BlockEntityType</code></li>
+<li>[ ] <strong>获取对象</strong>：使用 <code>deferredHolder.get()</code> 获取实际对象</li>
+<li>[ ] <strong>避免错误</strong>：说出至少 3 个常见错误及如何避免</li></ul></p>
+<p><hr></p>
+<h2 id="相关链接">相关链接</h2>
+<h3>源码文件</h3>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th><th>作用</th></tr></thead><tbody><tr><td><code>DeferredRegister.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>延迟注册器核心类</td></tr><tr><td><code>DeferredHolder.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>延迟持有者</td></tr><tr><td><code>DeferredBlock.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>方块特化持有者</td></tr><tr><td><code>DeferredItem.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>物品特化持有者</td></tr><tr><td><code>RegisterEvent.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>注册事件</td></tr><tr><td><code>RegistryBuilder.java</code></td><td><code>net.neoforged.neoforge.registries</code></td><td>注册表构建器</td></tr></tbody></table>
+<h3>进阶阅读</h3>
+<p><ul><li>下一章：<a href="./02-event-system.html">事件系统</a> - 理解 NeoForge 的事件总线和事件监听</li>
+<li>架构分析：<a href="../analysis/01-registry-event-system.html">注册与事件系统分析</a> - 深入理解注册系统底层原理</li></ul></p>
+<p><hr></p>
+<blockquote><p>💡 <strong>提示</strong>：NeoForge 的 DeferredRegister 系统是业界最佳实践之一。掌握它之后，你会发现注册任何游戏内容都变得简单明了！如果遇到问题，查看官方示例模组和 NeoForge 源码是最好的学习方法。</p></blockquote>
+<p><hr></p>
+<p><em>文档版本：NeoForge 1.21.x, Minecraft 1.21</em>
+<em>最后更新：2026-03-24</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-environment-setup.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            NeoForge 1.21.x 环境搭建与第一个 Mod
+        </a><a href="03-event-system.html" class="next">
+            NeoForge 事件系统完全指南
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

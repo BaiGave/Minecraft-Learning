@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>03 recipes - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../part-0-prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="../part-0-prerequisites/02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="../part-0-prerequisites/03-minecraft-mod-concepts.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="../part-0-prerequisites/04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../part-1-basics/01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="../part-1-basics/02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="../part-1-basics/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="../part-1-basics/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="../part-4-world-gen/01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="../part-4-world-gen/02-custom-biome.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="../part-4-world-gen/03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-rendering/01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="../part-5-rendering/02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="../part-5-rendering/03-particles.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="03-recipes.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="../part-8-projects/02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="../part-8-projects/03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="../part-8-projects/04-magic-creature.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>03 recipes</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    03 recipes
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第三章：配方系统教程</h1>
+
+
+<blockquote><p>这一章学习如何在 Fabric 中创建自定义合成配方，包括普通合成、烧制、交易等。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-配方系统概述">配方系统概述</a></li></ul>
+<ul><li><a href="#2-基础配方类型">基础配方类型</a></li></ul>
+<ul><li><a href="#3-自定义配方成分">自定义配方成分</a></li></ul>
+<ul><li><a href="#4-数据生成器配方">数据生成器配方</a></li></ul>
+<ul><li><a href="#5-完整示例工具合成">完整示例：工具合成</a></li></ul>
+<ul><li><a href="#6-完整示例流体烧制">完整示例：流体烧制</a></li></ul>
+<ul><li><a href="#7-完整示例交易配方">完整示例：交易配方</a></li></ul>
+
+<hr>
+
+<h2 id="1-配方系统概述">1. 配方系统概述</h2>
+
+
+<h3>1.1 Fabric 配方 API</h3>
+
+
+Fabric 提供了配方 API 扩展（<code>fabric-recipe-api-v1</code>），允许模组开发者：
+
+<ul><li>创建自定义配方类型</li></ul>
+<ul><li>使用自定义成分（Custom Ingredient）</li></ul>
+<ul><li>通过数据生成器自动生成配方</li></ul>
+
+<h3>1.2 依赖</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-groovy">dependencies {
+    // Fabric API（已包含配方 API）
+    modImplementation &quot;net.fabricmc:fabric-api:${fabric_version}&quot;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="2-基础配方类型">2. 基础配方类型</h2>
+
+
+<h3>2.1 有序合成配方（Shaped Recipe）</h3>
+
+
+有序合成需要按特定图案放置材料。
+</p>
+<p><pre class="code-block"><code class="language-java">ShapedRecipe recipe = new ShapedRecipe(
+    Identifier.of(&quot;mymod&quot;, &quot;diamond_sword&quot;),  // 配方 ID
+    &quot;mymod&quot;,                                  // 组名（可选）
+    3,                                        // 宽度（3格）
+    3,                                        // 高度（3格）
+    new Ingredient[]{                         // 材料（按行展开）
+        Ingredient.ofItems(Items.DIAMOND),    // 第一行
+        Ingredient.ofItems(Items.DIAMOND),    // |
+        Ingredient.ofItems(Items.STICK)       // |
+    },
+    new ItemStack(Items.DIAMOND_SWORD)        // 输出
+);
+
+Registry.register(Registries.RECIPE, Identifier.of(&quot;mymod&quot;, &quot;diamond_sword&quot;), recipe);</code></pre>
+
+
+<h3>2.2 无序合成配方（Shapeless Recipe）</h3>
+
+
+无序合成只需将材料放入工作台，顺序无关。
+</p>
+<p><pre class="code-block"><code class="language-java">ShapelessRecipe recipe = new ShapelessRecipe(
+    Identifier.of(&quot;mymod&quot;, &quot;saddle&quot;),         // 配方 ID
+    &quot;mymod&quot;,                                  // 组名
+    new ItemStack(Items.SADDLE),              // 输出
+    List.of(                                  // 材料列表
+        Ingredient.ofItems(Items.LEATHER),
+        Ingredient.ofItems(Items.LEATHER),
+        Ingredient.ofItems(Items.IRON_INGOT)
+    )
+);
+
+Registry.register(Registries.RECIPE, Identifier.of(&quot;mymod&quot;, &quot;saddle&quot;), recipe);</code></pre>
+
+
+<h3>2.3 烧制配方（Smelting Recipe）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">SmeltingRecipe recipe = new SmeltingRecipe(
+    Identifier.of(&quot;mymod&quot;, &quot;gold_ingot&quot;),     // 经验值（0-1）
+    new RecipeMatch[]{                        // 输入匹配
+        new RecipeEntry(Items.RAW_GOLD, 1)    // 物品和数量
+    },
+    new ItemStack(Items.GOLD_INGOT),          // 输出
+    200                                        // 烧制时间（刻）
+);
+
+Registry.register(Registries.RECIPE, Identifier.of(&quot;mymod&quot;, &quot;gold_ingot&quot;), recipe);</code></pre>
+
+
+<h3>2.4 强化木砧配方（Smithing Recipe）</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">SmithingRecipe recipe = new SmithingRecipe(
+    Identifier.of(&quot;mymod&quot;, &quot;diamond_sword_smithing&quot;),
+    new RecipeMatch[]{                        // 模板
+        new RecipeEntry(Items.DIAMOND_SWORD, 1)
+    },
+    new RecipeMatch[]{                        // 输入
+        new RecipeEntry(Items.GOLD_INGOT, 1)
+    },
+    new ItemStack(Items.GOLD_SWORD),          // 输出
+    RecipePattern.create(
+        &quot;ABA&quot;,                                 // 模式
+        new Symbol(&#39;A&#39;, Items.DIAMOND_SWORD),  // 符号映射
+        new Symbol(&#39;B&#39;, Items.GOLD_INGOT)
+    )
+);
+
+Registry.register(Registries.RECIPE, Identifier.of(&quot;mymod&quot;, &quot;diamond_sword_smithing&quot;), recipe);</code></pre>
+
+
+<hr>
+
+<h2 id="3-自定义配方成分">3. 自定义配方成分</h2>
+
+
+<h3>3.1 什么是自定义成分？</h3>
+
+
+自定义成分（Custom Ingredient）允许你创建更复杂的材料匹配逻辑。
+</p>
+<p><pre class="code-block"><code class="language-java">public interface CustomIngredient {
+    // 测试物品堆是否匹配
+    boolean test(ItemStack stack);
+    
+    // 获取匹配的物品堆列表（用于显示）
+    List&lt;ItemStack&gt; getMatchingStacks();
+    
+    // 是否需要直接测试（NBT 检查）
+    boolean requiresTesting();
+    
+    // 获取序列化器
+    CustomIngredientSerializer&lt;?&gt; getSerializer();
+}</code></pre>
+
+
+<h3>3.2 内置自定义成分类型</h3>
+
+
+| 类型 | 标识符 | 说明 |
+|-----|--------|------|
+| All | <code>fabric:all</code> | 所有子成分都必须匹配 |
+| Any | <code>fabric:any</code> | 任一子成分匹配即可 |
+| Difference | <code>fabric:difference</code> | 基础减去排除部分 |
+| CustomData | <code>fabric:custom_data</code> | 带有自定义 NBT 的物品 |
+| Components | <code>fabric:components</code> | 带有特定组件的物品 |
+
+<h3>3.3 在 JSON 中使用自定义成分</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:crafting_shaped&quot;,
+    &quot;pattern&quot;: [
+        &quot;AAA&quot;,
+        &quot;ABA&quot;,
+        &quot;AAA&quot;
+    ],
+    &quot;key&quot;: {
+        &quot;A&quot;: {
+            &quot;fabric:type&quot;: &quot;fabric:any&quot;,
+            &quot;ingredients&quot;: [
+                {&quot;item&quot;: &quot;minecraft:iron_ingot&quot;},
+                {&quot;item&quot;: &quot;minecraft:gold_ingot&quot;}
+            ]
+        },
+        &quot;B&quot;: {&quot;item&quot;: &quot;minecraft:diamond&quot;}
+    },
+    &quot;result&quot;: {&quot;item&quot;: &quot;mymod:reinforced_helmet&quot;}
+}</code></pre>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:crafting_shapeless&quot;,
+    &quot;ingredients&quot;: [
+        {
+            &quot;fabric:type&quot;: &quot;fabric:difference&quot;,
+            &quot;base&quot;: {&quot;tag&quot;: &quot;minecraft:wool&quot;},
+            &quot;exclude&quot;: [
+                {&quot;item&quot;: &quot;minecraft:white_wool&quot;}
+            ]
+        }
+    ],
+    &quot;result&quot;: {&quot;item&quot;: &quot;mymod:colored_wool&quot;}
+}</code></pre>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:crafting_shapeless&quot;,
+    &quot;ingredients&quot;: [
+        {
+            &quot;fabric:type&quot;: &quot;fabric:components&quot;,
+            &quot;components&quot;: {
+                &quot;minecraft:food&quot;: {&quot;nutrition&quot;: 4}
+            }
+        }
+    ],
+    &quot;result&quot;: {&quot;item&quot;: &quot;mymod:suspicious_stew&quot;}
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-数据生成器配方">4. 数据生成器配方</h2>
+
+
+<h3>4.1 数据生成器概述</h3>
+
+
+数据生成器（Data Generator）是 Fabric 提供的自动化资源生成工具，可以在构建时自动生成配方文件。
+
+<h3>4.2 创建配方生成器</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.datagen;
+
+import net.example.mymod.init.ModItems;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
+import net.minecraft.data.server.recipe.RecipeExporter;
+import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
+import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeCategory;
+
+public class ModRecipeProvider extends FabricRecipeProvider {
+    
+    public ModRecipeProvider(FabricDataOutput output) {
+        super(output);
+    }
+    
+    @Override
+    public void generate(RecipeExporter exporter) {
+        // 在这里生成配方
+        generateShapedRecipes(exporter);
+        generateShapelessRecipes(exporter);
+    }
+    
+    private void generateShapedRecipes(RecipeExporter exporter) {
+        // 有序合成配方
+        ShapedRecipeJsonBuilder.create(RecipeCategory.COMBAT, ModItems.MY_SWORD)
+            .pattern(&quot;X&quot;)
+            .pattern(&quot;X&quot;)
+            .pattern(&quot;S&quot;)
+            .input(&#39;X&#39;, Items.DIAMOND)
+            .input(&#39;S&#39;, Items.STICK)
+            .criterion(&quot;has_diamond&quot;, conditionsFromItem(Items.DIAMOND))
+            .offerTo(exporter);
+        
+        // 多个有序配方
+        ShapedRecipeJsonBuilder.create(RecipeCategory.TOOLS, ModItems.MY_PICKAXE)
+            .pattern(&quot;XXX&quot;)
+            .pattern(&quot; S &quot;)
+            .pattern(&quot; S &quot;)
+            .input(&#39;X&#39;, Items.DIAMOND)
+            .input(&#39;S&#39;, Items.STICK)
+            .criterion(&quot;has_diamond&quot;, conditionsFromItem(Items.DIAMOND))
+            .offerTo(exporter, Identifier.of(&quot;mymod&quot;, &quot;diamond_pickaxe&quot;));
+    }
+    
+    private void generateShapelessRecipes(RecipeExporter exporter) {
+        // 无序合成配方
+        ShapelessRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.MY_ITEM)
+            .input(Items.DIAMOND)
+            .input(Items.GLOWSTONE_DUST)
+            .criterion(&quot;has_glowstone&quot;, conditionsFromItem(Items.GLOWSTONE_DUST))
+            .offerTo(exporter);
+    }
+}</code></pre>
+
+
+<h3>4.2 注册数据生成器入口</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.datagen;
+
+import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+
+public class MyModDataGenerator implements DataGeneratorEntrypoint {
+    
+    @Override
+    public void onInitializeDataGenerator(FabricDataGenerator generator) {
+        FabricDataGenerator.Pack pack = generator.createPack();
+        
+        // 添加配方生成器
+        pack.addProvider(ModRecipeProvider::new);
+        
+        // 可以添加其他生成器
+        // pack.addProvider(ModTagProvider::new);
+        // pack.addProvider(ModLootTableProvider::new);
+    }
+}</code></pre>
+
+
+<h3>4.3 在 fabric.mod.json 中声明</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;entrypoints&quot;: {
+        &quot;main&quot;: [
+            &quot;net.example.mymod.Mymod&quot;,
+            &quot;net.example.mymod.datagen.MyModDataGenerator&quot;
+        ],
+        &quot;client&quot;: [
+            &quot;net.example.mymod.client.MyModClient&quot;
+        ]
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-完整示例工具合成">5. 完整示例：工具合成</h2>
+
+
+<h3>5.1 定义物品</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.item;
+
+import net.minecraft.item.Item;
+import net.minecraft.item.ToolMaterials;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+
+public class ModItems {
+    
+    // 自定义剑
+    public static final Item CRYSTAL_SWORD = new SwordItem(
+        ToolMaterials.DIAMOND,
+        3,                                          // 伤害
+        -2.4f,                                      // 攻击速度
+        new Item.Settings()
+    );
+    
+    // 自定义镐子
+    public static final Item CRYSTAL_PICKAXE = new PickaxeItem(
+        ToolMaterials.DIAMOND,
+        1,
+        -2.8f,
+        new Item.Settings()
+    );
+    
+    // 自定义斧头
+    public static final Item CRYSTAL_AXE = new AxeItem(
+        ToolMaterials.DIAMOND,
+        5,
+        -3.0f,
+        new Item.Settings()
+    );
+    
+    // 合成材料：水晶碎片
+    public static final Item CRYSTAL_SHARD = new Item(
+        new Item.Settings()
+    );
+    
+    public static void register() {
+        Registry.register(Registries.ITEM, Identifier.of(&quot;mymod&quot;, &quot;crystal_sword&quot;), CRYSTAL_SWORD);
+        Registry.register(Registries.ITEM, Identifier.of(&quot;mymod&quot;, &quot;crystal_pickaxe&quot;), CRYSTAL_PICKAXE);
+        Registry.register(Registries.ITEM, Identifier.of(&quot;mymod&quot;, &quot;crystal_axe&quot;), CRYSTAL_AXE);
+        Registry.register(Registries.ITEM, Identifier.of(&quot;mymod&quot;, &quot;crystal_shard&quot;), CRYSTAL_SHARD);
+    }
+}</code></pre>
+
+
+<h3>5.2 数据生成器配方</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.datagen;
+
+import net.example.mymod.init.ModItems;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
+import net.minecraft.data.server.recipe.RecipeExporter;
+import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
+import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeCategory;
+
+public class ToolRecipeProvider extends FabricRecipeProvider {
+    
+    public ToolRecipeProvider(FabricDataOutput output) {
+        super(output);
+    }
+    
+    @Override
+    public void generate(RecipeExporter exporter) {
+        // 水晶剑
+        ShapedRecipeJsonBuilder.create(RecipeCategory.COMBAT, ModItems.CRYSTAL_SWORD)
+            .pattern(&quot;C&quot;)
+            .pattern(&quot;C&quot;)
+            .pattern(&quot;S&quot;)
+            .input(&#39;C&#39;, ModItems.CRYSTAL_SHARD)
+            .input(&#39;S&#39;, Items.STICK)
+            .criterion(&quot;has_crystal_shard&quot;, conditionsFromItem(ModItems.CRYSTAL_SHARD))
+            .offerTo(exporter);
+        
+        // 水晶镐
+        ShapedRecipeJsonBuilder.create(RecipeCategory.TOOLS, ModItems.CRYSTAL_PICKAXE)
+            .pattern(&quot;CCC&quot;)
+            .pattern(&quot; S &quot;)
+            .pattern(&quot; S &quot;)
+            .input(&#39;C&#39;, ModItems.CRYSTAL_SHARD)
+            .input(&#39;S&#39;, Items.STICK)
+            .criterion(&quot;has_crystal_shard&quot;, conditionsFromItem(ModItems.CRYSTAL_SHARD))
+            .offerTo(exporter);
+        
+        // 水晶斧
+        ShapedRecipeJsonBuilder.create(RecipeCategory.TOOLS, ModItems.CRYSTAL_AXE)
+            .pattern(&quot;CC&quot;)
+            .pattern(&quot;CS&quot;)
+            .pattern(&quot; S&quot;)
+            .input(&#39;C&#39;, ModItems.CRYSTAL_SHARD)
+            .input(&#39;S&#39;, Items.STICK)
+            .criterion(&quot;has_crystal_shard&quot;, conditionsFromItem(ModItems.CRYSTAL_SHARD))
+            .offerTo(exporter);
+        
+        // 合成水晶碎片（无序）
+        ShapelessRecipeJsonBuilder.create(RecipeCategory.MISC, ModItems.CRYSTAL_SHARD, 4)
+            .input(Items.DIAMOND)
+            .input(Items.GLOWSTONE_DUST)
+            .criterion(&quot;has_glowstone&quot;, conditionsFromItem(Items.GLOWSTONE_DUST))
+            .offerTo(exporter);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-完整示例流体烧制">6. 完整示例：流体烧制</h2>
+
+
+<h3>6.1 流体烧制配方</h3>
+
+
+流体烧制允许使用流体作为燃料进行烧制。
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.recipe;
+
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.collection.DefaultedList;
+
+public class FluidSmeltingRecipe implements Recipe&lt;AbstractCookingRecipe&gt; {
+    
+    private final Identifier id;
+    private final String group;
+    private final Ingredient ingredient;
+    private final ItemStack result;
+    private final float experience;
+    private final int cookTime;
+    
+    public FluidSmeltingRecipe(Identifier id, String group, Ingredient ingredient, 
+                               ItemStack result, float experience, int cookTime) {
+        this.id = id;
+        this.group = group;
+        this.ingredient = ingredient;
+        this.result = result;
+        this.experience = experience;
+        this.cookTime = cookTime;
+    }
+    
+    @Override
+    public Identifier getId() {
+        return id;
+    }
+    
+    @Override
+    public RecipeType&lt;?&gt; getType() {
+        return RecipeType.BLASTING;  // 使用现有的配方类型
+    }
+    
+    @Override
+    public String getGroup() {
+        return group;
+    }
+    
+    @Override
+    public Ingredient getIngredients() {
+        return ingredient;
+    }
+    
+    @Override
+    public ItemStack getOutput() {
+        return result;
+    }
+    
+    public float getExperience() {
+        return experience;
+    }
+    
+    public int getCookTime() {
+        return cookTime;
+    }
+}</code></pre>
+
+
+<h3>6.2 注册烧制配方</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.recipe.FluidSmeltingRecipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
+
+public class ModRecipes {
+    
+    // 自定义序列化器
+    public static final RecipeSerializer&lt;FluidSmeltingRecipe&gt; FLUID_SMELTING =
+        new RecipeSerializer&lt;&gt;() {
+            @Override
+            public FluidSmeltingRecipe read(Identifier id, PacketByteBuf buf) {
+                String group = buf.readString();
+                Ingredient ingredient = Ingredient.fromPacket(buf);
+                ItemStack result = buf.readItemStack();
+                float experience = buf.readFloat();
+                int cookTime = buf.readInt();
+                
+                return new FluidSmeltingRecipe(id, group, ingredient, result, experience, cookTime);
+            }
+            
+            @Override
+            public void write(PacketByteBuf buf, FluidSmeltingRecipe recipe) {
+                buf.writeString(recipe.getGroup());
+                recipe.getIngredients().write(buf);
+                buf.writeItemStack(recipe.getOutput());
+                buf.writeFloat(recipe.getExperience());
+                buf.writeInt(recipe.getCookTime());
+            }
+            
+            @Override
+            public RecipeCodec getCodec() {
+                return null;
+            }
+        };
+    
+    public static void register() {
+        Registry.register(
+            Registry.RECIPE_SERIALIZER,
+            Identifier.of(Mymod.MOD_ID, &quot;fluid_smelting&quot;),
+            FLUID_SMELTING
+        );
+    }
+}</code></pre>
+
+
+<h3>6.3 数据生成器生成烧制配方</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">@Override
+public void generate(RecipeExporter exporter) {
+    // 烧制配方
+    offerSmelting(exporter, List.of(Items.RAW_IRON), RecipeCategory.MISC, 
+        Items.IRON_INGOT, 0.7f, 200, &quot;iron_ingot&quot;);
+    
+    offerBlasting(exporter, List.of(Items.RAW_IRON), RecipeCategory.MISC, 
+        Items.IRON_INGOT, 0.7f, 100, &quot;iron_ingot&quot;);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="7-完整示例交易配方">7. 完整示例：交易配方</h2>
+
+
+<h3>7.1 村民交易</h3>
+
+
+Fabric 提供了交易扩展 API。
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.trade;
+
+import net.fabricmc.fabric.api.object.builder.v1.trade.TradeOfferHelper;
+import net.minecraft.village.TradeOffers;
+import net.minecraft.village.VillagerProfession;
+
+public class ModTrades {
+    
+    public static void registerTrades() {
+        // 农民交易
+        TradeOfferHelper.registerVillagerOffers(
+            VillagerProfession.FARMER, 
+            1,  // 等级
+            factories -&gt; {
+                factories.add(new SellItemsFactory(
+                    Items.EMERALD,           // 卖出
+                    1,                       // 数量
+                    16,                      // 最大数量
+                    5,                       // 价格乘数
+                    2                        // 经验值
+                ));
+            }
+        );
+        
+        // 武器匠交易
+        TradeOfferHelper.registerVillagerOffers(
+            VillagerProfession.WEAPONSMITH,
+            2,
+            factories -&gt; {
+                factories.add(new EnchantItemFactory(
+                    Items.DIAMOND_SWORD,     // 物品
+                    5,                       // 经验等级
+                    10,                      // 价格乘数
+                    12,                      // 最大价格
+                    2                        // 交易次数
+                ));
+            }
+        );
+    }
+}</code></pre>
+
+
+<h3>7.2 自定义交易工厂</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.village.TradeOffer;
+import net.minecraft.village.TradeOffers;
+import net.minecraft.world.World;
+
+public class CustomTradeFactory implements TradeOffers.Factory {
+    
+    private final ItemStack sellItem;
+    private final int sellCount;
+    private final int maxUses;
+    private final int experience;
+    private final float priceMultiplier;
+    
+    public CustomTradeFactory(ItemStack sellItem, int sellCount, int maxUses, 
+                              int experience, float priceMultiplier) {
+        this.sellItem = sellItem;
+        this.sellCount = sellCount;
+        this.maxUses = maxUses;
+        this.experience = experience;
+        this.priceMultiplier = priceMultiplier;
+    }
+    
+    @Override
+    public TradeOffer create(Entity entity, World world) {
+        // 创建第一个交易：用绿宝石购买物品
+        ItemStack buying = new ItemStack(Items.EMERALD, 1);
+        ItemStack selling = sellItem.copy();
+        selling.setCount(sellCount);
+        
+        return new TradeOffer(
+            buying,               // 输入
+            ItemStack.EMPTY,     // 额外输入
+            selling,             // 输出
+            maxUses,             // 最大使用次数
+            experience,          // 经验值
+            priceMultiplier      // 价格乘数
+        );
+    }
+}
+
+// 使用示例
+TradeOfferHelper.registerVillagerOffers(
+    VillagerProfession.LIBRARIAN,
+    1,
+    factories -&gt; {
+        factories.add(new CustomTradeFactory(
+            new ItemStack(Items.BOOK),
+            2,      // 卖2本书
+            12,     // 最多交易12次
+            2,      // 给2点经验
+            0.05f   // 价格乘数
+        ));
+    }
+);</code></pre>
+
+
+<h3>7.3 数据生成器交易</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">private void generateTrades(TradeOfferDataGenerator exporter) {
+    // 生成农民交易
+    exporter.register(
+        VillagerProfession.FARMER,
+        1,
+        new SimpleTradeOfferData(
+            new ItemStack(Items.WHEAT, 12),
+            new ItemStack(Items.EMERALD),
+            2, 16, 2, 0.05
+        )
+    );
+    
+    // 生成 librarian 交易 - 卖书
+    exporter.register(
+        VillagerProfession.LIBRARIAN,
+        1,
+        new SimpleTradeOfferData(
+            new ItemStack(Items.EMERALD, 2),
+            new ItemStack(Items.BOOK),
+            1, 12, 1, 0.05
+        )
+    );
+}</code></pre>
+
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+现在你学会了配方系统！接下来可以学习：
+
+<ul><li><a href="./04-loot-tables.html">战利品表</a> - 修改战利品掉落</li></ul>
+
+<hr>
+
+<em>参考：<a href="../../analysis/03-item-recipe-system.html">物品与配方系统分析</a></em></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-data-attachment.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第二章：数据附件教程
+        </a><a href="04-loot-tables.html" class="next">
+            第四章：战利品表教程
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

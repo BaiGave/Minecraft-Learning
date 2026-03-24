@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>12 config server system - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>12 config server system</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    12 config server system
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>配置与服务器系统</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-配置系统">2. 配置系统</a></li>
+</ul>  - <a href="#21-modconfigspec-核心架构">2.1 ModConfigSpec 核心架构</a>
+  - <a href="#22-配置值类型">2.2 配置值类型</a>
+  - <a href="#23-neoforge-内置配置">2.3 NeoForge 内置配置</a>
+<ul><li><a href="#3-权限系统">3. 权限系统</a></li>
+</ul>  - <a href="#31-permissionapi-核心接口">3.1 PermissionAPI 核心接口</a>
+  - <a href="#32-permissionnode-权限节点">3.2 PermissionNode 权限节点</a>
+  - <a href="#33-权限类型系统">3.3 权限类型系统</a>
+  - <a href="#34-动态上下文">3.4 动态上下文</a>
+  - <a href="#35-权限处理器">3.5 权限处理器</a>
+<ul><li><a href="#4-服务器生命周期">4. 服务器生命周期</a></li>
+<li><a href="#5-工作流程图">5. 工作流程图</a></li>
+<li><a href="#6-api-使用示例">6. API 使用示例</a></li>
+<li><a href="#7-服务端命令系统">7. 服务端命令系统</a></li>
+<li><a href="#8-总结">8. 总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>NeoForge 1.21.x 的配置与服务器系统是模组框架的核心基础设施，主要由三大子系统组成：</p>
+<table class="data-table"><thead><tr><th>子系统</th><th>职责</th><th>源码位置</th></tr></thead><tbody><tr><td><strong>配置系统</strong></td><td>管理模组配置的声明、加载、验证和持久化</td><td><code>common/ModConfigSpec.java</code></td></tr><tr><td><strong>权限系统</strong></td><td>提供细粒度的玩家权限检查机制</td><td><code>server/permission/</code></td></tr><tr><td><strong>生命周期管理</strong></td><td>处理服务器启动、运行、停止各阶段的事件</td><td><code>server/ServerLifecycleHooks.java</code></td></tr></tbody></table>
+<strong>关键设计目标</strong>：
+<ul><li><strong>声明式配置</strong>：使用 Builder 模式定义配置项，支持类型安全的验证</li>
+<li><strong>热重载支持</strong>：区分 <code>NONE</code>、<code>WORLD</code>、<code>GAME</code> 三种重启级别</li>
+<li><strong>可扩展权限</strong>：允许第三方实现自定义权限处理器</li>
+<li><strong>事件驱动</strong>：通过事件总线与游戏生命周期深度集成</li></ul></p>
+<p><hr></p>
+<h2 id="2-配置系统">2. 配置系统</h2>
+<h3>2.1 ModConfigSpec 核心架构</h3>
+<p><code>ModConfigSpec</code> 是 NeoForge 配置系统的核心类，它基于 NightConfig 库构建，提供了一套类型安全的配置声明 API。</p>
+<pre class="code-block"><code class="language-12">public class ModConfigSpec implements IConfigSpec {
+    // 存储配置的规格定义（类型验证器、范围限制等）
+    private final UnmodifiableConfig spec;
+    // 存储实际的配置值（带缓存）
+    private final UnmodifiableConfig values;
+    // 当前加载的配置实例
+    @Nullable
+    private ILoadedConfig loadedConfig;
+    // 中间层级（分类）的注释和翻译键
+    private final Map&lt;List&lt;String&gt;, String&gt; levelComments;
+    private final Map&lt;List&lt;String&gt;, String&gt; levelTranslationKeys;</code></pre>
+<h4>配置加载流程</h4>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Mod as 模组代码
+    participant Builder as ModConfigSpec.Builder
+    participant Spec as ModConfigSpec
+    participant Tracker as ConfigTracker
+    participant File as 配置文件
+    
+    Mod->>Builder: 创建 Builder 实例
+    Builder->>Builder: 定义配置项 (define, defineInRange...)
+    Builder->>Spec: build() 生成规格
+    Mod->>Spec: 注册到 ModConfig
+    
+    Note over Tracker: 服务器启动时
+    Tracker->>File: 读取配置文件
+    File-->>Tracker: 返回配置内容
+    Tracker->>Spec: acceptConfig() 加载配置
+    Spec->>Spec: correct() 校验并修正
+    Spec->>Spec: afterReload() 重置缓存</div>
+</div>
+<h4>Builder 模式使用</h4>
+<pre class="code-block"><code class="language-56">public static class Builder {
+    // 配置规格（内部使用）
+    private final Config spec = Config.of(LinkedHashMap::new, InMemoryFormat.withUniversalSupport());
+    // 构建上下文（当前路径、注释、翻译键等）
+    private BuilderContext context = new BuilderContext();
+    // 分类级别的注释
+    private final Map&lt;List&lt;String&gt;, String&gt; levelComments = new HashMap&lt;&gt;();
+    // 分类级别的翻译键
+    private final Map&lt;List&lt;String&gt;, String&gt; levelTranslationKeys = new HashMap&lt;&gt;();
+    // 当前构建路径
+    private final List&lt;String&gt; currentPath = new ArrayList&lt;&gt;();
+    // 所有配置值的列表
+    private final List&lt;ConfigValue&lt;?&gt;&gt; values = new ArrayList&lt;&gt;();</code></pre>
+<p>关键方法：</p>
+<table class="data-table"><thead><tr><th>方法</th><th>用途</th></tr></thead><tbody><tr><td><code>define(path, defaultValue)</code></td><td>定义通用配置项</td></tr><tr><td><code>defineInRange(path, default, min, max)</code></td><td>定义带数值范围的配置</td></tr><tr><td><code>defineEnum(path, defaultValue)</code></td><td>定义枚举配置</td></tr><tr><td><code>defineList(path, default, validator)</code></td><td>定义列表配置</td></tr><tr><td><code>comment(String)</code></td><td>添加注释/说明</td></tr><tr><td><code>translation(String)</code></td><td>设置翻译键</td></tr><tr><td><code>worldRestart()</code></td><td>标记需要世界重启</td></tr><tr><td><code>gameRestart()</code></td><td>标记需要游戏重启</td></tr><tr><td><code>push(String)</code></td><td>进入分类</td></tr><tr><td><code>pop()</code></td><td>返回上级分类</td></tr></tbody></table>
+<h3>2.2 配置值类型</h3>
+<p>NeoForge 提供了多种类型安全的配置值包装类：</p>
+<pre class="code-block"><code class="language-1186">public static class ConfigValue&lt;T&gt; implements Supplier&lt;T&gt; {
+    private final Builder parent;
+    private final List&lt;String&gt; path;
+    private final Supplier&lt;T&gt; defaultSupplier;
+    @Nullable
+    private T cachedValue = null;  // 值缓存，支持热重载
+    @Nullable
+    private ModConfigSpec spec;</code></pre>
+<p>专用类型封装：</p>
+<table class="data-table"><thead><tr><th>类型</th><th>实现类</th><th>特殊方法</th></tr></thead><tbody><tr><td><code>Boolean</code></td><td><code>BooleanValue</code></td><td><code>isTrue()</code>, <code>isFalse()</code>, <code>getAsBoolean()</code></td></tr><tr><td><code>Integer</code></td><td><code>IntValue</code></td><td><code>getAsInt()</code></td></tr><tr><td><code>Long</code></td><td><code>LongValue</code></td><td><code>getAsLong()</code></td></tr><tr><td><code>Double</code></td><td><code>DoubleValue</code></td><td><code>getAsDouble()</code></td></tr><tr><td><code>Enum</code></td><td><code>EnumValue<T></code></td><td>支持自定义转换器</td></tr><tr><td><code>List</code></td><td><code>ConfigValue<List></code></td><td>支持元素验证和大小限制</td></tr></tbody></table>
+<h4>重启类型枚举</h4>
+<pre class="code-block"><code class="language-1379">public enum RestartType {
+    NONE,      // 无需重启，立即生效
+    WORLD,     // 需要重载世界（关闭/重新打开存档）
+    GAME;      // 需要完全重启游戏（不支持 SERVER 类型配置）
+}</code></pre>
+<h3>2.3 NeoForge 内置配置</h3>
+<h4>NeoForgeCommonConfig</h4>
+<p>通用配置，在服务器启动前就需要可用：</p>
+<pre class="code-block"><code class="language-16">public final class NeoForgeCommonConfig {
+    // 记录未翻译的物品标签警告
+    public final ModConfigSpec.EnumValue&lt;TagConventionLogWarning.LogWarningMode&gt; logUntranslatedItemTagWarnings;
+    
+    // 记录使用 legacy 命名空间标签的警告
+    public final ModConfigSpec.EnumValue&lt;TagConventionLogWarning.LogWarningMode&gt; logLegacyTagWarnings;
+    
+    // 显示物品属性的高级调试信息
+    public final ModConfigSpec.BooleanValue attributeAdvancedTooltipDebugInfo;
+}</code></pre>
+<h4>NeoForgeServerConfig</h4>
+<p>服务端配置，需要同步到客户端或按世界配置：</p>
+<pre class="code-block"><code class="language-16">public final class NeoForgeServerConfig {
+    // 移除抛出错误的 BlockEntity（而不是关闭服务器）
+    public final ModConfigSpec.BooleanValue removeErroringBlockEntities;
+    
+    // 移除抛出错误的 Entity
+    public final ModConfigSpec.BooleanValue removeErroringEntities;
+    
+    // 使用完整碰撞箱检测梯子
+    public final ModConfigSpec.BooleanValue fullBoundingBoxLadders;
+    
+    // 权限处理器选择
+    public final ModConfigSpec.ConfigValue&lt;String&gt; permissionHandler;
+    
+    // 向 LAN 客户端广播服务器
+    public final ModConfigSpec.BooleanValue advertiseDedicatedServerToLan;
+}</code></pre>
+<p><hr></p>
+<h2 id="3-权限系统">3. 权限系统</h2>
+<p>NeoForge 的权限系统提供了一套灵活、可扩展的权限检查机制，与传统 Minecraft 权限（基于命令权限等级）不同，它允许模组定义任意类型的权限节点。</p>
+<h3>3.1 PermissionAPI 核心接口</h3>
+<pre class="code-block"><code class="language-29">public final class PermissionAPI {
+    // 当前激活的权限处理器
+    private static IPermissionHandler activeHandler = null;
+    
+    // 获取所有已注册的权限节点
+    public static Collection&lt;PermissionNode&lt;?&gt;&gt; getRegisteredNodes() {
+        return activeHandler == null ? Collections.emptySet() : activeHandler.getRegisteredNodes();
+    }
+    
+    // 查询在线玩家的权限
+    public static &lt;T&gt; T getPermission(ServerPlayer player, PermissionNode&lt;T&gt; node, 
+                                       PermissionDynamicContext&lt;?&gt;... context) {
+        if (!activeHandler.getRegisteredNodes().contains(node)) 
+            throw new UnregisteredPermissionException(node);
+        return activeHandler.getPermission(player, node, context);
+    }
+    
+    // 查询离线玩家的权限
+    public static &lt;T&gt; T getOfflinePermission(UUID player, PermissionNode&lt;T&gt; node,
+                                             PermissionDynamicContext&lt;?&gt;... context) {
+        if (!activeHandler.getRegisteredNodes().contains(node)) 
+            throw new UnregisteredPermissionException(node);
+        return activeHandler.getOfflinePermission(player, node, context);
+    }
+    
+    // 初始化权限 API（仅由 ServerLifecycleHooks 调用）
+    public static void initializePermissionAPI() {
+        // 触发 PermissionGatherEvent.Handler 事件
+        PermissionGatherEvent.Handler handlerEvent = new PermissionGatherEvent.Handler();
+        NeoForge.EVENT_BUS.post(handlerEvent);
+        
+        // 获取所有可用的权限处理器工厂
+        Map&lt;Identifier, IPermissionHandlerFactory&gt; availableHandlers = 
+            handlerEvent.getAvailablePermissionHandlerFactories();
+        
+        // 根据配置选择处理器
+        Identifier selectedPermissionHandler = 
+            Identifier.parse(NeoForgeServerConfig.INSTANCE.permissionHandler.get());
+        
+        // 触发 PermissionGatherEvent.Nodes 事件收集节点
+        PermissionGatherEvent.Nodes nodesEvent = new PermissionGatherEvent.Nodes();
+        NeoForge.EVENT_BUS.post(nodesEvent);
+        
+        // 创建权限处理器实例
+        IPermissionHandlerFactory factory = availableHandlers.get(selectedPermissionHandler);
+        PermissionAPI.activeHandler = factory.create(nodesEvent.getNodes());
+    }
+}</code></pre>
+<h3>3.2 PermissionNode 权限节点</h3>
+<p><code>PermissionNode</code> 是权限系统的基本单元：</p>
+<pre class="code-block"><code class="language-44">public final class PermissionNode&lt;T&gt; {
+    private final String nodeName;        // 权限节点名称，如 &quot;mymod.admin.bypass&quot;
+    private final PermissionType&lt;T&gt; type; // 权限类型
+    private final PermissionResolver&lt;T&gt; defaultResolver; // 默认解析器
+    private final PermissionDynamicContextKey&lt;?&gt;[] dynamics; // 动态上下文键
+    
+    @Nullable
+    private Component readableName;        // 可读名称（用于 UI）
+    @Nullable
+    private Component description;        // 描述</code></pre>
+<p><strong>节点命名规范</strong>：建议使用 <code>modid.action.target</code> 格式，如：
+<ul><li><code>my mod.kick.player</code> - 踢出玩家权限</li>
+<li><code>my mod.teleport.bypass</code> - 传送绕过限制权限</li></ul></p>
+<h4>权限解析器</h4>
+<pre class="code-block"><code class="language-140">@FunctionalInterface
+public interface PermissionResolver&lt;T&gt; {
+    /**
+     * @param player     在线玩家（离线查询时为 null）
+     * @param playerUUID 玩家 UUID
+     * @param context    动态上下文
+     * @return 权限值
+     */
+    T resolve(@Nullable ServerPlayer player, UUID playerUUID, 
+              PermissionDynamicContext&lt;?&gt;... context);
+}</code></pre>
+<h3>3.3 权限类型系统</h3>
+<p>NeoForge 内置了四种基本权限类型：</p>
+<pre class="code-block"><code class="language-14">public final class PermissionTypes {
+    // 布尔类型 - 最常用
+    public static final PermissionType&lt;Boolean&gt; BOOLEAN = 
+        new PermissionType&lt;&gt;(Boolean.class, &quot;boolean&quot;);
+    
+    // 整数类型 - 用于等级或次数限制
+    public static final PermissionType&lt;Integer&gt; INTEGER = 
+        new PermissionType&lt;&gt;(Integer.class, &quot;integer&quot;);
+    
+    // 字符串类型 - 用于角色名称等
+    public static final PermissionType&lt;String&gt; STRING = 
+        new PermissionType&lt;&gt;(String.class, &quot;string&quot;);
+    
+    // 组件类型 - 用于返回富文本消息
+    public static final PermissionType&lt;Component&gt; COMPONENT = 
+        new PermissionType&lt;&gt;(Component.class, &quot;component&quot;);
+}</code></pre>
+<p><code>PermissionType</code> 类的定义：</p>
+<pre class="code-block"><code class="language-15">public final class PermissionType&lt;T&gt; {
+    private final Class&lt;T&gt; typeToken;  // 类型标记
+    private final String typeName;     // 类型名称
+}</code></pre>
+<h3>3.4 动态上下文</h3>
+<p>动态上下文允许在权限检查时提供额外的环境信息，类似于 BlockState 的 Property 概念：</p>
+<pre class="code-block"><code class="language-19">public final class PermissionDynamicContext&lt;T&gt; {
+    private PermissionDynamicContextKey&lt;T&gt; dynamic;  // 上下文键
+    private T value;                                 // 值
+}</code></pre>
+<p><strong>上下文键定义</strong>（Record 类型）：</p>
+<pre class="code-block"><code class="language-19">public record PermissionDynamicContextKey&lt;T&gt;(
+    Class&lt;T&gt; typeToken,                              // 类型标记
+    String name,                                     // 键名称
+    Function&lt;T, String&gt; serializer                   // 序列化函数
+) {
+    public PermissionDynamicContext&lt;T&gt; createContext(T value) {
+        return new PermissionDynamicContext&lt;&gt;(this, value);
+    }
+}</code></pre>
+<p><strong>使用示例</strong>：创建一个维度上下文键</p>
+<pre class="code-block"><code class="language-java">PermissionDynamicContextKey&lt;ResourceKey&lt;Level&gt;&gt; DIMENSION_KEY = 
+    new PermissionDynamicContextKey&lt;&gt;(
+        DimensionType.class,
+        &quot;dimension&quot;,
+        ResourceKey::location
+    );
+
+// 查询权限时传入上下文
+var context = DIMENSION_KEY.createContext(Level.END);
+boolean canBuild = PermissionAPI.getPermission(
+    player, 
+    BUILD_PERMISSION_NODE, 
+    context
+);</code></pre>
+<h3>3.5 权限处理器</h3>
+<h4>IPermissionHandler 接口</h4>
+<pre class="code-block"><code class="language-26">public interface IPermissionHandler {
+    // 获取处理器标识符
+    Identifier getIdentifier();
+    
+    // 获取所有已注册的权限节点
+    Set&lt;PermissionNode&lt;?&gt;&gt; getRegisteredNodes();
+    
+    // 查询在线玩家权限
+    &lt;T&gt; T getPermission(ServerPlayer player, PermissionNode&lt;T&gt; node, 
+                        PermissionDynamicContext&lt;?&gt;... context);
+    
+    // 查询离线玩家权限
+    &lt;T&gt; T getOfflinePermission(UUID player, PermissionNode&lt;T&gt; node, 
+                               PermissionDynamicContext&lt;?&gt;... context);
+}</code></pre>
+<h4>默认权限处理器</h4>
+<pre class="code-block"><code class="language-18">public final class DefaultPermissionHandler implements IPermissionHandler {
+    public static final Identifier IDENTIFIER = 
+        Identifier.fromNamespaceAndPath(&quot;neoforge&quot;, &quot;default_handler&quot;);
+    
+    private final Set&lt;PermissionNode&lt;?&gt;&gt; registeredNodes = new HashSet&lt;&gt;();
+    
+    // 默认处理器将所有查询转发到节点的默认解析器
+    @Override
+    public &lt;T&gt; T getPermission(ServerPlayer player, PermissionNode&lt;T&gt; node, 
+                               PermissionDynamicContext&lt;?&gt;... context) {
+        return node.getDefaultResolver().resolve(player, player.getUUID(), context);
+    }
+    
+    @Override
+    public &lt;T&gt; T getOfflinePermission(UUID player, PermissionNode&lt;T&gt; node, 
+                                      PermissionDynamicContext&lt;?&gt;... context) {
+        return node.getDefaultResolver().resolve(null, player, context);
+    }
+}</code></pre>
+<h4>权限处理器工厂</h4>
+<pre class="code-block"><code class="language-11">@FunctionalInterface
+public interface IPermissionHandlerFactory {
+    IPermissionHandler create(Collection&lt;PermissionNode&lt;?&gt;&gt; permissions);
+}</code></pre>
+<h3>3.6 权限事件</h3>
+<pre class="code-block"><code class="language-31">public abstract class PermissionGatherEvent extends Event {
+    
+    // Handler 子事件：注册权限处理器
+    public static class Handler extends PermissionGatherEvent {
+        private Map&lt;Identifier, IPermissionHandlerFactory&gt; availableHandlers = new HashMap&lt;&gt;();
+        
+        public void addPermissionHandler(Identifier id, IPermissionHandlerFactory factory) {
+            availableHandlers.put(id, factory);
+        }
+    }
+    
+    // Nodes 子事件：注册权限节点
+    public static class Nodes extends PermissionGatherEvent {
+        private final Set&lt;PermissionNode&lt;?&gt;&gt; nodes = new HashSet&lt;&gt;();
+        
+        public void addNodes(PermissionNode&lt;?&gt;... nodes) {
+            for (PermissionNode&lt;?&gt; node : nodes) {
+                this.nodes.add(node);
+            }
+        }
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4-服务器生命周期">4. 服务器生命周期</h2>
+<p><code>ServerLifecycleHooks</code> 管理服务器的完整生命周期：</p>
+<pre class="code-block"><code class="language-56">public class ServerLifecycleHooks {
+    @Nullable
+    private static volatile CountDownLatch exitLatch = null;
+    @Nullable
+    private static MinecraftServer currentServer;
+    
+    // 服务器即将启动
+    public static void handleServerAboutToStart(final MinecraftServer server) {
+        currentServer = server;
+        // 加载服务端配置
+        ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.SERVER, 
+            FMLPaths.CONFIGDIR.get(), 
+            getServerConfigPath(server));
+        // 运行生物群系和结构修改器
+        runModifiers(server);
+        // 触发事件
+        NeoForge.EVENT_BUS.post(new ServerAboutToStartEvent(server));
+    }
+    
+    // 服务器正在启动
+    public static void handleServerStarting(final MinecraftServer server) {
+        if (FMLEnvironment.getDist().isDedicatedServer()) {
+            LanguageHook.loadModLanguages(server);
+        }
+        // 初始化权限 API
+        PermissionAPI.initializePermissionAPI();
+        NeoForge.EVENT_BUS.post(new ServerStartingEvent(server));
+    }
+    
+    // 服务器已启动
+    public static void handleServerStarted(final MinecraftServer server) {
+        NeoForge.EVENT_BUS.post(new ServerStartedEvent(server));
+    }
+    
+    // 服务器正在停止
+    public static void handleServerStopping(final MinecraftServer server) {
+        NeoForge.EVENT_BUS.post(new ServerStoppingEvent(server));
+    }
+    
+    // 服务器已停止
+    public static void handleServerStopped(final MinecraftServer server) {
+        NeoForge.EVENT_BUS.post(new ServerStoppedEvent(server));
+        currentServer = null;
+        ConfigTracker.INSTANCE.unloadConfigs(ModConfig.Type.SERVER);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5-工作流程图">5. 工作流程图</h2>
+<h3>配置系统架构图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Mod["模组代码"]
+        Config["ModConfigSpec.Builder"]
+    end
+    
+    subgraph Spec["配置规格"]
+        ValueSpec["ValueSpec<br/>验证器、默认值、范围"]
+        Range["Range<br/>数值范围限制"]
+        Restart["RestartType<br/>重启级别"]
+    end
+    
+    subgraph Runtime["运行时"]
+        File["配置文件<br/>.toml/.json"]
+        Loader["ConfigTracker<br/>配置加载器"]
+        Cache["ConfigValue 缓存"]
+    end
+    
+    Mod -->|build()| Spec
+    Config -->|define()| ValueSpec
+    Config -->|defineInRange()| Range
+    Config -->|worldRestart/gameRestart| Restart
+    
+    File -->|加载| Loader
+    Loader -->|acceptConfig()| Spec
+    Spec -->|缓存| Cache
+    
+    classDef spec fill:#e1f5fe
+    classDef runtime fill:#fff3e0
+    class ValueSpec,Range,Restart spec
+    class File,Loader,Cache runtime</div>
+</div>
+<h3>权限系统架构图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Init["初始化阶段"]
+        E1["PermissionGatherEvent.Handler"]
+        E2["PermissionGatherEvent.Nodes"]
+        Factory["IPermissionHandlerFactory"]
+    end
+    
+    subgraph Runtime["运行时"]
+        API["PermissionAPI"]
+        Handler["IPermissionHandler"]
+        Node["PermissionNode"]
+        Context["PermissionDynamicContext"]
+    end
+    
+    E1 -->|注册| Factory
+    E2 -->|注册| Node
+    Factory -->|创建| Handler
+    Handler -->|管理| Node
+    
+    API -->|getPermission()| Handler
+    Handler -->|查询| Node
+    Node -->|上下文| Context
+    
+    classDef event fill:#f3e5f5
+    classDef runtime fill:#e8f5e9
+    class E1,E2 event
+    class API,Handler,Node runtime</div>
+</div>
+<p><hr></p>
+<h2 id="6-api-使用示例">6. API 使用示例</h2>
+<h3>6.1 创建模组配置</h3>
+<pre class="code-block"><code class="language-java">public final class MyModConfig {
+    public static final ModConfigSpec SPEC;
+    public static final MyModConfig INSTANCE;
+    
+    // 布尔配置
+    public final ModConfigSpec.BooleanValue enableFeature;
+    
+    // 整数配置（带范围）
+    public final ModConfigSpec.IntValue maxCacheSize;
+    
+    // 枚举配置
+    public final ModConfigSpec.EnumValue&lt;Difficulty&gt; difficulty;
+    
+    // 列表配置
+    public final ModConfigSpec.ConfigValue&lt;List&lt;String&gt;&gt; whitelist;
+    
+    private MyModConfig(ModConfigSpec.Builder builder) {
+        builder.comment(&quot;功能设置&quot;)
+               .push(&quot;features&quot;);
+        
+        enableFeature = builder
+            .comment(&quot;启用实验性功能&quot;)
+            .define(&quot;enableFeature&quot;, false);
+        
+        builder.pop();
+        
+        builder.comment(&quot;性能设置&quot;)
+               .push(&quot;performance&quot;);
+        
+        maxCacheSize = builder
+            .comment(&quot;最大缓存大小&quot;, &quot;范围: 100 - 10000&quot;)
+            .worldRestart()  // 需要世界重启
+            .defineInRange(&quot;maxCacheSize&quot;, 1000, 100, 10000);
+        
+        builder.pop();
+        
+        builder.comment(&quot;游戏设置&quot;)
+               .push(&quot;gameplay&quot;);
+        
+        difficulty = builder
+            .comment(&quot;游戏难度&quot;)
+            .defineEnum(&quot;difficulty&quot;, Difficulty.NORMAL);
+        
+        whitelist = builder
+            .comment(&quot;白名单玩家&quot;)
+            .define(&quot;whitelist&quot;, List.of());
+        
+        builder.pop();
+    }
+    
+    static {
+        final Pair&lt;MyModConfig, ModConfigSpec&gt; pair = 
+            new ModConfigSpec.Builder().configure(MyModConfig::new);
+        INSTANCE = pair.getLeft();
+        SPEC = pair.getRight();
+    }
+}
+
+// 在 mod 初始化时注册
+@Mod.EventBusSubscriber(modid = &quot;mymod&quot;, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class MyModSetup {
+    @SubscribeEvent
+    public static void onConfigLoad(ModConfig.Loading event) {
+        if (event.getConfig().getSpec() == MyModConfig.SPEC) {
+            // 配置加载完成
+        }
+    }
+    
+    @SubscribeEvent
+    public static void onConfigReload(ModConfig.Reloading event) {
+        if (event.getConfig().getSpec() == MyModConfig.SPEC) {
+            // 配置重新加载，刷新缓存
+        }
+    }
+}</code></pre>
+<h3>6.2 创建权限节点</h3>
+<pre class="code-block"><code class="language-java">public final class MyPermissions {
+    // 布尔权限 - 管理员绕过限制
+    public static final PermissionNode&lt;Boolean&gt; BYPASS_LIMIT = 
+        new PermissionNode&lt;&gt;(
+            &quot;mymod&quot;, &quot;admin.bypass&quot;,
+            PermissionTypes.BOOLEAN,
+            (player, uuid, ctx) -&gt; false  // 默认不允许
+        );
+    
+    // 整数权限 - 每日传送次数
+    public static final PermissionNode&lt;Integer&gt; DAILY_TELEPORTS = 
+        new PermissionNode&lt;&gt;(
+            &quot;mymod&quot;, &quot;teleport.daily_limit&quot;,
+            PermissionTypes.INTEGER,
+            (player, uuid, ctx) -&gt; 10  // 默认每天 10 次
+        );
+    
+    // 带动态上下文的权限 - 按维度限制
+    public static final PermissionNode&lt;Boolean&gt; BUILD_IN_DIMENSION = 
+        new PermissionNode&lt;&gt;(
+            &quot;mymod&quot;, &quot;build.dimension&quot;,
+            PermissionTypes.BOOLEAN,
+            (player, uuid, ctx) -&gt; {
+                for (var c : ctx) {
+                    if (c.getDynamic().name().equals(&quot;dimension&quot;)) {
+                        ResourceKey&lt;Level&gt; dim = c.getValue();
+                        return dim == Level.OVERWORLD;  // 默认只允许在主世界
+                    }
+                }
+                return false;
+            },
+            DIMENSION_CONTEXT_KEY  // 维度上下文键
+        );
+    
+    // 维度上下文键
+    public static final PermissionDynamicContextKey&lt;ResourceKey&lt;Level&gt;&gt; DIMENSION_CONTEXT_KEY = 
+        new PermissionDynamicContextKey&lt;&gt;(
+            (Class&lt;ResourceKey&lt;Level&gt;&gt;)(Class&lt;?&gt;)ResourceKey.class,
+            &quot;dimension&quot;,
+            ResourceKey::location
+        );
+    
+    // 注册所有权限节点
+    @SubscribeEvent
+    public static void onPermissionGather(PermissionGatherEvent.Nodes event) {
+        event.addNodes(
+            BYPASS_LIMIT,
+            DAILY_TELEPORTS,
+            BUILD_IN_DIMENSION
+        );
+    }
+}</code></pre>
+<h3>6.3 使用权限检查</h3>
+<pre class="code-block"><code class="language-java">public class TeleportCommand {
+    public static int execute(CommandContext&lt;CommandSourceStack&gt; context) {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        String target = context.getArgument(&quot;target&quot;, String.class);
+        
+        // 检查玩家是否有足够的每日传送次数
+        int remaining = PermissionAPI.getPermission(player, MyPermissions.DAILY_TELEPORTS);
+        if (remaining &lt;= 0) {
+            player.sendSystemMessage(Component.literal(&quot;今日传送次数已用完！&quot;));
+            return 0;
+        }
+        
+        // 检查是否在指定维度有建造权限
+        ResourceKey&lt;Level&gt; currentDim = player.level().dimension();
+        boolean canBuild = PermissionAPI.getPermission(
+            player, 
+            MyPermissions.BUILD_IN_DIMENSION,
+            MyPermissions.DIMENSION_CONTEXT_KEY.createContext(currentDim)
+        );
+        
+        if (!canBuild) {
+            player.sendSystemMessage(Component.literal(&quot;你不能在这里建造！&quot;));
+            return 0;
+        }
+        
+        // 执行传送逻辑...
+        return 1;
+    }
+}</code></pre>
+<h3>6.4 自定义权限处理器</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onHandlerGather(PermissionGatherEvent.Handler event) {
+    event.addPermissionHandler(
+        MyPermissionHandler.IDENTIFIER,
+        MyPermissionHandler::new
+    );
+}
+
+// 自定义处理器实现
+public class MyPermissionHandler implements IPermissionHandler {
+    public static final Identifier IDENTIFIER = 
+        Identifier.fromNamespaceAndPath(&quot;mymod&quot;, &quot;handler&quot;);
+    
+    private final Map&lt;UUID, Map&lt;String, Object&gt;&gt; playerPermissions = new HashMap&lt;&gt;();
+    
+    @Override
+    public Identifier getIdentifier() {
+        return IDENTIFIER;
+    }
+    
+    @Override
+    public Set&lt;PermissionNode&lt;?&gt;&gt; getRegisteredNodes() {
+        return Set.of();
+    }
+    
+    @Override
+    public &lt;T&gt; T getPermission(ServerPlayer player, PermissionNode&lt;T&gt; node, 
+                               PermissionDynamicContext&lt;?&gt;... context) {
+        Map&lt;String, Object&gt; perms = playerPermissions.get(player.getUUID());
+        if (perms != null &amp;&amp; perms.containsKey(node.getNodeName())) {
+            return (T) perms.get(node.getNodeName());
+        }
+        return node.getDefaultResolver().resolve(player, player.getUUID(), context);
+    }
+    
+    @Override
+    public &lt;T&gt; T getOfflinePermission(UUID player, PermissionNode&lt;T&gt; node, 
+                                      PermissionDynamicContext&lt;?&gt;... context) {
+        Map&lt;String, Object&gt; perms = playerPermissions.get(player);
+        if (perms != null &amp;&amp; perms.containsKey(node.getNodeName())) {
+            return (T) perms.get(node.getNodeName());
+        }
+        return node.getDefaultResolver().resolve(null, player, context);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7-服务端命令系统">7. 服务端命令系统</h2>
+<p>NeoForge 提供了一组内置的服务端命令，通过 <code>/config</code>、<code>/neoforge</code> 等命令提供管理功能。</p>
+<h3>ConfigCommand</h3>
+<pre class="code-block"><code class="language-24">public class ConfigCommand {
+    public static void register(CommandDispatcher&lt;CommandSourceStack&gt; dispatcher) {
+        dispatcher.register(
+            Commands.literal(&quot;config&quot;)
+                .then(ShowFile.register())
+        );
+    }
+    
+    // /config showfile &lt;mod&gt; &lt;type&gt;
+    // type: COMMON 或 SERVER
+    public static class ShowFile {
+        static ArgumentBuilder&lt;CommandSourceStack, ?&gt; register() {
+            return Commands.literal(&quot;showfile&quot;)
+                .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                .then(Commands.argument(&quot;mod&quot;, ModIdArgument.modIdArgument())
+                    .then(Commands.argument(&quot;type&quot;, 
+                        EnumArgument.enumArgument(ServerModConfigType.class))
+                        .executes(ShowFile::showFile)));
+        }
+        
+        private static int showFile(final CommandContext&lt;CommandSourceStack&gt; context) {
+            final String modId = context.getArgument(&quot;mod&quot;, String.class);
+            final ModConfig.Type type = ModConfig.Type.valueOf(
+                context.getArgument(&quot;type&quot;, ServerModConfigType.class).toString());
+            var configFileNames = ModConfigs.getConfigFileNames(modId, type);
+            
+            for (var configFileName : configFileNames) {
+                File f = new File(configFileName);
+                MutableComponent fileComponent = Component.literal(f.getName())
+                    .withStyle(ChatFormatting.UNDERLINE);
+                
+                // 单人游戏可点击打开文件
+                ServerPlayer caller = context.getSource().getPlayer();
+                if (FMLEnvironment.getDist().isClient() &amp;&amp; 
+                    caller != null &amp;&amp; 
+                    caller.connection.getConnection().isMemoryConnection()) {
+                    fileComponent.withStyle(s -&gt; s.withClickEvent(
+                        new ClickEvent.OpenFile(f)));
+                }
+                
+                context.getSource().sendSuccess(() -&gt; 
+                    CommandUtils.makeTranslatableWithFallback(
+                        &quot;commands.config.getwithtype&quot;,
+                        modId, type.toString(), fileComponent), true);
+            }
+            return 0;
+        }
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8-总结">8. 总结</h2>
+<p>NeoForge 1.21.x 的配置与服务器系统具有以下核心特性：</p>
+<h3>配置系统特点</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>说明</th></tr></thead><tbody><tr><td><strong>类型安全</strong></td><td>使用范型和专用 Value 类避免配置值类型错误</td></tr><tr><td><strong>声明式 API</strong></td><td>Builder 模式支持链式调用，代码简洁清晰</td></tr><tr><td><strong>三级重启</strong></td><td><code>NONE</code>（即时）、<code>WORLD</code>（重载世界）、<code>GAME</code>（完全重启）</td></tr><tr><td><strong>值缓存</strong></td><td>避免频繁读取配置文件，提高性能</td></tr><tr><td><strong>自动修正</strong></td><td>配置文件损坏或缺失键值时自动修复</td></tr></tbody></table>
+<h3>权限系统特点</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>说明</th></tr></thead><tbody><tr><td><strong>泛型设计</strong></td><td>支持 Boolean、Integer、String、Component 等多种类型</td></tr><tr><td><strong>动态上下文</strong></td><td>支持按维度、时间、位置等条件动态判断权限</td></tr><tr><td><strong>可扩展</strong></td><td>通过事件系统注册自定义权限处理器</td></tr><tr><td><strong>离线支持</strong></td><td>支持查询离线玩家的权限</td></tr><tr><td><strong>默认解析器</strong></td><td>每个节点可定义自己的默认权限值解析逻辑</td></tr></tbody></table>
+<h3>生命周期管理</h3>
+<table class="data-table"><thead><tr><th>阶段</th><th>关键操作</th></tr></thead><tbody><tr><td><code>handleServerAboutToStart</code></td><td>加载服务端配置、运行生物群系/结构修改器</td></tr><tr><td><code>handleServerStarting</code></td><td>加载语言文件、初始化权限 API</td></tr><tr><td><code>handleServerStarted</code></td><td>服务器完全启动</td></tr><tr><td><code>handleServerStopping</code></td><td>服务器即将关闭</td></tr><tr><td><code>handleServerStopped</code></td><td>清理配置、释放资源</td></tr></tbody></table>
+这套系统为模组开发者提供了强大且灵活的基础设施，能够满足从简单配置到复杂权限管理的各种需求。</p>
+<p><hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p><ul><li><strong>配置值何时需要调用 <code>worldRestart()</code> 或 <code>gameRestart()</code>？</strong>  </li>
+</ul>   答：当配置项需要在不重启游戏/世界的情况下保持原值时。例如，影响游戏核心逻辑的配置应使用 <code>gameRestart()</code>，需要重载世界才能生效的配置使用 <code>worldRestart()</code>。</p>
+<p><ul><li><strong>如何实现一个检查玩家是否可以在某个维度建造的权限？</strong>  </li>
+</ul>   答：创建一个带有 <code>PermissionDynamicContextKey<ResourceKey<Level>></code> 维度的 <code>PermissionNode<Boolean></code>，在解析器中根据传入的维度上下文返回相应结果。</p>
+<p><ul><li><strong>权限系统与命令权限等级有什么区别？</strong>  </li>
+</ul>   答：命令权限等级（0-4）是 Minecraft 原生的简单权限系统，只能控制是否能执行某命令；NeoForge 权限系统是细粒度的，支持任意类型的权限值，可用于自定义业务逻辑。</p>
+<p><ul><li><strong>为什么 <code>PermissionAPI.initializePermissionAPI()</code> 只允许 <code>ServerLifecycleHooks</code> 调用？</strong>  </li>
+</ul>   答：这是为了确保权限系统在服务器生命周期的正确阶段初始化，且只初始化一次，避免多个模组意外重复初始化导致状态混乱。</p>
+<p><ul><li><strong>NeoForge 默认的 <code>DefaultPermissionHandler</code> 如何处理权限查询？</strong>  </li>
+</ul>   答：它简单地将所有查询转发给对应 <code>PermissionNode</code> 的 <code>defaultResolver</code>，不支持存储或修改玩家的实际权限值。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="11-common-extensions-utils.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            通用扩展与工具
+        </a><a href="13-recipe-brewing-system.html" class="next">
+            配方与酿造系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

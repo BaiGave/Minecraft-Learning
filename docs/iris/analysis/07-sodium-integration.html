@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,34 +15,22 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <style>
-        /* 主题样式 */
-        .docs-nav { background: #404040; }
-        .docs-nav .nav-logo { color: white; }
-        .docs-nav .nav-links a { color: rgba(255,255,255,0.9); }
-        .docs-nav .nav-links a:hover,
-        .docs-nav .nav-links a.active { color: white; }
-        .docs-sidebar { background: linear-gradient(135deg, #2a2a2a 0, #525252 55%, #737373 15%); }
-        .sidebar-header h3 { color: white; }
-        .doc-badge { background: rgba(255,255,255,0.2); color: white; }
-        .sidebar-nav a { color: rgba(255,255,255,0.85); }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active { background: rgba(255,255,255,0.15); color: white; border-left-color: #404040; }
-        .sidebar-nav a i { color: rgba(255,255,255,0.7); }
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
         .breadcrumb {
             gap: 0.65rem 1rem !important;
             flex-wrap: wrap;
         }
-        .breadcrumb a { color: #404040; }
+        .breadcrumb a { color: var(--module-accent); }
         .breadcrumb i.fa-chevron-right {
-            color: #ccc;
+            color: var(--text-tertiary);
             font-size: 0.65rem;
-            opacity: 0.65;
+            opacity: 0.85;
             padding: 0 0.25em;
             flex-shrink: 0;
         }
-        .info-box { border-left: 4px solid #404040; background: #40404015; }
-        .info-box i { color: #404040; }
-        .info-table td:first-child { font-weight: 600; color: #666; }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
         /* 代码块样式 */
         pre.code-block {
             border: 1px solid rgba(255,255,255,0.06) !important;
@@ -73,25 +61,22 @@
         .code-reference::after {
             display: none !important;
         }
-        .docs-body h2 { border-bottom: 2px solid #404040; }
-        .docs-body h2 i { color: #404040; }
-        .data-table th { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next { background: linear-gradient(135deg, #2a2a2a 0%, #525252 55%, #737373 100%); }
-        .prev-next .next:hover { box-shadow: 0 4px 15px #40404066; }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
         .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
         .doc-content pre code:not(.hljs) { color: #d4d4d4; }
         pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
-        .docs-nav .dropdown-content {
+        .navbar .dropdown-content {
             z-index: 1001;
-            background: white;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
         }
-        .docs-nav .dropdown-content a {
+        .navbar .dropdown-content a {
             color: var(--text-primary);
         }
-        .docs-nav .dropdown-content a:hover {
-            background: var(--gray-light);
-            color: #404040;
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
         }
         /* 文档类型标签 */
         .doc-type-tag {
@@ -105,7 +90,7 @@
             margin-right: 10px;
         }
         .doc-type-tag.tutorial {
-            background: linear-gradient(135deg, #404040, #40404099);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
             color: white;
         }
         .doc-type-tag.analysis {
@@ -114,7 +99,7 @@
         }
     </style>
 </head>
-<body>
+<body class="docs-page">
     <div class="progress-bar" id="progressBar"></div>
 
     <nav class="navbar">
@@ -151,11 +136,16 @@
         </div>
     </nav>
 
-    <div class="docs-layout">
+    <div class="docs-layout" id="docsLayout">
         <aside class="docs-sidebar">
             <div class="sidebar-header">
-                <h3>Iris 光影</h3>
-                <span class="doc-badge">分析</span>
+                <div class="sidebar-header-text">
+                    <h3>Iris 光影</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <a href="01-architecture-overview.html" class="">
@@ -199,6 +189,11 @@
             </div>
         </aside>
 
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
         <main class="docs-content">
             <div class="docs-header">
                 <nav class="breadcrumb">
@@ -230,7 +225,7 @@
 <h2 id="文档目录">文档目录</h2>
 <table class="data-table"><thead><tr><th>文档</th><th>说明</th></tr></thead><tbody><tr><td><a href="01-architecture-overview.html">01-architecture-overview</a></td><td>整体架构设计模式、模块划分</td></tr><tr><td><a href="02-rendering-pipeline.html">02-rendering-pipeline</a></td><td>渲染管线 - GBuffer、Composite Pass</td></tr><tr><td><a href="03-shaderpack-system.html">03-shaderpack-system</a></td><td>着色器包加载与解析</td></tr><tr><td><a href="04-shadow-system.html">04-shadow-system</a></td><td>阴影系统 - 视锥体剔除、阴影渲染</td></tr><tr><td><a href="05-framebuffer-texture.html">05-framebuffer-texture</a></td><td>帧缓冲与纹理系统</td></tr><tr><td><a href="06-uniforms.html">06-uniforms</a></td><td>Uniform 管理</td></tr><tr><td><a href="07-sodium-integration.html">07-sodium-integration</a></td><td>Sodium 集成系统</td></tr><tr><td><a href="08-mixin-mechanism.html">08-mixin-mechanism</a></td><td>Mixin 注入机制</td></tr><tr><td><a href="README.html">README</a></td><td>模块说明</td></tr><tr><td><a href="SUMMARY.html">SUMMARY</a></td><td>总结文档</td></tr></tbody></table>
 <hr></p>
-<h2 id="1. 整体架构设计">1. 整体架构设计</h2>
+<h2 id="1-整体架构设计">1. 整体架构设计</h2>
 <h3>1.1 分层架构</h3>
 <p>Iris 通过 <code>sodiumCompatibility</code> 模块实现与 Sodium 的深度集成，采用分层架构：</p>
 <pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
@@ -259,7 +254,7 @@
 <h3>1.2 核心类表</h3>
 <table class="data-table"><thead><tr><th>类名</th><th>位置</th><th>功能</th></tr></thead><tbody><tr><td><code>SodiumTerrainPipeline</code></td><td>pipeline/</td><td>Sodium 地形渲染管线</td></tr><tr><td><code>IrisChunkProgramOverrides</code></td><td>sodiumCompatibility/impl/shader<em>overrides/</td><td>着色器程序覆盖管理</td></tr><tr><td><code>XHFPModelVertexType</code></td><td>sodiumCompatibility/impl/vertex</em>format/terrain<em>xhfp/</td><td>扩展顶点格式</td></tr><tr><td><code>MixinShaderChunkRenderer</code></td><td>sodiumCompatibility/mixin/</td><td>渲染器注入</td></tr><tr><td><code>MixinRenderSectionManager</code></td><td>sodiumCompatibility/mixin/shadow</em>map/</td><td>区块渲染管理</td></tr></tbody></table>
 <hr></p>
-<h2 id="2. 顶点格式扩展机制">2. 顶点格式扩展机制</h2>
+<h2 id="2-顶点格式扩展机制">2. 顶点格式扩展机制</h2>
 <h3>2.1 扩展属性注入</h3>
 <p>Iris 通过 Mixin hack 技术向 Sodium 的枚举添加新的顶点属性：</p>
 <pre class="code-block"><code class="language-java">static {
@@ -294,7 +289,7 @@
 └─────────┴─────────┴─────────┴─────────┴─────────┴─────────────────┘</code></pre>
 <table class="data-table"><thead><tr><th>偏移</th><th>属性</th><th>类型</th><th>说明</th></tr></thead><tbody><tr><td>0-7</td><td>Position</td><td>float[2]</td><td>X, Y 坐标</td></tr><tr><td>8-11</td><td>Color</td><td>ubyte[4]</td><td>颜色 + 透明度</td></tr><tr><td>12-15</td><td>TexCoord</td><td>ushort[2]</td><td>纹理坐标</td></tr><tr><td>16-19</td><td>LightCoord</td><td>ushort[2]</td><td>光照坐标</td></tr><tr><td>20-23</td><td>MidTexCoord</td><td>ushort[2]</td><td>中点纹理坐标</td></tr><tr><td>24-27</td><td>Tangent</td><td>byte[4]</td><td>切线向量</td></tr><tr><td>28-31</td><td>Normal</td><td>byte[4]</td><td>法线向量</td></tr><tr><td>32-33</td><td>BlockId</td><td>short[2]</td><td>方块 ID</td></tr><tr><td>36-39</td><td>MidBlock</td><td>byte[4]</td><td>中点坐标</td></tr></tbody></table>
 <hr></p>
-<h2 id="3. 缓冲区构建器扩展">3. 缓冲区构建器扩展</h2>
+<h2 id="3-缓冲区构建器扩展">3. 缓冲区构建器扩展</h2>
 <h3>3.1 顶点序列化器注册</h3>
 <p>Iris 注册了多个顶点格式转换器来处理不同格式间的数据转换：</p>
 <pre class="code-block"><code class="language-java">@Inject(method = &quot;&lt;init&gt;&quot;, at = @At(&quot;TAIL&quot;))
@@ -327,7 +322,7 @@ private void putSerializerIris(CallbackInfo ci) {
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="4. 渲染钩子实现">4. 渲染钩子实现</h2>
+<h2 id="4-渲染钩子实现">4. 渲染钩子实现</h2>
 <h3>4.1 着色器程序覆盖</h3>
 <p><code>IrisChunkProgramOverrides</code> 是核心着色器管理类：</p>
 <pre class="code-block"><code class="language-java">public class IrisChunkProgramOverrides {
@@ -392,7 +387,7 @@ public class MixinShaderChunkRenderer implements ShaderChunkRendererExt {
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="5. 阴影渲染集成">5. 阴影渲染集成</h2>
+<h2 id="5-阴影渲染集成">5. 阴影渲染集成</h2>
 <h3>5.1 渲染列表切换</h3>
 <pre class="code-block"><code class="language-java">@Mixin(RenderSectionManager.class)
 public class MixinRenderSectionManager {
@@ -438,7 +433,7 @@ public class MixinSodiumWorldRenderer {
     }
 }</code></pre>
 <p><hr></p>
-<h2 id="6. SodiumTerrainPipeline 核心逻辑">6. SodiumTerrainPipeline 核心逻辑</h2>
+<h2 id="6-sodiumterrainpipeline-核心逻辑">6. SodiumTerrainPipeline 核心逻辑</h2>
 <h3>6.1 默认顶点着色器</h3>
 <pre class="code-block"><code class="language-glsl">#version 330 core
 in ivec2 a_LightCoord;
@@ -484,7 +479,7 @@ void main() {
     // 类似处理 cutout, translucent, shadow...
 }</code></pre>
 <p><hr></p>
-<h2 id="7. 架构总结图">7. 架构总结图</h2>
+<h2 id="7-架构总结图">7. 架构总结图</h2>
 <pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────────────────┐
 │                           SodiumTerrainPipeline                          │
 │  ┌────────────────────────────────────────────────────────────────────┐ │
@@ -530,10 +525,10 @@ void main() {
 │  └────────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────┘</code></pre>
 <p><hr></p>
-<h2 id="8. 关键设计模式">8. 关键设计模式</h2>
+<h2 id="8-关键设计模式">8. 关键设计模式</h2>
 <table class="data-table"><thead><tr><th>模式</th><th>应用位置</th><th>说明</th></tr></thead><tbody><tr><td><strong>策略模式</strong></td><td><code>IrisTerrainPass</code></td><td>为不同渲染通道定义不同策略</td></tr><tr><td><strong>装饰器模式</strong></td><td><code>IrisChunkShaderInterface</code></td><td>扩展 ChunkShaderInterface 添加 Iris 特定功能</td></tr><tr><td><strong>工厂模式</strong></td><td><code>VertexSerializerRegistryImpl</code></td><td>注册多种顶点转换器</td></tr><tr><td><strong>代理模式</strong></td><td><code>ShaderBindingContextExt</code></td><td>提供 uniform 绑定的延迟解析</td></tr><tr><td><strong>单例模式</strong></td><td><code>ShadowRenderingState</code></td><td>管理阴影渲染全局状态</td></tr></tbody></table>
 <hr></p>
-<h2 id="9. 相关文档">9. 相关文档</h2>
+<h2 id="9-相关文档">9. 相关文档</h2>
 <p><ul><li><a href="02-rendering-pipeline.html">02-rendering-pipeline</a> - 渲染管线详解</li>
 <li><a href="04-shadow-system.html">04-shadow-system</a> - 阴影系统</li>
 <li><a href="08-mixin-mechanism.html">08-mixin-mechanism</a> - Mixin 注入机制</li></ul></p>
@@ -557,6 +552,7 @@ void main() {
 
     <script src="../../../script.js"></script>
     <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -579,5 +575,6 @@ void main() {
     
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
 </body>
 </html>

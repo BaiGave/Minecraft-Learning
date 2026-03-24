@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>11 common extensions utils - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="active">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>11 common extensions utils</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    11 common extensions utils
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>通用扩展与工具</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-扩展接口详解">2. 扩展接口详解</a></li>
+</ul>  - <a href="#21-核心扩展接口">2.1 核心扩展接口</a>
+  - <a href="#22-扩展接口与-mixin-协作机制">2.2 扩展接口与 Mixin 协作机制</a>
+<ul><li><a href="#3-常用工具类">3. 常用工具类</a></li>
+<li><a href="#4-api-使用示例">4. API 使用示例</a></li>
+<li><a href="#5-总结">5. 总结</a></li></ul></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>NeoForge 的 <code>common</code> 模块提供了两套核心扩展机制：<strong>扩展接口（Extension Interfaces）</strong> 和 <strong>工具类（Utility Classes）</strong>。这两者相辅相成，共同为模组开发者提供强大的功能扩展能力。</p>
+<h3>扩展接口的设计理念</h3>
+<p>扩展接口是 NeoForge 实现向后兼容和优雅扩展的核心机制。其设计基于 <strong>接口默认方法（Default Methods）</strong> 和 <strong>Mixin 注入</strong> 的结合：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 核心概念
+        A[原始 Minecraft 类] --> B[Mixin 注入层]
+        B --> C[扩展接口 IXXXExtension]
+        C --> D[模组实现]
+    end
+    
+    subgraph 优势
+        E[向后兼容] --> G[无需修改原类]
+        F[优雅扩展] --> G
+        H[清晰 API] --> G
+    end</div>
+</div>
+<p><strong>关键术语解释：</strong>
+<ul><li><strong>Mixin</strong>：一种代码注入机制，允许在不修改原类的情况下向类中添加方法</li>
+<li><strong>扩展接口</strong>：以 <code>I</code> 开头、以 <code>Extension</code> 结尾的接口，如 <code>IBlockExtension</code></li></ul></p>
+<h3>extensions 目录结构</h3>
+<pre class="code-block"><code class="language-text">extensions/
+├── IBlockExtension.java        # 方块扩展
+├── IEntityExtension.java       # 实体扩展
+├── IItemExtension.java         # 物品扩展
+├── IItemStackExtension.java    # 物品堆扩展
+├── IFluidExtension.java        # 流体扩展
+├── ILevelExtension.java        # 世界扩展
+├── IBlockEntityExtension.java  # 方块实体扩展
+├── ILivingEntityExtension.java # 活体实体扩展
+├── IPlayerExtension.java       # 玩家扩展
+├── IBlockStateExtension.java  # 方块状态扩展
+└── ... (共 50+ 个扩展接口)</code></pre>
+<h3>util 目录结构</h3>
+<pre class="code-block"><code class="language-text">util/
+├── FakePlayer.java             # 模拟玩家
+├── AttributeUtil.java          # 属性工具
+├── ItemStackMap.java           # 物品堆映射
+├── TransformationHelper.java   # 变换辅助
+├── Lazy.java                  # 延迟加载
+├── BlockSnapshot.java          # 方块快照
+├── FriendlyByteBufUtil.java    # 网络缓冲区工具
+├── ConcatenatedListView.java   # 列表视图
+└── ... (共 30+ 个工具类)</code></pre>
+<h2 id="2-扩展接口详解">2. 扩展接口详解</h2>
+<h3>2.1 核心扩展接口</h3>
+<h4>IBlockExtension（方块扩展）</h4>
+<p><code>IBlockExtension</code> 是最常用的扩展接口之一，提供了 50+ 个可重写方法。</p>
+<p><strong>核心方法分类：</strong></p>
+<table class="data-table"><thead><tr><th>分类</th><th>方法示例</th><th>说明</th></tr></thead><tbody><tr><td><strong>物理属性</strong></td><td><code>getFriction()</code>, <code>getExplosionResistance()</code></td><td>控制摩擦力和爆炸抗性</td></tr><tr><td><strong>光照系统</strong></td><td><code>getLightEmission()</code>, <code>hasDynamicLightEmission()</code></td><td>动态光源支持</td></tr><tr><td><strong>红石系统</strong></td><td><code>canConnectRedstone()</code>, <code>shouldCheckWeakPower()</code></td><td>自定义红石连接</td></tr><tr><td><strong>实体交互</strong></td><td><code>isLadder()</code>, <code>canEntityDestroy()</code></td><td>梯子、实体破坏检测</td></tr><tr><td><strong>音效粒子</strong></td><td><code>addLandingEffects()</code>, <code>playStepSound()</code></td><td>自定义音效和粒子</td></tr><tr><td><strong>工具交互</strong></td><td><code>getToolModifiedState()</code></td><td>工具右键交互（斧子剥离等）</td></tr><tr><td><strong>燃烧系统</strong></td><td><code>getFlammability()</code>, <code>onCaughtFire()</code></td><td>火焰传播控制</td></tr></tbody></table>
+<h4>IEntityExtension（实体扩展）</h4>
+<p><strong>关键方法：</strong></p>
+<pre class="code-block"><code class="language-java">CompoundTag getPersistentData();
+
+// 实体多部分支持（用于末影龙等）
+boolean isMultipartEntity();
+PartEntity&lt;?&gt;[] getParts();
+
+// 流体交互
+double getFluidTypeHeight(FluidType type);
+boolean isInFluidType(FluidType type);
+
+// 附件系统
+void copyAttachmentsFrom(Entity other, boolean isDeath);</code></pre>
+<h4>IItemExtension / IItemStackExtension（物品扩展）</h4>
+<pre class="code-block"><code class="language-java">boolean canPerformAction(ItemAbility itemAbility);
+
+// 耐久和修复
+int getDamage(ItemStack stack);
+float getXpRepairRatio(ItemStack stack);
+
+// 附魔支持
+int getEnchantmentLevel(ItemStack stack, Holder&lt;Enchantment&gt; enchantment);
+ItemEnchantments getAllEnchantments(ItemStack stack, RegistryLookup&lt;Enchantment&gt; lookup);
+
+// 熔炉燃料
+int getBurnTime(ItemStack stack, RecipeType&lt;?&gt; recipeType, FuelValues fuelValues);</code></pre>
+<h4>ILevelExtension（世界扩展）</h4>
+<pre class="code-block"><code class="language-java">&lt;T, C&gt; T getCapability(BlockCapability&lt;T, C&gt; cap, BlockPos pos, C context);
+
+// 能力失效通知
+void invalidateCapabilities(BlockPos pos);
+void invalidateCapabilities(ChunkPos pos);
+
+// 模型数据管理
+ModelDataManager getModelDataManager();</code></pre>
+<h3>2.2 扩展接口与 Mixin 协作机制</h3>
+<p>NeoForge 使用 Mixin 在游戏类中注入扩展接口的实现，协作流程如下：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Mod as 模组代码
+    participant Mixin as Mixin 注入层
+    participant Extension as 扩展接口
+    participant Base as Minecraft 原类
+    
+    Mod->>Mixin: 调用 block.getLightEmission()
+    Mixin->>Extension: 委派到 IBlockExtension
+    Note over Extension: 模组可重写此方法
+    Extension-->>Mixin: 返回结果
+    Mixin-->>Mod: 返回结果</div>
+</div>
+<p><strong>Mixin 配置示例：</strong></p>
+<pre class="code-block"><code class="language-java">{
+  &quot;mixins&quot;: [
+    &quot;neoforge.mixins.common.extensions.BlockMixin&quot;
+  ],
+  &quot;injectors&quot;: {
+    &quot;defaultRequire&quot;: 1
+  }
+}</code></pre>
+<h2 id="3-常用工具类">3. 常用工具类</h2>
+<h3>工具类功能对照表</h3>
+<table class="data-table"><thead><tr><th>工具类</th><th>功能</th><th>使用场景</th></tr></thead><tbody><tr><td><code>FakePlayer</code></td><td>模拟服务器玩家执行操作</td><td>自动化的区块加载、实体交互测试</td></tr><tr><td><code>AttributeUtil</code></td><td>属性修饰符工具</td><td>物品属性提示格式化</td></tr><tr><td><code>ItemStackMap</code></td><td>基于物品类型和 NBT 的 Map</td><td>存储玩家背包数据、缓存</td></tr><tr><td><code>TransformationHelper</code></td><td>3D 变换（旋转、缩放、平移）</td><td>模型变换、动画</td></tr><tr><td><code>Lazy<T></code></td><td>延迟初始化</td><td>避免过早初始化开销</td></tr><tr><td><code>BlockSnapshot</code></td><td>方块状态快照</td><td>方块操作的事务性处理</td></tr><tr><td><code>FriendlyByteBufUtil</code></td><td>网络数据包工具</td><td>自定义网络协议</td></tr></tbody></table>
+<h3>FakePlayer 详解</h3>
+<p><code>FakePlayer</code> 是一个特殊的 <code>ServerPlayer</code> 子类，用于在服务器端模拟玩家操作，常用场景：</p>
+<pre class="code-block"><code class="language-java">GameProfile profile = new GameProfile(UUID.randomUUID(), &quot;FakePlayer&quot;);
+FakePlayer fakePlayer = FakePlayerFactory.getOrCreate(level, profile);
+
+// 使用场景 1: 触发方块的 use 方法
+fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, myItemStack);
+fakePlayer.gameMode.interact(fakePlayer, level.getBlockState(pos), 
+    InteractionHand.MAIN_HAND, pos, Direction.UP);
+
+// 使用场景 2: 触发实体交互
+fakePlayer.gameMode.interact(fakePlayer, targetEntity, InteractionHand.MAIN_HAND);</code></pre>
+<h3>Lazy 延迟加载</h3>
+<pre class="code-block"><code class="language-java">private final Lazy&lt;HeavyObject&gt; heavyObject = Lazy.of(() -&gt; new HeavyObject());
+
+// 延迟获取
+HeavyObject obj = heavyObject.get(); // 首次调用时初始化
+
+// 失效并重新计算
+heavyObject.invalidate(); // 下次 get() 会重新初始化</code></pre>
+<h2 id="4-api-使用示例">4. API 使用示例</h2>
+<h3>示例 1: 实现自定义方块的动态光源</h3>
+<pre class="code-block"><code class="language-java">public class GlowStoneBlock extends Block implements IBlockExtension {
+    
+    @Override
+    public boolean hasDynamicLightEmission(BlockState state) {
+        return true; // 启用动态光源
+    }
+    
+    @Override
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+        // 从方块实体获取光源强度
+        TileEntity te = level.getBlockEntity(pos);
+        if (te instanceof GlowStoneTileEntity glowTile) {
+            return glowTile.getLightLevel();
+        }
+        return 15; // 默认最大光源
+    }
+    
+    @Override
+    public void onNeighborChange(BlockState state, LevelReader level, 
+                                 BlockPos pos, BlockPos neighbor) {
+        // 邻居方块变化时，通知光源可能改变
+        level.invalidateCapabilities(pos);
+    }
+}</code></pre>
+<h3>示例 2: 实体扩展实现自定义流体行为</h3>
+<pre class="code-block"><code class="language-java">public class LavaWalker extends LivingEntity implements ILivingEntityExtension {
+    
+    @Override
+    public boolean canSwimInFluidType(FluidType type) {
+        // 自定义熔岩游泳逻辑
+        if (type == NeoForgeMod.LAVA_TYPE.value()) {
+            return this.hasEffect(MobEffects.FIRE_RESISTANCE);
+        }
+        return IEntityExtension.super.canSwimInFluidType(type);
+    }
+    
+    @Override
+    public boolean canDrownInFluidType(FluidType type) {
+        // 熔岩中不会溺水（除非没有抗火效果）
+        if (type == NeoForgeMod.LAVA_TYPE.value()) {
+            return !this.hasEffect(MobEffects.FIRE_RESISTANCE);
+        }
+        return ILivingEntityExtension.super.canDrownInFluidType(type);
+    }
+}</code></pre>
+<h3>示例 3: 使用 FakePlayer 自动化操作</h3>
+<pre class="code-block"><code class="language-java">public class ChunkLoader {
+    
+    public static void simulatePlayerInteraction(ServerLevel level, BlockPos pos) {
+        // 创建或获取 FakePlayer
+        FakePlayer player = FakePlayerFactory.getOrCreate(
+            level,
+            new GameProfile(UUID.randomUUID(), &quot;ChunkLoader&quot;)
+        );
+        
+        // 移动到目标位置
+        player.setPos(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5);
+        
+        // 模拟右键点击（触发方块交互）
+        ItemStack heldItem = player.getMainHandItem();
+        BlockState state = level.getBlockState(pos);
+        UseOnContext context = new UseOnContext(
+            player, InteractionHand.MAIN_HAND, 
+            new BlockHitResult(Vec3.ZERO, Direction.DOWN, pos, false)
+        );
+        
+        state.use(level, player, InteractionHand.MAIN_HAND, context);
+        
+        // 通知能力系统更新
+        level.invalidateCapabilities(pos);
+    }
+}</code></pre>
+<h3>示例 4: 物品属性扩展</h3>
+<pre class="code-block"><code class="language-java">public class MagicSword extends SwordItem implements IItemExtension {
+    
+    private static final UUID ATTACK_RANGE_UUID = UUID.fromString(
+        &quot;CB3F55D3-645C-4F38-A497-9C13A33DB5B9&quot;
+    );
+    
+    @Override
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        if (stack.has(DataComponents.ENCHANTMENTS)) {
+            // 附魔后增加攻击范围
+            return ItemAttributeModifiers.builder()
+                .add(
+                    Attributes.ATTACK_RANGE, 
+                    new AttributeModifier(
+                        ATTACK_RANGE_UUID, 
+                        0.5, 
+                        Operation.ADD_VALUE
+                    ),
+                    EquipmentSlotGroup.MAINHAND
+                )
+                .build();
+        }
+        return ItemAttributeModifiers.EMPTY;
+    }
+    
+    @Override
+    public float getXpRepairRatio(ItemStack stack) {
+        // 增加修复经验效率
+        return 2.0f; // 普通是 1.0f
+    }
+}</code></pre>
+<h2 id="5-总结">5. 总结</h2>
+<h3>扩展接口使用指南</h3>
+<table class="data-table"><thead><tr><th>场景</th><th>推荐扩展接口</th></tr></thead><tbody><tr><td>自定义方块属性/行为</td><td><code>IBlockExtension</code></td></tr><tr><td>实体生命周期/属性</td><td><code>IEntityExtension</code>, <code>ILivingEntityExtension</code></td></tr><tr><td>物品能力/属性</td><td><code>IItemExtension</code>, <code>IItemStackExtension</code></td></tr><tr><td>世界级别查询</td><td><code>ILevelExtension</code>, <code>ILevelReaderExtension</code></td></tr><tr><td>方块实体数据同步</td><td><code>IBlockEntityExtension</code></td></tr><tr><td>玩家交互/菜单</td><td><code>IPlayerExtension</code>, <code>IMenuProviderExtension</code></td></tr></tbody></table>
+<h3>最佳实践</h3>
+<p><ul><li><strong>优先使用扩展接口</strong>：避免直接 Mixin 到游戏类，优先实现扩展接口</li>
+<li><strong>利用默认方法</strong>：扩展接口提供了合理的默认实现，只重写必要的方法</li>
+<li><strong>注意线程安全</strong>：某些扩展方法可能在不同线程调用（如渲染线程）</li>
+<li><strong>正确处理 null</strong>：使用 <code>@Nullable</code> 注解标记可能为 null 的参数</li>
+<li><strong>利用 Capability 系统</strong>：<code>ILevelExtension.getCapability()</code> 是查询方块能力的推荐方式</li></ul></p>
+<h3>NeoForge 与 Fabric 的对比</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>NeoForge</th><th>Fabric</th></tr></thead><tbody><tr><td>扩展机制</td><td>扩展接口 + Mixin</td><td>Mixin 直接注入</td></tr><tr><td>API 风格</td><td>偏向继承/接口</td><td>偏向回调/事件</td></tr><tr><td>代码侵入性</td><td>较低</td><td>中等</td></tr><tr><td>扩展接口数量</td><td>50+</td><td>N/A（使用 Mixin）</td></tr></tbody></table>
+NeoForge 的扩展接口机制提供了一种优雅且向后兼容的方式来扩展 Minecraft 的核心类，是其最重要的设计特色之一。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="10-client-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            客户端系统
+        </a><a href="12-config-server-system.html" class="next">
+            配置与服务器系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

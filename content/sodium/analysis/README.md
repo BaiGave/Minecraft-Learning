@@ -33,6 +33,9 @@
 | [04-render-pipeline.md](04-render-pipeline.md) | 渲染管线 - Pass 系统、命令封装、渲染流程 |
 | [05-shader-system.md](05-shader-system.md) | 着色器系统 - GLSL 着色器、顶点格式 |
 | [06-platform-integration.md](06-platform-integration.md) | 平台集成 - Fabric/NeoForge 服务加载 |
+| [07-mixin-injection.md](07-mixin-injection.md) | Mixin 注入机制 - 字节码修改、回调注入 |
+| [08-configuration-system.md](08-configuration-system.md) | 配置系统 - 选项定义、持久化、GUI 界面 |
+| [09-performance-optimization.md](09-performance-optimization.md) | 性能优化技术 - 多线程、渲染、内存、算法优化 |
 
 ---
 

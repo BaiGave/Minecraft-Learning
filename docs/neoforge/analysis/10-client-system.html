@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#9B59B6;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>客户端系统 - NeoForge 模组</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>NeoForge 模组</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            NeoForge 架构解析
+        </a>
+<a href="01-registry-event-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            注册与事件系统
+        </a>
+<a href="02-capability-transfer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能力与传输系统
+        </a>
+<a href="03-attachment-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            附件系统
+        </a>
+<a href="04-network-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            网络系统
+        </a>
+<a href="05-resource-data-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            资源与数据系统
+        </a>
+<a href="06-world-chunk-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            世界与区块系统
+        </a>
+<a href="07-entity-living-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            实体与生物系统
+        </a>
+<a href="08-fluid-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            流体与物品系统
+        </a>
+<a href="09-energy-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            能量系统
+        </a>
+<a href="10-client-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            客户端系统
+        </a>
+<a href="11-common-extensions-utils.html" class="">
+            <i class="fas fa-microscope"></i>
+            通用扩展与工具
+        </a>
+<a href="12-config-server-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配置与服务器系统
+        </a>
+<a href="13-recipe-brewing-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            配方与酿造系统
+        </a>
+<a href="14-datamap-holdersets.html" class="">
+            <i class="fas fa-microscope"></i>
+            数据映射与 Holder 集合
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">NeoForge 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>客户端系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    客户端系统
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>客户端系统</h1>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-目录结构">2. 目录结构</a></li>
+<li><a href="#3-核心组件">3. 核心组件</a></li>
+<li><a href="#4-客户端事件系统">4. 客户端事件系统</a></li>
+<li><a href="#5-客户端扩展接口">5. 客户端扩展接口</a></li>
+<li><a href="#6-工作流程图">6. 工作流程图</a></li>
+<li><a href="#7-api-使用示例">7. API 使用示例</a></li>
+<li><a href="#8-与服务端交互">8. 与服务端交互</a></li>
+<li><a href="#9-总结">9. 总结</a></li></ul></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>NeoForge 1.21.x 的客户端系统是一套完整的事件驱动架构，用于处理所有仅在客户端执行的渲染、输入和资源加载逻辑。与传统 Minecraft Mod 混合客户端/服务端代码不同，NeoForge 通过 <strong><code>@Mod(dist = Dist.CLIENT)</code></strong> 注解和 <strong>Dist 注解系统</strong>严格分离双端代码。</p>
+<h3>设计理念</h3>
+<p>NeoForge 客户端系统的核心设计包含以下原则：</p>
+<table class="data-table"><thead><tr><th>设计原则</th><th>说明</th></tr></thead><tbody><tr><td><strong>事件驱动</strong></td><td>使用 NeoForge Event Bus 处理所有客户端事件</td></tr><tr><td><strong>注册机制</strong></td><td>通过注册表（Registry）系统管理渲染器、粒子、模型等</td></tr><tr><td><strong>扩展接口</strong></td><td>通过 <code>IClient*Extensions</code> 接口为方块、物品、流体等提供客户端特定功能</td></tr><tr><td><strong>生命周期管理</strong></td><td>完整的客户端初始化、资源加载、渲染回调流程</td></tr></tbody></table>
+<h3>关键特性</h3>
+<p><ul><li><strong>渲染管线集成</strong>：支持自定义渲染类型、管线修饰符、帧图（Frame Graph）配置</li>
+<li><strong>输入处理</strong>：完整的键盘、鼠标事件拦截和处理</li>
+<li><strong>资源管理</strong>：纹理图集、粒子定义、模型加载器的注册</li>
+<li><strong>GUI 系统</strong>：Screen 生命周期管理、Tooltip 定制、配置界面</li></ul></p>
+<h2 id="2-目录结构">2. 目录结构</h2>
+<p>NeoForge 客户端源码位于 <code>src/client/java/net/neoforged/neoforge/client/</code> 目录：</p>
+<pre class="code-block"><code class="language-text">client/
+├── ClientNeoForgeMod.java          # 客户端 Mod 主类
+├── ClientHooks.java                 # 客户端钩子集合
+├── ClientLifecycleHooks.java        # 生命周期钩子
+├── ClientCommandHandler.java         # 客户端命令处理器
+├── ClientTooltipFlag.java           # Tooltip 标志
+├── CreativeModeTabSearchRegistry.java # 创造模式标签搜索
+├── ColorResolverManager.java        # 颜色解析器管理
+├── NamedRenderTypeManager.java      # 命名渲染类型管理
+├── RenderTypeHelper.java           # 渲染类型辅助工具
+├── RenderTypeGroup.java             # 渲染类型组
+├── StencilManager.java             # 模板缓冲管理
+├── NeoForgeRenderTypes.java        # NeoForge 渲染类型
+├── NeoForgeRenderPipelines.java    # NeoForge 渲染管线
+│
+├── event/                          # 客户端事件包
+│   ├── lifecycle/                  # 生命周期事件
+│   ├── sound/                      # 声音相关事件
+│   ├── AddClientReloadListenersEvent.java
+│   ├── ClientTickEvent.java
+│   ├── EntityRenderersEvent.java
+│   ├── InputEvent.java
+│   ├── RegisterColorHandlersEvent.java
+│   ├── RegisterKeyMappingsEvent.java
+│   ├── RegisterParticleProvidersEvent.java
+│   ├── RenderLevelStageEvent.java
+│   ├── ScreenEvent.java
+│   └── ViewportEvent.java
+│
+├── extensions/                      # 客户端扩展接口
+│   ├── common/                     # 通用扩展
+│   │   ├── IClientFluidTypeExtensions.java
+│   │   ├── IClientItemExtensions.java
+│   │   └── IClientMobEffectExtensions.java
+│   ├── blaze3d/                   # Blaze3D 渲染扩展
+│   ├── BlockStateModelExtension.java
+│   ├── IBlockEntityRendererExtension.java
+│   └── IFontExtension.java
+│
+├── gui/                            # GUI 相关
+│   ├── ClientTooltipComponentManager.java
+│   ├── ConfigurationScreen.java
+│   ├── map/                        # 地图装饰渲染
+│   └── screen/                     # 屏幕相关
+│
+├── model/                          # 模型系统
+│   ├── ao/                        # 环境光遮蔽
+│   ├── block/                     # 方块模型
+│   ├── generators/                 # 模型生成器
+│   ├── item/                      # 物品模型
+│   ├── obj/                       # OBJ 模型加载器
+│   ├── pipeline/                  # 模型管线
+│   └── quad/                      # 四边形处理
+│
+├── network/                        # 客户端网络
+│   ├── ClientPacketDistributor.java
+│   ├── ClientPayloadHandler.java
+│   ├── event/
+│   └── handling/
+│
+├── config/                        # 配置系统
+├── data/                          # 客户端数据生成
+├── entity/                        # 实体渲染相关
+├── internal/                      # 内部实现
+├── loading/                      # 加载流程
+├── registries/                   # 客户端注册表管理
+├── renderstate/                  # 渲染状态
+├── resources/                    # 资源加载
+├── settings/                     # 设置系统
+└── textures/                    # 纹理系统</code></pre>
+<h2 id="3-核心组件">3. 核心组件</h2>
+<h3>3.1 ClientNeoForgeMod - 客户端 Mod 主类</h3>
+<p><code>ClientNeoForgeMod</code> 是 NeoForge 的客户端入口点，使用 <code>@Mod(dist = Dist.CLIENT)</code> 注解标记：</p>
+<pre class="code-block"><code class="language-java">@Mod(value = &quot;neoforge&quot;, dist = Dist.CLIENT)
+public class ClientNeoForgeMod {
+    public ClientNeoForgeMod(IEventBus modEventBus, ModContainer container) {
+        // 初始化客户端命令处理器
+        ClientCommandHandler.init();
+        
+        // 注册配置
+        container.registerConfig(ModConfig.Type.CLIENT, NeoForgeClientConfig.SPEC);
+        
+        // 注册模型加载器
+        modEventBus.register(ClientNeoForgeMod.class);
+    }
+    
+    @SubscribeEvent
+    static void onRegisterModelLoaders(ModelEvent.RegisterLoaders event) {
+        event.register(neoForgeId(&quot;empty&quot;), EmptyModel.LOADER);
+        event.register(neoForgeId(&quot;obj&quot;), ObjLoader.INSTANCE);
+        event.register(neoForgeId(&quot;composite&quot;), CompositeUnbakedModel.Loader.INSTANCE);
+    }
+}</code></pre>
+<h3>3.2 ClientHooks - 客户端钩子集合</h3>
+<p><code>ClientHooks</code> 包含大量静态方法，作为客户端渲染和输入事件的桥梁：</p>
+<table class="data-table"><thead><tr><th>类别</th><th>方法</th><th>说明</th></tr></thead><tbody><tr><td><strong>渲染</strong></td><td><code>renderSpecificFirstPersonHand()</code></td><td>自定义第一人称手部渲染</td></tr><tr><td><code>renderSpecificFirstPersonArm()</code></td><td>自定义第一人称手臂渲染</td></tr><tr><td><code>renderBlockOverlay()</code></td><td>方块覆盖效果（如火焰、水）</td></tr><tr><td><strong>GUI</strong></td><td><code>pushGuiLayer()</code> / <code>popGuiLayer()</code></td><td>GUI 图层管理</td></tr><tr><td><code>drawScreen()</code></td><td>屏幕渲染钩子</td></tr><tr><td><strong>输入</strong></td><td><code>onScreenMouseClickedPre()</code></td><td>鼠标点击预处理</td></tr><tr><td><code>onScreenKeyPressedPre()</code></td><td>键盘按键预处理</td></tr><tr><td><strong>FOV</strong></td><td><code>getFieldOfViewModifier()</code></td><td>视野修改器事件</td></tr><tr><td><strong>雾</strong></td><td><code>getFogColor()</code></td><td>雾颜色计算</td></tr><tr><td><code>onSetupFog()</code></td><td>雾渲染设置</td></tr></tbody></table>
+<h3>3.3 渲染管线</h3>
+<p>NeoForge 提供了完整的渲染管线扩展机制：</p>
+<pre class="code-block"><code class="language-java">public static void gatherRenderPipelines(
+        List&lt;PipelineRegistry.PipelineTarget&gt; targets) {
+    // Mod 可添加自定义渲染目标
+}
+
+// 渲染管线修饰符
+public class PipelineModifiers {
+    public static void init() {
+        // 初始化管线修饰符系统
+    }
+}</code></pre>
+<h2 id="4-客户端事件系统">4. 客户端事件系统</h2>
+<p>NeoForge 的客户端事件分为两类：</p>
+<table class="data-table"><thead><tr><th>事件总线</th><th>说明</th></tr></thead><tbody><tr><td><strong>NeoForge Event Bus</strong> (<code>NeoForge.EVENT_BUS</code>)</td><td>主要事件总线，用于游戏循环、渲染、输入等</td></tr><tr><td><strong>Mod Event Bus</strong> (<code>modEventBus</code>)</td><td>用于注册表初始化、模型加载器注册等</td></tr></tbody></table>
+<h3>4.1 渲染阶段事件 (RenderLevelStageEvent)</h3>
+<p>在 <code>LevelRenderer</code> 渲染世界的不同阶段触发：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    A[LevelRenderer.renderLevel] --> B[AfterSky<br/>天空渲染后]
+    B --> C[AfterOpaqueBlocks<br/>不透明方块后]
+    C --> D[AfterEntities<br/>实体渲染后]
+    D --> E[AfterTranslucentBlocks<br/>半透明方块后]
+    E --> F[AfterTripwireBlocks<br/>绊线后]
+    F --> G[AfterParticles<br/>粒子后]
+    G --> H[AfterWeather<br/>天气后]
+    H --> I[AfterLevel<br/>关卡渲染后]</div>
+</div>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onAfterSky(RenderLevelStageEvent.AfterSky event) {
+    // 在天空渲染完成后执行自定义渲染
+}</code></pre>
+<h3>4.2 屏幕事件 (ScreenEvent)</h3>
+<p>Screen 系统提供完整的事件覆盖：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph LR
+    A[Screen Opening] --> B[Init.Pre]
+    B --> C[Init.Post]
+    C --> D[Render.Pre]
+    D --> E[Render.Background]
+    E --> F[Render.Post]
+    F --> G[Closing]
+    
+    H[Input Events] --> I[MouseButton]
+    H --> J[KeyPressed]
+    H --> K[CharacterTyped]</div>
+</div>
+<h3>4.3 实体渲染器事件 (EntityRenderersEvent)</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+    event.registerEntityRenderer(
+        MyModEntities.MY_ENTITY.get(),
+        context -&gt; new MyEntityRenderer(context)
+    );
+    
+    event.registerBlockEntityRenderer(
+        MyModBlocks.MY_BLOCK_ENTITY.get(),
+        context -&gt; new MyBlockEntityRenderer(context)
+    );
+}
+
+// 注册模型层定义
+@SubscribeEvent
+public static void onRegisterLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+    event.registerLayerDefinition(
+        MyModelLayers.MY_ARMOR,
+        MyArmorModel::createBodyLayer
+    );
+}</code></pre>
+<h3>4.4 粒子系统事件</h3>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRegisterParticles(RegisterParticleProvidersEvent event) {
+    // 非精灵粒子（无纹理列表）
+    event.registerSpecial(MyParticles.MY_PARTICLE.get(), 
+        provider -&gt; new MyParticleProvider());
+    
+    // 精灵粒子（有纹理列表）
+    event.registerSpriteSet(MyParticles.MY_SPRITE_PARTICLE.get(),
+        sprites -&gt; new MySpriteParticleProvider(sprites));
+}</code></pre>
+<h3>4.5 关键事件列表</h3>
+<table class="data-table"><thead><tr><th>事件类</th><th>触发时机</th><th>用途</th></tr></thead><tbody><tr><td><code>ClientTickEvent.Pre/Post</code></td><td>游戏刻前/后</td><td>每刻执行的逻辑</td></tr><tr><td><code>RenderFrameEvent.Pre/Post</code></td><td>渲染帧前/后</td><td>全局渲染控制</td></tr><tr><td><code>ComputeFovModifierEvent</code></td><td>FOV 计算时</td><td>修改视野</td></tr><tr><td><code>RegisterKeyMappingsEvent</code></td><td>键位注册时</td><td>添加自定义键位</td></tr><tr><td><code>RegisterColorHandlersEvent</code></td><td>颜色处理器注册</td><td>方块/物品染色</td></tr><tr><td><code>ClientChatReceivedEvent</code></td><td>收到聊天消息</td><td>聊天拦截修改</td></tr><tr><td><code>ClientPlayerNetworkEvent</code></td><td>玩家网络状态变化</td><td>登录/登出处理</td></tr></tbody></table>
+<h2 id="5-客户端扩展接口">5. 客户端扩展接口</h2>
+<h3>5.1 IClientItemExtensions</h3>
+<p>为物品提供客户端特定功能：</p>
+<pre class="code-block"><code class="language-java">public interface IClientItemExtensions {
+    // 获取物品自定义字体
+    @Nullable Font getFont(ItemStack stack, FontContext context);
+    
+    // 获取物品使用时的手臂姿势
+    HumanoidModel.@Nullable ArmPose getArmPose(...);
+    
+    // 自定义第一人称手部变换
+    boolean applyForgeHandTransform(...);
+    
+    // 获取护甲模型
+    Model getHumanoidArmorModel(...);
+    Model getGenericArmorModel(...);
+    
+    // 护甲染色
+    int getArmorLayerTintColor(...);
+    
+    // 护甲纹理
+    @Nullable Identifier getArmorTexture(...);
+    
+    // 第一人称覆盖层渲染
+    void renderFirstPersonOverlay(...);
+}</code></pre>
+<h3>5.2 IClientFluidTypeExtensions</h3>
+<p>为流体类型提供客户端渲染功能：</p>
+<pre class="code-block"><code class="language-java">public interface IClientFluidTypeExtensions {
+    // 静态纹理获取
+    Identifier getStillTexture();
+    Identifier getFlowingTexture();
+    Identifier getOverlayTexture();
+    
+    // 动态纹理获取（基于状态和位置）
+    Identifier getStillTexture(FluidState state, BlockAndTintGetter getter, BlockPos pos);
+    
+    // 染色颜色
+    int getTintColor();
+    int getTintColor(FluidState state, BlockAndTintGetter getter, BlockPos pos);
+    
+    // 雾效果修改
+    Vector4f modifyFogColor(...);
+    void modifyFogRender(...);
+    
+    // 水下覆盖纹理
+    Identifier getRenderOverlayTexture(Minecraft mc);
+    void renderOverlay(Minecraft mc, PoseStack poseStack, MultiBufferSource buffers);
+    
+    // 自定义流体渲染
+    boolean renderFluid(...);
+}</code></pre>
+<h3>5.3 注册扩展</h3>
+<p>扩展通过 <code>RegisterClientExtensionsEvent</code> 注册：</p>
+<pre class="code-block"><code class="language-java">@SubscribeEvent
+public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
+    event.registerFluidType(new IClientFluidTypeExtensions() {
+        @Override
+        public Identifier getStillTexture() {
+            return Identifier.of(&quot;modid&quot;, &quot;block/my_fluid_still&quot;);
+        }
+        
+        @Override
+        public Identifier getFlowingTexture() {
+            return Identifier.of(&quot;modid&quot;, &quot;block/my_fluid_flowing&quot;);
+        }
+        
+        @Override
+        public int getTintColor() {
+            return 0xFF8844; // ARGB 格式
+        }
+    }, MyModFluids.MY_FLUID_TYPE.get());
+}</code></pre>
+<h2 id="6-工作流程图">6. 工作流程图</h2>
+<h3>6.1 客户端初始化流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant M as Minecraft
+    participant CM as ClientNeoForgeMod
+    participant CH as ClientHooks
+    participant E as EventBus
+    
+    Note over M: 游戏启动
+    M->>CM: 构造 ClientNeoForgeMod
+    CM->>CM: initClientRegistries()
+    CM->>E: 发送 InitializeClientRegistriesEvent
+    Note over E: 动画类型、方块状态模型钩子初始化
+    
+    CM->>CH: initClientHooks()
+    CH->>E: 发送 AddClientReloadListenersEvent
+    CH->>E: 发送 EntityRenderersEvent.RegisterLayerDefinitions
+    CH->>E: 发送 EntityRenderersEvent.RegisterRenderers
+    CH->>E: 发送 InitializeClientRegistriesEvent
+    
+    Note over M: 资源加载
+    M->>E: 发送 ClientResourceLoadFinishedEvent
+    
+    Note over M: 游戏循环
+    loop 每游戏刻
+        E->>CH: ClientTickEvent.Pre
+        M->>M: 游戏逻辑更新
+        E->>CH: ClientTickEvent.Post
+    end
+    
+    loop 每渲染帧
+        E->>CH: RenderFrameEvent.Pre
+        M->>M: 渲染世界
+        E->>E: RenderLevelStageEvent 事件序列
+        M->>M: 渲染 GUI
+        E->>CH: RenderFrameEvent.Post
+    end</div>
+</div>
+<h3>6.2 渲染事件时序</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant LR as LevelRenderer
+    participant E as NeoForge EventBus
+    participant Mod as Mod Code
+    
+    LR->>E: RenderLevelStageEvent.AfterSky
+    Mod->>Mod: 渲染自定义天空元素
+    
+    LR->>E: RenderLevelStageEvent.AfterOpaqueBlocks
+    Mod->>Mod: 在不透明物体上添加覆盖
+    
+    LR->>E: RenderLevelStageEvent.AfterEntities
+    Mod->>Mod: 渲染实体特效
+    
+    LR->>E: RenderLevelStageEvent.AfterTranslucentBlocks
+    Mod->>Mod: 渲染半透明物体
+    
+    LR->>E: RenderLevelStageEvent.AfterParticles
+    Mod->>Mod: 粒子特效后渲染
+    
+    LR->>E: RenderLevelStageEvent.AfterWeather
+    Mod->>Mod: 天气效果后渲染
+    
+    LR->>E: RenderLevelStageEvent.AfterLevel
+    Mod->>Mod: 世界渲染完成后的最终渲染</div>
+</div>
+<h2 id="7-api-使用示例">7. API 使用示例</h2>
+<h3>7.1 创建自定义实体渲染器</h3>
+<pre class="code-block"><code class="language-java">public class MyEntityRenderer extends EntityRendererProvider&lt;MyEntity&gt; {
+    private final EntityModelSet modelSet;
+    private final RenderLayerAccess access;
+    
+    public MyEntityRenderer(Context context) {
+        super(context);
+        this.modelSet = context.getModelSet();
+        this.access = context.getLayerRenderSetup();
+    }
+    
+    @Override
+    public void render(MyEntity entity, float entityYaw, float partialTick,
+                       PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        // 渲染逻辑
+        var model = getModel();
+        model.setupAnim(entity, 0, 0, entity.tickCount, entity.getYRot(), entity.getXRot());
+        
+        var vertexConsumer = buffer.getBuffer(RenderType.entityCutout(getTextureLocation(entity)));
+        model.renderToBuffer(poseStack, vertexConsumer, packedLight, 
+            LivingEntityRenderer.getOverlayCoords(entity, 0), 1, 1, 1, 1);
+    }
+    
+    @Override
+    public ResourceLocation getTextureLocation(MyEntity entity) {
+        return ResourceLocation.fromNamespaceAndPath(&quot;modid&quot;, &quot;textures/entity/my_entity.png&quot;);
+    }
+}
+
+// 2. 注册渲染器
+@Mod(&quot;my-mod&quot;)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+public class MyModClient {
+    @SubscribeEvent
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MyModEntities.MY_ENTITY.get(), 
+            MyEntityRenderer::new);
+    }
+}</code></pre>
+<h3>7.2 自定义屏幕</h3>
+<pre class="code-block"><code class="language-java">@Mod(&quot;my-mod&quot;)
+public class MyModClient {
+    // 在 Mod 初始化时注册屏幕
+    @SubscribeEvent
+    public static void onRegisterScreens(RegisterMenuScreensEvent event) {
+        event.register(MyModMenus.MY_CONTAINER.get(), MyContainerScreen::new);
+    }
+    
+    // 监听屏幕事件
+    @SubscribeEvent
+    public static void onScreenInit(ScreenEvent.Init.Post event) {
+        if (event.getScreen() instanceof MyContainerScreen screen) {
+            // 添加自定义组件
+            event.addListener(new MyCustomWidget());
+        }
+    }
+    
+    // 拦截屏幕渲染
+    @SubscribeEvent
+    public static void onScreenRender(ScreenEvent.Render.Pre event) {
+        if (event.getScreen() instanceof MyContainerScreen) {
+            // 在屏幕渲染前添加效果
+        }
+    }
+}</code></pre>
+<h3>7.3 自定义粒子</h3>
+<pre class="code-block"><code class="language-java">public static final DeferredHolder&lt;ParticleType&lt;MyParticleOptions&gt;, ParticleType&lt;MyParticleOptions&gt;&gt; MY_PARTICLE = 
+    REGISTER.register(&quot;my_particle&quot;, () -&gt; 
+        new ParticleType&lt;MyParticleOptions&gt;(false, MyParticleOptions.UI_MATERIALS) {
+            // 粒子类型配置
+        });
+
+// 2. 定义粒子选项
+public record MyParticleOptions(Identifier texture, float size, int color) 
+    implements ParticleOptions {
+    // 实现 codec 和 factory
+}
+
+// 3. 创建粒子提供者
+public class MyParticleProvider implements ParticleProvider&lt;MyParticleOptions&gt; {
+    private final SpriteSet sprites;
+    
+    public MyParticleProvider(SpriteSet sprites) {
+        this.sprites = sprites;
+    }
+    
+    @Override
+    public Particle createParticle(MyParticleOptions options, ClientLevel level,
+                                    double x, double y, double z,
+                                    double xSpeed, double ySpeed, double zSpeed) {
+        return new MyParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, 
+            this.sprites, options);
+    }
+}
+
+// 4. 注册粒子
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public class MyModParticles {
+    @SubscribeEvent
+    public static void registerParticles(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(MyParticles.MY_PARTICLE.get(), 
+            MyParticleProvider::new);
+    }
+}</code></pre>
+<h3>7.4 键位注册</h3>
+<pre class="code-block"><code class="language-java">public class MyModKeys {
+    public static final KeyMapping MY_KEY = new KeyMapping(
+        KeyMapping.Category.MISC.getOrCreateCategory(&quot;my_mod&quot;),
+        &quot;key.my_mod.my_key&quot;,
+        InputConstants.Type.KEYSYM,
+        GLFW.GLFW_KEY_P,
+        &quot;key.categories.my_mod&quot;
+    );
+    
+    @SubscribeEvent
+    public static void registerKeys(RegisterKeyMappingsEvent event) {
+        event.register(MY_KEY);
+    }
+    
+    @SubscribeEvent
+    public static void onKeyPress(InputEvent.InteractionKeyMappingTriggered event) {
+        if (event.getKeyMapping() == MY_KEY &amp;&amp; event.hand() == InteractionHand.MAIN_HAND) {
+            // 执行键位触发逻辑
+        }
+    }
+}</code></pre>
+<h2 id="8-与服务端交互">8. 与服务端交互</h2>
+<h3>8.1 Dist 注解系统</h3>
+<p>NeoForge 使用 <code>@Dist</code> 注解严格分离客户端和服务端代码：</p>
+<pre class="code-block"><code class="language-java">@Mod(value = &quot;my-mod&quot;, dist = Dist.CLIENT)
+public class MyModClient {
+    // 客户端代码
+}
+
+// 仅在物理客户端执行
+@SubscribeEvent(dist = Dist.CLIENT)
+public void onClientEvent(ClientTickEvent event) {
+    // 仅在客户端执行
+}
+
+// 仅在服务端执行
+@SubscribeEvent(dist = Dist.DEDICATED_SERVER)
+public void onServerEvent(ServerTickEvent event) {
+    // 仅在服务端执行
+}
+
+// 在两端都执行
+@SubscribeEvent
+public void onUniversalEvent(Init event) {
+    // 两端都执行
+}</code></pre>
+<h3>8.2 客户端/服务端事件交互</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph 客户端
+        C1[ClientTickEvent]
+        C2[ClientPlayerNetworkEvent.LoggingIn]
+        C3[ClientChatEvent]
+    end
+    
+    subgraph 服务端
+        S1[ServerTickEvent]
+        S2[PlayerLoggedInEvent]
+    end
+    
+    subgraph 网络同步
+        P1[CustomPayload<br/>自定义网络包]
+    end
+    
+    C1 -->|玩家状态| P1
+    P1 --> S1
+    C2 -->|玩家登录| S2</div>
+</div>
+<h3>8.3 自定义网络包</h3>
+<pre class="code-block"><code class="language-java">public record MyCustomPacket(int value, String message) implements CustomPacketPayload {
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(&quot;mymod&quot;, &quot;custom&quot;);
+    public static final StreamCodec&lt;RegistryByteBuf, MyCustomPacket&gt; CODEC = StreamCodec.of(
+        MyCustomPacket::write, MyCustomPacket::new
+    );
+    
+    @Override
+    public Id&lt;MyCustomPacket&gt; id() { return ID; }
+    
+    private void write(RegistryByteBuf buf) {
+        buf.writeInt(value);
+        buf.writeUtf(message);
+    }
+    
+    private MyCustomPacket(RegistryByteBuf buf) {
+        this(buf.readInt(), buf.readUtf());
+    }
+}
+
+// 客户端发送包
+public class MyModClientNetworking {
+    public static void sendToServer(MyCustomPacket packet) {
+        NeoForgeNetwork HANDLER.sendToServer(packet);
+    }
+}
+
+// 服务端处理包
+public class MyModServerNetworking {
+    @SubscribeEvent
+    public static void registerHandlers(RegisterPayloadHandlersEvent event) {
+        event.registerToServer(ID, (payload, context) -&gt; {
+            context.enqueueWork(() -&gt; {
+                ServerPlayer player = context.getPlayer();
+                // 处理包
+            });
+        });
+    }
+}</code></pre>
+<h2 id="9-总结">9. 总结</h2>
+<p>NeoForge 1.21.x 的客户端系统提供了完整、灵活的客户端开发框架：</p>
+<h3>核心优势</h3>
+<p><ul><li><strong>严格的 Dist 分离</strong>：通过编译期和运行期双重检查，确保客户端代码不会在服务端执行</li>
+<li><strong>事件驱动的架构</strong>：丰富的事件系统覆盖了渲染、输入、资源加载等所有客户端生命周期</li>
+<li><strong>扩展接口模式</strong>：<code>IClient*Extensions</code> 接口提供了优雅的扩展机制</li>
+<li><strong>灵活的渲染管线</strong>：支持自定义渲染类型、管线修饰符和帧图配置</li>
+<li><strong>完整的生命周期管理</strong>：从游戏启动到资源加载再到渲染帧的完整钩子</li></ul></p>
+<h3>关键设计模式</h3>
+<table class="data-table"><thead><tr><th>模式</th><th>应用场景</th></tr></thead><tbody><tr><td><strong>观察者模式</strong></td><td>事件系统</td></tr><tr><td><strong>策略模式</strong></td><td>扩展接口（不同的流体类型实现）</td></tr><tr><td><strong>工厂模式</strong></td><td>EntityRendererProvider、BlockEntityRendererProvider</td></tr><tr><td><strong>单例模式</strong></td><td>ClientHooks 中的静态工具方法</td></tr></tbody></table>
+<h3>学习路径建议</h3>
+<p><ul><li>从 <code>ClientNeoForgeMod</code> 了解客户端入口</li>
+<li>深入 <code>ClientHooks</code> 理解钩子机制</li>
+<li>研究 <code>RenderLevelStageEvent</code> 掌握渲染管线</li>
+<li>学习 <code>ScreenEvent</code> 了解 GUI 交互</li>
+<li>实践 <code>EntityRenderersEvent</code> 注册实体渲染</li>
+<li>探索扩展接口实现自定义渲染</li></ul></p>
+<p><hr></p>
+<blockquote><p><strong>源码路径</strong>: <code>D:\Minecraft-Learning\assets\NeoForge-1.21.x\src\client\java\net\neoforged\neoforge\client\</code></p></blockquote>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="09-energy-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            能量系统
+        </a><a href="11-common-extensions-utils.html" class="next">
+            通用扩展与工具
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

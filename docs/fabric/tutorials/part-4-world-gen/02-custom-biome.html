@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#4A90D9;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>02 custom biome - Fabric 模组</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Fabric 模组</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../part-0-prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：Java 编程基础</span>
+        </a>
+<a href="../part-0-prerequisites/02-environment-setup.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：开发环境搭建</span>
+        </a>
+<a href="../part-0-prerequisites/03-minecraft-mod-concepts.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：Minecraft Mod 开发概念</span>
+        </a>
+<a href="../part-0-prerequisites/04-first-mod.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：创建你的第一个 Mod</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 基础知识</div>
+            <a href="../part-1-basics/01-fabric-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 Fabric 是什么？—— 让你的 MC 听你的话！</span>
+        </a>
+<a href="../part-1-basics/02-mod-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：Mod 项目结构</span>
+        </a>
+<a href="../part-1-basics/03-event-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>⚡ 事件系统 —— 让游戏"活"起来！</span>
+        </a>
+<a href="../part-1-basics/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🔖 注册系统 —— 给你的 Mod 对象发"身份证"！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 方块与物品</div>
+            <a href="../part-2-blocks-items/01-creating-blocks.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🧱 创建你的第一个方块！</span>
+        </a>
+<a href="../part-2-blocks-items/03-creating-items.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义物品</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 实体系统</div>
+            <a href="../part-3-entities/01-entity-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>👾 创建你的第一个生物！</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 世界生成</div>
+            <a href="01-biome-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：生物群系简介</span>
+        </a>
+<a href="02-custom-biome.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第二章：创建自定义生物群系</span>
+        </a>
+<a href="03-features.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：世界特征</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: 渲染系统</div>
+            <a href="../part-5-rendering/01-rendering-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>渲染基础</span>
+        </a>
+<a href="../part-5-rendering/02-custom-models.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>自定义模型</span>
+        </a>
+<a href="../part-5-rendering/03-particles.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>粒子效果</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络通信</div>
+            <a href="../part-6-networking/01-networking-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>1. 网络基础</span>
+        </a>
+<a href="../part-6-networking/02-custom-packets.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>2. 自定义数据包</span>
+        </a>
+<a href="../part-6-networking/03-commands.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>3. 自定义命令</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 进阶主题</div>
+            <a href="../part-7-advanced/01-transfer-api.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第一章：传输 API 教程</span>
+        </a>
+<a href="../part-7-advanced/02-data-attachment.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：数据附件教程</span>
+        </a>
+<a href="../part-7-advanced/03-recipes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：配方系统教程</span>
+        </a>
+<a href="../part-7-advanced/04-loot-tables.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：战利品表教程</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 实战项目</div>
+            <a href="../part-8-projects/01-project-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>🎮 实战项目：从零打造你的魔法世界！</span>
+        </a>
+<a href="../part-8-projects/02-magic-crystal.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第二章：魔法水晶 - 完整实战</span>
+        </a>
+<a href="../part-8-projects/03-magic-wand.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第三章：魔法棒 - 特殊物品与网络通信</span>
+        </a>
+<a href="../part-8-projects/04-magic-creature.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第四章：魔法生物 - 自定义实体与 AI</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Fabric 模组</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>02 custom biome</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    02 custom biome
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第二章：创建自定义生物群系</h1>
+
+
+<blockquote><p>在这一章中，我们将学习如何创建全新的生物群系，包括主世界、下界和末地的生物群系。</p></blockquote>
+
+<hr>
+
+<h2 id="目录">目录</h2>
+
+
+<ul><li><a href="#1-准备工作">准备工作</a></li></ul>
+<ul><li><a href="#2-创建主世界生物群系">创建主世界生物群系</a></li></ul>
+<ul><li><a href="#3-注册生物群系">注册生物群系</a></li></ul>
+<ul><li><a href="#4-添加世界特征">添加世界特征</a></li></ul>
+<ul><li><a href="#5-创建下界生物群系">创建下界生物群系</a></li></ul>
+<ul><li><a href="#6-创建末地生物群系">创建末地生物群系</a></li></ul>
+<ul><li><a href="#7-完整示例">完整示例</a></li></ul>
+
+<hr>
+
+<h2 id="1-准备工作">1. 准备工作</h2>
+
+
+<h3>1.1 添加依赖</h3>
+
+
+在 <code>build.gradle</code> 中添加生物群系 API：
+</p>
+<p><pre class="code-block"><code class="language-groovy">dependencies {
+    modImplementation &quot;net.fabricmc.fabric-api:fabric-biome-api-v1&quot;
+}</code></pre>
+
+
+<h3>1.2 需要了解的概念</h3>
+
+
+在创建生物群系之前，我们需要了解几个核心概念：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              创建生物群系需要的组件                    │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  1. 生物群系定义 (Biome)                            │
+│     └── 定义气候、效果、生成内容                      │
+│                                                     │
+│  2. 放置特征 (PlacedFeature)                        │
+│     └── 定义矿石、树木、花草在哪里生成                 │
+│                                                     │
+│  3. 配置特征 (ConfiguredFeature)                    │
+│     └── 定义特征的具体参数                            │
+│                                                     │
+│  4. 雕刻器 (Carver)                                 │
+│     └── 定义洞穴、峡谷等地形空洞                      │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="2-创建主世界生物群系">2. 创建主世界生物群系</h2>
+
+
+<h3>2.1 生物群系构建器</h3>
+
+
+Fabric 提供了 <code>Biome.Builder</code> 类来创建生物群系：
+</p>
+<p><pre class="code-block"><code class="language-java">import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeEffects;
+import net.minecraft.world.biome.BiomeWeather;
+import net.minecraft.world.biome.GenerationSettings;
+import net.minecraft.world.biome.SpawnSettings;
+
+// 创建生物群系
+Biome myBiome = new Biome.Builder()
+    // 气候设置
+    .weather(
+        new BiomeWeather(
+            0.5f,          // 温度 (0-1)
+            0.5f,          // 湿度/降雨量 (0-1)
+            false,         // 是否永春（不积雪）
+            false          // 是否无雨
+        )
+    )
+    // 视觉效果
+    .effects(
+        new BiomeEffects.Builder()
+            .skyColor(0x87CEEB)      // 天空颜色
+            .fogColor(0xC0E8FF)      // 雾颜色
+            .waterColor(0x00AADD)    // 水颜色
+            .waterFogColor(0x050533) // 水下雾颜色
+            .grassColor(0x55FF55)    // 草地颜色
+            .foliageColor(0x55AA55)  // 树叶颜色
+            .build()
+    )
+    // 生成设置（矿石、树木等）
+    .generationSettings(GenerationSettings::new)
+    // 实体生成设置（动物、怪物等）
+    .spawnSettings(SpawnSettings::new)
+    .build();</code></pre>
+
+
+<h3>2.2 完整生物群系示例</h3>
+
+
+让我们创建一个"魔法森林"生物群系：
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.biome;
+
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeEffects;
+import net.minecraft.world.biome.BiomeWeather;
+import net.minecraft.world.biome.GenerationSettings;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.gen.feature.DefaultBiomeFeatures;
+
+public class ModBiomes {
+    
+    public static Biome createMagicForestBiome() {
+        return new Biome.Builder()
+            // 气候设置：温和湿润
+            .weather(
+                new BiomeWeather(
+                    0.7f,      // 温度：温暖
+                    0.8f,      // 湿度：高
+                    false,     // 不永春
+                    false      // 有降雨
+                )
+            )
+            // 视觉效果：紫色调的魔法森林
+            .effects(
+                new BiomeEffects.Builder()
+                    .skyColor(0x6A5ACD)        // 紫蓝色天空
+                    .fogColor(0x9370DB)        // 紫色雾
+                    .waterColor(0x4B0082)      // 深紫色水
+                    .waterFogColor(0x2F1B4C)   // 紫色水下雾
+                    .grassColor(0x4B0082)      // 紫色草地
+                    .foliageColor(0x6A0DAD)    // 紫色树叶
+                    .build()
+            )
+            // 生成设置
+            .generationSettings(createMagicForestGenerationSettings())
+            // 实体生成设置
+            .spawnSettings(createMagicForestSpawnSettings())
+            .build();
+    }
+    
+    private static GenerationSettings createMagicForestGenerationSettings() {
+        GenerationSettings.Builder builder = new GenerationSettings.Builder();
+        
+        // 添加默认特征（草地、花朵等）
+        DefaultBiomeFeatures.addGrass(builder);
+        DefaultBiomeFeatures.addForestFlowers(builder);
+        DefaultBiomeFeatures.addDefaultFlowers(builder);
+        
+        // 添加树木 - 我们会在后面创建自定义树木
+        // DefaultBiomeFeatures.addTaigaTrees(builder);
+        
+        // 添加矿石
+        DefaultBiomeFeatures.addMineables(builder);
+        DefaultBiomeFeatures.addOres(builder);
+        
+        // 添加动物
+        DefaultBiomeFeatures.addForestAnimals(builder);
+        
+        return builder.build();
+    }
+    
+    private static SpawnSettings createMagicForestSpawnSettings() {
+        SpawnSettings.Builder builder = new SpawnSettings.Builder();
+        
+        // 狐狸（森林动物）
+        builder.spawn(
+            SpawnGroup.CREATURE,
+            new SpawnSettings.SpawnEntry(
+                net.minecraft.entity.EntityType.FOX,
+                5,    // 权重
+                2,    // 最小数量
+                4     // 最大数量
+            )
+        );
+        
+        return builder.build();
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-注册生物群系">3. 注册生物群系</h2>
+
+
+<h3>3.1 注册到游戏</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.example.mymod.biome.ModBiomes;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
+
+public class ModBiomeRegistry {
+    // 定义生物群系的注册键
+    public static final RegistryKey&lt;Biome&gt; MAGIC_FOREST = RegistryKey.of(
+        Registries.BIOME,
+        Identifier.of(Mymod.MOD_ID, &quot;magic_forest&quot;)
+    );
+    
+    public static void register() {
+        // 注册生物群系
+        Registry.register(
+            Registries.BIOME,           // 注册表类型
+            MAGIC_FOREST.getValue(),   // ID
+            ModBiomes.createMagicForestBiome()  // 生物群系实例
+        );
+        
+        Mymod.LOGGER.info(&quot;注册生物群系: {}&quot;, MAGIC_FOREST.getValue());
+    }
+}</code></pre>
+
+
+<h3>3.2 在 Mod 入口中调用</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.api.ModInitializer;
+import net.example.mymod.init.ModBiomeRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Mymod implements ModInitializer {
+    public static final String MOD_ID = &quot;mymod&quot;;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info(&quot;开始初始化 {}&quot;, MOD_ID);
+        
+        // 注册生物群系
+        ModBiomeRegistry.register();
+        
+        LOGGER.info(&quot;{} 初始化完成&quot;, MOD_ID);
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-添加世界特征">4. 添加世界特征</h2>
+
+
+创建完生物群系后，我们需要让它在世界中生成内容。
+
+<h3>4.1 什么是特征（Feature）</h3>
+
+
+特征是世界中生成的各种东西：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              世界特征类型                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  矿石类                                             │
+│  ├── 煤炭矿、红宝石矿、金矿等                         │
+│  └── OreFeature, ScatterableFeature                 │
+│                                                     │
+│  地形类                                             │
+│  ├── 巨石、珊瑚、沙漠水井                            │
+│  └── LargeDripstoneFeature, CoralFeature             │
+│                                                     │
+│  植被类                                             │
+│  ├── 树木、花、草                                   │
+│  └── TreeFeature, FlowerFeature, GrassFeature        │
+│                                                     │
+│  结构类                                             │
+│  ├── 村庄、地牢、矿井                                │
+│  └── StructureFeature                               │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>4.2 使用 Fabric API 添加特征</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.GenerationStep;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.BiomeKeys;
+
+public class ModWorldGeneration {
+    
+    public static void addBiomeFeatures() {
+        // 添加到主世界的平原生物群系
+        // 第一个参数：选择哪些生物群系
+        // 第二个参数：生成阶段
+        // 第三个参数：放置特征的 ID
+        
+        // 在地下矿石层添加
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+            GenerationStep.Feature.UNDERGROUND_ORES,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;my_custom_ore&quot;)
+            )
+        );
+        
+        // 在植被层添加树木
+        BiomeModifications.addFeature(
+            BiomeSelectors.includeByKey(BiomeKeys.PLAINS),
+            GenerationStep.Feature.VEGETAL_DECORATION,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;my_custom_tree&quot;)
+            )
+        );
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-创建下界生物群系">5. 创建下界生物群系</h2>
+
+
+<h3>5.1 下界生物群系的特点</h3>
+
+
+下界生物群系需要特殊处理，因为它们使用"噪声参数"来决定生成位置：
+</p>
+<p><pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.biome.v1.NetherBiomes;
+import net.minecraft.util.math.noise.MultiNoiseUtil;</code></pre>
+
+
+<h3>5.2 添加下界生物群系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ModNetherBiomes {
+    
+    public static void addNetherBiome() {
+        // 添加到下界
+        // 参数：生物群系键，噪声参数
+        
+        NetherBiomes.addNetherBiome(
+            RegistryKey.of(
+                Registries.BIOME,
+                Identifier.of(&quot;mymod&quot;, &quot;crystal_caves&quot;)
+            ),
+            // 创建噪声参数
+            MultiNoiseUtil.createNoiseHypercube(
+                0.0f,      // 温度 (temperature)
+                0.5f,      // 湿度 (humidity)
+                0.0f,      // 大陆性 (continentalness)
+                0.0f,      // 侵蚀 (erosion)
+                0.0f,      // 深度 (depth)
+                0.0f,      // 怪异度 (weirdness)
+                0.1f       // 偏移 (offset)
+            )
+        );
+    }
+}</code></pre>
+
+
+<h3>5.3 噪声参数解释</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              噪声参数说明                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  MultiNoiseUtil.createNoiseHypercube(               │
+│      temperature,     // 温度：-2 到 2             │
+│      humidity,        // 湿度：-2 到 2             │
+│      continentalness, // 大陆性：离海洋多远         │
+│      erosion,         // 侵蚀：地形侵蚀程度           │
+│      depth,          // 深度：表面还是地下           │
+│      weirdness,      // 怪异度：独特地形             │
+│      offset          // 偏移：调整生成位置           │
+│  )                                                │
+│                                                     │
+│  常见下界生物群系参数：                              │
+│  • 灵魂沙 valley: -0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0  │
+│  • 珊瑚墓地: 0.0, 0.5, -0.5, 0.0, 0.0, 0.0, 0      │
+│  • 绯红森林: 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0       │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="6-创建末地生物群系">6. 创建末地生物群系</h2>
+
+
+<h3>6.1 末地生物群系类型</h3>
+
+
+末地有不同的区域类型：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────┐
+│              末地区域类型                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  主岛 (Main Island)                                 │
+│  └── 末地的主要大型岛屿                              │
+│                                                     │
+│  高地 (Highlands)                                   │
+│  └── 较高的陆地，有天空岛                            │
+│                                                     │
+│  中地 (Midlands)                                    │
+│  └── 高地和低地之间的区域                            │
+│                                                     │
+│  低地 (Lowlands)                                    │
+│  └── 较低的陆地                                      │
+│                                                     │
+│  荒地 (Barrens)                                     │
+│  └── 贫瘠的区域                                     │
+│                                                     │
+└─────────────────────────────────────────────────────┘</code></pre>
+
+
+<h3>6.2 添加末地生物群系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">import net.fabricmc.fabric.api.biome.v1.TheEndBiomes;
+
+public class ModEndBiomes {
+    
+    public static void addEndBiomes() {
+        // 获取生物群系键
+        RegistryKey&lt;Biome&gt; crystalPlains = RegistryKey.of(
+            Registries.BIOME,
+            Identifier.of(&quot;mymod&quot;, &quot;crystal_plains&quot;)
+        );
+        
+        RegistryKey&lt;Biome&gt; crystalMidlands = RegistryKey.of(
+            Registries.BIOME,
+            Identifier.of(&quot;mymod&quot;, &quot;crystal_midlands&quot;)
+        );
+        
+        // 添加为高地生物群系（权重越高越容易生成）
+        TheEndBiomes.addHighlandsBiome(crystalPlains, 5.0);
+        
+        // 为该高地添加中地
+        TheEndBiomes.addMidlandsBiome(crystalPlains, crystalMidlands, 10.0);
+        
+        // 或者添加到主岛
+        TheEndBiomes.addMainIslandBiome(
+            RegistryKey.of(
+                Registries.BIOME,
+                Identifier.of(&quot;mymod&quot;, &quot;my_end_biome&quot;)
+            ),
+            1.0  // 权重
+        );
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="7-完整示例">7. 完整示例</h2>
+
+
+让我们创建一个完整的 mod 示例，包含：
+<ul><li>自定义主世界生物群系</li></ul>
+<ul><li>添加到世界生成</li></ul>
+
+<h3>7.1 项目结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">src/main/java/net/example/mymod/
+├── Mymod.java                    # 主入口
+├── init/
+│   ├── ModBiomes.java            # 生物群系定义
+│   └── ModBiomeRegistry.java     # 生物群系注册
+└── world/
+    └── ModWorldGeneration.java   # 世界生成
+
+src/main/resources/
+└── assets/mymod/
+    └── lang/
+        └── zh_cn.json            # 中文翻译</code></pre>
+
+
+<h3>7.2 完整代码</h3>
+
+
+<strong>Mymod.java</strong>:</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod;
+
+import net.fabricmc.api.ModInitializer;
+import net.example.mymod.init.ModBiomeRegistry;
+import net.example.mymod.world.ModWorldGeneration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Mymod implements ModInitializer {
+    public static final String MOD_ID = &quot;mymod&quot;;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    @Override
+    public void onInitialize() {
+        LOGGER.info(&quot;开始初始化 {}&quot;, MOD_ID);
+        
+        // 1. 注册生物群系
+        ModBiomeRegistry.register();
+        
+        // 2. 配置世界生成
+        ModWorldGeneration.configureBiomes();
+        
+        LOGGER.info(&quot;{} 初始化完成&quot;, MOD_ID);
+    }
+}</code></pre>
+
+
+<strong>ModBiomes.java</strong>:</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.init;
+
+import net.example.mymod.Mymod;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeEffects;
+import net.minecraft.world.biome.BiomeWeather;
+import net.minecraft.world.biome.GenerationSettings;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.gen.feature.DefaultBiomeFeatures;
+
+public class ModBiomes {
+    
+    // 主世界生物群系
+    public static final RegistryKey&lt;Biome&gt; CRYSTAL_FOREST = RegistryKey.of(
+        Registries.BIOME,
+        Identifier.of(Mymod.MOD_ID, &quot;crystal_forest&quot;)
+    );
+    
+    public static Biome createCrystalForestBiome() {
+        return new Biome.Builder()
+            .weather(
+                new BiomeWeather(
+                    0.8f,      // 温暖
+                    0.6f,      // 中等湿度
+                    false,     // 不永春
+                    false      // 有降雨
+                )
+            )
+            .effects(
+                new BiomeEffects.Builder()
+                    .skyColor(0x7B68EE)        // 中紫色天空
+                    .fogColor(0x9370DB)        // 紫色雾
+                    .waterColor(0x0077BE)      // 水蓝色水
+                    .waterFogColor(0x505050)   // 灰色水下雾
+                    .grassColor(0x7CFC00)      // 草绿色草地
+                    .foliageColor(0x228B22)    // 森林绿树叶
+                    .build()
+            )
+            .generationSettings(createGenerationSettings())
+            .spawnSettings(createSpawnSettings())
+            .build();
+    }
+    
+    private static GenerationSettings createGenerationSettings() {
+        GenerationSettings.Builder builder = new GenerationSettings.Builder();
+        
+        // 添加原版特征
+        DefaultBiomeFeatures.addGrass(builder);
+        DefaultBiomeFeatures.addDefaultFlowers(builder);
+        DefaultBiomeFeatures.addForestFlowers(builder);
+        DefaultBiomeFeatures.addForestTrees(builder);
+        DefaultBiomeFeatures.addMineables(builder);
+        DefaultBiomeFeatures.addOres(builder);
+        DefaultBiomeFeatures.addForestAnimals(builder);
+        
+        return builder.build();
+    }
+    
+    private static SpawnSettings createSpawnSettings() {
+        SpawnSettings.Builder builder = new SpawnSettings.Builder();
+        
+        // 添加狼（森林动物）
+        builder.spawn(
+            SpawnGroup.CREATURE,
+            new SpawnSettings.SpawnEntry(
+                net.minecraft.entity.EntityType.WOLF,
+                5, 2, 4
+            )
+        );
+        
+        // 添加兔子
+        builder.spawn(
+            SpawnGroup.CREATURE,
+            new SpawnSettings.SpawnEntry(
+                net.minecraft.entity.EntityType.RABBIT,
+                4, 2, 3
+            )
+        );
+        
+        return builder.build();
+    }
+    
+    public static void register() {
+        Registry.register(
+            Registries.BIOME,
+            CRYSTAL_FOREST.getValue(),
+            createCrystalForestBiome()
+        );
+        Mymod.LOGGER.info(&quot;注册生物群系: {}&quot;, CRYSTAL_FOREST.getValue());
+    }
+}</code></pre>
+
+
+<strong>ModWorldGeneration.java</strong>:</p>
+<p><pre class="code-block"><code class="language-java">package net.example.mymod.world;
+
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.biome.v1.GenerationStep;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.biome.BiomeKeys;
+
+public class ModWorldGeneration {
+    
+    public static void configureBiomes() {
+        // 让我们的水晶森林可以在主世界生成
+        
+        // 注意：这里需要使用专门的生物群系修改器
+        // Fabric 1.20+ 可以使用下面的方法
+        
+        // 使用 BiomeKeys 获取已有的特征
+        // 或者创建你自己的放置特征
+        
+        // 示例：添加更多矿石到所有主世界生物群系
+        BiomeModifications.addFeature(
+            BiomeSelectors.foundInOverworld(),
+            GenerationStep.Feature.UNDERGROUND_ORES,
+            RegistryKey.of(
+                Registries.PLACED_FEATURE,
+                Identifier.of(&quot;mymod&quot;, &quot;extra_coal_ore&quot;)
+            )
+        );
+    }
+}</code></pre>
+
+
+<h3>7.3 语言文件</h3>
+
+
+<strong>zh_cn.json</strong>:</p>
+<p><pre class="code-block"><code class="language-json">{
+    &quot;biome.mymod.crystal_forest&quot;: &quot;水晶森林&quot;
+}</code></pre>
+
+
+<hr>
+
+<h2 id="小结">小结</h2>
+
+
+在这一章中，你学会了：
+
+<ul><li><strong>创建主世界生物群系</strong> - 使用 <code>Biome.Builder</code></li></ul>
+<ul><li><strong>注册生物群系</strong> - 放入游戏的注册表</li></ul>
+<ul><li><strong>世界特征基础</strong> - 矿石、树木的生成</li></ul>
+<ul><li><strong>创建下界生物群系</strong> - 使用噪声参数</li></ul>
+<ul><li><strong>创建末地生物群系</strong> - 添加到不同区域</li></ul>
+
+<hr>
+
+<h2 id="下一步">下一步</h2>
+
+
+现在你已经学会了创建生物群系，接下来可以学习：
+
+<ul><li><a href="./03-features.html">第三章：世界特征</a> - 深入了解矿石、树木、地形特征</li></ul>
+<ul><li><a href="./01-biome-intro.html">第一章：生物群系简介</a> - 回顾生物群系基础知识</li></ul>
+
+<hr>
+
+<blockquote><p><strong>常见问题</strong></p></blockquote>
+>
+<blockquote><p><strong>Q: 生物群系没有生成？</strong></p></blockquote>
+<blockquote><p>- 检查是否正确注册了生物群系</p></blockquote>
+<blockquote><p>- 确认选择器条件正确</p></blockquote>
+<blockquote><p>- 使用 <code>/locatebiome</code> 命令查找</p></blockquote>
+>
+<blockquote><p><strong>Q: 游戏崩溃？</strong></p></blockquote>
+<blockquote><p>- 检查生物群系的天空颜色是否在有效范围内 (0x000000 - 0xFFFFFF)</p></blockquote>
+<blockquote><p>- 确认温度值在 0-1 之间</p></blockquote>
+>
+<blockquote><p><strong>Q: 如何让多个生物群系连续生成？</strong></p></blockquote>
+<blockquote><p>- 需要修改生物群系源（BiomeSource），这需要更高级的技术</p></blockquote>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-biome-intro.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第一章：生物群系简介
+        </a><a href="03-features.html" class="next">
+            第三章：世界特征
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>
