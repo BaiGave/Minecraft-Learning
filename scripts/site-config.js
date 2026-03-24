@@ -518,6 +518,25 @@ const SITE_CONFIG = {
 // scan-docs:auto-modules:start
 (function applyAutoDiscoveredModulesFromDocs() {
     var AUTO_SITE_MODULES = {
+    "ImmersivePortalsMod": {
+        "id": "ImmersivePortalsMod",
+        "name": "ImmersivePortalsMod",
+        "shortName": "ImmersivePortals",
+        "slug": "ImmersivePortalsMod",
+        "icon": "fa-folder-open",
+        "color": "#5B8C5A",
+        "colorGradient": "linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)",
+        "accentColor": "#171717",
+        "description": "ImmersivePortalsMod的教程与源码分析文档",
+        "category": "mc",
+        "order": 50,
+        "docsDir": "docs/ImmersivePortalsMod",
+        "hasTutorials": true,
+        "hasAnalysis": true,
+        "featured": [],
+        "versions": null,
+        "defaultVersion": null
+    },
     "fabric": {
         "id": "fabric",
         "name": "Fabric 生态",
@@ -529,7 +548,7 @@ const SITE_CONFIG = {
         "accentColor": "#171717",
         "description": "Fabric 生态 的教程与源码分析文档",
         "category": "fabric",
-        "order": 50,
+        "order": 51,
         "docsDir": "docs/fabric",
         "hasTutorials": true,
         "hasAnalysis": true,
@@ -548,7 +567,7 @@ const SITE_CONFIG = {
         "accentColor": "#171717",
         "description": "NeoForge的教程与源码分析文档",
         "category": "forge",
-        "order": 51,
+        "order": 52,
         "docsDir": "docs/neoforge",
         "hasTutorials": true,
         "hasAnalysis": true,

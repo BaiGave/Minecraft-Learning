@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#3498DB;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>06 compatibility - Immersiveportalsmod</title>
+    <link rel="stylesheet" href="../../../styles/main.css">
+    <link rel="stylesheet" href="../../../styles.css">
+    <link rel="stylesheet" href="../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../docs/mc/1.21/index.html">Minecraft 原版</a>
+                        <a href="../../../docs/iris/index.html">Iris 光影</a>
+                        <a href="../../../docs/sodium/index.html">Sodium 优化</a>
+                        <a href="../../../docs/fabric/index.html">Fabric 模组</a>
+                        <a href="../../../docs/forge/index.html">Forge 模组</a>
+                        <a href="../../../docs/ImmersivePortalsMod/index.html">Immersiveportalsmod</a>
+                        <a href="../../../docs/neoforge/index.html">NeoForge 模组</a>
+                    </div>
+                </li>
+                <li><a href="../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Immersiveportalsmod</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-core-architecture.html" class="">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod Core Architecture Analysis
+        </a>
+<a href="02-portal-entity.html" class="">
+            <i class="fas fa-microscope"></i>
+            Portal Entity System
+        </a>
+<a href="03-teleportation-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Teleportation System
+        </a>
+<a href="04-rendering-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Rendering System
+        </a>
+<a href="05-network-sync.html" class="">
+            <i class="fas fa-microscope"></i>
+            Network Synchronization System
+        </a>
+<a href="06-compatibility.html" class="active">
+            <i class="fas fa-microscope"></i>
+            ImmersivePortalsMod 兼容性系统分析
+        </a>
+<a href="07-mixin-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Mixin Injection System
+        </a>
+<a href="08-public-api.html" class="">
+            <i class="fas fa-microscope"></i>
+            Public API
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Immersiveportalsmod</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>06 compatibility</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    06 compatibility
+                </h1>
+                <div class="docs-meta">
+                    
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>ImmersivePortalsMod 兼容性系统分析</h1>
+<pre class="code-block"><code class="language-yaml">---
+title: Compatibility System
+readingTime: 35
+---</code></pre>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#概述">概述</a></li>
+<li><a href="#sodium-兼容性">Sodium 兼容性</a></li>
+<li><a href="#iris-兼容性">Iris 兼容性</a></li>
+<li><a href="#flywheel-兼容性">Flywheel 兼容性</a></li>
+<li><a href="#兼容性检测机制">兼容性检测机制</a></li>
+<li><a href="#接口设计模式">接口设计模式</a></li>
+<li><a href="#总结">总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="概述">概述</h2>
+<p>ImmersivePortalsMod 作为 Minecraft 的维度传送门模组，需要与多个渲染优化模组协同工作。主要包括：</p>
+<p><ul><li><strong>Sodium</strong> - 高性能渲染优化模组，提供自定义区块渲染系统</li>
+<li><strong>Iris</strong> - 着色器光影前置模组，提供着色器渲染管线</li>
+<li><strong>Flywheel</strong> - GPU 实例化渲染引擎，提供更高效的方块/实体渲染</li></ul></p>
+<p>这些模组的兼容性处理是 ImmersivePortalsMod 最为复杂的技术挑战之一，因为涉及到：</p>
+<p><ul><li><strong>帧缓冲管理</strong>：每个渲染层需要独立管理深度缓冲和模板缓冲</li>
+<li><strong>渲染上下文切换</strong>：需要在不同维度/世界之间切换渲染状态</li>
+<li><strong>着色器管线集成</strong>：需要正确注入 Iris 的着色器渲染流程</li>
+<li><strong>区块可见性计算</strong>：Sodium 的遮挡剔除算法在传送门场景下会失效</li></ul></p>
+<p>以下 Mermaid 图展示了兼容性检测的整体流程：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[Mod 初始化] --> B{检测 Sodium}
+    B -->|存在| C[初始化 SodiumInterface]
+    B -->|不存在| D[使用默认 Invoker]
+    C --> E{检测 Iris}
+    D --> E
+    E -->|存在| F[初始化 IrisInterface]
+    E -->|不存在| G[使用默认 Invoker]
+    F --> H{检测 Flywheel}
+    G --> H
+    H -->|存在| I[初始化 Flywheel 兼容性]
+    H -->|不存在| J[跳过 Flywheel]
+    
+    K[Mixin Plugin 初始化] --> L{sodium in mixin?}
+    L -->|是| M[检查 Sodium 是否加载]
+    M -->|是| N[应用 Sodium Mixin]
+    M -->|否| O[跳过 Mixin]
+    L -->|否| P{iris in mixin?}
+    O --> P
+    P -->|是| Q[检查 Iris 是否加载]
+    Q -->|是| R[应用 Iris Mixin]
+    Q -->|否| S[跳过 Mixin]
+    R --> T[完成 Mixin 配置]
+    S --> T</div>
+</div>
+<p><hr></p>
+<h2 id="sodium-兼容性">Sodium 兼容性</h2>
+<h3>核心挑战</h3>
+<p>Sodium 替换了 Minecraft 原生的区块渲染系统，使用自定义的 <code>RenderSectionManager</code> 和 <code>SodiumWorldRenderer</code>。这带来以下挑战：</p>
+<p><ul><li><strong>Frustum Culler 替换</strong>：Sodium 有自己的视锥体裁剪实现</li>
+<li><strong>渲染上下文管理</strong>：每个世界切换需要创建新的 <code>SortedRenderLists</code></li>
+<li><strong>区块可见性判断</strong>：Sodium 的 <code>isSectionVisible()</code> 在传送门渲染时返回错误结果</li></ul></p>
+<h3>接口设计</h3>
+<p><code>SodiumInterface</code> 使用了<strong>策略模式 + 空对象模式</strong>的组合设计：</p>
+<pre class="code-block"><code class="language-18">public class SodiumInterface {
+    
+    @Nullable
+    public static FrustumCuller frustumCuller = null;
+    
+    public static class Invoker {
+        public boolean isSodiumPresent() {
+            return false;
+        }
+        
+        public Object createNewContext(int renderDistance) {
+            return null;
+        }
+        // ... 更多方法
+    }
+    
+    public static Invoker invoker = new Invoker();
+    
+    public static class OnSodiumPresent extends Invoker {
+        @Override
+        public boolean isSodiumPresent() {
+            return true;
+        }
+        // ... 实现细节
+    }
+}</code></pre>
+<p><strong>设计要点</strong>：</p>
+<p><ul><li><code>Invoker</code> 是默认的空实现，所有方法返回 <code>null</code> 或 <code>false</code></li>
+<li><code>OnSodiumPresent</code> 是 Sodium 存在时的完整实现</li>
+<li><code>invoker</code> 静态变量在运行时被 Mixin 替换为 <code>OnSodiumPresent</code> 实例</li></ul></p>
+<h3>渲染上下文切换</h3>
+<p><code>SodiumRenderingContext</code> 存储了渲染所需的全部状态：</p>
+<pre class="code-block"><code class="language-1">public class SodiumRenderingContext {
+    public SortedRenderLists renderLists;
+    
+    public int renderDistance;
+    
+    public SodiumRenderingContext(int renderDistance) {
+        this.renderDistance = renderDistance;
+        this.renderLists = SortedRenderLists.empty();
+    }
+}</code></pre>
+<p>当渲染传送门内容时，需要切换到目标世界的渲染上下文：</p>
+<pre class="code-block"><code class="language-59">@Override
+public void switchContextWithCurrentWorldRenderer(Object context) {
+    SodiumWorldRenderer swr =
+        ((LevelRendererExtension) Minecraft.getInstance().levelRenderer).sodium$getWorldRenderer();
+    swr.scheduleTerrainUpdate();
+    
+    RenderSectionManager renderSectionManager =
+        ((IESodiumWorldRenderer) swr).ip_getRenderSectionManager();
+    
+    ((IESodiumRenderSectionManager) renderSectionManager)
+        .ip_swapContext(((SodiumRenderingContext) context));
+    
+    swr.scheduleTerrainUpdate();
+}</code></pre>
+<h3>Mixin 注入点</h3>
+<p><code>MixinSodiumWorldRenderer</code> 在 Sodium 的地形更新前更新 FrustumCuller：</p>
+<pre class="code-block"><code class="language-14">@Mixin(value = SodiumWorldRenderer.class, remap = false)
+public class MixinSodiumWorldRenderer {
+    @Inject(
+        method = &quot;setupTerrain&quot;,
+        at = @At(&quot;HEAD&quot;)
+    )
+    private void onUpdateChunks(
+        Camera camera, Viewport viewport, boolean spectator, boolean updateChunksImmediately, CallbackInfo ci
+    ) {
+        SodiumInterface.frustumCuller = new FrustumCuller();
+        Vec3 cameraPos = camera.getPosition();
+        SodiumInterface.frustumCuller.update(cameraPos.x, cameraPos.y, cameraPos.z);
+    }
+}</code></pre>
+<h3>区块可见性优化取消</h3>
+<p><code>MixinSodiumRenderSectionManager</code> 取消了 Sodium 的区块可见性优化：</p>
+<pre class="code-block"><code class="language-47"> * The section visibility information will be wrong if rendered a portal.
+ * Just cancel this optimization.
+ * isSectionVisible() is currently only used for culling entities.
+ */
+@Inject(method = &quot;isSectionVisible&quot;, at = @At(&quot;HEAD&quot;), cancellable = true)
+private void onIsSectionVisible(int x, int y, int z, CallbackInfoReturnable&lt;Boolean&gt; cir) {
+    if (RenderStates.portalsRenderedThisFrame != 0) {
+        cir.setReturnValue(true);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="iris-兼容性">Iris 兼容性</h2>
+<h3>核心挑战</h3>
+<p>Iris 提供了着色器渲染管线，包含复杂的阴影渲染和多阶段渲染过程：</p>
+<p><ul><li><strong>Pipeline 管理</strong>：需要正确获取和替换 Iris 的渲染管线</li>
+<li><strong>阴影渲染同步</strong>：传送门内的阴影需要正确计算</li>
+<li><strong>Deferred 渲染</strong>：Iris 使用延迟渲染，多个渲染阶段需要正确同步</li></ul></p>
+<h3>双渲染器设计</h3>
+<p>ImmersivePortalsMod 为 Iris 设计了两套渲染器：</p>
+<table class="data-table"><thead><tr><th>渲染器</th><th>适用场景</th><th>特点</th></tr></thead><tbody><tr><td><code>IrisPortalRenderer</code></td><td>Iris 启用光影时</td><td>使用 Deferred FrameBuffer 处理模板缓冲</td></tr><tr><td><code>ExperimentalIrisPortalRenderer</code></td><td>未来版本</td><td>直接使用主帧缓冲，更高效的模板缓冲处理</td></tr></tbody></table>
+<h3>IrisInterface 接口</h3>
+<pre class="code-block"><code class="language-12">public class IrisInterface {
+    
+    public static class Invoker {
+        public boolean isIrisPresent() {
+            return false;
+        }
+        
+        public boolean isShaders() {
+            return false;
+        }
+        
+        public boolean isRenderingShadowMap() {
+            return false;
+        }
+        
+        public Object getPipeline(LevelRenderer worldRenderer) {
+            return null;
+        }
+        
+        public void setPipeline(LevelRenderer worldRenderer, Object pipeline) {
+        
+        }
+        
+        public void reloadPipelines() {}
+    
+        @Nullable
+        public String getShaderpackName() {
+            return null;
+        }
+    }
+    
+    public static class OnIrisPresent extends Invoker {
+        private Field worldRendererPipelineField = Helper.noError(() -&gt; {
+            Field field = LevelRenderer.class.getDeclaredField(&quot;pipeline&quot;);
+            field.setAccessible(true);
+            return field;
+        });
+        
+        @Override
+        public boolean isIrisPresent() {
+            return true;
+        }
+        
+        @Override
+        public boolean isShaders() {
+            return Iris.getCurrentPack().isPresent();
+        }
+        
+        @Override
+        public boolean isRenderingShadowMap() {
+            return ShadowRenderer.ACTIVE;
+        }
+        // ...
+    }
+    
+    public static Invoker invoker = new Invoker();
+}</code></pre>
+<h3>模板缓冲层级管理</h3>
+<p><code>IrisPortalRenderer</code> 使用多层 Deferred FrameBuffer 来处理传送门嵌套：</p>
+<pre class="code-block"><code class="language-46">private SecondaryFrameBuffer[] deferredFbs = new SecondaryFrameBuffer[0];
+
+private boolean portalRenderingNeeded = false;
+private boolean nextFramePortalRenderingNeeded = false;
+
+IrisPortalRenderer() {
+    IPGlobal.PRE_GAME_RENDER_EVENT.register(() -&gt; {
+        updateNeedsPortalRendering();
+    });
+}</code></pre>
+<p>每层传送门使用递增的模板值（0, 1, 2...）来标识渲染区域：</p>
+<pre class="code-block"><code class="language-175">private void initStencilForLayer(int portalLayer) {
+    if (portalLayer == 0) {
+        deferredFbs[portalLayer].fb.bindWrite(true);
+        GlStateManager._clearStencil(0);
+        GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
+    }
+    else {
+        CHelper.checkGlError();
+        
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, deferredFbs[portalLayer - 1].fb.frameBufferId);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, deferredFbs[portalLayer].fb.frameBufferId);
+        
+        GL30.glBlitFramebuffer(
+            0, 0, deferredFbs[0].fb.viewWidth, deferredFbs[0].fb.viewHeight,
+            0, 0, deferredFbs[0].fb.viewWidth, deferredFbs[0].fb.viewHeight,
+            GL_STENCIL_BUFFER_BIT, GL_NEAREST
+        );
+        
+        CHelper.checkGlError();
+    }
+}</code></pre>
+<h3>ExperimentalIrisPortalRenderer 高级特性</h3>
+<p><code>ExperimentalIrisPortalRenderer</code> 是为未来 Iris 版本设计的高级渲染器，它：</p>
+<p><ul><li>直接使用主帧缓冲的深度缓冲（不再需要 Deferred FB）</li>
+<li>在半透明渲染阶段执行传送门渲染</li>
+<li>正确处理 Iris 的 Deferred 复合渲染</li></ul></p>
+<pre class="code-block"><code class="language-51">@Override
+public void onBeginIrisTranslucentRendering(Matrix4f modelView) {
+    // Iris&#39;s buffers are deferred, changing a render layer won&#39;t cause it to draw
+    client.renderBuffers().bufferSource().endBatch();
+    
+    doPortalRendering(modelView);
+    
+    // Resume Iris world rendering
+    ((IEIrisNewWorldRenderingPipeline) (Object) Iris.getPipelineManager().getPipeline().get())
+        .ip_setIsRenderingWorld(true);
+}</code></pre>
+<h3>模板值钳制机制</h3>
+<p>为了防止传送门嵌套超过模板缓冲范围，使用钳制机制：</p>
+<pre class="code-block"><code class="language-329">public static void clampStencilValue(int maximumValue) {
+    GlStateManager._depthMask(true);
+    
+    // NOTE GL_GREATER means ref &gt; stencil
+    // GL_LESS means ref &lt; stencil
+    
+    // pass if the stencil value is greater than the maximum value
+    GL11.glStencilFunc(GL_LESS, maximumValue, 0xFF);
+    
+    // if stencil test passed, encode the stencil value
+    GL11.glStencilOp(GL_KEEP, GL_REPLACE, GL_REPLACE);
+    
+    // do not manipulate the depth buffer
+    GL11.glDepthMask(false);
+    
+    // do not manipulate the color buffer
+    GL11.glColorMask(false, false, false, false);
+    
+    GlStateManager._disableDepthTest();
+    
+    MyRenderHelper.renderScreenTriangle();
+    
+    GL11.glDepthMask(true);
+    GL11.glColorMask(true, true, true, true);
+    GlStateManager._enableDepthTest();
+}</code></pre>
+<p><hr></p>
+<h2 id="flywheel-兼容性">Flywheel 兼容性</h2>
+<h3>简单的兼容性检测</h3>
+<p>Flywheel 是一个 GPU 实例化渲染引擎，ImmersivePortalsMod 对其的支持相对简单：</p>
+<pre class="code-block"><code class="language-8">@Environment(EnvType.CLIENT)
+public class IPFlywheelCompat {
+    
+    public static boolean isFlywheelPresent = false;
+    
+    public static void init(){
+        if (FabricLoader.getInstance().isModLoaded(&quot;flywheel&quot;)) {
+            Helper.log(&quot;Flywheel is present&quot;);
+        }
+        
+    }
+    
+}</code></pre>
+<h3>Mixin 注入</h3>
+<p><code>MixinFlywheelProgramCompiler</code> 和 <code>MixinFlywheelQuadConverter</code> 处理 Flywheel 的着色器编译和四边形转换，确保传送门几何体正确传递给 Flywheel。</p>
+<p><code>MixinFlywheelCrumblingRenderer</code> 处理 Flywheel 的方块碎裂渲染效果在传送门内的行为。</p>
+<p><hr></p>
+<h2 id="兼容性检测机制">兼容性检测机制</h2>
+<h3>Mixin 条件加载</h3>
+<p><code>IPCompatMixinPlugin</code> 是 Mixin 配置插件，负责条件性地应用 Mixin：</p>
+<pre class="code-block"><code class="language-22">@Override
+public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+    
+    FabricLoader fabricLoader = FabricLoader.getInstance();
+    
+    if (mixinClassName.contains(&quot;IrisSodium&quot;)) {
+        boolean sodiumLoaded = fabricLoader.isModLoaded(&quot;sodium&quot;);
+        boolean irisLoaded = fabricLoader.isModLoaded(&quot;iris&quot;);
+        return sodiumLoaded &amp;&amp; irisLoaded;
+    }
+    
+    if (mixinClassName.contains(&quot;Iris&quot;)) {
+        boolean irisLoaded = fabricLoader.isModLoaded(&quot;iris&quot;);
+        return irisLoaded;
+    }
+    
+    if (mixinClassName.contains(&quot;Sodium&quot;)) {
+        boolean sodiumLoaded = fabricLoader.isModLoaded(&quot;sodium&quot;);
+        return sodiumLoaded;
+    }
+    
+    if (mixinClassName.contains(&quot;Flywheel&quot;)) {
+        boolean flywheelLoaded = fabricLoader.isModLoaded(&quot;flywheel&quot;);
+        return flywheelLoaded;
+    }
+    
+    if (mixinClassName.contains(&quot;CardinalComp&quot;)) {
+        boolean cardinalCompLoaded = fabricLoader.isModLoaded(&quot;cardinal-components-base&quot;);
+        return cardinalCompLoaded;
+    }
+    
+    return false;
+}</code></pre>
+<p>这种设计确保了：</p>
+<p><ul><li><strong>零开销</strong>：不存在的 Mod 不会增加任何类加载开销</li>
+<li><strong>编译时验证</strong>：Mixin 在编译时检查条件，但实际应用在运行时决定</li>
+<li><strong>模块化</strong>：每个兼容性模块完全独立</li></ul></p>
+<h3>运行时 Invoker 切换</h3>
+<p>虽然 Mixin 插件在编译时决定是否应用 Mixin，但实际的 Invoker 切换可能需要在运行时通过反射或更巧妙的方式完成。</p>
+<p><hr></p>
+<h2 id="接口设计模式">接口设计模式</h2>
+<h3>策略模式 + 空对象模式</h3>
+<p>ImmersivePortalsMod 的兼容性系统大量使用了<strong>策略模式 + 空对象模式</strong>的组合：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class Invoker {
+        <<abstract>>
+        +isSodiumPresent() boolean
+        +createNewContext(int) Object
+        +switchContext(Object) void
+    }
+    
+    class OnSodiumPresent {
+        +isSodiumPresent() boolean
+        +createNewContext(int) Object
+        +switchContext(Object) void
+    }
+    
+    class SodiumInterface {
+        +invoker: Invoker
+    }
+    
+    Invoker <|-- OnSodiumPresent
+    SodiumInterface o-- Invoker</div>
+</div>
+<p><strong>优势</strong>：</p>
+<p><ul><li><strong>统一接口</strong>：调用方无需关心 Mod 是否存在</li>
+<li><strong>无 null 检查</strong>：避免了繁琐的 null 检查</li>
+<li><strong>易于扩展</strong>：添加新 Mod 支持只需创建新的 <code>On*Present</code> 类</li></ul></p>
+<h3>Mixin 访问器模式</h3>
+<p>对于需要访问第三方 Mod 私有成员的场景，使用 Mixin 接口模式：</p>
+<pre class="code-block"><code class="language-1">@Mixin(value = SodiumWorldRenderer.class, remap = false)
+public interface IESodiumWorldRenderer {
+    @Accessor(&quot;renderSectionManager&quot;)
+    RenderSectionManager ip_getRenderSectionManager();
+}</code></pre>
+<p>这种模式：</p>
+<p><ul><li>避免了反射的性能开销</li>
+<li>在编译时验证字段存在性</li>
+<li>提供类型安全的访问</li></ul></p>
+<p><hr></p>
+<h2 id="总结">总结</h2>
+<p>ImmersivePortalsMod 的兼容性系统展示了复杂模组间协作的优雅解决方案：</p>
+<table class="data-table"><thead><tr><th>设计模式</th><th>应用场景</th><th>优势</th></tr></thead><tbody><tr><td>策略 + 空对象</td><td>SodiumInterface, IrisInterface</td><td>统一接口，无 null 检查</td></tr><tr><td>Mixin 条件加载</td><td>IPCompatMixinPlugin</td><td>零开销编译时优化</td></tr><tr><td>访问器接口</td><td>IESodiumWorldRenderer</td><td>类型安全，性能高效</td></tr><tr><td>多层缓冲</td><td>IrisPortalRenderer</td><td>支持传送门嵌套渲染</td></tr></tbody></table>
+<h3>关键技术要点</h3>
+<p><ul><li><strong>帧缓冲管理</strong>：每个传送门层需要独立的模板缓冲层级</li>
+<li><strong>渲染上下文切换</strong>：使用 <code>SortedRenderLists</code> 和 <code>renderDistance</code> 状态切换</li>
+<li><strong>优化取消</strong>：传送门渲染时必须禁用 Sodium 的区块可见性优化</li>
+<li><strong>Pipeline 注入</strong>：需要正确获取和操作 Iris 的渲染管线</li></ul></p>
+<h3>源码路径</h3>
+<p>本分析涉及的源码文件位于：</p>
+<pre class="code-block"><code class="language-text">assets/ImmersivePortalsMod-6.0.6-mc1.21.1/src/main/java/qouteall/imm_ptl/core/compat/
+├── sodium_compatibility/
+│   ├── SodiumInterface.java
+│   ├── SodiumRenderingContext.java
+│   └── IESodiumRenderSectionManager.java
+├── iris_compatibility/
+│   ├── IrisInterface.java
+│   ├── IrisPortalRenderer.java
+│   ├── ExperimentalIrisPortalRenderer.java
+│   ├── ShadowMapSwapper.java
+│   └── IEIrisShadowRenderTargets.java
+├── mixin/
+│   ├── sodium/
+│   │   ├── MixinSodiumWorldRenderer.java
+│   │   ├── MixinSodiumRenderSectionManager.java
+│   │   └── IESodiumWorldRenderer.java
+│   └── iris/
+│       ├── MixinIrisIris.java
+│       └── MixinIrisShadowRenderTargets.java
+└── IPFlywheelCompat.java</code></pre>
+
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-network-sync.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Network Synchronization System
+        </a><a href="07-mixin-system.html" class="next">
+            Mixin Injection System
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script.js"></script>
+    <script src="../../../scripts/theme.js"></script>
+    <script src="../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

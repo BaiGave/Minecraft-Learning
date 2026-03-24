@@ -1815,6 +1815,11 @@ function generateModuleIndexPage(moduleKey) {
         const actualTutorials = getActualDocFiles(tutorialsSourceDir);
         const actualAnalysis = getActualDocFiles(analysisSourceDir);
 
+        // 确保输出目录存在
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
         const indexContent = generateModuleIndex(module, actualTutorials, actualAnalysis);
         fs.writeFileSync(path.join(outputDir, 'index.html'), indexContent);
         console.log(`生成 ${module.name} 索引页`);

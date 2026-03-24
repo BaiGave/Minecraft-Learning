@@ -3,7 +3,7 @@ title: API 基础使用
 readingTime: 30
 ---
 
-# 第 8 章：API 基础使用
+# 第八章：API 基础
 
 > ⭐ **学习目标**：掌握 PortalAPI 的基本用法，能够创建和配置传送门
 
