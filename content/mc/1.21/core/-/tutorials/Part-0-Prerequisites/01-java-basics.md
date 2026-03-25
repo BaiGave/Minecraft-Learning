@@ -1,4 +1,9 @@
-# ☕ Java 基础速查
+---
+title: Java 基础速查
+readingTime: 30
+---
+
+# Java 基础速查
 
 > **面向读者**：需要阅读 Minecraft 源码的人
 > 

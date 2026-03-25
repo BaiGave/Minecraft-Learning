@@ -1,3 +1,8 @@
+---
+title: ItemStack：物品堆叠
+readingTime: 20
+---
+
 # 18 - ItemStack：物品堆叠
 
 ## 目标

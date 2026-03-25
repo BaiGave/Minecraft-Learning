@@ -1,3 +1,8 @@
+---
+title: LivingEntity——有血有肉的活物
+readingTime: 20
+---
+
 # 第22章 LivingEntity——有血有肉的活物
 
 > **注意**：以下代码示例基于 CFR 反编译结果，实际 Minecraft 源码可能有所差异。在使用时请以游戏源码为准。

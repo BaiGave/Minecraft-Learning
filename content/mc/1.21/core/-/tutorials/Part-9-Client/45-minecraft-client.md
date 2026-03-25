@@ -1,3 +1,8 @@
+---
+title: 第45章 Minecraft 客户端核心
+readingTime: 15
+---
+
 # 第45章 Minecraft 客户端核心
 
 ## 目标

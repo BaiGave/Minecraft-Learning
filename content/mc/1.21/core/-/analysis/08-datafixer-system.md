@@ -771,42 +771,152 @@ dynamic = fixerUpper.update(
 NbtCompound result = (NbtCompound) dynamic.getValue();
 ```
 
-### 10.3 自定义 Fix
+### 10.3 自定义 Fix 开发教程
+
+#### 10.3.1 为什么需要自定义 Fix
+
+当你开发 Mod 时，如果修改了游戏数据结构（如重命名方块、改变物品 NBT 格式），需要添加自定义 Fix 确保旧世界数据能正确迁移。
+
+#### 10.3.2 完整示例：重命名自定义方块
 
 ```java
-// 创建自定义修复
-public class MyCustomFix extends Fix {
-    
-    private final Map<String, String> renames;
-    
-    public MyCustomFix(Schema schema, Map<String, String> renames) {
-        super(schema, "custom_fix");
-        this.renames = renames;
+// 1. 创建自定义修复类
+public class ModBlockRenameFix extends ChoiceFix {
+    private final Map<String, String> blockRenames;
+
+    public ModBlockRenameFix(Schema schema, int version,
+                             Map<String, String> blockRenames) {
+        super(schema, false, "mod_block_rename", References.BLOCK_ENTITY, version);
+        this.blockRenames = blockRenames;
     }
-    
+
     @Override
-    public Dynamic<?> fix(Dynamic<?> data) {
-        String oldName = data.get("name").asString("");
-        String newName = renames.getOrDefault(oldName, oldName);
-        
-        return data.set("name", data.createString(newName));
+    protected TypeRewriteRule makeRule() {
+        // 创建类型规则
+        return this.facade.getChoiceType(
+            References.BLOCK_ENTITY,
+            this.getVersionKey()
+        ).revision(this.fromVersion()).type().xpath(
+            this.xpath("d/@id")  // 定位到方块 ID
+        ).visit(
+            XpatHVisitor.fromChanger(
+                pair -> pair.mapFirst(name -> {
+                    // 执行重命名
+                    String oldName = name.asString("");
+                    String newName = blockRenames.getOrDefault(oldName, oldName);
+                    return name.equals(oldName) ?
+                        name.createString(newName) : name;
+                })
+            )
+        );
     }
 }
 
-// 注册修复
-public class MySchema extends Schema {
-    
-    @Override
-    public void registerFixes(FixerUpper upper) {
-        Map<String, String> renames = Map.of(
-            "old_block", "new_block",
-            "old_item", "new_item"
+// 2. 注册自定义 Fix
+public class ModDataFixes {
+    public static final int BLOCK_RENAME_VERSION = 5000;
+
+    public static void register(DataFixerBuilder builder) {
+        // 添加 Mod 数据版本
+        builder.addSchema(BLOCK_RENAME_VERSION, ModSchema::new);
+
+        // 注册自定义修复
+        builder.getRegistryBuilder()
+            .addMigrator(
+                new ModMigrator(
+                    BLOCK_RENAME_VERSION,
+                    Map.of(
+                        "mymod:old_block", "mymod:new_block",
+                        "mymod:deprecated_block", "mymod:replacement_block"
+                    )
+                )
+            );
+    }
+
+    private static class ModSchema extends Schema {
+        public ModSchema(int versionKey, @Nullable Schema parent) {
+            super(versionKey, parent);
+        }
+
+        @Override
+        public void registerTypes(SchemaFactory factory) {
+            factory.registerSimple(
+                new ResourceLocation("mymod", "custom_block")
+            );
+        }
+    }
+}
+
+// 3. 应用到世界加载
+public class ModWorldLoader {
+    public static DataFixerUpper createDataFixer() {
+        DataFixerBuilder builder = new DataFixerBuilder(
+            DataFixerConstants.DATA_VERSION
         );
-        
-        registerFix(upper, "Custom Rename", new MyCustomFix(this, renames));
+
+        // 注册游戏原有 Fix
+        // ...
+
+        // 注册 Mod 自定义 Fix
+        ModDataFixes.register(builder);
+
+        return builder.build();
     }
 }
 ```
+
+#### 10.3.3 常见 Fix 模式
+
+| 模式 | 用途 | 代码模式 |
+|------|------|---------|
+| 重命名 | ID 映射 | `xpath + fromChanger` |
+| 添加字段 | 默认值填充 | `xpath + addElement` |
+| 删除字段 | 清理废弃数据 | `xpath + removeElement` |
+| 类型转换 | NBT 标签类型变更 | `xpath + xfrm` |
+
+#### 10.3.4 注意事项
+
+1. **版本号必须递增**：每次 Fix 都要使用更高的版本号
+2. **向后兼容**：确保旧版本数据能正确迁移
+3. **幂等性**：重复应用 Fix 不应产生错误结果
+4. **测试**：务必测试各种旧版本数据的迁移
+
+```java
+// 测试示例
+@Test
+public void testDataFixerMigration() {
+    NbtCompound oldData = createOldVersionData();
+    DataFixerUpper fixer = ModWorldLoader.createDataFixer();
+
+    // 从旧版本迁移到最新版本
+    NbtCompound migratedData = fixer.update(
+        References.STRUCTURE,
+        new Dynamic<>(NbtOps.INSTANCE, oldData),
+        MIN_VERSION,
+        DataFixerConstants.DATA_VERSION
+    ).getValue();
+
+    // 验证迁移结果
+    assertEquals("mymod:new_block",
+        migratedData.getString("BlockId"));
+}
+```
+
+---
+
+### 10.4 版本号参考表
+
+| 游戏版本 | 数据版本 | 重大变化 |
+|---------|---------|----------|
+| 1.13 | 1343 | 方块状态系统引入 |
+| 1.14 | 1515 | 村民数据结构变化 |
+| 1.15 | 1631 | 蜜蜂和蜂巢 |
+| 1.16 | 2202 | 下界更新 |
+| 1.17 | 2586 | 洞穴与山峰 |
+| 1.18 | 2865 | 世界高度扩展 |
+| 1.19 | 3120 | 幽匿系统 |
+| 1.20 | 3465 | 考古系统 |
+| 1.21 | 3953 | 当前版本 |
 
 ---
 

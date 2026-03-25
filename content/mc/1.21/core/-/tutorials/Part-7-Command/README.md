@@ -1,3 +1,8 @@
+---
+title: Part 7 命令系统
+readingTime: 15
+---
+
 # Part 7 - 命令系统（Command System）
 
 欢迎来到 Minecraft 源码分析教程的第七部分！在这一部分，我们将深入学习 Minecraft 的命令系统。

@@ -190,6 +190,38 @@
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 包结构详解
         </a>
+<a href="11-particle-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
 <a href="README.html" class="">
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 源代码分析
@@ -1000,41 +1032,154 @@ dynamic = fixerUpper.update(
 NbtCompound result = (NbtCompound) dynamic.getValue();</code></pre>
 
 
-<h3>10.3 自定义 Fix</h3>
+<h3>10.3 自定义 Fix 开发教程</h3>
+
+
+<h4>10.3.1 为什么需要自定义 Fix</h4>
+
+
+当你开发 Mod 时，如果修改了游戏数据结构（如重命名方块、改变物品 NBT 格式），需要添加自定义 Fix 确保旧世界数据能正确迁移。
+
+<h4>10.3.2 完整示例：重命名自定义方块</h4>
 
 </p>
-<p><pre class="code-block"><code class="language-java">public class MyCustomFix extends Fix {
-    
-    private final Map&lt;String, String&gt; renames;
-    
-    public MyCustomFix(Schema schema, Map&lt;String, String&gt; renames) {
-        super(schema, &quot;custom_fix&quot;);
-        this.renames = renames;
+<p><pre class="code-block"><code class="language-java">public class ModBlockRenameFix extends ChoiceFix {
+    private final Map&lt;String, String&gt; blockRenames;
+
+    public ModBlockRenameFix(Schema schema, int version,
+                             Map&lt;String, String&gt; blockRenames) {
+        super(schema, false, &quot;mod_block_rename&quot;, References.BLOCK_ENTITY, version);
+        this.blockRenames = blockRenames;
     }
-    
+
     @Override
-    public Dynamic&lt;?&gt; fix(Dynamic&lt;?&gt; data) {
-        String oldName = data.get(&quot;name&quot;).asString(&quot;&quot;);
-        String newName = renames.getOrDefault(oldName, oldName);
-        
-        return data.set(&quot;name&quot;, data.createString(newName));
+    protected TypeRewriteRule makeRule() {
+        // 创建类型规则
+        return this.facade.getChoiceType(
+            References.BLOCK_ENTITY,
+            this.getVersionKey()
+        ).revision(this.fromVersion()).type().xpath(
+            this.xpath(&quot;d/@id&quot;)  // 定位到方块 ID
+        ).visit(
+            XpatHVisitor.fromChanger(
+                pair -&gt; pair.mapFirst(name -&gt; {
+                    // 执行重命名
+                    String oldName = name.asString(&quot;&quot;);
+                    String newName = blockRenames.getOrDefault(oldName, oldName);
+                    return name.equals(oldName) ?
+                        name.createString(newName) : name;
+                })
+            )
+        );
     }
 }
 
-// 注册修复
-public class MySchema extends Schema {
-    
-    @Override
-    public void registerFixes(FixerUpper upper) {
-        Map&lt;String, String&gt; renames = Map.of(
-            &quot;old_block&quot;, &quot;new_block&quot;,
-            &quot;old_item&quot;, &quot;new_item&quot;
+// 2. 注册自定义 Fix
+public class ModDataFixes {
+    public static final int BLOCK_RENAME_VERSION = 5000;
+
+    public static void register(DataFixerBuilder builder) {
+        // 添加 Mod 数据版本
+        builder.addSchema(BLOCK_RENAME_VERSION, ModSchema::new);
+
+        // 注册自定义修复
+        builder.getRegistryBuilder()
+            .addMigrator(
+                new ModMigrator(
+                    BLOCK_RENAME_VERSION,
+                    Map.of(
+                        &quot;mymod:old_block&quot;, &quot;mymod:new_block&quot;,
+                        &quot;mymod:deprecated_block&quot;, &quot;mymod:replacement_block&quot;
+                    )
+                )
+            );
+    }
+
+    private static class ModSchema extends Schema {
+        public ModSchema(int versionKey, @Nullable Schema parent) {
+            super(versionKey, parent);
+        }
+
+        @Override
+        public void registerTypes(SchemaFactory factory) {
+            factory.registerSimple(
+                new ResourceLocation(&quot;mymod&quot;, &quot;custom_block&quot;)
+            );
+        }
+    }
+}
+
+// 3. 应用到世界加载
+public class ModWorldLoader {
+    public static DataFixerUpper createDataFixer() {
+        DataFixerBuilder builder = new DataFixerBuilder(
+            DataFixerConstants.DATA_VERSION
         );
-        
-        registerFix(upper, &quot;Custom Rename&quot;, new MyCustomFix(this, renames));
+
+        // 注册游戏原有 Fix
+        // ...
+
+        // 注册 Mod 自定义 Fix
+        ModDataFixes.register(builder);
+
+        return builder.build();
     }
 }</code></pre>
 
+
+<h4>10.3.3 常见 Fix 模式</h4>
+
+
+| 模式 | 用途 | 代码模式 |
+|------|------|---------|
+| 重命名 | ID 映射 | <code>xpath + fromChanger</code> |
+| 添加字段 | 默认值填充 | <code>xpath + addElement</code> |
+| 删除字段 | 清理废弃数据 | <code>xpath + removeElement</code> |
+| 类型转换 | NBT 标签类型变更 | <code>xpath + xfrm</code> |
+
+<h4>10.3.4 注意事项</h4>
+
+
+<ul><li><strong>版本号必须递增</strong>：每次 Fix 都要使用更高的版本号</li></ul>
+<ul><li><strong>向后兼容</strong>：确保旧版本数据能正确迁移</li></ul>
+<ul><li><strong>幂等性</strong>：重复应用 Fix 不应产生错误结果</li></ul>
+<ul><li><strong>测试</strong>：务必测试各种旧版本数据的迁移</li></ul>
+</p>
+<p><pre class="code-block"><code class="language-java">@Test
+public void testDataFixerMigration() {
+    NbtCompound oldData = createOldVersionData();
+    DataFixerUpper fixer = ModWorldLoader.createDataFixer();
+
+    // 从旧版本迁移到最新版本
+    NbtCompound migratedData = fixer.update(
+        References.STRUCTURE,
+        new Dynamic&lt;&gt;(NbtOps.INSTANCE, oldData),
+        MIN_VERSION,
+        DataFixerConstants.DATA_VERSION
+    ).getValue();
+
+    // 验证迁移结果
+    assertEquals(&quot;mymod:new_block&quot;,
+        migratedData.getString(&quot;BlockId&quot;));
+}</code></pre>
+
+
+<hr>
+
+<h3>10.4 版本号参考表</h3>
+
+
+| 游戏版本 | 数据版本 | 重大变化 |
+|---------|---------|----------|
+| 1.13 | 1343 | 方块状态系统引入 |
+| 1.14 | 1515 | 村民数据结构变化 |
+| 1.15 | 1631 | 蜜蜂和蜂巢 |
+| 1.16 | 2202 | 下界更新 |
+| 1.17 | 2586 | 洞穴与山峰 |
+| 1.18 | 2865 | 世界高度扩展 |
+| 1.19 | 3120 | 幽匿系统 |
+| 1.20 | 3465 | 考古系统 |
+| 1.21 | 3953 | 当前版本 |
 
 <hr>
 

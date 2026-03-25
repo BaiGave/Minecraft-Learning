@@ -335,6 +335,69 @@ public int readVarInt() {
 | WorldEventS2CPacket | 0x23 | 世界事件 |
 | WorldParticlesS2CPacket | 0x26 | 世界粒子 |
 
+#### 5.1.1 数据包批次机制 (Chunk Batch)
+
+Minecraft 1.19+ 引入数据包批次机制优化区块同步：
+
+```java
+// ChunkBatchStartS2CPacket - 开始区块批次
+public class ChunkBatchStartS2CPacket implements Packet<ClientPlayPacketListener> {
+    private final int chunkX;
+    private final int chunkZ;
+    private final int chunkCount;  // 预期区块数量
+
+    public ChunkBatchStartS2CPacket(int chunkX, int chunkZ, int chunkCount) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        this.chunkCount = chunkCount;
+    }
+}
+
+// ChunkBatchFinishedS2CPacket - 完成区块批次
+public class ChunkBatchFinishedS2CPacket implements Packet<ClientPlayPacketListener> {
+    private final int chunkX;
+    private final int chunkZ;
+    private final int chunksLoaded;  // 实际加载的区块数
+
+    public ChunkBatchFinishedS2CPacket(int chunkX, int chunkZ, int chunksLoaded) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        this.chunksLoaded = chunksLoaded;
+    }
+}
+```
+
+**批次机制工作流程：**
+
+```mermaid
+sequenceDiagram
+    participant Server as 服务端
+    participant Client as 客户端
+
+    Server->>Client: ChunkBatchStartS2CPacket
+    Note over Client: 开始接收新区块
+
+    loop 每个区块
+        Server->>Client: ChunkDataS2CPacket
+        Note over Client: 累积区块数据
+    end
+
+    Server->>Client: ChunkBatchFinishedS2CPacket
+    Note over Client: 批次完成，渲染所有区块
+
+    Server->>Client: ChunkRenderDistanceCenterS2CPacket
+    Note over Client: 更新渲染中心
+```
+
+**优化效果：**
+
+| 优化项 | 传统模式 | 批次模式 |
+|--------|---------|---------|
+| 网络往返 | 每区块一次 | 多区块一批 |
+| 渲染触发 | 每区块一次 | 批次完成后一次 |
+| CPU 开销 | 高（频繁状态切换） | 低（批量处理） |
+| 适用场景 | 小范围区块变化 | 大范围区块加载 |
+
 ### 5.2 数据包注册
 
 ```java

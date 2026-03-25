@@ -1,3 +1,8 @@
+---
+title: 客户端-服务端架构
+readingTime: 35
+---
+
 # 第五章：客户端-服务端架构（Client-Server Architecture）
 
 > ⭐ **理解这章，你就能明白 Minecraft 如何实现多人联机！**

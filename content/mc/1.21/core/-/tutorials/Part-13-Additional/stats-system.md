@@ -1,3 +1,8 @@
+---
+title: 统计系统
+readingTime: 15
+---
+
 # 统计系统 (Stats System)
 
 ## 目标

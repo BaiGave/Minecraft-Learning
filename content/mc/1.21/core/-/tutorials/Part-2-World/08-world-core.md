@@ -1,3 +1,8 @@
+---
+title: 世界核心：World 类
+readingTime: 20
+---
+
 # 08 - 世界核心：World 类
 
 ## 目标

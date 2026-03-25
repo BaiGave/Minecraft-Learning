@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Minecraft 1.21 粒子系统 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 架构总览
+        </a>
+<a href="02-client-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 客户端模块深度分析报告
+        </a>
+<a href="03-server-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 服务端模块分析
+        </a>
+<a href="04-world-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 世界系统深度分析
+        </a>
+<a href="05-entity-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 实体系统深度分析
+        </a>
+<a href="06-block-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 方块物品系统分析
+        </a>
+<a href="07-network-protocol.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 网络协议分析
+        </a>
+<a href="08-datafixer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 数据修复（DataFixer）系统分析
+        </a>
+<a href="09-registry-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 注册表（Registry）系统分析
+        </a>
+<a href="10-package-structure.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 包结构详解
+        </a>
+<a href="11-particle-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Minecraft 1.21 粒子系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Minecraft 1.21 粒子系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 粒子系统</h1>
+<blockquote><p>基于 CFR 0.2.2 反编译源代码的粒子系统完整分析</p></blockquote>
+<blockquote><p>版本信息: Protocol 767, World Version 3953</p></blockquote>
+<p><hr></p>
+<h2 id="1-概述">1. 概述</h2>
+<p>粒子系统是 Minecraft 中视觉效果的核心组件，负责实现火焰、烟雾、气泡、爆炸、尘土等数百种视觉特效。1.21 版本对粒子系统进行了多项优化，包括更高效的精灵图加载和粒子批次渲染。</p>
+<h3>1.1 粒子系统架构</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    粒子系统核心架构                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │  ParticleType    │   │     ParticleEffect          │   │
+│  │  (类型定义)        │◄──│     (效果参数)               │   │
+│  └────────┬─────────┘   └──────────────┬─────────────┘   │
+│           │                              │                  │
+│           │         ┌────────────────────┘                  │
+│           ▼         ▼                                       │
+│  ┌──────────────────────────┐                              │
+│  │      Particle             │                              │
+│  │  (实际显示的粒子实例)       │                              │
+│  └────────────┬─────────────┘                              │
+│               │                                             │
+│               ▼                                             │
+│  ┌──────────────────────────┐                              │
+│  │   ParticleManager         │                              │
+│  │   (粒子管理器 - 客户端)    │                              │
+│  └──────────────────────────┘                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2-核心类详解">2. 核心类详解</h2>
+<h3>2.1 ParticleType - 粒子类型基类</h3>
+<p>粒子类型是所有粒子的定义基类，类似于注册表中的键，决定了粒子的基本行为。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/ParticleType.java">public abstract class ParticleType&lt;T extends ParticleEffect&gt; {
+    private final boolean alwaysShow;
+
+    protected ParticleType(boolean alwaysShow) {
+        this.alwaysShow = alwaysShow;
+    }
+
+    // 某些粒子（如爆炸）不受距离限制，总是显示
+    public boolean shouldAlwaysSpawn() {
+        return this.alwaysShow;
+    }
+
+    // 用于数据包序列化
+    public abstract MapCodec&lt;T&gt; getCodec();
+    // 用于网络包传输
+    public abstract PacketCodec&lt;? super RegistryByteBuf, T&gt; getPacketCodec();
+}</code></pre>
+<p><strong>关键设计</strong>：<code>alwaysShow</code> 标志用于区分局部粒子（如火焰，只有靠近才能看到）和全局粒子（如大爆炸，在任意距离都能看到）。</p>
+<h3>2.2 SimpleParticleType - 简单粒子类型</h3>
+<p>不需要额外参数的粒子使用 <code>SimpleParticleType</code>，它同时实现了 <code>ParticleEffect</code> 接口。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/SimpleParticleType.java">public class SimpleParticleType extends ParticleType&lt;SimpleParticleType&gt;
+                                implements ParticleEffect {
+    protected SimpleParticleType(boolean alwaysShow) {
+        super(alwaysShow);
+    }
+
+    // 简单粒子直接返回自身作为类型标识
+    public SimpleParticleType getType() {
+        return this;
+    }
+}</code></pre>
+<h3>2.3 ParticleEffect - 粒子效果接口</h3>
+<p><code>ParticleEffect</code> 是粒子的"配方单"，包含了生成粒子所需的所有参数。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/ParticleEffect.java">public interface ParticleEffect {
+    // 返回粒子类型
+    ParticleType&lt;?&gt; getType();
+}</code></pre>
+<h3>2.4 Particle - 粒子实例基类</h3>
+<p>实际的粒子对象，存储位置、速度、生命周期等运行时状态。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/Particle.java">public abstract class Particle {
+    protected final MinecraftClient client;
+    protected double x;
+    protected double y;
+    protected double z;
+    protected double vx;
+    protected double vy;
+    protected double vz;
+    protected float size;
+    protected float r;
+    protected float g;
+    protected float b;
+    protected float alpha;
+    protected int age;
+    protected int maxAge;
+    protected boolean dead;
+
+    // 每 tick 更新粒子状态
+    public abstract void tick();
+
+    // 渲染粒子到屏幕
+    public abstract void render(ParticleRenderState renderer, MatrixStack matrices,
+                                 float delta);
+
+    // 获取精灵图索引（用于动画粒子）
+    protected int getWideDustSprite(float delta, SpriteSet sprites) {
+        float f = MathHelper.clamp((this.size - delta * this.size) / 8.0F, 0.0F, 1.0F);
+        int i = this.age * sprites.size() / this.maxAge;
+        return i;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="3-内置粒子类型注册表">3. 内置粒子类型注册表</h2>
+<p><code>ParticleTypes</code> 静态类注册了所有内置粒子类型：</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/ParticleTypes.java">public class ParticleTypes {
+    // ===== 基础粒子 =====
+    public static final SimpleParticleType AMBIENT_ENTITY_EFFECT = register(&quot;ambient_entity_effect&quot;, false);
+    public static final SimpleParticleType ANGRY_VILLAGER = register(&quot;angry_villager&quot;, false);
+    public static final SimpleParticleType BLOCK = register(&quot;block&quot;, false);
+    public static final SimpleParticleType BUBBLE = register(&quot;bubble&quot;, false);
+    public static final SimpleParticleType CLOUD = register(&quot;cloud&quot;, false);
+    public static final SimpleParticleType CRIT = register(&quot;crit&quot;, false);
+    public static final SimpleParticleType CURRENT_DOWN = register(&quot;current_down&quot;, false);
+    public static final SimpleParticleType DAME_MAGIC = register(&quot;dame_magic&quot;, false);
+    public static final SimpleParticleType DOLPHIN = register(&quot;dolphin&quot;, false);
+    public static final SimpleParticleType DRAGON_BREATH = register(&quot;dragon_breath&quot;, false);
+    public static final SimpleParticleType DRIPPING_LAVA = register(&quot;dripping_lava&quot;, false);
+    public static final SimpleParticleType END_ROD = register(&quot;end_rod&quot;, false);
+    public static final SimpleParticleType EXPLOSION = register(&quot;explosion&quot;, true);
+    public static final SimpleParticleType EXPLOSION_EMITTER = register(&quot;explosion_emitter&quot;, true);
+    public static final SimpleParticleType FALLING_DUST = register(&quot;falling_dust&quot;, false);
+    public static final SimpleParticleType FIREWORK = register(&quot;firework&quot;, false);
+    public static final SimpleParticleType FLAME = register(&quot;flame&quot;, false);
+    public static final SimpleParticleType FLASH = register(&quot;flash&quot;, false);
+    public static final SimpleParticleType HAPPY_VILLAGER = register(&quot;happy_villager&quot;, false);
+    public static final SimpleParticleType HEART = register(&quot;heart&quot;, false);
+    public static final SimpleParticleType INSTA = register(&quot;insta&quot;, false);
+    public static final SimpleParticleType ITEM = register(&quot;item&quot;, false);
+    public static final SimpleParticleType LAVA = register(&quot;lava&quot;, false);
+    public static final SimpleParticleType MYCELIUM = register(&quot;mycelium&quot;, false);
+    public static final SimpleParticleType NOTE = register(&quot;note&quot;, false);
+    public static final SimpleParticleType POOF = register(&quot;poof&quot;, false);
+    public static final SimpleParticleType PORTAL = register(&quot;portal&quot;, false);
+    public static final SimpleParticleType RAIN = register(&quot;rain&quot;, false);
+    public static final SimpleParticleType SMOKE = register(&quot;smoke&quot;, false);
+    public static final SimpleParticleType SNEEZE = register(&quot;sneeze&quot;, false);
+    public static final SimpleParticleType SOUL = register(&quot;soul&quot;, false);
+    public static final SimpleParticleType SPIT = register(&quot;spit&quot;, false);
+    public static final SimpleParticleType SQUID_INK = register(&quot;squid_ink&quot;, false);
+    public static final SimpleParticleType SWEEP_ATTACK = register(&quot;sweep_attack&quot;, false);
+    public static final SimpleParticleType TOTEM_OF_UNDYING = register(&quot;totem_of_undying&quot;, false);
+    public static final SimpleParticleType WARPED_SPORE = register(&quot;warped_spore&quot;, false);
+    public static final SimpleParticleType WHITE_ASH = register(&quot;white_ash&quot;, false);
+    public static final SimpleParticleType ASH = register(&quot;ash&quot;, false);
+
+    // ===== 带参数的粒子类型 =====
+    public static final ParticleType&lt;DustColorTransitionParticleEffect&gt; DUST_COLOR_TRANSITION =
+        register(&quot;dust_color_transition&quot;, false, ...);
+
+    public static final ParticleType&lt;DustParticleEffect&gt; DUST =
+        register(&quot;dust&quot;, false, DustParticleEffect::createCodec, DustParticleEffect.PACKET_CODEC);
+
+    public static final ParticleType&lt;BlockStateParticleEffect&gt; BLOCK =
+        register(&quot;block&quot;, false, BlockStateParticleEffect::createCodec, ...);
+
+    public static final ParticleType&lt;ItemStackParticleEffect&gt; ITEM =
+        register(&quot;item&quot;, false, ItemStackParticleEffect::createCodec, ...);
+
+    public static final ParticleType&lt;SculkSoulParticleEffect&gt; SCULK_SOUL =
+        register(&quot;sculk_soul&quot;, false, ...);
+
+    public static final ParticleType&lt;ShriekParticleEffect&gt; SHRIEK =
+        register(&quot;shriek&quot;, false, ...);
+
+    public static final ParticleType&lt;SpawnerChildParticleEffect&gt; SPAWNER =
+        register(&quot;spawner&quot;, false, ...);
+
+    public static final ParticleType&lt;VibrationParticleEffect&gt; VIBRATION =
+        register(&quot;vibration&quot;, false, ...);
+}</code></pre>
+<p><hr></p>
+<h2 id="4-带参数的粒子效果类">4. 带参数的粒子效果类</h2>
+<h3>4.1 DustParticleEffect - 彩色灰尘粒子</h3>
+<p>用于红石粉、滑石粉等彩色粒子效果。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/DustParticleEffect.java">public class DustParticleEffect extends AbstractDustParticleEffect {
+    public static final Vector3f RED = Vec3d.unpackRgb(0xFF0000).toVector3f();
+    public static final Vector3f GREEN = Vec3d.unpackRgb(0x00FF00).toVector3f();
+    public static final Vector3f BLUE = Vec3d.unpackRgb(0x0000FF).toVector3f();
+
+    public static final DustParticleEffect DEFAULT = new DustParticleEffect(RED, 1.0F);
+
+    private final Vector3f color;
+
+    protected DustParticleEffect(Vector3f color, float scale) {
+        super(scale);
+        this.color = color;
+    }
+
+    public ParticleType&lt;DustParticleEffect&gt; getType() {
+        return ParticleTypes.DUST;
+    }
+
+    public Vector3f getColor() {
+        return this.color;
+    }
+
+    // 序列化 Codec（用于 JSON 解析）
+    public static MapCodec&lt;DustParticleEffect&gt; createCodec() {
+        return RecordCodecBuilder.mapCodec(instance -&gt;
+            instance.group(
+                Vector3f.CODEC.fieldOf(&quot;color&quot;).forGetter(DustParticleEffect::getColor),
+                Codec.FLOAT.fieldOf(&quot;scale&quot;).forGetter(AbstractDustParticleEffect::getScale)
+            ).apply(instance, DustParticleEffect::new)
+        );
+    }
+
+    // PacketCodec（用于网络传输）
+    public static final PacketCodec&lt;RegistryByteBuf, DustParticleEffect&gt; PACKET_CODEC =
+        PacketCodec.tuple(
+            PacketCodec.of((buf, effect) -&gt; {
+                buf.writeFloat(effect.color.getX());
+                buf.writeFloat(effect.color.getY());
+                buf.writeFloat(effect.color.getZ());
+            }, buf -&gt; new Vector3f(buf.readFloat(), buf.readFloat(), buf.readFloat())),
+            PacketCodec.FLOAT,
+            DustParticleEffect::new
+        );
+}</code></pre>
+<h3>4.2 BlockStateParticleEffect - 方块状态粒子</h3>
+<p>显示方块碎片的粒子效果，用于挖掘方块时的视觉反馈。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/BlockStateParticleEffect.java">public class BlockStateParticleEffect implements ParticleEffect {
+    private final ParticleType&lt;BlockStateParticleEffect&gt; type;
+    private final BlockState state;
+
+    public BlockStateParticleEffect(ParticleType&lt;BlockStateParticleEffect&gt; type, BlockState state) {
+        this.type = type;
+        this.state = state;
+    }
+
+    public BlockState getState() {
+        return this.state;
+    }
+
+    public ParticleType&lt;BlockStateParticleEffect&gt; getType() {
+        return this.type;
+    }
+}</code></pre>
+<h3>4.3 DustColorTransitionParticleEffect - 颜色过渡粒子</h3>
+<p>1.19+ 引入的渐变颜色粒子效果。</p>
+<pre class="code-block"><code class="language-net/minecraft/particle/DustColorTransitionParticleEffect.java">public class DustColorTransitionParticleEffect extends AbstractDustParticleEffect {
+    private final Vector3f toColor;
+
+    public DustColorTransitionParticleEffect(Vector3f fromColor, Vector3f toColor, float scale) {
+        super(scale);
+        this.toColor = toColor;
+    }
+
+    // 渐变目标颜色
+    public Vector3f getToColor() {
+        return this.toColor;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5-粒子生成流程">5. 粒子生成流程</h2>
+<h3>5.1 世界级生成方法</h3>
+<p><code>World</code> 类提供了多种粒子生成方法：</p>
+<pre class="code-block"><code class="language-net/minecraft/world/World.java">public void addParticle(ParticleEffect effect, double x, double y, double z,
+                        double velocityX, double velocityY, double velocityZ) {
+    if (this.isClient) {
+        this.particleManager.addParticle(effect, x, y, z, velocityX, velocityY, velocityZ);
+    }
+}
+
+// 仅指定玩家能看到的粒子
+public void addParticle(ParticleEffect effect, boolean alwaysShow, double x, double y, double z,
+                        double velocityX, double velocityY, double velocityZ) {
+    if (this.isClient) {
+        this.particleManager.addParticle(effect, alwaysShow, x, y, z, velocityX, velocityY, velocityZ);
+    }
+}
+
+// 同步全局粒子事件
+public void syncGlobalEvent(int eventId, Vec3d pos, int data) {
+    if (this.isClient) {
+        ClientPacketListenerUtil.handleGlobalEvent(this, eventId, pos, data);
+    } else {
+        ServerPacketListenerUtil.handleGlobalEvent(this, eventId, pos, data);
+    }
+}</code></pre>
+<h3>5.2 粒子生成流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    subgraph 服务端侧
+        A[游戏事件触发<br/>挖掘方块/攻击实体] --> B[服务端调用 World#addParticle]
+        B --> C[查找或创建 PacketByteBuf]
+        C --> D[PacketHandler 编码粒子参数]
+        D --> E[通过网络发送 S2CParticlePacket]
+    end
+
+    subgraph 网络传输
+        E --> F[S2C Particle Packet<br/>Protocol 767]
+    end
+
+    subgraph 客户端侧
+        G[ClientPlayNetworkHandler 接收] --> H[ClientPlayInteractionManager<br/>处理粒子数据包]
+        H --> I[ParticleManager.addParticle]
+        I --> J{粒子类型检查}
+        J -->|内置类型| K[直接创建粒子]
+        J -->|自定义类型| L[查找注册的工厂]
+        K --> M[分配到粒子列表]
+        L --> M
+        M --> N[ParticleRenderState<br/>批次渲染]
+        N --> O[显示到屏幕]
+    end</div>
+</div>
+<p><hr></p>
+<h2 id="6-粒子管理器">6. 粒子管理器</h2>
+<p><code>ParticleManager</code> 是客户端粒子系统的核心，负责加载、调度和渲染所有粒子。</p>
+<pre class="code-block"><code class="language-net/minecraft/client/particle/ParticleManager.java">public class ParticleManager implements ResourceReloader, AutoCloseable {
+    // 粒子纹理图集
+    private final SpriteAtlasTexture spriteAtlas;
+
+    // 所有活跃粒子的列表
+    private final ObjectList&lt;Particle&gt; particles = new ObjectArrayList&lt;&gt;(16384);
+
+    // 待移除粒子索引
+    private final IntArray pendingParticles = new IntArray(1024);
+
+    // 精灵图池
+    private final Map&lt;ParticleType&lt;?&gt;, SpriteSet&gt; spriteSets;
+
+    // 纹理加载器
+    private final DynamicTextureManager textureManager;
+
+    // 最大粒子数量限制
+    private static final int MAX_PARTICLES = 16384;
+
+    // 添加粒子到世界
+    public &lt;T extends ParticleEffect&gt; void addParticle(T effect, double x, double y, double z,
+                                                        double velocityX, double velocityY, double velocityZ) {
+        this.addParticle(effect, false, x, y, z, velocityX, velocityY, velocityZ);
+    }
+
+    // 添加带距离限制的粒子
+    public &lt;T extends ParticleEffect&gt; void addParticle(T effect, boolean alwaysShow,
+                                                         double x, double y, double z,
+                                                         double velocityX, double velocityY, double velocityZ) {
+        Particle particle = this.makeParticle(effect, x, y, z, velocityX, velocityY, velocityZ);
+        if (particle != null) {
+            this.particles.add(particle);
+            if (this.particles.size() &gt; MAX_PARTICLES) {
+                this.particles.remove(this.particles.size() - 1);
+            }
+        }
+    }
+
+    // 创建粒子实例（通过工厂）
+    private &lt;T extends ParticleEffect&gt; Particle makeParticle(T effect, double x, double y, double z,
+                                                                double velocityX, double velocityY, double velocityZ) {
+        ParticleFactory&lt;T&gt; factory = this.factoryMap.get(effect.getType());
+        if (factory != null) {
+            return factory.create(effect, this.clientWorld, this.spriteSets.get(effect.getType()),
+                                   x, y, z, velocityX, velocityY, velocityZ);
+        }
+        return null;
+    }
+
+    // 每帧渲染
+    public void render(LayeredRenderLayers&lt;ParticleRenderingContext&gt; layers,
+                       Camera camera, float delta) {
+        // 使用分层渲染器渲染粒子
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7-粒子工厂注册系统">7. 粒子工厂注册系统</h2>
+<h3>7.1 ParticleFactoryRegistry</h3>
+<p>Fabric API 提供的工厂注册系统允许 Mod 添加自定义粒子：</p>
+<pre class="code-block"><code class="language-net/fabricmc/fabric/api/particle/v1/ParticleFactoryRegistry.java">@Environment(EnvType.CLIENT)
+public interface ParticleFactoryRegistry {
+    // 注册简单粒子的工厂
+    &lt;T extends SimpleParticleType&gt; void register(T type, ParticleFactory&lt;T&gt; factory);
+
+    // 注册带参数粒子的工厂
+    &lt;T extends ParticleEffect&gt; void register(ParticleType&lt;T&gt; type, ParticleFactory&lt;T&gt; factory);
+
+    // 注册延迟加载精灵图的工厂（推荐）
+    &lt;T extends ParticleEffect&gt; void register(ParticleType&lt;T&gt; type, SpriteAwareFactory&lt;T&gt; factory);
+}</code></pre>
+<h3>7.2 工厂实现示例</h3>
+<pre class="code-block"><code class="language-java">public interface ParticleFactory&lt;T extends ParticleEffect&gt; {
+    Particle create(T parameters, ClientWorld world, SpriteSet sprites,
+                    double x, double y, double z,
+                    double vx, double vy, double vz);
+}
+
+// 延迟加载精灵图的工厂
+public interface SpriteAwareFactory&lt;T extends ParticleEffect&gt; {
+    Particle create(T parameters, ClientWorld world, SpriteSet sprites,
+                    double x, double y, double z,
+                    double vx, double vy, double vz);
+}</code></pre>
+<h3>7.3 内置粒子工厂示例</h3>
+<pre class="code-block"><code class="language-net/minecraft/client/particle/DustParticle.java">public class DustParticle extends SpriteBillboardParticle {
+    private final Vector3f fromColor;
+    private Vector3f toColor;
+
+    public DustParticle(ClientWorld world, double x, double y, double z,
+                        double vx, double vy, double vz,
+                        Vector3f fromColor, Vector3f toColor, float scale) {
+        super(world, x, y, z, vx, vy, vz);
+        this.fromColor = fromColor;
+        this.toColor = toColor;
+        this.size = scale;
+        // ...
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // 颜色插值
+        float ratio = (float) this.age / this.maxAge;
+        this.colorRed = fromColor.getX() + (toColor.getX() - fromColor.getX()) * ratio;
+        this.colorGreen = fromColor.getY() + (toColor.getY() - fromColor.getY()) * ratio;
+        this.colorBlue = fromColor.getZ() + (toColor.getZ() - fromColor.getZ()) * ratio;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8-常见粒子类型速查表">8. 常见粒子类型速查表</h2>
+<table class="data-table"><thead><tr><th>ID</th><th>类</th><th>说明</th><th>常用场景</th></tr></thead><tbody><tr><td><code>flame</code></td><td>SimpleParticleType</td><td>火焰</td><td>熔炉、火把、岩浆块</td></tr><tr><td><code>smoke</code></td><td>SimpleParticleType</td><td>烟雾</td><td>营火、烟熏炉</td></tr><tr><td><code>bubble</code></td><td>SimpleParticleType</td><td>气泡</td><td>水下、喷泉</td></tr><tr><td><code>heart</code></td><td>SimpleParticleType</td><td>爱心</td><td>繁殖、治疗</td></tr><tr><td><code>crit</code></td><td>SimpleParticleType</td><td>暴击</td><td>暴击伤害数字</td></tr><tr><td><code>enchant</code></td><td>SimpleParticleType</td><td>附魔</td><td>附魔台、书架</td></tr><tr><td><code>explosion</code></td><td>SimpleParticleType</td><td>爆炸碎片</td><td>TNT、恶魂火球</td></tr><tr><td><code>dust</code></td><td>DustParticleEffect</td><td>彩色灰尘</td><td>红石粉、滑石粉</td></tr><tr><td><code>block</code></td><td>BlockStateParticleEffect</td><td>方块碎片</td><td>挖掘方块</td></tr><tr><td><code>item</code></td><td>ItemStackParticleEffect</td><td>物品图标</td><td>消耗物品动画</td></tr><tr><td><code>note</code></td><td>SimpleParticleType</td><td>音符</td><td>音符盒</td></tr><tr><td><code>dust<em>color</em>transition</code></td><td>DustColorTransitionParticleEffect</td><td>颜色渐变</td><td>末影珍珠落地</td></tr><tr><td><code>shriek</code></td><td>ShriekParticleEffect</td><td>尖叫声</td><td>循声守望者</td></tr><tr><td><code>sculk<em>soul</code></td><td>SculkSoulParticleEffect</td><td>幽魂</td><td>下界反应核</td></tr><tr><td><code>vibration</code></td><td>VibrationParticleEffect</td><td>振动</td><td>音符盒、手柄</td></tr><tr><td><code>soul</code></td><td>SimpleParticleType</td><td>灵魂</td><td>灵魂营火</td></tr><tr><td><code>ash</code></td><td>SimpleParticleType</td><td>灰烬</td><td>下界生物死亡</td></tr><tr><td><code>white</em>ash</code></td><td>SimpleParticleType</td><td>白灰</td><td>远古守卫者死亡</td></tr></tbody></table>
+<hr></p>
+<h2 id="9-粒子系统类图">9. 粒子系统类图</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class ParticleType~T~ {
+        <<abstract>>
+        +boolean alwaysShow
+        +shouldAlwaysSpawn() boolean
+        +getCodec() MapCodec~T~
+        +getPacketCodec() PacketCodec
+    }
+
+    class SimpleParticleType {
+        +getType() SimpleParticleType
+    }
+
+    class ParticleEffect {
+        <<interface>>
+        +getType() ParticleType~?~
+    }
+
+    class Particle {
+        <<abstract>>
+        +double x, y, z
+        +double vx, vy, vz
+        +float size, alpha
+        +int age, maxAge
+        +tick() void
+        +render() void
+    }
+
+    class SpriteBillboardParticle {
+        +Sprite sprite
+        +render() void
+    }
+
+    class DustParticle {
+        +Vector3f fromColor, toColor
+        +tick() void
+    }
+
+    class BlockParticle {
+        +BlockState state
+        +tick() void
+    }
+
+    class ItemParticle {
+        +ItemStack stack
+        +tick() void
+    }
+
+    class ParticleTypes {
+        <<static registry>>
+        +FLAME SimpleParticleType
+        +SMOKE SimpleParticleType
+        +DUST DustParticleEffect
+        +BLOCK BlockStateParticleEffect
+    }
+
+    class ParticleManager {
+        +SpriteAtlasTexture spriteAtlas
+        +ObjectList~Particle~ particles
+        +addParticle() void
+        +makeParticle() Particle
+        +render() void
+    }
+
+    ParticleType <|.. SimpleParticleType
+    ParticleType --> ParticleEffect : type parameter
+    ParticleEffect <|.. SimpleParticleType
+    ParticleEffect <|.. DustParticleEffect
+    ParticleEffect <|.. BlockStateParticleEffect
+    Particle <|-- SpriteBillboardParticle
+    SpriteBillboardParticle <|-- DustParticle
+    SpriteBillboardParticle <|-- BlockParticle
+    SpriteBillboardParticle <|-- ItemParticle
+    ParticleTypes --> ParticleType : registers
+    ParticleManager --> Particle : manages</div>
+</div>
+<p><hr></p>
+<h2 id="10-数据包格式">10. 数据包格式</h2>
+<h3>10.1 S2C Particle Packet</h3>
+<p>粒子通过 <code>S2CParticlePacket</code> 在网络上传输：</p>
+<pre class="code-block"><code class="language-text">| 字段 | 类型 | 说明 |
+|------|------|------|
+| Particle ID | VarInt | 粒子类型的数字 ID |
+| Keep Long | Boolean | 是否保留长坐标（相对于玩家的偏移） |
+| Position | Double[3] 或 Float[3] | 根据 Keep Long 决定 |
+| Velocity | Byte[3] | 速度向量（归一化到 -127 ~ 127） |
+| Data | Variable | 粒子特定参数（通过 PacketCodec 解码） |</code></pre>
+<h3>10.2 Velocity 编码</h3>
+<p>速度使用 1 个字节表示每个分量，范围 [-127, 127]，实际速度通过以下公式计算：</p>
+<pre class="code-block"><code class="language-java">public static double decodeVelocity(byte b) {
+    return (double) b / 4096.0;  // 归一化到 [-0.031, 0.031]
+}</code></pre>
+<p><hr></p>
+<h2 id="11-性能优化">11. 性能优化</h2>
+<h3>11.1 粒子数量限制</h3>
+<p><ul><li>客户端最大活跃粒子数：<code>MAX_PARTICLES = 16384</code></li>
+<li>超出限制时移除最旧的粒子</li>
+<li>可通过游戏设置中的"粒子"选项调整可见距离</li></ul></p>
+<h3>11.2 精灵图批处理</h3>
+<p>粒子使用 <code>SpriteAtlasTexture</code> 进行批处理渲染：
+<ul><li>所有粒子精灵打包到单一纹理图集中</li>
+<li>减少纹理绑定次数</li>
+<li>支持精灵动画（通过帧索引切换）</li></ul></p>
+<h3>11.3 距离剔除</h3>
+<p><ul><li>非 <code>alwaysShow</code> 粒子在超过一定距离后不再渲染</li>
+<li>渲染前通过相机视锥体剔除</li></ul></p>
+<p><hr></p>
+<h2 id="12-总结">12. 总结</h2>
+<table class="data-table"><thead><tr><th>组件</th><th>职责</th><th>关键类</th></tr></thead><tbody><tr><td><code>ParticleType</code></td><td>粒子类型定义</td><td>决定粒子的基本行为</td></tr><tr><td><code>ParticleEffect</code></td><td>粒子效果配方</td><td>包含生成粒子所需的所有参数</td></tr><tr><td><code>SimpleParticleType</code></td><td>无参数粒子</td><td>火焰、烟雾等简单粒子</td></tr><tr><td><code>Particle</code></td><td>粒子实例</td><td>存储运行时状态（位置、速度等）</td></tr><tr><td><code>SpriteBillboardParticle</code></td><td>精灵图粒子</td><td>渲染带纹理/动画的粒子</td></tr><tr><td><code>ParticleManager</code></td><td>粒子管理器</td><td>加载、调度、渲染粒子</td></tr><tr><td><code>ParticleFactory</code></td><td>工厂接口</td><td>创建粒子实例</td></tr></tbody></table>
+粒子系统遵循 <strong>类型注册 → 效果创建 → 实例生成 → 批次渲染</strong> 的数据流，通过 PacketCodec 实现高效的客户端-服务端通信。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="10-package-structure.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 1.21 包结构详解
+        </a><a href="12-sound-system.html" class="next">
+            Minecraft 1.21 声音系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

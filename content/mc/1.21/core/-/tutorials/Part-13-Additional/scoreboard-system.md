@@ -1,3 +1,8 @@
+---
+title: 记分板系统
+readingTime: 15
+---
+
 # 记分板系统 (Scoreboard System)
 
 ## 目标

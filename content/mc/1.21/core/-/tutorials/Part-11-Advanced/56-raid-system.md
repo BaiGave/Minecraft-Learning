@@ -1,3 +1,8 @@
+---
+title: 第56章 袭击系统
+readingTime: 15
+---
+
 # 第56章 袭击系统 (Raid System)
 
 ## 目标

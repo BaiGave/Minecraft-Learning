@@ -1,3 +1,8 @@
+---
+title: 玩家大管家 PlayerManager
+readingTime: 15
+---
+
 # 第五十章：玩家大管家 - PlayerManager
 
 ## 目标

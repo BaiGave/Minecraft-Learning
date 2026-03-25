@@ -1,4 +1,9 @@
-# 第38章 Brigadier 基础 —— Minecraft 命令解析的秘密武器
+---
+title: 第38章 Brigadier 基础
+readingTime: 24
+---
+
+# 第38章 Brigadier 基础
 
 ## 目标
 

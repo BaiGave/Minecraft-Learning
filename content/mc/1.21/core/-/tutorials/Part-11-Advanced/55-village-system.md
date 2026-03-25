@@ -1,3 +1,8 @@
+---
+title: 第55章 村民系统
+readingTime: 15
+---
+
 # 第55章 村民系统 (Village System)
 
 ## 目标

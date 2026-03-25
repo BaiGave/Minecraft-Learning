@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Minecraft 1.21 战利品系统 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 架构总览
+        </a>
+<a href="02-client-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 客户端模块深度分析报告
+        </a>
+<a href="03-server-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 服务端模块分析
+        </a>
+<a href="04-world-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 世界系统深度分析
+        </a>
+<a href="05-entity-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 实体系统深度分析
+        </a>
+<a href="06-block-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 方块物品系统分析
+        </a>
+<a href="07-network-protocol.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 网络协议分析
+        </a>
+<a href="08-datafixer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 数据修复（DataFixer）系统分析
+        </a>
+<a href="09-registry-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 注册表（Registry）系统分析
+        </a>
+<a href="10-package-structure.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 包结构详解
+        </a>
+<a href="11-particle-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Minecraft 1.21 战利品系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Minecraft 1.21 战利品系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 战利品系统</h1>
+<blockquote><p>基于 CFR 0.2.2 反编译源代码的战利品系统完整分析</p></blockquote>
+<blockquote><p>版本信息: Protocol 767, World Version 3953</p></blockquote>
+<p><hr></p>
+<h2 id="1-概述">1. 概述</h2>
+<p>战利品系统（Loot System）是 Minecraft 物品获取的核心机制，控制着方块掉落、实体掉落、钓鱼、箱子奖励等所有物品生成逻辑。系统通过 JSON 数据包定义，使用条件（Condition）和函数（Function）实现高度灵活的掉落配置。</p>
+<h3>1.1 战利品系统架构</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    战利品系统核心架构                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   LootTable       │   │     LootContext             │   │
+│  │   (战利品表)       │◄──│     (上下文)                │   │
+│  └────────┬─────────┘   └──────────────┬─────────────┘   │
+│           │                              │                  │
+│           ▼                              ▼                  │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   LootPool        │   │  LootContextParameters      │   │
+│  │   (战利品池)       │   │  (上下文参数)                │   │
+│  └────────┬─────────┘   └──────────────────────────────┘   │
+│           │                                             │
+│    ┌──────┴──────┐                                       │
+│    ▼             ▼                                        │
+│ ┌─────────┐ ┌──────────┐                                 │
+│ │LootEntry│ │LootCondition│                               │
+│ │(条目)   │ │(条件)     │                                 │
+│ └─────────┘ └──────────┘                                 │
+│    │                                                        │
+│    ▼                                                        │
+│ ┌──────────┐                                                │
+│ │LootFunction│                                               │
+│ │(函数)    │                                                │
+│ └──────────┘                                                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2-核心类详解">2. 核心类详解</h2>
+<h3>2.1 LootTable - 战利品表</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/LootTable.java">public class LootTable {
+    // 上下文类型（决定能使用什么条件/函数）
+    private final LootContextType type;
+
+    // 随机序列 ID
+    private final Optional&lt;Identifier&gt; randomSequenceId;
+
+    // 所有的池
+    private final List&lt;LootPool&gt; pools;
+
+    // 全局函数
+    private final List&lt;LootFunction&gt; functions;
+
+    // 生成战利品
+    public void generateLoot(LootContextParameterSet parameters,
+                            Consumer&lt;ItemStack&gt; lootConsumer) {
+        // 创建上下文
+        LootContext context = new LootContext.Builder(parameters)
+            .withRandom(this.randomSequenceId)
+            .build(this.type);
+
+        // 为每个池生成战利品
+        for (LootPool pool : this.pools) {
+            if (pool.checkCondition(context)) {
+                pool.addLoot(lootConsumer, context);
+            }
+        }
+
+        // 应用全局函数
+        for (LootFunction function : this.functions) {
+            // 对所有已生成的物品应用函数
+        }
+    }
+
+    // 获取重复次数
+    public int getRolls(LootContext context) {
+        int rolls = 1;
+        for (LootPool pool : this.pools) {
+            rolls += pool.getRolls(context);
+        }
+        return rolls;
+    }
+
+    // 验证战利品表
+    public void validate(LootReporter reporter) {
+        for (LootPool pool : this.pools) {
+            pool.validate(reporter);
+        }
+    }
+}</code></pre>
+<h3>2.2 LootPool - 战利品池</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/LootPool.java">public class LootPool {
+    // 奖品条目
+    public final List&lt;LootPoolEntry&gt; entries;
+
+    // 生效条件
+    public final List&lt;LootCondition&gt; conditions;
+
+    // 处理函数
+    public final List&lt;LootFunction&gt; functions;
+
+    // 抽取次数
+    public final LootNumberProvider rolls;
+
+    // 额外抽取次数（受幸运影响）
+    public final LootNumberProvider bonusRolls;
+
+    // 添加战利品
+    public void addLoot(Consumer&lt;ItemStack&gt; lootConsumer, LootContext context) {
+        // 计算实际抽取次数
+        int rolls = this.rolls.getInt(context);
+        int bonusRolls = this.bonusRolls.getInt(context);
+        int totalRolls = rolls + bonusRolls;
+
+        // 多次抽取
+        for (int i = 0; i &lt; totalRolls; i++) {
+            // 根据权重随机选择条目
+            LootPoolEntry entry = this.chooseEntry(context);
+            if (entry != null) {
+                // 展开条目（如引用其他表）
+                entry.expand(context, expanded -&gt; {
+                    // 生成物品
+                    expanded.generateLoot(lootConsumer, context);
+                });
+            }
+        }
+    }
+
+    // 检查条件
+    public boolean checkCondition(LootContext context) {
+        for (LootCondition condition : this.conditions) {
+            if (!condition.test(context)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 根据权重选择条目
+    private LootPoolEntry chooseEntry(LootContext context) {
+        float totalWeight = 0;
+        for (LootPoolEntry entry : this.entries) {
+            if (entry.isEnabled(context)) {
+                totalWeight += entry.getWeight(context).getWeight();
+            }
+        }
+
+        float randomValue = context.getRandom().nextFloat() * totalWeight;
+        float currentWeight = 0;
+
+        for (LootPoolEntry entry : this.entries) {
+            if (entry.isEnabled(context)) {
+                currentWeight += entry.getWeight(context).getWeight();
+                if (currentWeight &gt;= randomValue) {
+                    return entry;
+                }
+            }
+        }
+
+        return this.entries.get(context.getRandom().nextInt(this.entries.size()));
+    }
+}</code></pre>
+<h3>2.3 LootCondition - 条件接口</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/condition/LootCondition.java">public interface LootCondition {
+    // 测试条件是否满足
+    boolean test(LootContext context);
+
+    // 获取 Codec 用于序列化
+    default Codec&lt;? extends LootCondition&gt; getCodec() {
+        return null;
+    }
+}</code></pre>
+<p><strong>常用条件实现类</strong>：</p>
+<table class="data-table"><thead><tr><th>类名</th><th>用途</th><th>JSON ID</th></tr></thead><tbody><tr><td><code>RandomChanceLootCondition</code></td><td>随机概率</td><td><code>minecraft:random<em>chance</code></td></tr><tr><td><code>KilledByPlayerLootCondition</code></td><td>被玩家击杀</td><td><code>minecraft:killed</em>by<em>player</code></td></tr><tr><td><code>SurvivesExplosionLootCondition</code></td><td>爆炸中存活</td><td><code>minecraft:survives</em>explosion</code></td></tr><tr><td><code>TableBonusLootCondition</code></td><td>抢夺/时运</td><td><code>minecraft:table<em>bonus</code></td></tr><tr><td><code>EntityPropertiesLootCondition</code></td><td>实体属性</td><td><code>minecraft:entity</em>properties</code></td></tr><tr><td><code>EnchantmentCheckLootCondition</code></td><td>附魔检查</td><td><code>minecraft:enchantment<em>check</code></td></tr><tr><td><code>InvertedLootCondition</code></td><td>条件反转</td><td><code>minecraft:inverted</code></td></tr><tr><td><code>ReferenceLootCondition</code></td><td>引用其他条件</td><td><code>minecraft:reference</code></td></tr><tr><td><code>WeatherCheckLootCondition</code></td><td>天气检查</td><td><code>minecraft:weather</em>check</code></td></tr><tr><td><code>BlockStatePropertyLootCondition</code></td><td>方块状态</td><td><code>minecraft:block<em>state</em>property</code></td></tr></tbody></table>
+<h3>2.4 LootFunction - 函数接口</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/function/LootFunction.java">public interface LootFunction {
+    // 应用函数到物品
+    ItemStack apply(ItemStack stack, LootContext context);
+
+    // 获取 Codec
+    default Codec&lt;? extends LootFunction&gt; getCodec() {
+        return null;
+    }
+}</code></pre>
+<p><strong>常用函数实现类</strong>：</p>
+<table class="data-table"><thead><tr><th>类名</th><th>用途</th><th>JSON ID</th></tr></thead><tbody><tr><td><code>SetCountLootFunction</code></td><td>设置数量</td><td><code>minecraft:set<em>count</code></td></tr><tr><td><code>SetNbtLootFunction</code></td><td>设置 NBT</td><td><code>minecraft:set</em>nbt</code></td></tr><tr><td><code>EnchantRandomlyLootFunction</code></td><td>随机附魔</td><td><code>minecraft:enchant<em>randomly</code></td></tr><tr><td><code>LootingEnchantLootFunction</code></td><td>抢夺加成</td><td><code>minecraft:looting</em>enchant</code></td></tr><tr><td><code>SetAttributesLootFunction</code></td><td>设置属性</td><td><code>minecraft:set<em>attributes</code></td></tr><tr><td><code>CopyNbtLootFunction</code></td><td>复制 NBT</td><td><code>minecraft:copy</em>nbt</code></td></tr><tr><td><code>ExplorationMapLootFunction</code></td><td>探索地图</td><td><code>minecraft:exploration<em>map</code></td></tr><tr><td><code>FurnaceSmeltLootFunction</code></td><td>熔炉烧制</td><td><code>minecraft:furnace</em>smelt</code></td></tr><tr><td><code>SetBannerPatternsLootFunction</code></td><td>设置旗帜图案</td><td><code>minecraft:set<em>banner</em>patterns</code></td></tr><tr><td><code>SetStewEffectLootFunction</code></td><td>设置炖菜效果</td><td><code>minecraft:set<em>stew</em>effect</code></td></tr></tbody></table>
+<hr></p>
+<h2 id="3-战利品条目系统">3. 战利品条目系统</h2>
+<h3>3.1 LootPoolEntry 接口</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/entry/LootPoolEntry.java">public interface LootPoolEntry {
+    // 是否启用
+    boolean isEnabled(LootContext context);
+
+    // 展开（如引用其他表）
+    void expand(LootContext context, Consumer&lt;LootPoolEntry&gt; expandedConsumer);
+
+    // 生成战利品
+    void generateLoot(Consumer&lt;ItemStack&gt; lootConsumer, LootContext context);
+
+    // 获取权重
+    LootEntryWeight getWeight(LootContext context);
+
+    // 获取质量
+    int getQuality(LootContext context);
+
+    // 获取 Codec
+    default Codec&lt;? extends LootPoolEntry&gt; getCodec() {
+        return null;
+    }
+}</code></pre>
+<h3>3.2 条目类型</h3>
+<table class="data-table"><thead><tr><th>类型</th><th>类</th><th>JSON ID</th><th>说明</th></tr></thead><tbody><tr><td>物品</td><td><code>ItemLootPoolEntry</code></td><td><code>minecraft:item</code></td><td>直接物品</td></tr><tr><td>标签</td><td><code>TagLootPoolEntry</code></td><td><code>minecraft:tag</code></td><td>引用物品标签</td></tr><tr><td>引用</td><td><code>LootTableReferenceLootEntry</code></td><td><code>minecraft:loot_table</code></td><td>引用其他战利品表</td></tr><tr><td>分组</td><td><code>GroupLootPoolEntry</code></td><td><code>minecraft:group</code></td><td>分组容器</td></tr><tr><td>替代</td><td><code>AlternativeLootPoolEntry</code></td><td><code>minecraft:alternatives</code></td><td>替代选项</td></tr><tr><td>序列</td><td><code>SequenceLootPoolEntry</code></td><td><code>minecraft:sequence</code></td><td>顺序执行</td></tr><tr><td>空</td><td><code>EmptyLootPoolEntry</code></td><td><code>minecraft:empty</code></td><td>空条目</td></tr></tbody></table>
+<h3>3.3 ItemLootPoolEntry - 物品条目</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/entry/ItemLootPoolEntry.java">public class ItemLootPoolEntry extends TagLootPoolEntry {
+    private final Item item;
+    private final LootNumberProvider count;
+    private final List&lt;LootFunction&gt; functions;
+
+    @Override
+    public void generateLoot(Consumer&lt;ItemStack&gt; lootConsumer, LootContext context) {
+        // 创建物品
+        ItemStack stack = new ItemStack(this.item);
+
+        // 设置数量
+        int count = this.count.getInt(context);
+        stack.setCount(count);
+
+        // 应用函数
+        for (LootFunction function : this.functions) {
+            stack = function.apply(stack, context);
+        }
+
+        // 输出
+        lootConsumer.accept(stack);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4-上下文系统">4. 上下文系统</h2>
+<h3>4.1 LootContext - 战利品上下文</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/context/LootContext.java">public class LootContext {
+    private final LootContextParameters parameters;
+    private final long seed;
+    private final RegistryWrapper.Impl&lt;LootModifier&gt; luckBonus;
+
+    // 创建 Builder
+    public static Builder builder(LootContextParameterSet parameters) {
+        return new Builder(parameters);
+    }
+
+    // 获取随机数
+    public Random getRandom() {
+        return new Random(this.seed);
+    }
+
+    // 获取参数
+    public &lt;T&gt; T get(LootContextParameter&lt;T&gt; parameter) {
+        return this.parameters.get(parameter);
+    }
+
+    // 上下文参数
+    public enum EntityTarget {
+        THIS,           // 当前实体
+        ATTACKER,       // 攻击者
+        DIRECT_ENTITY,   // 直接实体
+        KILLER,         // 杀手
+        ORIGIN          // 起源
+    }
+}</code></pre>
+<h3>4.2 LootContextParameters - 上下文参数</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/context/LootContextParameters.java">public class LootContextParameters {
+    // 常用参数
+    public static final LootContextParameter&lt;Entity&gt; THIS =
+        new LootContextParameter&lt;&gt;(&quot;this&quot;);
+
+    public static final LootContextParameter&lt;Entity&gt; ATTACKER =
+        new LootContextParameter&lt;&gt;(&quot;attacker&quot;);
+
+    public static final LootContextParameter&lt;Entity&gt; KILLER =
+        new LootContextParameter&lt;&gt;(&quot;killer&quot;);
+
+    public static final LootContextParameter&lt;Entity&gt; DIRECT_KILLER_ENTITY =
+        new LootContextParameter&lt;&gt;(&quot;direct_killer_entity&quot;);
+
+    public static final LootContextParameter&lt;PlayerEntity&gt; LAST_KILL_PLAYER =
+        new LootContextParameter&lt;&gt;(&quot;last_kill_player&quot;);
+
+    public static final LootContextParameter&lt;BlockState&gt; BLOCK_STATE =
+        new LootContextParameter&lt;&gt;(&quot;block_state&quot;);
+
+    public static final LootContextParameter&lt;BlockEntity&gt; BLOCK_ENTITY =
+        new LootContextParameter&lt;&gt;(&quot;block_entity&quot;);
+
+    public static final LootContextParameter&lt;ItemStack&gt; TOOL =
+        new LootContextParameter&lt;&gt;(&quot;tool&quot;);
+
+    public static final LootContextParameter&lt;Float&gt; EXPLOSION_RADIUS =
+        new LootContextParameter&lt;&gt;(&quot;explosion_radius&quot;);
+}</code></pre>
+<p><hr></p>
+<h2 id="5-内置战利品表">5. 内置战利品表</h2>
+<h3>5.1 LootTables - 内置表注册</h3>
+<pre class="code-block"><code class="language-net/minecraft/loot/LootTables.java">public class LootTables {
+    // 方块掉落
+    public static final LootTable BLOCKS = register(&quot;blocks&quot;, LootContextTypes.BLOCK);
+
+    // 实体掉落
+    public static final LootTable EMPTY = register(&quot;empty&quot;, LootContextTypes.EMPTY);
+
+    // 游戏事件掉落
+    public static final LootTable GAMEPLAY = register(&quot;gameplay&quot;, LootContextTypes.EMPTY);
+
+    // ===== 实体掉落 =====
+    public static final LootTable ZOMBIE = register(&quot;entities/zombie&quot;, LootContextTypes.ENTITY);
+    public static final LootTable CREEPER = register(&quot;entities/creeper&quot;, LootContextTypes.ENTITY);
+    public static final LootTable SKELETON = register(&quot;entities/skeleton&quot;, LootContextTypes.ENTITY);
+    public static final LootTable ENDERMAN = register(&quot;entities/enderman&quot;, LootContextTypes.ENTITY);
+    public static final LootTable PIG = register(&quot;entities/pig&quot;, LootContextTypes.ENTITY);
+    public static final LootTable COW = register(&quot;entities/cow&quot;, LootContextTypes.ENTITY);
+    public static final LootTable SHEEP = register(&quot;entities/sheep&quot;, LootContextTypes.ENTITY);
+    public static final LootTable CHICKEN = register(&quot;entities/chicken&quot;, LootContextTypes.ENTITY);
+    public static final LootTable RABBIT = register(&quot;entities/rabbit&quot;, LootContextTypes.ENTITY);
+    public static final LootTable BEE = register(&quot;entities/bee&quot;, LootContextTypes.ENTITY);
+
+    // ===== 抽成相关 =====
+    public static final LootTable FISHING = register(&quot;gameplay/fishing&quot;, LootContextTypes.FISHING);
+    public static final LootTable FISHING_JUNK = register(&quot;gameplay/fishing/junk&quot;, LootContextTypes.FISHING);
+    public static final LootTable FISHING_TREASURE = register(&quot;gameplay/fishing/treasure&quot;, LootContextTypes.FISHING);
+
+    // =====  chests =====
+    public static final LootTable JUNGLE_TEMPLE = register(&quot;chests/jungle_temple&quot;, LootContextTypes.CHEST);
+    public static final LootTable DESERT_PYRAMID = register(&quot;chests/desert_pyramid&quot;, LootContextTypes.CHEST);
+    public static final LootTable STRONGHOLD = register(&quot;chests/stronghold&quot;, LootContextTypes.CHEST);
+    public static final LootTable VILLAGE = register(&quot;chests/village&quot;, LootContextTypes.CHEST);
+    public static final LootTable BURIED_TREASURE = register(&quot;chests/buried_treasure&quot;, LootContextTypes.CHEST);
+    public static final LootTable SHIPWRECK_TREASURE = register(&quot;chests/shipwreck_treasure&quot;, LootContextTypes.CHEST);
+}</code></pre>
+<p><hr></p>
+<h2 id="6-json-数据包格式">6. JSON 数据包格式</h2>
+<h3>6.1 完整示例</h3>
+<pre class="code-block"><code class="language-json">{
+    &quot;type&quot;: &quot;minecraft:generic&quot;,
+    &quot;random_sequence&quot;: &quot;minecraft:entities/cow&quot;,
+    &quot;pools&quot;: [
+        {
+            &quot;rolls&quot;: 1,
+            &quot;bonus_rolls&quot;: 0,
+            &quot;entries&quot;: [
+                {
+                    &quot;type&quot;: &quot;minecraft:item&quot;,
+                    &quot;name&quot;: &quot;minecraft:leather&quot;,
+                    &quot;weight&quot;: 1,
+                    &quot;quality&quot;: 0,
+                    &quot;functions&quot;: [
+                        {
+                            &quot;function&quot;: &quot;minecraft:set_count&quot;,
+                            &quot;count&quot;: {
+                                &quot;type&quot;: &quot;minecraft:uniform&quot;,
+                                &quot;min&quot;: 0,
+                                &quot;max&quot;: 2
+                            }
+                        }
+                    ]
+                }
+            ],
+            &quot;conditions&quot;: [
+                {
+                    &quot;condition&quot;: &quot;minecraft:killed_by_player&quot;
+                }
+            ],
+            &quot;functions&quot;: [
+                {
+                    &quot;function&quot;: &quot;minecraft:looting_enchant_bonus&quot;,
+                    &quot;count&quot;: {
+                        &quot;type&quot;: &quot;minecraft:uniform&quot;,
+                        &quot;min&quot;: 0,
+                        &quot;max&quot;: 1
+                    }
+                }
+            ]
+        }
+    ],
+    &quot;functions&quot;: []
+}</code></pre>
+<h3>6.2 条件示例</h3>
+<pre class="code-block"><code class="language-json">{
+    &quot;condition&quot;: &quot;minecraft:random_chance&quot;,
+    &quot;chance&quot;: 0.5
+}</code></pre>
+<pre class="code-block"><code class="language-json">{
+    &quot;condition&quot;: &quot;minecraft:table_bonus&quot;,
+    &quot;enchantment&quot;: &quot;minecraft:looting&quot;,
+    &quot;chances&quot;: [0.01, 0.02, 0.03, 0.04, 0.05]
+}</code></pre>
+<h3>6.3 函数示例</h3>
+<pre class="code-block"><code class="language-json">{
+    &quot;function&quot;: &quot;minecraft:set_count&quot;,
+    &quot;count&quot;: {
+        &quot;type&quot;: &quot;minecraft:uniform&quot;,
+        &quot;min&quot;: 1,
+        &quot;max&quot;: 3
+    }
+}</code></pre>
+<pre class="code-block"><code class="language-json">{
+    &quot;function&quot;: &quot;minecraft:enchant_randomly&quot;,
+    &quot;enchantments&quot;: [&quot;minecraft:sharpness&quot;, &quot;minecraft:knockback&quot;]
+}</code></pre>
+<p><hr></p>
+<h2 id="7-战利品生成流程">7. 战利品生成流程</h2>
+<h3>7.1 生成流程图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[开始生成] --> B{检查 LootTable}
+
+    B --> C{遍历 Pool}
+    C --> D{Pool 条件满足?}
+
+    D -->|否| E[跳过]
+    D -->|是| F[计算抽取次数]
+
+    F --> G{rolls + bonus_rolls}
+
+    G --> H{还有次数?}
+    H -->|是| I[根据权重选择 Entry]
+
+    I --> J{Entry 类型?}
+
+    J -->|item| K[创建 ItemStack]
+    J -->|tag| L[随机选择标签物品]
+    J -->|loot_table| M[递归生成]
+    J -->|alternatives| N[尝试每个选项]
+
+    K --> O[应用 Entry Functions]
+    L --> O
+    M --> O
+    N --> O
+
+    O --> P[应用 Pool Functions]
+    P --> H
+
+    E --> C
+
+    H -->|否| Q[应用全局 Functions]
+    Q --> R[返回物品列表]</div>
+</div>
+<h3>7.2 服务端使用示例</h3>
+<pre class="code-block"><code class="language-java">public void generateLoot(World world, Entity killer, LootTable table) {
+    LootContext context = new LootContext.Builder(world)
+        .withParameter(LootContextParameters.THIS, killer)
+        .withParameter(LootContextParameters.KILLER, killer)
+        .withRandom(killer.getRandom())
+        .build(LootContextTypes.ENTITY);
+
+    List&lt;ItemStack&gt; loot = new ArrayList&lt;&gt;();
+    table.generateLoot(context, loot::add);
+
+    // 将物品给予玩家
+    for (ItemStack stack : loot) {
+        player.getInventory().offerOrDrop(stack);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="8-lootmanager-管理器">8. LootManager - 管理器</h2>
+<pre class="code-block"><code class="language-net/minecraft/loot/LootManager.java">public class LootManager implements ReloadableResourceManagerImpl.Reloadable {
+    // 所有战利品表
+    private Map&lt;Identifier, LootTable&gt; lootTables = new HashMap&lt;&gt;();
+
+    // 加载资源包中的战利品表
+    public void apply(Map&lt;Identifier, JsonElement&gt; jsons, ResourceReloadContext context) {
+        for (Map.Entry&lt;Identifier, JsonElement&gt; entry : jsons.entrySet()) {
+            Identifier id = entry.getKey();
+            JsonObject json = entry.getValue().getAsJsonObject();
+            LootTable table = LootTable.fromJson(json, context);
+            this.lootTables.put(id, table);
+        }
+    }
+
+    // 获取战利品表
+    public LootTable getLootTable(RegistryKey&lt;LootTable&gt; key) {
+        return this.lootTables.getOrDefault(key.getValue(), LootTables.EMPTY);
+    }
+
+    // 获取所有表
+    public Collection&lt;LootTable&gt; getAllTables() {
+        return this.lootTables.values();
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="9-fabric-api-扩展">9. Fabric API 扩展</h2>
+<h3>9.1 LootTableEvents</h3>
+<pre class="code-block"><code class="language-java">net/fabricmc/fabric/api/loot/v3/LootTableEvents.java
+
+// 修改现有战利品表
+LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -&gt; {
+    if (source.isBuiltin() &amp;&amp; key.equals(LootTables.ENTITIES.ZOMBIE)) {
+        // 添加自定义掉落
+        tableBuilder.pool(LootPool.builder()
+            .with(ItemEntry.builder(Items.ROTTEN_FLESH)
+                .weight(1)
+            )
+            .with(EntryBuilder.builder(Items.DIAMOND)
+                .weight(1)
+                .conditionally(RandomChanceLootCondition.builder(0.01f))
+            )
+        );
+    }
+});
+
+// 替换整个战利品表
+LootTableEvents.REPLACE.register((key, tableBuilder, source, registries) -&gt; {
+    if (source.isBuiltin() &amp;&amp; key.equals(LootTables.CHESTS.VILLAGE_WEAPONSMITH)) {
+        return LootTable.builder()
+            .pool(...)
+            .build();
+    }
+    return tableBuilder;
+});</code></pre>
+<h3>9.2 LootConditionEvents</h3>
+<pre class="code-block"><code class="language-java">LootConditionEvents.register(&quot;mymod:has_mod_loaded&quot;, context -&gt;
+    LootCondition.class,
+    (codec, json) -&gt; /* 从 JSON 构建条件 */);
+
+// 或使用 Builder 模式
+public static LootCondition hasModLoaded(String modId) {
+    return builder()
+        .builder(hasModLoadedCodec)
+        .build();
+}</code></pre>
+<h3>9.3 LootFunctionEvents</h3>
+<pre class="code-block"><code class="language-java">LootFunctionEvents.register(&quot;mymod:add_lore&quot;, context -&gt;
+    LootFunction.class,
+    (codec, json) -&gt; {
+        String lore = GsonHelper.getString(json, &quot;lore&quot;);
+        return stack -&gt; {
+            // 添加 Lore 到 NBT
+            return stack;
+        };
+    });</code></pre>
+<p><hr></p>
+<h2 id="10-常见用例">10. 常见用例</h2>
+<h3>10.1 方块掉落修改</h3>
+<pre class="code-block"><code class="language-java">LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -&gt; {
+    if (source.isBuiltin() &amp;&amp; key.equals(LootTables.BLOCKS.DIAMOND_ORE)) {
+        tableBuilder.pool(LootPool.builder()
+            .with(ItemEntry.builder(Items.DIAMOND)
+                .weight(1)
+                .apply(SetCountLootFunction.builder(
+                    UniformLootNumberProvider.create(1f, 3f)
+                ))
+                .conditionally(TableBonusLootCondition.builder(
+                    registries.getOrThrow(RegistryKeys.ENCHANTMENT)
+                        .getOrThrow(Enchantments.FORTUNE),
+                    0.1f  // 基础概率
+                ))
+            )
+        );
+    }
+});</code></pre>
+<h3>10.2 实体掉落修改</h3>
+<pre class="code-block"><code class="language-java">LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -&gt; {
+    if (source.isBuiltin() &amp;&amp; key.equals(LootTables.ENTITIES.CREEPER)) {
+        tableBuilder.pool(LootPool.builder()
+            .with(ItemEntry.builder(Items.GUNPOWDER)
+                .weight(1)
+                .apply(SetCountLootFunction.builder(
+                    UniformLootNumberProvider.create(0f, 2f)
+                ))
+                .conditionally(LootingEnchantLootCondition.builder(
+                    registries.getOrThrow(RegistryKeys.ENCHANTMENT)
+                        .getOrThrow(Enchantments.LOOTING),
+                    0.01f
+                ))
+            )
+        );
+    }
+});</code></pre>
+<p><hr></p>
+<h2 id="11-类图总结">11. 类图总结</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class LootTable {
+        +LootContextType type
+        +Optional~Identifier~ randomSequenceId
+        +List~LootPool~ pools
+        +List~LootFunction~ functions
+        +generateLoot() void
+    }
+
+    class LootPool {
+        +List~LootPoolEntry~ entries
+        +List~LootCondition~ conditions
+        +List~LootFunction~ functions
+        +LootNumberProvider rolls
+        +LootNumberProvider bonusRolls
+        +addLoot() void
+        +checkCondition() boolean
+    }
+
+    class LootPoolEntry {
+        <<interface>>
+        +isEnabled() boolean
+        +expand() void
+        +generateLoot() void
+        +getWeight() LootEntryWeight
+    }
+
+    class LootCondition {
+        <<interface>>
+        +test(context) boolean
+    }
+
+    class LootFunction {
+        <<interface>>
+        +apply(stack, context) ItemStack
+    }
+
+    class LootContext {
+        +LootContextParameters parameters
+        +long seed
+        +get() T
+        +getRandom() Random
+    }
+
+    class LootManager {
+        +Map~Identifier~ lootTables
+        +getLootTable() LootTable
+        +apply() void
+    }
+
+    LootTable "1" o-- "n" LootPool
+    LootPool "1" o-- "n" LootPoolEntry
+    LootPool "1" o-- "n" LootCondition
+    LootPool "1" o-- "n" LootFunction
+
+    LootPoolEntry <|-- ItemLootPoolEntry
+    LootPoolEntry <|-- TagLootPoolEntry
+    LootPoolEntry <|-- LootTableReferenceLootEntry
+    LootPoolEntry <|-- GroupLootPoolEntry
+
+    LootContext --> LootContextParameters
+    LootManager --> LootTable</div>
+</div>
+<p><hr></p>
+<h2 id="12-总结">12. 总结</h2>
+<table class="data-table"><thead><tr><th>概念</th><th>Minecraft 术语</th><th>JSON 字段</th></tr></thead><tbody><tr><td>战利品表</td><td>LootTable</td><td>顶层 JSON</td></tr><tr><td>池</td><td>LootPool</td><td><code>pools[]</code></td></tr><tr><td>条目</td><td>LootPoolEntry</td><td><code>entries[]</code></td></tr><tr><td>条件</td><td>LootCondition</td><td><code>conditions[]</code></td></tr><tr><td>函数</td><td>LootFunction</td><td><code>functions[]</code></td></tr><tr><td>抽取次数</td><td>rolls</td><td><code>rolls</code></td></tr><tr><td>额外次数</td><td>bonusRolls</td><td><code>bonus<em>rolls</code></td></tr><tr><td>权重</td><td>weight</td><td><code>weight</code></td></tr><tr><td>质量</td><td>quality</td><td><code>quality</code></td></tr><tr><td>随机序列</td><td>randomSequenceId</td><td><code>random</em>sequence</code></td></tr></tbody></table>
+战利品系统遵循 <strong>表 → 池 → 条件检查 → 抽取 → 条目展开 → 函数应用</strong> 的生成流程，通过 JSON 实现完全数据驱动的掉落配置。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="13-advancement-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 1.21 进度系统
+        </a><a href="15-recipe-system.html" class="next">
+            Minecraft 1.21 配方系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

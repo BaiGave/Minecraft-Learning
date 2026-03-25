@@ -1,3 +1,8 @@
+---
+title: ComponentMap：1.21新版物品数据系统
+readingTime: 25
+---
+
 # 19 - ComponentMap：1.21新版物品数据系统
 
 ## 目标

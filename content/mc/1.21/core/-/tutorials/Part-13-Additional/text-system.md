@@ -1,3 +1,8 @@
+---
+title: 文本系统
+readingTime: 17
+---
+
 # 文本系统 (Text System)
 
 ## 目标

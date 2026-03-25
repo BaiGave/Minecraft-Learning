@@ -1,3 +1,8 @@
+---
+title: Minecraft 服务器核心 MinecraftServer
+readingTime: 15
+---
+
 # 第四十九章：Minecraft 服务器核心 - MinecraftServer
 
 ## 目标

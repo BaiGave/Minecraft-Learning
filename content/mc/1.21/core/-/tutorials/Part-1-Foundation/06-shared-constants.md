@@ -1,3 +1,8 @@
+---
+title: 共享常量（Shared Constants）
+readingTime: 30
+---
+
 # 第六章：共享常量（Shared Constants）
 
 > ⭐ **理解这章，你就能知道 Minecraft 的"游戏规则"藏在哪里！**

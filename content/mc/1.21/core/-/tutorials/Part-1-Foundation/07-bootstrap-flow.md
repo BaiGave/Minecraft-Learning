@@ -1,3 +1,8 @@
+---
+title: 启动流程（Bootstrap Flow）
+readingTime: 35
+---
+
 # 第七章：启动流程（Bootstrap Flow）
 
 > ⭐ **理解这章，你就能知道 Minecraft 启动时幕后发生了什么！**

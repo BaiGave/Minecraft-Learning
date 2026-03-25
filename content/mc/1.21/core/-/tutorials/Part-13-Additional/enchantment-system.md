@@ -1,3 +1,8 @@
+---
+title: 附魔系统
+readingTime: 17
+---
+
 # 附魔系统 (Enchantment System)
 
 ## 目标

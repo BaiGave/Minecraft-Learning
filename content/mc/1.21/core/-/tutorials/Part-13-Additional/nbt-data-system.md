@@ -1,3 +1,8 @@
+---
+title: NBT 数据系统
+readingTime: 16
+---
+
 # NBT 数据系统
 
 ## 目标

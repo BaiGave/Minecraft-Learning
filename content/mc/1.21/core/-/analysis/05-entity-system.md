@@ -893,6 +893,90 @@ public abstract class EntityNavigation {
 }
 ```
 
+#### 5.2.1 A* 路径搜索算法
+
+Minecraft 使用 A* 算法优化路径搜索：
+
+```java
+//astarsearcher.java 简化示意
+public class AStarNode implements Comparable<AStarNode> {
+    public int x, y, z;
+    public float gScore;      // 从起点到当前节点的实际代价
+    public float fScore;      // gScore + 启发式估计
+    public AStarNode parent;  // 父节点（用于回溯路径）
+    public float penalty;    // 路径惩罚（用于穿越困难地形）
+
+    @Override
+    public int compareTo(AStarNode other) {
+        return Float.compare(this.fScore, other.fScore);
+    }
+}
+
+// A* 搜索核心
+public class AStarPathFinder {
+    private static final int MAX_ITERATIONS = 65536;
+
+    public Path findPath(NodeProcessor processor, BlockPos start, BlockPos end,
+                        int maxIterations, float followDistance) {
+
+        AStarNode startNode = new AStarNode(start);
+        AStarNode endNode = new AStarNode(end);
+
+        // 优先队列（按 fScore 排序）
+        PriorityQueue<AStarNode> openSet = new PriorityQueue<>();
+        openSet.add(startNode);
+
+        // 已访问集合
+        Set<Long> visited = new HashSet<>();
+        visited.add(toLong(startNode));
+
+        while (!openSet.isEmpty() && maxIterations-- > 0) {
+            // 取出 fScore 最小的节点
+            AStarNode current = openSet.poll();
+
+            // 到达目标
+            if (current.distanceTo(endNode) < followDistance) {
+                return reconstructPath(current);
+            }
+
+            // 遍历邻居
+            for (AStarNode neighbor : processor.getSuccessors(current)) {
+                // 计算 gScore
+                float tentativeGScore = current.gScore +
+                    current.distanceTo(neighbor) + neighbor.penalty;
+
+                if (tentativeGScore < neighbor.gScore) {
+                    neighbor.parent = current;
+                    neighbor.gScore = tentativeGScore;
+                    neighbor.fScore = tentativeGScore + heuristic(neighbor, endNode);
+
+                    if (!visited.contains(toLong(neighbor))) {
+                        openSet.add(neighbor);
+                        visited.add(toLong(neighbor));
+                    }
+                }
+            }
+        }
+        return null; // 未找到路径
+    }
+
+    // 启发式函数（曼哈顿距离或欧几里得距离）
+    private float heuristic(AStarNode a, AStarNode b) {
+        return a.distanceTo(b);
+    }
+}
+```
+
+**关键设计特点：**
+
+| 特性 | 实现 | 说明 |
+|------|------|------|
+| 优先队列 | `PriorityQueue` | 保证每次取出最优节点 |
+| 已访问集合 | `HashSet<Long>` | O(1) 查找，避免重复处理 |
+| 最大迭代次数 | `MAX_ITERATIONS=65536` | 防止搜索过深 |
+| 路径惩罚 | `penalty` | 穿过岩浆/水等困难地形时增加代价 |
+| 跳点搜索 | `JumpPointSearch` | 优化直线移动，跳过中间节点 |
+
 ---
 
 ## 6. 瞄准系统 (TargetPredicate)

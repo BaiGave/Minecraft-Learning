@@ -1,4 +1,9 @@
-# 🎮 Minecraft 源码入门教程 - 课程总览
+---
+title: Minecraft 源码入门教程 - 课程总览
+readingTime: 15
+---
+
+# Minecraft 源码入门教程 - 课程总览
 
 > **面向人群**：想学习 Minecraft 源码、想做 Mod 开发的零基础萌新
 > 

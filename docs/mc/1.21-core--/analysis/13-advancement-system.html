@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Minecraft 1.21 进度系统 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 架构总览
+        </a>
+<a href="02-client-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 客户端模块深度分析报告
+        </a>
+<a href="03-server-module.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 服务端模块分析
+        </a>
+<a href="04-world-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 世界系统深度分析
+        </a>
+<a href="05-entity-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 实体系统深度分析
+        </a>
+<a href="06-block-item-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 方块物品系统分析
+        </a>
+<a href="07-network-protocol.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 网络协议分析
+        </a>
+<a href="08-datafixer-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 数据修复（DataFixer）系统分析
+        </a>
+<a href="09-registry-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 注册表（Registry）系统分析
+        </a>
+<a href="10-package-structure.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 包结构详解
+        </a>
+<a href="11-particle-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 源代码分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Minecraft 1.21 进度系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Minecraft 1.21 进度系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21-core--</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 进度系统</h1>
+<blockquote><p>基于 CFR 0.2.2 反编译源代码的进度/成就系统完整分析</p></blockquote>
+<blockquote><p>版本信息: Protocol 767, World Version 3953</p></blockquote>
+<p><hr></p>
+<h2 id="1-概述">1. 概述</h2>
+<p>进度系统（Advancement System）是 Minecraft 的成就/任务系统，允许玩家在完成特定条件后获得奖励、解锁配方、展示成就提示。系统采用树形结构组织，支持复杂的条件逻辑和丰富的奖励机制。</p>
+<h3>1.1 进度系统架构</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    进度系统核心架构                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   Advancement     │   │     AdvancementDisplay       │   │
+│  │   (进度条目)       │◄──│     (显示信息)               │   │
+│  └────────┬─────────┘   └──────────────┬─────────────┘   │
+│           │                              │                  │
+│           │         ┌────────────────────┘                  │
+│           ▼         ▼                                       │
+│  ┌──────────────────────────┐                              │
+│  │  Map~String~ Criteria     │                              │
+│  │  (条件映射)               │                              │
+│  └────────────┬─────────────┘                              │
+│               │                                             │
+│               ▼                                             │
+│  ┌──────────────────────────┐                              │
+│  │  AdvancementRewards      │                              │
+│  │  (奖励)                   │                              │
+│  └──────────────────────────┘                              │
+│                                                             │
+│  ┌──────────────────────────┐                              │
+│  │  AdvancementManager      │                              │
+│  │  (服务端管理器)            │                              │
+│  └──────────────────────────┘                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><hr></p>
+<h2 id="2-核心类详解">2. 核心类详解</h2>
+<h3>2.1 Advancement - 进度条目</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/Advancement.java">public record Advancement(
+    Optional&lt;Identifier&gt; parent,                    // 父进度
+    Optional&lt;AdvancementDisplay&gt; display,           // 显示信息
+    AdvancementRewards rewards,                      // 奖励
+    Map&lt;String, AdvancementCriterion&lt;?&gt;&gt; criteria,  // 条件列表
+    AdvancementRequirements requirements,            // 条件要求
+    boolean sendsTelemetryEvent                      // 是否发送遥测
+) {
+    // 检查是否是根进度
+    public boolean isRoot() {
+        return this.parent.isEmpty();
+    }
+
+    // 获取所有条件
+    public String[] getRequirements() {
+        return this.requirements.getRequirementNames();
+    }
+
+    // 获取条件数量
+    public int getRequirementCount() {
+        return this.requirements.size();
+    }
+}</code></pre>
+<h3>2.2 AdvancementEntry - 进度入口</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementEntry.java">public record AdvancementEntry(
+    Identifier id,      // 进度的完整 ID
+    Advancement value   // 进度数据
+) {}</code></pre>
+<h3>2.3 AdvancementDisplay - 显示信息</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/DisplayInfo.java">public class DisplayInfo {
+    private final ItemStack icon;              // 显示图标
+    private final Text title;                  // 标题
+    private final Text description;            // 描述
+    private final Optional&lt;Identifier&gt; background;  // 背景纹理
+    private final AdvancementFrame frame;      // 框架类型
+    private final float toastX;                // Toast X 偏移
+    private final float toastY;                // Toast Y 偏移
+    private final float chatX;                // 聊天 X 偏移
+    private final float chatY;                // 聊天 Y 偏移
+    private final boolean showToast;           // 显示弹窗
+    private final boolean announceToChat;       // 发送到聊天
+    private final boolean hidden;              // 是否隐藏
+
+    // 框架类型
+    private final AdvancementFrame frame;
+}</code></pre>
+<h3>2.4 AdvancementFrame - 框架类型枚举</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementFrame.java">public enum AdvancementFrame {
+    TASK(&quot;task&quot;, false),     // 任务（绿色对勾）- 普通难度
+    GOAL(&quot;goal&quot;, false),     // 目标（绿色旗帜）- 中等难度
+    CHALLENGE(&quot;challenge&quot;, true); // 挑战（红色感叹号）- 高难度
+
+    private final String name;
+    private final boolean isChallenge;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public boolean isChallenge() {
+        return this.isChallenge;
+    }
+}</code></pre>
+<h3>2.5 AdvancementRewards - 奖励</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementRewards.java">public record AdvancementRewards(
+    int experience,                           // 经验值
+    List&lt;RegistryKey&lt;LootTable&gt;&gt; loot,        // 战利品表列表
+    List&lt;Identifier&gt; recipes,                 // 配方列表
+    Optional&lt;LazyContainer&gt; function          // 函数容器
+) {
+    // 无奖励的静态实例
+    public static final AdvancementRewards EMPTY = new AdvancementRewards(
+        0, List.of(), List.of(), Optional.empty()
+    );
+
+    // 应用奖励到玩家
+    public void apply(ServerPlayerEntity player) {
+        // 给予经验
+        if (this.experience &gt; 0) {
+            player.addExperience(this.experience);
+        }
+
+        // 生成战利品
+        for (RegistryKey&lt;LootTable&gt; lootTable : this.loot) {
+            LootTable table = player.getServer().getLootManager().getLootTable(lootTable);
+            LootContext context = LootContext.createVillageTradeContext(player, player.getRandom());
+            table.generateLoot(context, stack -&gt; {
+                player.getInventory().offerOrDrop(stack);
+            });
+        }
+
+        // 解锁配方
+        for (Identifier recipeId : this.recipes) {
+            player.unlockRecipes(player.getServer().getRecipeManager()
+                .getAllMatches(recipeId, player));
+        }
+
+        // 执行函数
+        this.function.ifPresent(func -&gt; {
+            ServerCommandSource source = player.getCommandSource()
+                .withLevel(2)
+                .withPosition(player.getPos());
+            func.run(source);
+        });
+    }
+
+    // Builder 模式构建器
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private int experience = 0;
+        private final List&lt;RegistryKey&lt;LootTable&gt;&gt; loot = new ArrayList&lt;&gt;();
+        private final List&lt;Identifier&gt; recipes = new ArrayList&lt;&gt;();
+        private Optional&lt;LazyContainer&gt; function = Optional.empty();
+
+        public Builder experience(int amount) {
+            this.experience = amount;
+            return this;
+        }
+
+        public Builder addLoot(RegistryKey&lt;LootTable&gt; lootTable) {
+            this.loot.add(lootTable);
+            return this;
+        }
+
+        public Builder addRecipe(Identifier recipeId) {
+            this.recipes.add(recipeId);
+            return this;
+        }
+
+        public Builder赢() {
+            this.function = Optional.of(LazyContainer.of(() -&gt; {
+                // 构建函数
+            }));
+            return this;
+        }
+
+        public AdvancementRewards build() {
+            return new AdvancementRewards(experience, loot, recipes, function);
+        }
+    }
+}</code></pre>
+<h3>2.6 AdvancementCriterion - 单个条件</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/criterion/AdvancementCriterion.java">public class AdvancementCriterion&lt;T extends LootConditionAwareBuilder&gt; {
+    private final String name;                    // 条件名称
+    private final T trigger;                       // 触发器
+    private final Optional&lt;PlayerAdvancementTracker.Formatted&gt; formatted;  // 格式化
+
+    public String getName() {
+        return this.name;
+    }
+
+    public T getTrigger() {
+        return this.trigger;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="3-触发器系统">3. 触发器系统</h2>
+<h3>3.1 Criteria 类 - 触发器注册表</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/criterion/Criteria.java">public class Criteria {
+    // 预定义的触发器
+    public static final Criteria INVENTORY_CHANGED =
+        new Criteria(&quot;inventory_changed&quot;);
+
+    public static final Criteria PLAYER_KILLED_ENTITY =
+        new Criteria(&quot;player_killed_entity&quot;);
+
+    public static final Criteria ENTITY_KILLED_PLAYER =
+        new Criteria(&quot;entity_killed_player&quot;);
+
+    public static final Criteria ENTER_BLOCK =
+        new Criteria(&quot;enter_block&quot;);
+
+    public static final Criteria EXIT_BLOCK =
+        new Criteria(&quot;exit_block&quot;);
+
+    public static final Criteria EFFECTS_CHANGED =
+        new Criteria(&quot;effects_changed&quot;);
+
+    public static final Criteria RECIPE_UNLOCKED =
+        new Criteria(&quot;recipe_unlocked&quot;);
+
+    public static final Criteria TICK =
+        new Criteria(&quot;tick&quot;);
+
+    public static final Criteria LOCATION =
+        new Criteria(&quot;location&quot;);
+
+    public static final Criteria BRED_ANIMALS =
+        new Criteria(&quot;bred_animals&quot;);
+
+    public static final Criteria NETHER_TRAVEL =
+        new Criteria(&quot;nether_travel&quot;);
+
+    public static final Criteria BEE_GROW_CROP =
+        new Criteria(&quot;bee_grow_crop&quot;);
+
+    public static final Criteria VOLUNTARY_EXILE =
+        new Criteria(&quot;voluntary_exile&quot;);
+
+    public static final Criteria HUSK_CONVERTED =
+        new Criteria(&quot;husk_converted&quot;);
+
+    public static final Criteria AVOID_VEX =
+        new Criteria(&quot;avoid_vex&quot;);
+
+    public static final Criteria FALL_FROM_HEIGHT =
+        new Criteria(&quot;fall_from_height&quot;);
+
+    public static final Criteria LEVITATE =
+        new Criteria(&quot;levitate&quot;);
+
+    public static final Criteria THROWN_ITEM_PICKED_UP_BY_ENTITY =
+        new Criteria(&quot;thrown_item_picked_up_by_entity&quot;);
+
+    public static final Criteria FILLED_BUCKET =
+        new Criteria(&quot;filled_bucket&quot;);
+
+    public static final Criteria PLACED_BLOCK =
+        new Criteria(&quot;placed_block&quot;);
+
+    public static final Criteria CONSUME_ITEM =
+        new Criteria(&quot;consume_item&quot;);
+
+    public static final Criteria CRITically_HIT_ENTITY =
+        new Criteria(&quot;critically_hit_entity&quot;);
+
+    public static final Criteria KILLED_BY_EXPLOSION =
+        new Criteria(&quot;killed_by_explosion&quot;);
+
+    public static final Criteria CROSSBOW_HIT_ENTITY =
+        new Criteria(&quot;crossbow_hit_entity&quot;);
+
+    public static final Criteria AMBIENT_MUSIC_DISK =
+        new Criteria(&quot;ambient_music_disk&quot;);
+
+    public static final Criteria READ_USING_COMPASS =
+        new Criteria(&quot;read_using_compass&quot;);
+
+    public static final Criteria GOAT_MILK =
+        new Criteria(&quot;goat_milk&quot;);
+
+    public static final Criteria CLEAN_BANNER =
+        new Criteria(&quot;clean_banner&quot;);
+
+    public static final Criteria CAULDRON_FILLED =
+        new Criteria(&quot;cauldron_filled&quot;);
+
+    public static final Criteria CAULDRON_USED =
+        new Criteria(&quot;cauldron_used&quot;);
+
+    public static final Criteria BOMB_LANDED_NEAR_PLAYER =
+        new Criteria(&quot;bomb_landed_near_player&quot;);
+
+    public static final Criteria CUT_AIRCRAFT =
+        new Criteria(&quot;cut_airdhip&quot;);
+
+    public static final Criteria SHOOT_ARROW =
+        new Criteria(&quot;shoot_arrow&quot;);
+
+    public static final Criteria KILLED_BY_RANGED_PROJECTILE =
+        new Criteria(&quot;killed_by_ranged_projectile&quot;);
+}</code></pre>
+<h3>3.2 常用触发器详解</h3>
+<h4>3.2.1 inventory_changed - 背包变化</h4>
+<pre class="code-block"><code class="language-json">{
+    &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+    &quot;conditions&quot;: {
+        &quot;items&quot;: [
+            {
+                &quot;items&quot;: [&quot;minecraft:diamond&quot;],
+                &quot;count&quot;: {&quot;min&quot;: 10}
+            }
+        ]
+    }
+}</code></pre>
+<h4>3.2.2 player<em>killed</em>entity - 击杀实体</h4>
+<pre class="code-block"><code class="language-json">{
+    &quot;trigger&quot;: &quot;minecraft:player_killed_entity&quot;,
+    &quot;conditions&quot;: {
+        &quot;entity&quot;: {
+            &quot;type&quot;: &quot;minecraft:creeper&quot;,
+            &quot;nbt&quot;: &quot;{powered: true}&quot;
+        }
+    }
+}</code></pre>
+<h4>3.2.3 enter_block - 进入方块</h4>
+<pre class="code-block"><code class="language-json">{
+    &quot;trigger&quot;: &quot;minecraft:enter_block&quot;,
+    &quot;conditions&quot;: {
+        &quot;block&quot;: &quot;minecraft:beehive&quot;,
+        &quot;state&quot;: {
+            &quot;honey_level&quot;: 5
+        }
+    }
+}</code></pre>
+<h4>3.2.4 location - 位置检查</h4>
+<pre class="code-block"><code class="language-json">{
+    &quot;trigger&quot;: &quot;minecraft:location&quot;,
+    &quot;conditions&quot;: {
+        &quot;biome&quot;: &quot;minecraft:desert&quot;,
+        &quot;dimension&quot;: &quot;minecraft:overworld&quot;
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="4-进度管理器">4. 进度管理器</h2>
+<h3>4.1 AdvancementManager</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementManager.java">public class AdvancementManager extends JsonDataLoader {
+    // 所有已加载的进度
+    private Map&lt;Identifier, AdvancementEntry&gt; advancements = new HashMap&lt;&gt;();
+
+    // 根进度列表
+    private List&lt;AdvancementEntry&gt; roots = new ArrayList&lt;&gt;();
+
+    // 进度树
+    private AdvancementTree tree = new AdvancementTree();
+
+    // 加载进度
+    public void load(RegistryWrapper&lt;Advancement&gt; registry, Path path) {
+        this.loadAdvancementTree(registry, path);
+        this.tree.rebuild();
+    }
+
+    // 获取进度
+    public AdvancementEntry get(Identifier id) {
+        return this.advancements.get(id);
+    }
+
+    // 获取所有进度
+    public Collection&lt;AdvancementEntry&gt; getAll() {
+        return this.advancements.values();
+    }
+
+    // 序列化到 JSON
+    public void serializeToJson(Advancement advancement, JsonObject json) {
+        // 序列化逻辑
+    }
+}</code></pre>
+<h3>4.2 PlayerAdvancementTracker</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/PlayerAdvancementTracker.java">public class PlayerAdvancementTracker {
+    // 玩家引用
+    private final ServerPlayerEntity player;
+
+    // 进度状态映射
+    private final Map&lt;Identifier, AdvancementProgress&gt; progressMap = new HashMap&lt;&gt;();
+
+    // 刷新的进度（需要同步到客户端）
+    private final Set&lt;Identifier&gt; refreshed = new HashSet&lt;&gt;();
+
+    // 进度发布（给所有监听器）
+    public void grant(AdvancementEntry advancement) {
+        // 授予进度
+        AdvancementProgress progress = this.getProgress(advancement);
+        if (progress.grant()) {  // 如果进度完成
+            // 发送奖励
+            advancement.getValue().rewards().apply(this.player);
+            // 通知监听器
+            thisListeners.forEach(listener -&gt;
+                listener.onAdvancementGranted(this.player, advancement));
+            // 标记为已刷新
+            this.refreshed.add(advancement.getId());
+        }
+    }
+
+    // 撤销进度
+    public void revoke(AdvancementEntry advancement) {
+        AdvancementProgress progress = this.getProgress(advancement);
+        if (progress.revoke()) {
+            thisListeners.forEach(listener -&gt;
+                listener.onAdvancementRevoked(this.player, advancement));
+            this.refreshed.add(advancement.getId());
+        }
+    }
+
+    // 发送刷新到客户端
+    public void sendRefreshedPackets() {
+        if (!this.refreshed.isEmpty()) {
+            this.player.networkHandler.sendPacket(
+                new S2CAdvancementUpdatePacket(this.refreshed, this.progressMap));
+            this.refreshed.clear();
+        }
+    }
+
+    // 获取或创建进度
+    public AdvancementProgress getProgress(AdvancementEntry advancement) {
+        return this.progressMap.computeIfAbsent(
+            advancement.getId(),
+            id -&gt; new AdvancementProgress(
+                advancement.getValue().criteria(),
+                advancement.getValue().requirements()
+            )
+        );
+    }
+}</code></pre>
+<h3>4.3 AdvancementProgress - 进度状态</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementProgress.java">public class AdvancementProgress {
+    // 条件状态映射
+    private final Map&lt;String, CriterionProgress&gt; criteriaProgress;
+
+    // 要求（条件组合）
+    private final AdvancementRequirements requirements;
+
+    // 是否完成
+    private volatile boolean done;
+
+    // 尝试授予进度
+    public boolean grant() {
+        if (!this.done &amp;&amp; this.requirements.test(this.criteriaProgress)) {
+            this.done = true;
+            return true;
+        }
+        return false;
+    }
+
+    // 尝试撤销进度
+    public boolean revoke() {
+        if (this.done) {
+            this.done = false;
+            return true;
+        }
+        return false;
+    }
+
+    // 是否完成
+    public boolean isDone() {
+        return this.done;
+    }
+
+    // 获取条件进度
+    public CriterionProgress getCriterionProgress(String criterion) {
+        return this.criteriaProgress.get(criterion);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="5-进度树结构">5. 进度树结构</h2>
+<h3>5.1 AdvancementTree 类</h3>
+<pre class="code-block"><code class="language-net/minecraft/advancement/AdvancementTree.java">public class AdvancementTree {
+    // 树节点
+    private final Map&lt;AdvancementEntry, Set&lt;AdvancementEntry&gt;&gt; children = new HashMap&lt;&gt;();
+    private final Map&lt;AdvancementEntry, AdvancementEntry&gt; parents = new HashMap&lt;&gt;();
+
+    // 重建树结构
+    public void rebuild() {
+        this.children.clear();
+        this.parents.clear();
+
+        for (AdvancementEntry advancement : this.manager.getAll()) {
+            // 建立父子关系
+            Advancement value = advancement.getValue();
+            value.parent().ifPresentOrElse(
+                parentId -&gt; {
+                    AdvancementEntry parent = this.manager.get(parentId);
+                    if (parent != null) {
+                        this.parents.put(advancement, parent);
+                        this.children.computeIfAbsent(parent, k -&gt; new HashSet&lt;&gt;())
+                            .add(advancement);
+                    }
+                },
+                () -&gt; {
+                    // 根进度
+                    this.children.put(advancement, new HashSet&lt;&gt;());
+                }
+            );
+        }
+    }
+
+    // 获取子进度
+    public Set&lt;AdvancementEntry&gt; getChildren(AdvancementEntry parent) {
+        return this.children.getOrDefault(parent, Set.of());
+    }
+
+    // 获取父进度
+    public AdvancementEntry getParent(AdvancementEntry advancement) {
+        return this.parents.get(advancement);
+    }
+}</code></pre>
+<h3>5.2 进度树结构图</h3>
+<pre class="code-block"><code class="language-text">                         [根进度]
+                             │
+            ┌────────────────┼────────────────┐
+            ▼                ▼                ▼
+        [冒险开始]        [畜牧]          [矿井]
+            │                │                │
+            ▼                ▼                ▼
+        [钻石!]          [羊羊得意]       [铁器时代]
+            │                │                │
+            ▼                ▼                ▼
+        [钻石装备]        [养牛]           [钻石!]</code></pre>
+<p><hr></p>
+<h2 id="6-网络同步">6. 网络同步</h2>
+<h3>6.1 S2CAdvancementUpdatePacket</h3>
+<pre class="code-block"><code class="language-net/minecraft/network/packet/s2c/AdvancementUpdateS2CPacket.java">public class AdvancementUpdateS2CPacket implements Packet&lt;ClientPlayPacketListener&gt; {
+    // 要刷新的进度
+    private final List&lt;AdvancementEntry&gt; advancementsToUpdate;
+    private final List&lt;Identifier&gt; advancementsToRemove;
+    private final Map&lt;Identifier, AdvancementProgress&gt; progressUpdates;
+    private final boolean immediately;
+
+    // 构造函数
+    public AdvancementUpdateS2CPacket(
+            List&lt;AdvancementEntry&gt; advancementsToUpdate,
+            List&lt;Identifier&gt; advancementsToRemove,
+            Map&lt;Identifier, AdvancementProgress&gt; progressUpdates,
+            boolean immediately) {
+        this.immediately = immediately;
+    }
+
+    // 解码
+    public static AdvancementUpdateS2CPacket read(PacketByteBuf buf) {
+        // 从数据包读取进度更新
+    }
+
+    // 应用到客户端
+    public void apply(ClientPlayPacketListener clientPlayPacketListener) {
+        clientPlayPacketListener.onAdvancementUpdate(this);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="7-json-格式完整示例">7. JSON 格式完整示例</h2>
+<pre class="code-block"><code class="language-json">{
+    &quot;display&quot;: {
+        &quot;icon&quot;: {
+            &quot;item&quot;: &quot;minecraft:diamond&quot;
+        },
+        &quot;title&quot;: &quot;取得钻石！&quot;,
+        &quot;description&quot;: &quot;获得你的第一颗钻石&quot;,
+        &quot;frame&quot;: &quot;task&quot;,
+        &quot;background&quot;: &quot;minecraft:textures/gui/advancements/backgrounds/stone.png&quot;,
+        &quot;show_toast&quot;: true,
+        &quot;announce_to_chat&quot;: true,
+        &quot;hidden&quot;: false
+    },
+    &quot;parent&quot;: &quot;minecraft:story/mine_stone&quot;,
+    &quot;criteria&quot;: {
+        &quot;diamond&quot;: {
+            &quot;trigger&quot;: &quot;minecraft:inventory_changed&quot;,
+            &quot;conditions&quot;: {
+                &quot;items&quot;: [
+                    {
+                        &quot;items&quot;: [&quot;minecraft:diamond&quot;]
+                    }
+                ]
+            }
+        }
+    },
+    &quot;requirements&quot;: [[&quot;diamond&quot;]],
+    &quot;rewards&quot;: {
+        &quot;experience&quot;: 100,
+        &quot;loot&quot;: [&quot;minecraft:gameplay/happy_hero_of_the_village&quot;],
+        &quot;recipes&quot;: [&quot;minecraft:diamond_pickaxe&quot;]
+    },
+    &quot;sends_telemetry_event&quot;: true
+}</code></pre>
+<p><hr></p>
+<h2 id="8-requirements-条件组合">8. Requirements 条件组合</h2>
+<h3>8.1 默认 AND 逻辑</h3>
+<pre class="code-block"><code class="language-json">&quot;criteria&quot;: {
+    &quot;diamond&quot;: {...},
+    &quot;emerald&quot;: {...}
+},
+&quot;requirements&quot;: [[&quot;diamond&quot;], [&quot;emerald&quot;]]
+// 必须同时满足 diamond 和 emerald</code></pre>
+<h3>8.2 OR 逻辑</h3>
+<pre class="code-block"><code class="language-json">&quot;criteria&quot;: {
+    &quot;diamond&quot;: {...},
+    &quot;emerald&quot;: {...}
+},
+&quot;requirements&quot;: [[&quot;diamond&quot;, &quot;emerald&quot;]]
+// 满足 diamond 或 emerald 任意一个即可</code></pre>
+<h3>8.3 复杂组合</h3>
+<pre class="code-block"><code class="language-json">&quot;criteria&quot;: {
+    &quot;diamond&quot;: {...},
+    &quot;emerald&quot;: {...},
+    &quot;gold&quot;: {...}
+},
+&quot;requirements&quot;: [[&quot;diamond&quot;, &quot;emerald&quot;], [&quot;gold&quot;]]
+// (diamond OR emerald) AND gold</code></pre>
+<p><hr></p>
+<h2 id="9-类图总结">9. 类图总结</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class Advancement {
+        +Optional~Identifier~ parent
+        +Optional~AdvancementDisplay~ display
+        +AdvancementRewards rewards
+        +Map~String~ criteria
+        +AdvancementRequirements requirements
+        +boolean sendsTelemetryEvent
+        +isRoot() boolean
+    }
+
+    class AdvancementDisplay {
+        +ItemStack icon
+        +Text title
+        +Text description
+        +Optional~Identifier~ background
+        +AdvancementFrame frame
+        +boolean showToast
+        +boolean announceToChat
+        +boolean hidden
+    }
+
+    class AdvancementRewards {
+        +int experience
+        +List~LootTable~ loot
+        +List~Identifier~ recipes
+        +Optional~LazyContainer~ function
+        +apply(Player) void
+    }
+
+    class AdvancementCriterion {
+        +String name
+        +T trigger
+    }
+
+    class AdvancementProgress {
+        +Map~String~ criteriaProgress
+        +AdvancementRequirements requirements
+        +boolean done
+        +grant() boolean
+        +revoke() boolean
+        +isDone() boolean
+    }
+
+    class AdvancementFrame {
+        <<enumeration>>
+        TASK
+        GOAL
+        CHALLENGE
+    }
+
+    class AdvancementManager {
+        +Map~Identifier~ advancements
+        +List~AdvancementEntry~ roots
+        +AdvancementTree tree
+        +load() void
+        +get() AdvancementEntry
+    }
+
+    class PlayerAdvancementTracker {
+        +ServerPlayerEntity player
+        +Map~Identifier~ progressMap
+        +grant(Advancement) void
+        +revoke(Advancement) void
+        +getProgress() AdvancementProgress
+    }
+
+    Advancement "1" --> "0..1" AdvancementDisplay
+    Advancement "1" --> "0..1" AdvancementRewards
+    Advancement "1" --> "n" AdvancementCriterion
+    AdvancementDisplay --> AdvancementFrame
+    AdvancementManager --> AdvancementEntry
+    PlayerAdvancementTracker --> AdvancementProgress
+    PlayerAdvancementTracker --> AdvancementManager</div>
+</div>
+<p><hr></p>
+<h2 id="10-数据保存">10. 数据保存</h2>
+<p>进度数据保存在世界目录的 <code>advancements/</code> 子目录中：</p>
+<pre class="code-block"><code class="language-text">📁 world/
+├── 📁 playerdata/
+│   └── xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.dat  # 玩家数据
+├── 📁 stats/              # 统计信息
+└── 📁 advancements/        # 进度数据
+    └── xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.json  # 每个玩家的进度</code></pre>
+<p><hr></p>
+<h2 id="11-总结">11. 总结</h2>
+<table class="data-table"><thead><tr><th>组件</th><th>职责</th><th>关键字段</th></tr></thead><tbody><tr><td><code>Advancement</code></td><td>进度主体</td><td>criteria, parent, rewards</td></tr><tr><td><code>AdvancementDisplay</code></td><td>显示信息</td><td>icon, title, frame, showToast</td></tr><tr><td><code>AdvancementRewards</code></td><td>奖励</td><td>experience, loot, recipes, function</td></tr><tr><td><code>AdvancementCriterion</code></td><td>单个条件</td><td>name, trigger</td></tr><tr><td><code>AdvancementProgress</code></td><td>完成状态</td><td>criteriaProgress, done</td></tr><tr><td><code>AdvancementManager</code></td><td>服务端管理器</td><td>加载和管理所有进度</td></tr><tr><td><code>PlayerAdvancementTracker</code></td><td>玩家追踪器</td><td>跟踪单个玩家的进度</td></tr><tr><td><code>AdvancementTree</code></td><td>进度树</td><td>父子关系管理</td></tr></tbody></table>
+进度系统遵循 <strong>条件满足 → 父进度检查 → 完成进度 → 给予奖励 → 通知玩家</strong> 的完成流程，通过 <code>sendsTelemetryEvent</code> 字段实现遥测数据收集。
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="12-sound-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 1.21 声音系统
+        </a><a href="14-loot-system.html" class="next">
+            Minecraft 1.21 战利品系统
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

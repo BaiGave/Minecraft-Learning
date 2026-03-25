@@ -306,6 +306,74 @@ void loadPrograms(ResourceFactory factory) {
 }
 ```
 
+#### 3.2.1 着色器程序速查表
+
+| 着色器名称 | 文件 | 用途 |
+|-----------|------|------|
+| `particle` | `particle.glsl` | 粒子渲染 |
+| `position_color` | `position_color.glsl` | 位置+颜色顶点 |
+| `rendertype_solid` | `rendertype_solid.glsl` | 实体方块渲染 |
+| `rendertype_translucent` | `rendertype_translucent.glsl` | 半透明渲染 |
+| `rendertype_entity_translucent` | `rendertype_entity_translucent.glsl` | 实体半透明 |
+| `rendertype_entity_solid` | `rendertype_entity_solid.glsl` | 实体固体 |
+| `rendertype_text` | `rendertype_text.glsl` | 文字渲染 |
+| `rendertype_text_background` | `rendertype_text_background.glsl` | 文字背景 |
+| `rendertype_lightning` | `rendertype_lightning.glsl` | 闪电特效 |
+| `rendertype_water_mask` | `rendertype_water_mask.glsl` | 水面遮罩 |
+| `rendertype_entity_decal` | `rendertype_entity_decal.glsl` | 实体贴花 |
+| `rendertype_text_intensity` | `rendertype_text_intensity.glsl` | 强度文字 |
+| `rendertype_glint` | `rendertype_glint.glsl` | 附魔闪光 |
+| `rendertype_glint_direct` | `rendertype_glint_direct.glsl` | 直接闪光 |
+| `rendertype_armor_glint` | `rendertype_armor_glint.glsl` | 护甲闪光 |
+| `rendertype_entity_glint` | `rendertype_entity_glint.glsl` | 实体闪光 |
+
+#### 3.2.2 GLSL 着色器文件位置
+
+```
+assets/minecraft/shaders/
+├── include/                    # 共享代码片段
+│   ├── common.glsl           # 通用数学函数
+│   ├── noise.glsl            # 噪声函数
+│   └── utilities.glsl        # 工具函数
+├── program/                   # 着色器程序
+│   ├── particle.frag         # 粒子片段着色器
+│   ├── particle.vert         # 粒子顶点着色器
+│   ├── position_color.frag   # 位置颜色片段
+│   ├── position_color.vert   # 位置颜色顶点
+│   ├── rendertype_solid.*    # 固体渲染类型
+│   ├── rendertype_translucent.*  # 半透明渲染
+│   ├── rendertype_text.*     # 文字渲染
+│   └── ...                   # 更多着色器
+└── uniform/                  # Uniform 变量定义
+```
+
+#### 3.2.3 后处理效果
+
+GameRenderer 支持多种后处理着色器效果：
+
+```java
+// 后处理着色器列表
+list2.add(Pair.of(new ShaderProgram(factory, "blur", ...), program -> {
+    blurProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, "color_convolve", ...), program -> {
+    colorConvolveProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, "creeper", ...), program -> {
+    creeperProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, "notch", ...), program -> {
+    notchProgram = program;
+}));
+```
+
+| 后处理效果 | 触发条件 | 视觉效果 |
+|-----------|---------|----------|
+| `blur` | 村民交易界面 | 背景模糊 |
+| `color_convolve` | 桶装药水效果 | 色彩卷积 |
+| `creeper` | 凋零效果 | 绿色闪烁 |
+| `notch` | 彩色灯笼效果 | 彩色滤镜 |
+
 ### 3.3 WorldRenderer 分析
 
 `WorldRenderer` 负责渲染游戏世界：

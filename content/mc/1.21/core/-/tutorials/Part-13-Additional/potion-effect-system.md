@@ -1,3 +1,8 @@
+---
+title: Minecraft 药水效果系统详解
+readingTime: 17
+---
+
 # Minecraft 药水效果系统详解
 
 ## 目标

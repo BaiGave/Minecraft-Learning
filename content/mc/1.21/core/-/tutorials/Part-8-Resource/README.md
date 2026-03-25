@@ -1,3 +1,8 @@
+---
+title: Part 8 资源系统
+readingTime: 15
+---
+
 # Part-8 资源系统
 
 欢迎来到 Minecraft 源码教程 Part-8！本部分将带你深入了解 Minecraft 的**资源系统（Resource System）**，包括资源包、数据包以及它们定义的各种游戏数据。

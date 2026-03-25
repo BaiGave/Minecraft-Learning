@@ -42,6 +42,24 @@
 | [08-datafixer-system.md](08-datafixer-system.md) | 数据修复系统 - 版本迁移、NBT转换 |
 | [09-registry-system.md](09-registry-system.md) | 注册表系统 - 资源定位符、标签 |
 
+### 高级系统分析
+
+| 文档 | 说明 |
+|------|------|
+| [11-particle-system.md](11-particle-system.md) | 粒子系统 - 粒子类型、渲染、工厂 |
+| [12-sound-system.md](12-sound-system.md) | 声音系统 - 声音事件、音量通道、衰减 |
+| [13-advancement-system.md](13-advancement-system.md) | 进度系统 - 成就、触发器、奖励 |
+| [14-loot-system.md](14-loot-system.md) | 战利品系统 - 掉落表、条件、函数 |
+| [15-recipe-system.md](15-recipe-system.md) | 配方系统 - 合成、烹饪、锻造 |
+| [16-profiler-system.md](16-profiler-system.md) | 性能剖析 - Tick监控、F3调试 |
+
+### 参考资料
+
+| 文档 | 说明 |
+|------|------|
+| [17-quick-reference.md](17-quick-reference.md) | 核心参考速查表 - 关键类速查 |
+| [18-version-comparison.md](18-version-comparison.md) | 版本对比 - 1.20.x vs 1.21 差异 |
+
 ### 总结
 
 | 文档 | 说明 |

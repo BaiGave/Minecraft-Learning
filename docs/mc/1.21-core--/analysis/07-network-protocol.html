@@ -190,6 +190,38 @@
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 包结构详解
         </a>
+<a href="11-particle-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
 <a href="README.html" class="">
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 源代码分析
@@ -579,6 +611,69 @@ public int readVarInt() {
 | ExplosionS2CPacket | 0x1C | 爆炸 |
 | WorldEventS2CPacket | 0x23 | 世界事件 |
 | WorldParticlesS2CPacket | 0x26 | 世界粒子 |
+
+<h4>5.1.1 数据包批次机制 (Chunk Batch)</h4>
+
+
+Minecraft 1.19+ 引入数据包批次机制优化区块同步：
+</p>
+<p><pre class="code-block"><code class="language-java">public class ChunkBatchStartS2CPacket implements Packet&lt;ClientPlayPacketListener&gt; {
+    private final int chunkX;
+    private final int chunkZ;
+    private final int chunkCount;  // 预期区块数量
+
+    public ChunkBatchStartS2CPacket(int chunkX, int chunkZ, int chunkCount) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        this.chunkCount = chunkCount;
+    }
+}
+
+// ChunkBatchFinishedS2CPacket - 完成区块批次
+public class ChunkBatchFinishedS2CPacket implements Packet&lt;ClientPlayPacketListener&gt; {
+    private final int chunkX;
+    private final int chunkZ;
+    private final int chunksLoaded;  // 实际加载的区块数
+
+    public ChunkBatchFinishedS2CPacket(int chunkX, int chunkZ, int chunksLoaded) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        this.chunksLoaded = chunksLoaded;
+    }
+}</code></pre>
+
+
+<strong>批次机制工作流程：</strong>
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Server as 服务端
+    participant Client as 客户端
+
+    Server->>Client: ChunkBatchStartS2CPacket
+    Note over Client: 开始接收新区块
+
+    loop 每个区块
+        Server->>Client: ChunkDataS2CPacket
+        Note over Client: 累积区块数据
+    end
+
+    Server->>Client: ChunkBatchFinishedS2CPacket
+    Note over Client: 批次完成，渲染所有区块
+
+    Server->>Client: ChunkRenderDistanceCenterS2CPacket
+    Note over Client: 更新渲染中心</div>
+</div>
+
+
+<strong>优化效果：</strong>
+
+| 优化项 | 传统模式 | 批次模式 |
+|--------|---------|---------|
+| 网络往返 | 每区块一次 | 多区块一批 |
+| 渲染触发 | 每区块一次 | 批次完成后一次 |
+| CPU 开销 | 高（频繁状态切换） | 低（批量处理） |
+| 适用场景 | 小范围区块变化 | 大范围区块加载 |
 
 <h3>5.2 数据包注册</h3>
 

@@ -1,3 +1,8 @@
+---
+title: 第47章 GUI系统
+readingTime: 15
+---
+
 # 第47章 GUI系统
 
 ## 目标

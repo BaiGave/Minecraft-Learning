@@ -1,3 +1,8 @@
+---
+title: Item 类：物品的基础
+readingTime: 20
+---
+
 # 17 - Item 类：物品的基础
 
 ## 目标

@@ -1,3 +1,8 @@
+---
+title: 注册表系统（Registry System）
+readingTime: 40
+---
+
 # 第四章：注册表系统（Registry System）
 
 > ⭐ **这是 Minecraft 源码中最重要的系统！学完这章，你就能理解MC如何管理所有的游戏内容。**

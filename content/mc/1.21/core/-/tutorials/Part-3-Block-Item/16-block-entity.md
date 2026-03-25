@@ -1,3 +1,8 @@
+---
+title: BlockEntity：需要存储数据的方块
+readingTime: 25
+---
+
 # 16 - BlockEntity：需要存储数据的方块
 
 ## 目标

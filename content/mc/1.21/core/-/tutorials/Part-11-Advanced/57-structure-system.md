@@ -1,3 +1,8 @@
+---
+title: 第57章 结构系统
+readingTime: 15
+---
+
 # 第57章 结构系统 (Structure System)
 
 ## 目标

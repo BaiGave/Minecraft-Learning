@@ -1,3 +1,8 @@
+---
+title: Minecraft 声音系统详解
+readingTime: 15
+---
+
 # Minecraft 声音系统详解
 
 ## 目标

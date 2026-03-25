@@ -190,6 +190,38 @@
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 包结构详解
         </a>
+<a href="11-particle-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 粒子系统
+        </a>
+<a href="12-sound-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 声音系统
+        </a>
+<a href="13-advancement-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 进度系统
+        </a>
+<a href="14-loot-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 战利品系统
+        </a>
+<a href="15-recipe-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 配方系统
+        </a>
+<a href="16-profiler-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 性能剖析系统
+        </a>
+<a href="17-quick-reference.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.21 核心参考速查表
+        </a>
+<a href="18-version-comparison.html" class="">
+            <i class="fas fa-microscope"></i>
+            Minecraft 1.20.x vs 1.21 核心差异对比
+        </a>
 <a href="README.html" class="">
             <i class="fas fa-microscope"></i>
             Minecraft 1.21 源代码分析
@@ -546,6 +578,74 @@ GameRenderer 预加载并管理大量着色器程序：
     // ... 更多着色器
 }</code></pre>
 
+
+<h4>3.2.1 着色器程序速查表</h4>
+
+
+| 着色器名称 | 文件 | 用途 |
+|-----------|------|------|
+| <code>particle</code> | <code>particle.glsl</code> | 粒子渲染 |
+| <code>position<em>color</code> | <code>position</em>color.glsl</code> | 位置+颜色顶点 |
+| <code>rendertype<em>solid</code> | <code>rendertype</em>solid.glsl</code> | 实体方块渲染 |
+| <code>rendertype<em>translucent</code> | <code>rendertype</em>translucent.glsl</code> | 半透明渲染 |
+| <code>rendertype<em>entity</em>translucent</code> | <code>rendertype<em>entity</em>translucent.glsl</code> | 实体半透明 |
+| <code>rendertype<em>entity</em>solid</code> | <code>rendertype<em>entity</em>solid.glsl</code> | 实体固体 |
+| <code>rendertype<em>text</code> | <code>rendertype</em>text.glsl</code> | 文字渲染 |
+| <code>rendertype<em>text</em>background</code> | <code>rendertype<em>text</em>background.glsl</code> | 文字背景 |
+| <code>rendertype<em>lightning</code> | <code>rendertype</em>lightning.glsl</code> | 闪电特效 |
+| <code>rendertype<em>water</em>mask</code> | <code>rendertype<em>water</em>mask.glsl</code> | 水面遮罩 |
+| <code>rendertype<em>entity</em>decal</code> | <code>rendertype<em>entity</em>decal.glsl</code> | 实体贴花 |
+| <code>rendertype<em>text</em>intensity</code> | <code>rendertype<em>text</em>intensity.glsl</code> | 强度文字 |
+| <code>rendertype<em>glint</code> | <code>rendertype</em>glint.glsl</code> | 附魔闪光 |
+| <code>rendertype<em>glint</em>direct</code> | <code>rendertype<em>glint</em>direct.glsl</code> | 直接闪光 |
+| <code>rendertype<em>armor</em>glint</code> | <code>rendertype<em>armor</em>glint.glsl</code> | 护甲闪光 |
+| <code>rendertype<em>entity</em>glint</code> | <code>rendertype<em>entity</em>glint.glsl</code> | 实体闪光 |
+
+<h4>3.2.2 GLSL 着色器文件位置</h4>
+
+</p>
+<p><pre class="code-block"><code class="language-text">assets/minecraft/shaders/
+├── include/                    # 共享代码片段
+│   ├── common.glsl           # 通用数学函数
+│   ├── noise.glsl            # 噪声函数
+│   └── utilities.glsl        # 工具函数
+├── program/                   # 着色器程序
+│   ├── particle.frag         # 粒子片段着色器
+│   ├── particle.vert         # 粒子顶点着色器
+│   ├── position_color.frag   # 位置颜色片段
+│   ├── position_color.vert   # 位置颜色顶点
+│   ├── rendertype_solid.*    # 固体渲染类型
+│   ├── rendertype_translucent.*  # 半透明渲染
+│   ├── rendertype_text.*     # 文字渲染
+│   └── ...                   # 更多着色器
+└── uniform/                  # Uniform 变量定义</code></pre>
+
+
+<h4>3.2.3 后处理效果</h4>
+
+
+GameRenderer 支持多种后处理着色器效果：
+</p>
+<p><pre class="code-block"><code class="language-java">list2.add(Pair.of(new ShaderProgram(factory, &quot;blur&quot;, ...), program -&gt; {
+    blurProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, &quot;color_convolve&quot;, ...), program -&gt; {
+    colorConvolveProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, &quot;creeper&quot;, ...), program -&gt; {
+    creeperProgram = program;
+}));
+list2.add(Pair.of(new ShaderProgram(factory, &quot;notch&quot;, ...), program -&gt; {
+    notchProgram = program;
+}));</code></pre>
+
+
+| 后处理效果 | 触发条件 | 视觉效果 |
+|-----------|---------|----------|
+| <code>blur</code> | 村民交易界面 | 背景模糊 |
+| <code>color_convolve</code> | 桶装药水效果 | 色彩卷积 |
+| <code>creeper</code> | 凋零效果 | 绿色闪烁 |
+| <code>notch</code> | 彩色灯笼效果 | 彩色滤镜 |
 
 <h3>3.3 WorldRenderer 分析</h3>
 
