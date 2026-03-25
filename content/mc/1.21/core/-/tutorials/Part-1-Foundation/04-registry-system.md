@@ -23,14 +23,14 @@ readingTime: 45
 
 ### 注册表系统 = 图书馆索引系统
 
-> **生活比喻**：想象 Minecraft 是一个大型图书馆
->
-> | 图书馆组件 | Minecraft 对应 | 示例 |
->|-----------|---------------|------|
->| 书籍 ISBN 号 | `Identifier` | `minecraft:diamond_block` |
->| 分类卡片 | `RegistryKey` | `RegistryKey.of(BLOCK, "diamond_block")` |
->| 索引卡 | `RegistryEntry` | 记录书籍位置、借阅状态 |
->| 索引柜 | `Registries` | 所有分类的总和 |
+**生活比喻**：想象 Minecraft 是一个大型图书馆：
+
+| 图书馆组件 | Minecraft 对应 | 示例 |
+|-----------|---------------|------|
+| 书籍 ISBN 号 | `Identifier` | `minecraft:diamond_block` |
+| 分类卡片 | `RegistryKey` | `RegistryKey.of(BLOCK, "diamond_block")` |
+| 索引卡 | `RegistryEntry` | 记录书籍位置、借阅状态 |
+| 索引柜 | `Registries` | 所有分类的总和 |
 
 ### 三层标识系统
 
@@ -363,8 +363,8 @@ flowchart TB
 
 | 类型 | 特点 | 示例 |
 |------|------|------|
-| **静态注册表** | 游戏内置、初始化后冻结 | BLOCK, ITEM, ENTITY_TYPE |
-| **动态注册表** | 数据包驱动、可扩展 | BIOME, LOOT_TABLE, RECIPE |
+| **静态注册表** | 游戏内置、初始化后冻结 | `BLOCK`, `ITEM`, `ENTITY_TYPE` |
+| **动态注册表** | 数据包驱动、可扩展 | `BIOME`, `LOOT_TABLE`, `RECIPE` |
 
 ## 生命周期追踪
 

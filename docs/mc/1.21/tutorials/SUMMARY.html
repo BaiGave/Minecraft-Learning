@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Minecraft 1.21 源码教程 - 学习总结 - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core---/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 00 章：课程总览（Course Overview）</span>
+        </a>
+<a href="Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 01 章：Java 基础速查（Java Basics）</span>
+        </a>
+<a href="Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 02 章：开发环境搭建（Development Environment）</span>
+        </a>
+<a href="Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 03 章：项目结构介绍（Project Layout）</span>
+        </a>
+<a href="Part-0-Prerequisites/04-project-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：项目结构与源码阅读技巧（Project and Source Reading）</span>
+        </a>
+<a href="Part-0-Prerequisites/05-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：源码查找指南（Source Navigation Appendix）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：注册表系统（Registry System）</span>
+        </a>
+<a href="Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 06 章：全局常量与版本信息（SharedConstants）</span>
+        </a>
+<a href="Part-1-Foundation/08-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 08 章：服务器 Tick 系统（Server Tick）</span>
+        </a>
+<a href="Part-1-Foundation/09-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：启动引导流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="Part-2-World/09-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：World核心类详解（World Core）</span>
+        </a>
+<a href="Part-2-World/10-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 10 章：Chunk区块系统详解（Chunk System）</span>
+        </a>
+<a href="Part-2-World/11-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 11 章：生物群系系统（Biome System）</span>
+        </a>
+<a href="Part-2-World/12-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 12 章：地形生成详解（Terrain Generation）</span>
+        </a>
+<a href="Part-2-World/13-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 13 章：光照系统详解（Lighting System）</span>
+        </a>
+<a href="Part-2-World/14-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 14 章：高度图系统详解（Heightmap）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="Part-3-Block-Item/15-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 15 章：方块基础详解（Block Basics）</span>
+        </a>
+<a href="Part-3-Block-Item/16-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 16 章：方块状态详解（Block State）</span>
+        </a>
+<a href="Part-3-Block-Item/17-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 17 章：方块实体详解（Block Entity）</span>
+        </a>
+<a href="Part-3-Block-Item/18-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 18 章：物品基础详解（Item Basics）</span>
+        </a>
+<a href="Part-3-Block-Item/19-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 19 章：ItemStack物品堆叠详解（ItemStack）</span>
+        </a>
+<a href="Part-3-Block-Item/20-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 20 章：组件系统详解（Data Components）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="Part-4-Entity/21-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 21 章：实体系统入门（Entity Introduction）</span>
+        </a>
+<a href="Part-4-Entity/22-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 22 章：实体生命周期（Entity Lifecycle）</span>
+        </a>
+<a href="Part-4-Entity/23-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 23 章：LivingEntity 有生命实体（LivingEntity）</span>
+        </a>
+<a href="Part-4-Entity/24-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 24 章：MobEntity 生物实体（MobEntity）</span>
+        </a>
+<a href="Part-4-Entity/25-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 25 章：属性系统（Entity Attributes）</span>
+        </a>
+<a href="Part-4-Entity/26-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 26 章：伤害系统（Damage System）</span>
+        </a>
+<a href="Part-4-Entity/27-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 27 章：生成系统（Spawn System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="Part-5-AI/28-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 28 章：AI Brain 大脑入门（AI Brain Introduction）</span>
+        </a>
+<a href="Part-5-AI/29-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 29 章：Memory 记忆系统（Memory System）</span>
+        </a>
+<a href="Part-5-AI/30-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 30 章：Sensor 传感器（Sensor System）</span>
+        </a>
+<a href="Part-5-AI/31-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 31 章：Task 任务系统（Task System）</span>
+        </a>
+<a href="Part-5-AI/32-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 32 章：Activity 与 Schedule（Activity and Schedule）</span>
+        </a>
+<a href="Part-5-AI/33-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 33 章：路径导航（Pathfinding）</span>
+        </a>
+<a href="Part-5-AI/34-ai-control-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 34 章：AI 控制系统（AI Control）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="Part-6-Network/35-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 35 章：网络系统入门（Network Introduction）</span>
+        </a>
+<a href="Part-6-Network/36-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 36 章：数据包Packet系统（Packet System）</span>
+        </a>
+<a href="Part-6-Network/37-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 37 章：协议状态机（Protocol States）</span>
+        </a>
+<a href="Part-6-Network/38-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 38 章：同步机制（Sync Mechanism）</span>
+        </a>
+<a href="Part-6-Network/39-login-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 39 章：登录认证系统（Login Flow）</span>
+        </a>
+<a href="Part-6-Network/40-play-packet-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 40 章：Play 阶段数据包入门（Play Phase Packets）</span>
+        </a>
+<a href="Part-6-Network/41-chat-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 41 章：聊天系统与签名（Chat System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="Part-7-Command/42-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 42 章：命令入门（Command System Introduction）</span>
+        </a>
+<a href="Part-7-Command/43-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 43 章：Brigadier基础（Brigadier Basics）</span>
+        </a>
+<a href="Part-7-Command/44-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 44 章：自定义命令实战（Custom Command Practice）</span>
+        </a>
+<a href="Part-7-Command/45-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 45 章：命令进阶（Command Advanced）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="Part-8-Resource/46-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 46 章：资源包系统（Resource Pack）</span>
+        </a>
+<a href="Part-8-Resource/47-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 47 章：数据包入门（Datapack Introduction）</span>
+        </a>
+<a href="Part-8-Resource/48-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 48 章：战利品表（Loot Table）</span>
+        </a>
+<a href="Part-8-Resource/49-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 49 章：进度系统（Advancement）</span>
+        </a>
+<a href="Part-8-Resource/50-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 50 章：配方系统（Recipe System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="Part-9-Client/51-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 51 章：MinecraftClient 主类（MinecraftClient）</span>
+        </a>
+<a href="Part-9-Client/52-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 52 章：渲染系统（Rendering）</span>
+        </a>
+<a href="Part-9-Client/53-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 53 章：GUI 系统（GUI System）</span>
+        </a>
+<a href="Part-9-Client/54-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 54 章：输入处理（Input Handling）</span>
+        </a>
+<a href="Part-9-Client/55-render-layer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 55 章：渲染层系统（Render Layers）</span>
+        </a>
+<a href="Part-9-Client/56-entity-model.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 56 章：实体模型系统（Entity Models）</span>
+        </a>
+<a href="Part-9-Client/70-sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：声音系统（Sound System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="Part-10-Server/57-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 57 章：服务端入门（Dedicated Server Intro）</span>
+        </a>
+<a href="Part-10-Server/58-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：玩家管理（PlayerManager）</span>
+        </a>
+<a href="Part-10-Server/59-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：Tick系统（Tick Loop）</span>
+        </a>
+<a href="Part-10-Server/60-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 60 章：存档系统（Save System）</span>
+        </a>
+<a href="Part-10-Server/61-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 61 章：独立服务器与整合服务器（Dedicated vs Integrated）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="Part-11-Advanced/58-particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：粒子系统（Particle System）</span>
+        </a>
+<a href="Part-11-Advanced/59-enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：附魔系统（Enchantment System）</span>
+        </a>
+<a href="Part-11-Advanced/62-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 62 章：数据修复系统（DataFixer）</span>
+        </a>
+<a href="Part-11-Advanced/63-fluid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 63 章：流体系统（Fluid System）</span>
+        </a>
+<a href="Part-11-Advanced/64-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 64 章：村民系统（Village System）</span>
+        </a>
+<a href="Part-11-Advanced/65-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 65 章：袭击系统（Raid System）</span>
+        </a>
+<a href="Part-11-Advanced/66-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 66 章：结构系统（Structure System）</span>
+        </a>
+<a href="Part-11-Advanced/67-profiler-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 67 章：性能分析系统（Profiler）</span>
+        </a>
+<a href="Part-11-Advanced/68-explosion-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 68 章：爆炸系统（Explosion System）</span>
+        </a>
+<a href="Part-11-Advanced/69-vehicle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 69 章：载具系统（Vehicles）</span>
+        </a>
+<a href="Part-11-Advanced/70-rcon-language-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：RCON 与语言本地化系统（RCON and Language）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 98 章：项目1：添加新方块（Project 1 — New Block）</span>
+        </a>
+<a href="Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 99 章：项目2：添加新物品（Project 2 — New Item）</span>
+        </a>
+<a href="Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 100 章：项目3：添加新生物（Project 3 — New Entity）</span>
+        </a>
+<a href="Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 101 章：项目4：创建数据包（Project 4 — Datapack）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统</span>
+        </a>
+<a href="Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统</span>
+        </a>
+<a href="Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统</span>
+        </a>
+<a href="Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程总入口</span>
+        </a>
+<a href="SUMMARY.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程 - 学习总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Minecraft 1.21 源码教程 - 学习总结</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    Minecraft 1.21 源码教程 - 学习总结
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Minecraft 1.21 源码教程 - 学习总结</h1>
+<blockquote><p>核心要点速览，知识点汇总</p></blockquote>
+<p><hr></p>
+<h2 id="1-课程总览">1. 课程总览</h2>
+<table class="data-table"><thead><tr><th>属性</th><th>值</th></tr></thead><tbody><tr><td>教程版本</td><td>Minecraft 1.21</td></tr><tr><td>章节数量</td><td>12 个 Part</td></tr><tr><td>预计学习时间</td><td>48-76 天</td></tr><tr><td>核心系统</td><td>注册表、AI大脑、Tick循环</td></tr></tbody></table>
+<hr></p>
+<h2 id="2-知识点汇总表格">2. 知识点汇总表格</h2>
+<h3>核心基础 (Part-1)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>注册表系统 ⭐</td><td><code>Registries</code>, <code>Identifier</code>, <code>RegistryKey</code></td><td>MC 最核心概念，万物皆注册</td></tr><tr><td>标识符</td><td><code>Identifier</code></td><td>格式 <code>namespace:path</code>，如 <code>minecraft:stone</code></td></tr><tr><td>客户端-服务端</td><td><code>MinecraftClient</code>, <code>MinecraftServer</code></td><td>分离架构，各司其职</td></tr><tr><td>Tick 循环</td><td><code>TickScheduler</code></td><td>20次/秒，游戏心跳</td></tr><tr><td>启动流程</td><td><code>Bootstrap</code></td><td>初始化顺序很重要</td></tr></tbody></table>
+<h3>世界系统 (Part-2)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>World</td><td><code>World</code>, <code>ServerWorld</code>, <code>ClientWorld</code></td><td>世界基类，分服务端/客户端</td></tr><tr><td>Chunk</td><td><code>Chunk</code>, <code>WorldChunk</code></td><td>16x256x16 区块，延迟加载</td></tr><tr><td>Biome</td><td><code>Biome</code>, <code>BiomeSource</code></td><td>生物群系，噪声生成</td></tr><tr><td>地形生成</td><td><code>ChunkGenerator</code></td><td>高度图 + 噪声函数</td></tr><tr><td>光照系统</td><td><code>LightCalculator</code></td><td>方块光 + 天空光</td></tr></tbody></table>
+<h3>方块物品 (Part-3)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>Block</td><td><code>Block</code></td><td>方块状态机</td></tr><tr><td>BlockState</td><td><code>BlockState</code></td><td>同一方块的不同状态</td></tr><tr><td>BlockEntity</td><td><code>BlockEntity</code></td><td>有状态的方块（箱子、熔炉等）</td></tr><tr><td>Item</td><td><code>Item</code></td><td>物品行为</td></tr><tr><td>ItemStack</td><td><code>ItemStack</code></td><td>物品堆叠，NBT 数据</td></tr></tbody></table>
+<h3>实体系统 (Part-4)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>Entity</td><td><code>Entity</code></td><td>所有游戏对象的基类</td></tr><tr><td>LivingEntity</td><td><code>LivingEntity</code></td><td>有生命值的实体</td></tr><tr><td>MobEntity</td><td><code>MobEntity</code></td><td>有 AI 的生物</td></tr><tr><td>PlayerEntity</td><td><code>PlayerEntity</code></td><td>玩家实体</td></tr><tr><td>属性系统</td><td><code>Attribute</code></td><td>生命、速度、攻击等</td></tr><tr><td>伤害系统</td><td><code>DamageSource</code></td><td>伤害来源和抗性</td></tr></tbody></table>
+<h3>AI系统 (Part-5) ⭐</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>Brain ⭐</td><td><code>Brain</code></td><td>AI 决策核心</td></tr><tr><td>Memory</td><td><code>MemoryModule</code></td><td>记忆存储</td></tr><tr><td>Sensor</td><td><code>Sensor</code></td><td>感知世界</td></tr><tr><td>Task</td><td><code>Activity</code></td><td>行为任务</td></tr><tr><td>Schedule</td><td><code>Schedule</code></td><td>日程安排</td></tr><tr><td>Pathfinding</td><td><code>PathNavigator</code></td><td>路径导航</td></tr></tbody></table>
+<h3>网络系统 (Part-6)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>Packet</td><td><code>Packet</code></td><td>数据包</td></tr><tr><td>ClientPlayHandler</td><td><code>ClientPlayPacketListener</code></td><td>客户端处理</td></tr><tr><td>ServerPlayHandler</td><td><code>ServerPlayPacketListener</code></td><td>服务端处理</td></tr><tr><td>Protocol</td><td><code>Protocol</code></td><td>协议状态机</td></tr></tbody></table>
+<h3>命令系统 (Part-7)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>Command</td><td><code>Command</code></td><td>命令基类</td></tr><tr><td>Brigadier</td><td><code>CommandDispatcher</code></td><td>Mojang 命令解析库</td></tr><tr><td>CommandSource</td><td><code>CommandSource</code></td><td>命令来源</td></tr><tr><td>CommandContext</td><td><code>CommandContext</code></td><td>命令上下文</td></tr></tbody></table>
+<h3>资源系统 (Part-8)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>ResourcePack</td><td><code>ResourcePack</code></td><td>资源包</td></tr><tr><td>Datapack</td><td><code>Datapack</code></td><td>数据包</td></tr><tr><td>LootTable</td><td><code>LootTable</code></td><td>战利品表</td></tr><tr><td>Advancement</td><td><code>Advancement</code></td><td>进度/成就</td></tr><tr><td>Recipe</td><td><code>Recipe</code></td><td>合成配方</td></tr></tbody></table>
+<h3>客户端 (Part-9)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>MinecraftClient</td><td><code>MinecraftClient</code></td><td>客户端主类</td></tr><tr><td>GameRenderer</td><td><code>GameRenderer</code></td><td>渲染器</td></tr><tr><td>Screen</td><td><code>Screen</code></td><td>GUI 界面</td></tr><tr><td>Window</td><td><code>Window</code></td><td>窗口管理</td></tr></tbody></table>
+<h3>服务端 (Part-10)</h3>
+<table class="data-table"><thead><tr><th>概念</th><th>核心类</th><th>关键点</th></tr></thead><tbody><tr><td>MinecraftServer</td><td><code>MinecraftServer</code></td><td>服务端主类</td></tr><tr><td>ServerWorld</td><td><code>ServerWorld</code></td><td>服务端世界</td></tr><tr><td>PlayerManager</td><td><code>PlayerManager</code></td><td>玩家管理</td></tr><tr><td>SaveHandler</td><td><code>SaveHandler</code></td><td>存档处理</td></tr></tbody></table>
+<hr></p>
+<h2 id="3-核心概念图">3. 核心概念图</h2>
+<h3>3.1 注册表三层结构</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Registry["注册表系统"]
+        subgraph Layer1["第一层：标识符 Identifier"]
+            I1["minecraft:stone"]
+            I2["minecraft:diamond_sword"]
+            I3["minecraft:pig"]
+        end
+
+        subgraph Layer2["第二层：注册键 RegistryKey"]
+            K1["RegistryKey<Block>"]
+            K2["RegistryKey<Item>"]
+            K3["RegistryKey<EntityType>"]
+        end
+
+        subgraph Layer3["第三层：注册条目 RegistryEntry"]
+            E1["石头方块实例"]
+            E2["钻石剑实例"]
+            E3["猪实体类型"]
+        end
+    end
+
+    I1 --> K1
+    I2 --> K2
+    I3 --> K3
+
+    K1 --> E1
+    K2 --> E2
+    K3 --> E3
+
+    style Registry fill:#ffd93d,color:#000
+    style Layer1 fill:#4d96ff,color:#fff
+    style Layer2 fill:#6bcb77,color:#fff
+    style Layer3 fill:#ff6b6b,color:#fff</div>
+</div>
+<h3>3.2 实体继承关系</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart BT
+    Entity["Entity<br/>基础实体"] --> Object["Object"]
+
+    Entity --> EntityWithOwner["EntityWithOwner"]
+    Entity --> Projectile["Projectile"]
+
+    Entity --> LivingEntity["LivingEntity ⭐<br/>有生命实体"]
+
+    LivingEntity --> MobEntity["MobEntity ⭐<br/>可移动生物"]
+
+    MobEntity --> AnimalEntity["AnimalEntity<br/>动物"]
+    MobEntity --> Monster["Monster<br/>怪物"]
+    MobEntity --> PathfinderMob["PathfinderMob<br/>寻路生物"]
+
+    LivingEntity --> PlayerEntity["PlayerEntity<br/>玩家"]
+
+    PlayerEntity --> ServerPlayer["ServerPlayerEntity"]
+    PlayerEntity --> ClientPlayer["ClientPlayerEntity"]
+
+    AnimalEntity --> Pig["Pig"]
+    AnimalEntity --> Cow["Cow"]
+    AnimalEntity --> Sheep["Sheep"]
+
+    Monster --> Zombie["Zombie"]
+    Monster --> Skeleton["Skeleton"]
+    Monster --> Creeper["Creeper"]
+
+    PathfinderMob --> Villager["VillagerEntity"]
+    PathfinderMob --> IronGolem["IronGolem"]
+
+    style Entity fill:#4d96ff,color:#fff
+    style LivingEntity fill:#ff6b6b,color:#fff
+    style MobEntity fill:#6bcb77,color:#fff
+    style PlayerEntity fill:#ffd93d,color:#000</div>
+</div>
+<h3>3.3 AI大脑架构</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Brain["AI 大脑 Brain"]
+        subgraph Memory["记忆 MemoryModule"]
+            M1["最近看到的实体"]
+            M2["工作位置"]
+            M3["敌对目标"]
+            M4["家庭位置"]
+        end
+
+        subgraph Activities["活动 Activity"]
+            A1["IDLE 空闲"]
+            A2["WORK 工作"]
+            A3["REST 休息"]
+            A4["FIGHT 战斗"]
+        end
+
+        subgraph Tasks["任务 Task"]
+            T1["WalkToTarget 走向目标"]
+            T2["LookAtTarget 看向目标"]
+            T3["AttackTarget 攻击目标"]
+        end
+
+        subgraph Schedule["日程 Schedule"]
+            S1["06:00 起床工作"]
+            S2["12:00 休息"]
+            S3["18:00 回家"]
+            S4["22:00 睡觉"]
+        end
+    end
+
+    subgraph Sensors["传感器 Sensor"]
+        SE1["NearestLiving 最近生物"]
+        SE2["NearestPoI 最近兴趣点"]
+        SE3["HurtBy 被谁伤害"]
+    end
+
+    Sensors -->|"更新"| Memory
+    Memory -->|"决策"| Brain
+    Brain -->|"选择"| Activities
+    Activities -->|"执行"| Tasks
+    Schedule -->|"控制"| Activities
+
+    style Brain fill:#ff6b6b,color:#fff
+    style Memory fill:#ffd93d,color:#000
+    style Sensors fill:#4d96ff,color:#fff</div>
+</div>
+<h3>3.4 网络数据包流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Client as 客户端 MinecraftClient
+    participant Network as 网络层 Packet
+    participant Server as 服务端 MinecraftServer
+
+    Client->>Network: 1. 发送操作 (如移动)
+    Network->>Server: 2. ServerBoundPacket
+    Server->>Server: 3. 验证和处理
+    Server->>Network: 4. 生成响应包
+    Network->>Client: 5. ClientBoundPacket
+    Client->>Client: 6. 应用更新 (本地预测)
+
+    Note over Client,Server: 同步完成后状态一致</div>
+</div>
+<h3>3.5 Tick 游戏循环</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    Start["Tick 开始<br/>每 50ms 一次"] --> Check{"游戏暂停?"}
+
+    Check -->|是| Wait["等待..."]
+    Wait --> End
+
+    Check -->|否| ServerTick["服务端 Tick"]
+    ServerTick --> EntityTick["实体 Tick"]
+    EntityTick --> BlockTick["方块 Tick"]
+    BlockTick --> WeatherTick["天气 Tick"]
+    WeatherTick --> SaveCheck{"需要保存?"}
+
+    SaveCheck -->|是| AutoSave["自动保存"]
+    SaveCheck -->|否| Schedule["调度"]
+    AutoSave --> Schedule
+
+    Schedule --> End["Tick 结束"]
+
+    style Start fill:#6bcb77,color:#fff
+    style End fill:#6bcb77,color:#fff
+    style EntityTick fill:#ff6b6b,color:#fff</div>
+</div>
+<p><hr></p>
+<h2 id="4-学习检查清单">4. 学习检查清单</h2>
+<h3>Part-0 ~ Part-1: 入门</h3>
+<p><ul><li>[ ] 理解什么是注册表系统</li>
+<li>[ ] 能说出 Identifier 的格式</li>
+<li>[ ] 理解客户端和服务端的区别</li>
+<li>[ ] 理解 Tick 是什么</li></ul></p>
+<h3>Part-2: 世界系统</h3>
+<p><ul><li>[ ] 能描述 World 和 Chunk 的关系</li>
+<li>[ ] 理解区块的加载/卸载机制</li>
+<li>[ ] 了解生物群系是如何生成的</li>
+<li>[ ] 理解光照的计算方式</li></ul></p>
+<h3>Part-3: 方块物品</h3>
+<p><ul><li>[ ] 能区分 Block 和 BlockState</li>
+<li>[ ] 理解为什么需要 BlockEntity</li>
+<li>[ ] 理解 Item 和 ItemStack 的区别</li>
+<li>[ ] 知道如何使用 NBT 存储数据</li></ul></p>
+<h3>Part-4: 实体系统</h3>
+<p><ul><li>[ ] 能画出 Entity 继承关系图</li>
+<li>[ ] 理解 LivingEntity 的核心功能</li>
+<li>[ ] 知道实体是如何生成的</li>
+<li>[ ] 理解属性系统是如何工作的</li></ul></p>
+<h3>Part-5: AI系统</h3>
+<p><ul><li>[ ] 理解 Brain 的三大组件（Memory, Sensor, Task）</li>
+<li>[ ] 能解释村民 AI 的工作原理</li>
+<li>[ ] 理解 Schedule 和 Activity 的关系</li>
+<li>[ ] 知道路径导航是如何实现的</li></ul></p>
+<h3>Part-6: 网络系统</h3>
+<p><ul><li>[ ] 理解数据包的作用</li>
+<li>[ ] 能描述客户端和服务端的通信流程</li>
+<li>[ ] 知道什么是状态同步</li>
+<li>[ ] 理解网络压缩和加密</li></ul></p>
+<h3>Part-7 ~ Part-8: 命令和资源</h3>
+<p><ul><li>[ ] 能使用 Brigadier 创建自定义命令</li>
+<li>[ ] 理解资源包和数据包的区别</li>
+<li>[ ] 能创建战利品表</li>
+<li>[ ] 能创建配方</li></ul></p>
+<h3>Part-9 ~ Part-10: 客户端和服务端</h3>
+<p><ul><li>[ ] 理解渲染管线的基本流程</li>
+<li>[ ] 知道服务端如何管理玩家</li>
+<li>[ ] 理解存档是如何保存的</li>
+<li>[ ] 能区分独立服务器和整合客户端</li></ul></p>
+<p><hr></p>
+<h2 id="5-进阶学习路径">5. 进阶学习路径</h2>
+<p>完成本教程后，你可以继续深入：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 基础["基础掌握"]
+        B1["阅读更多源码"]
+        B2["写自己的 Mod"]
+    end
+
+    subgraph 进阶["进阶方向"]
+        A1["渲染引擎开发"]
+        A2["AI 系统优化"]
+        A3["网络协议研究"]
+        A4["性能优化"]
+    end
+
+    subgraph 实践["实践项目"]
+        P1["优化 Sodium"]
+        P2["开发新 Mod"]
+        P3["创建光影包"]
+    end
+
+    B1 --> A1
+    B1 --> A2
+    B1 --> A3
+    B1 --> A4
+    B2 --> P1
+    B2 --> P2
+    B2 --> P3
+
+    style 基础 fill:#4d96ff,color:#fff
+    style 进阶 fill:#ff6b6b,color:#fff
+    style 实践 fill:#6bcb77,color:#fff</div>
+</div>
+<h3>推荐进阶资源</h3>
+<table class="data-table"><thead><tr><th>方向</th><th>资源</th><th>说明</th></tr></thead><tbody><tr><td>渲染</td><td><a href="../sodium/1.21/fabric/0.8.6/analysis.html">Sodium 分析</a></td><td>高性能渲染优化</td></tr><tr><td>光影</td><td><a href="../iris/1.21/fabric/1.7.3/analysis.html">Iris 分析</a></td><td>着色器系统</td></tr><tr><td>传送门</td><td><a href="../ImmersivePortalsMod/1.21.1/fabric/6.0.6/analysis.html">ImmersivePortals 分析</a></td><td>Mixin 高级用法</td></tr><tr><td>Mod开发</td><td><a href="https://fabricmc.net/wiki/" target="_blank" rel="noopener noreferrer">Fabric Wiki</a></td><td>官方开发文档</td></tr><tr><td>命令</td><td><a href="https://github.com/Mojang/brigadier" target="_blank" rel="noopener noreferrer">Brigadier GitHub</a></td><td>命令解析库源码</td></tr></tbody></table>
+<hr></p>
+<h2 id="6-相关资源链接">6. 相关资源链接</h2>
+<h3>内部资源</h3>
+<table class="data-table"><thead><tr><th>资源</th><th>路径</th><th>说明</th></tr></thead><tbody><tr><td>学习路线图</td><td><a href="01-LEARNING-ROADMAP.html">01-LEARNING-ROADMAP</a></td><td>完整学习路径</td></tr><tr><td>课程总览</td><td><a href="README.html">README</a></td><td>教程入口</td></tr><tr><td>源码分析</td><td><a href="../-analysis.html">../-analysis/</a></td><td>详细系统分析</td></tr><tr><td>源码文件映射</td><td><a href="../-analysis/SOURCE-FILES.json.html">../-analysis/SOURCE-FILES.json</a></td><td>源码文件索引</td></tr></tbody></table>
+<h3>外部资源</h3>
+<table class="data-table"><thead><tr><th>资源</th><th>链接</th></tr></thead><tbody><tr><td>Minecraft Wiki</td><td>https://minecraft.fandom.com/wiki/Minecraft_Wiki</td></tr><tr><td>Fabric Wiki</td><td>https://fabricmc.net/wiki/</td></tr><tr><td>Minecraft Forge</td><td>https://minecraftforge.net/</td></tr><tr><td>Brigadier</td><td>https://github.com/Mojang/brigadier</td></tr><tr><td>Mojang YARN 反编译</td><td>https://github.com/FabricMC/yarn</td></tr></tbody></table>
+<hr></p>
+<h2 id="7-关键术语表">7. 关键术语表</h2>
+<table class="data-table"><thead><tr><th>术语</th><th>中文</th><th>解释</th></tr></thead><tbody><tr><td>Registry</td><td>注册表</td><td>存储游戏所有元素（方块、物品、实体等）的系统</td></tr><tr><td>Identifier</td><td>标识符</td><td>资源的唯一名称，格式 <code>namespace:path</code></td></tr><tr><td>Tick</td><td>游戏刻</td><td>游戏的最小时间单位，20次/秒</td></tr><tr><td>Entity</td><td>实体</td><td>存在于世界中的对象（生物、物品、子弹等）</td></tr><tr><td>Chunk</td><td>区块</td><td>16x16x256 的方块区域</td></tr><tr><td>Biome</td><td>生物群系</td><td>具有特定环境特征的区域</td></tr><tr><td>Packet</td><td>数据包</td><td>网络通信的基本单位</td></tr><tr><td>NBT</td><td>Named Binary Tag</td><td>Minecraft 的二进制数据格式</td></tr><tr><td>Mixin</td><td>混合注入</td><td>修改代码的技术</td></tr><tr><td>Datapack</td><td>数据包</td><td>自定义游戏内容的 JSON 文件</td></tr></tbody></table>
+<hr></p>
+<h2 id="8-常见问题速查">8. 常见问题速查</h2>
+<h3>Q: 注册表为什么重要？</h3>
+<p>A: MC 中几乎所有内容（方块、物品、实体、附魔等）都需要注册才能使用。</p>
+<h3>Q: 客户端和服务端的区别是什么？</h3>
+<p>A: 客户端负责渲染和输入，服务端负责游戏逻辑和数据权威。</p>
+<h3>Q: Tick 和帧率有什么关系？</h3>
+<p>A: Tick 是服务端的逻辑更新（固定20次/秒），帧率是客户端的渲染速度（可变）。</p>
+<h3>Q: 为什么要学习源码？</h3>
+<p>A: 理解源码才能做高级 Mod，才能优化性能，才能创造新的游戏内容。</p>
+<p><hr></p>
+<blockquote><p><strong>学习建议</strong>：不要试图一次记住所有内容，理解核心概念后，多阅读源码。</p></blockquote>
+<p><hr></p>
+<p><em>教程版本：Minecraft 1.21</em>
+<em>总结更新时间：2026-03-26</em>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="README.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Minecraft 1.21 源码教程总入口
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

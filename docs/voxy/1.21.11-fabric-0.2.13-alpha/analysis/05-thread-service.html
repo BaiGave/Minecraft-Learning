@@ -289,7 +289,7 @@
 </div>
 <h3>线程优先级为 3 的含义</h3>
 <pre class="code-block"><code class="language-10">t.setPriority(3);</code></pre>
-<p>Java 线程优先级范围是 <code>Thread.MIN<em>PRIORITY</code>(1) 到 <code>Thread.MAX</em>PRIORITY</code>(10)，默认是 <code>NORM_PRIORITY</code>(5)。</p>
+<p>Java 线程优先级范围是 <code>Thread.MIN_PRIORITY</code>(1) 到 <code>Thread.MAX_PRIORITY</code>(10)，默认是 <code>NORM_PRIORITY</code>(5)。</p>
 <p><strong>设为 3 的设计意图</strong>：低于正常优先级，让 Voxy Worker 在有大量任务时不会过度抢占渲染线程/主线程的时间片。设置为 3 意味着 Voxy 工作线程在系统调度中处于「低优先级」——这在 Minecraft 客户端尤其关键，渲染帧率不能被后台存储操作拖累。</p>
 <p>此外，<code>VoxyInstance</code> 中还有一个 <code>worldCleaner</code> 线程使用 <code>Thread.MIN_PRIORITY</code>（优先级 1），专门做空闲世界清理：</p>
 <pre class="code-block"><code class="language-54">this.worldCleaner.setPriority(Thread.MIN_PRIORITY);</code></pre>
@@ -309,16 +309,16 @@
         F -->|"diff < 0"| H["selfBlock.release(-diff)"]
     end</div>
 </div>
-<p><strong><code>UnifiedServiceThreadPool</code></strong> 的核心职责是管理一组专用线程：</p>
+<p>**<code>UnifiedServiceThreadPool</code>** 的核心职责是管理一组专用线程：</p>
 <pre class="code-block"><code class="language-10">public class UnifiedServiceThreadPool {
     public final ServiceManager serviceManager;
     public final MultiThreadPrioritySemaphore groupSemaphore;
     private final MultiThreadPrioritySemaphore.Block selfBlock;
     private final ThreadGroup dedicatedPool;
     private final List&lt;Thread&gt; threads = new ArrayList&lt;&gt;();</code></pre>
-<p><ul><li><strong><code>ServiceManager</code></strong>：管理所有 Service，负责选取哪个 Service 执行任务</li>
-<li><strong><code>MultiThreadPrioritySemaphore</code></strong>：协调 Worker 线程阻塞/唤醒，支持优先级调度</li>
-<li><strong><code>ThreadGroup</code></strong>：将 Voxy Worker 归入名为 <code>"Voxy Dedicated Service"</code> 的线程组，便于调试</li>
+<p><ul><li>**<code>ServiceManager</code>**：管理所有 Service，负责选取哪个 Service 执行任务</li>
+<li>**<code>MultiThreadPrioritySemaphore</code>**：协调 Worker 线程阻塞/唤醒，支持优先级调度</li>
+<li>**<code>ThreadGroup</code>**：将 Voxy Worker 归入名为 <code>"Voxy Dedicated Service"</code> 的线程组，便于调试</li>
 <li><strong>Daemon 线程</strong>：设为 <code>true</code>，JVM 退出时自动销毁</li></ul></p>
 <h3>Worker 线程生命周期</h3>
 <pre class="code-block"><code class="language-29">public boolean setNumThreads(int threads) {
@@ -370,7 +370,7 @@
     B --> BS</div>
 </div>
 <p>每个 Worker 线程持有一个 <code>Block</code>，Worker 通过 <code>Block.acquire()</code> 进入阻塞状态。有任务时：</p>
-<p><ul><li><strong><code>pooledRelease(permits)</code></strong> 被调用 → <code>pooledSemaphore</code> 增加计数</li>
+<p><ul><li>**<code>pooledRelease(permits)</code>** 被调用 → <code>pooledSemaphore</code> 增加计数</li>
 <li>所有 <code>Block.blockSemaphore</code> 同时增加计数</li>
 <li>Worker 从 <code>acquire()</code> 返回后：</li>
 </ul>   - 优先从 <code>localSemaphore</code> 获取（本地任务）
@@ -560,7 +560,7 @@ private volatile boolean isStopping = false;</code></pre>
     public SectionSavingService(ServiceManager sm) {
         this.service = sm.createServiceNoCleanup(() -&gt; this::processJob, 100, &quot;Section saving service&quot;);
     }</code></pre>
-<p><strong><code>limiter</code> 的软限流</strong>：VoxyInstance 传入 <code>savingServiceRateLimiter = ()->this.savingService.getTaskCount()<1200</code>。当保存任务超过 1200 时，<code>ServiceManager.runAJob0()</code> 会跳过该 Service，但主线程仍可通过 <code>steal()</code> 同步处理——这是一个<strong>双层限流</strong>设计。</p>
+<p>**<code>limiter</code> 的软限流**：VoxyInstance 传入 <code>savingServiceRateLimiter = ()->this.savingService.getTaskCount()<1200</code>。当保存任务超过 1200 时，<code>ServiceManager.runAJob0()</code> 会跳过该 Service，但主线程仍可通过 <code>steal()</code> 同步处理——这是一个<strong>双层限流</strong>设计。</p>
 <p><hr></p>
 <h2 id="7-voxyinstance-线程管理">7. VoxyInstance 线程管理</h2>
 <div class="mermaid-wrapper mermaid-container">

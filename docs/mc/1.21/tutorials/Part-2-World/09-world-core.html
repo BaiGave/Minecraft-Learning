@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第 09 章：World核心类详解（World Core） - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core---/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 00 章：课程总览（Course Overview）</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 01 章：Java 基础速查（Java Basics）</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 02 章：开发环境搭建（Development Environment）</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 03 章：项目结构介绍（Project Layout）</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-project-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：项目结构与源码阅读技巧（Project and Source Reading）</span>
+        </a>
+<a href="../Part-0-Prerequisites/05-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：源码查找指南（Source Navigation Appendix）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 06 章：全局常量与版本信息（SharedConstants）</span>
+        </a>
+<a href="../Part-1-Foundation/08-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 08 章：服务器 Tick 系统（Server Tick）</span>
+        </a>
+<a href="../Part-1-Foundation/09-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：启动引导流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="09-world-core.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：World核心类详解（World Core）</span>
+        </a>
+<a href="10-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 10 章：Chunk区块系统详解（Chunk System）</span>
+        </a>
+<a href="11-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 11 章：生物群系系统（Biome System）</span>
+        </a>
+<a href="12-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 12 章：地形生成详解（Terrain Generation）</span>
+        </a>
+<a href="13-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 13 章：光照系统详解（Lighting System）</span>
+        </a>
+<a href="14-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 14 章：高度图系统详解（Heightmap）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/15-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 15 章：方块基础详解（Block Basics）</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 16 章：方块状态详解（Block State）</span>
+        </a>
+<a href="../Part-3-Block-Item/17-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 17 章：方块实体详解（Block Entity）</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 18 章：物品基础详解（Item Basics）</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 19 章：ItemStack物品堆叠详解（ItemStack）</span>
+        </a>
+<a href="../Part-3-Block-Item/20-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 20 章：组件系统详解（Data Components）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/21-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 21 章：实体系统入门（Entity Introduction）</span>
+        </a>
+<a href="../Part-4-Entity/22-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 22 章：实体生命周期（Entity Lifecycle）</span>
+        </a>
+<a href="../Part-4-Entity/23-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 23 章：LivingEntity 有生命实体（LivingEntity）</span>
+        </a>
+<a href="../Part-4-Entity/24-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 24 章：MobEntity 生物实体（MobEntity）</span>
+        </a>
+<a href="../Part-4-Entity/25-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 25 章：属性系统（Entity Attributes）</span>
+        </a>
+<a href="../Part-4-Entity/26-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 26 章：伤害系统（Damage System）</span>
+        </a>
+<a href="../Part-4-Entity/27-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 27 章：生成系统（Spawn System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/28-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 28 章：AI Brain 大脑入门（AI Brain Introduction）</span>
+        </a>
+<a href="../Part-5-AI/29-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 29 章：Memory 记忆系统（Memory System）</span>
+        </a>
+<a href="../Part-5-AI/30-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 30 章：Sensor 传感器（Sensor System）</span>
+        </a>
+<a href="../Part-5-AI/31-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 31 章：Task 任务系统（Task System）</span>
+        </a>
+<a href="../Part-5-AI/32-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 32 章：Activity 与 Schedule（Activity and Schedule）</span>
+        </a>
+<a href="../Part-5-AI/33-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 33 章：路径导航（Pathfinding）</span>
+        </a>
+<a href="../Part-5-AI/34-ai-control-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 34 章：AI 控制系统（AI Control）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/35-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 35 章：网络系统入门（Network Introduction）</span>
+        </a>
+<a href="../Part-6-Network/36-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 36 章：数据包Packet系统（Packet System）</span>
+        </a>
+<a href="../Part-6-Network/37-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 37 章：协议状态机（Protocol States）</span>
+        </a>
+<a href="../Part-6-Network/38-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 38 章：同步机制（Sync Mechanism）</span>
+        </a>
+<a href="../Part-6-Network/39-login-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 39 章：登录认证系统（Login Flow）</span>
+        </a>
+<a href="../Part-6-Network/40-play-packet-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 40 章：Play 阶段数据包入门（Play Phase Packets）</span>
+        </a>
+<a href="../Part-6-Network/41-chat-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 41 章：聊天系统与签名（Chat System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/42-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 42 章：命令入门（Command System Introduction）</span>
+        </a>
+<a href="../Part-7-Command/43-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 43 章：Brigadier基础（Brigadier Basics）</span>
+        </a>
+<a href="../Part-7-Command/44-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 44 章：自定义命令实战（Custom Command Practice）</span>
+        </a>
+<a href="../Part-7-Command/45-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 45 章：命令进阶（Command Advanced）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/46-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 46 章：资源包系统（Resource Pack）</span>
+        </a>
+<a href="../Part-8-Resource/47-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 47 章：数据包入门（Datapack Introduction）</span>
+        </a>
+<a href="../Part-8-Resource/48-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 48 章：战利品表（Loot Table）</span>
+        </a>
+<a href="../Part-8-Resource/49-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 49 章：进度系统（Advancement）</span>
+        </a>
+<a href="../Part-8-Resource/50-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 50 章：配方系统（Recipe System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/51-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 51 章：MinecraftClient 主类（MinecraftClient）</span>
+        </a>
+<a href="../Part-9-Client/52-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 52 章：渲染系统（Rendering）</span>
+        </a>
+<a href="../Part-9-Client/53-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 53 章：GUI 系统（GUI System）</span>
+        </a>
+<a href="../Part-9-Client/54-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 54 章：输入处理（Input Handling）</span>
+        </a>
+<a href="../Part-9-Client/55-render-layer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 55 章：渲染层系统（Render Layers）</span>
+        </a>
+<a href="../Part-9-Client/56-entity-model.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 56 章：实体模型系统（Entity Models）</span>
+        </a>
+<a href="../Part-9-Client/70-sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：声音系统（Sound System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/57-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 57 章：服务端入门（Dedicated Server Intro）</span>
+        </a>
+<a href="../Part-10-Server/58-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：玩家管理（PlayerManager）</span>
+        </a>
+<a href="../Part-10-Server/59-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：Tick系统（Tick Loop）</span>
+        </a>
+<a href="../Part-10-Server/60-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 60 章：存档系统（Save System）</span>
+        </a>
+<a href="../Part-10-Server/61-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 61 章：独立服务器与整合服务器（Dedicated vs Integrated）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="../Part-11-Advanced/58-particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：粒子系统（Particle System）</span>
+        </a>
+<a href="../Part-11-Advanced/59-enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：附魔系统（Enchantment System）</span>
+        </a>
+<a href="../Part-11-Advanced/62-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 62 章：数据修复系统（DataFixer）</span>
+        </a>
+<a href="../Part-11-Advanced/63-fluid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 63 章：流体系统（Fluid System）</span>
+        </a>
+<a href="../Part-11-Advanced/64-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 64 章：村民系统（Village System）</span>
+        </a>
+<a href="../Part-11-Advanced/65-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 65 章：袭击系统（Raid System）</span>
+        </a>
+<a href="../Part-11-Advanced/66-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 66 章：结构系统（Structure System）</span>
+        </a>
+<a href="../Part-11-Advanced/67-profiler-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 67 章：性能分析系统（Profiler）</span>
+        </a>
+<a href="../Part-11-Advanced/68-explosion-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 68 章：爆炸系统（Explosion System）</span>
+        </a>
+<a href="../Part-11-Advanced/69-vehicle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 69 章：载具系统（Vehicles）</span>
+        </a>
+<a href="../Part-11-Advanced/70-rcon-language-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：RCON 与语言本地化系统（RCON and Language）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 98 章：项目1：添加新方块（Project 1 — New Block）</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 99 章：项目2：添加新物品（Project 2 — New Item）</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 100 章：项目3：添加新生物（Project 3 — New Entity）</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 101 章：项目4：创建数据包（Project 4 — Datapack）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程总入口</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程 - 学习总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第 09 章：World核心类详解（World Core）</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第 09 章：World核心类详解（World Core）
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第 09 章：World核心类详解（World Core）</h1>
+
+
+<h2 id="章节目标">章节目标</h2>
+
+
+通过本章学习，你将掌握：
+<ul><li>World 类的核心架构和设计理念</li></ul>
+<ul><li>世界坐标系统和边界验证</li></ul>
+<ul><li>区块的加载和访问机制</li></ul>
+<ul><li>方块操作的完整流程</li></ul>
+<ul><li>世界与实体的交互方式</li></ul>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+建议先阅读：
+<ul><li><a href="../Part-1-Foundation/05-registry-system.html">Part-1 基础/05-注册表系统</a> - 注册表机制</li></ul>
+<ul><li><a href="../Part-1-Foundation/08-tick-system.html">Part-1 基础/06-Tick系统</a> - 游戏刻概念</li></ul>
+
+<h2 id="核心概念">核心概念</h2>
+
+
+<h3>World = 巨大的图书馆档案柜</h3>
+
+
+想象 World 是一个<strong>巨大的图书馆档案柜</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    World = 图书馆档案柜                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  📚 档案柜 = World                                           │
+│     │                                                        │
+│     ├── 📁 抽屉 = Chunk（区块）                               │
+│     │     ├── 📄 页面 = ChunkSection（截面）                   │
+│     │     └── 📋 标签 = BlockState（方块状态）                  │
+│     │                                                        │
+│     ├── 🗂️ 索引卡 = Heightmap（高度图）                        │
+│     └── 📦 特殊物品 = BlockEntity（方块实体）                    │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<strong>关键类比</strong>：
+<ul><li>档案柜（World）管理所有抽屉（Chunk）</li></ul>
+<ul><li>每个抽屉（Chunk）包含详细的页面（方块数据）</li></ul>
+<ul><li>索引系统（Heightmap）让你快速找到资料位置</li></ul>
+<ul><li>特殊物品箱（BlockEntity）存储需要跟踪的信息</li></ul>
+
+<hr>
+
+<h2 id="1-world-类的层次结构">1. World 类的层次结构</h2>
+
+
+<h3>1.1 类继承关系</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">90:92:World.java
+public abstract class World
+    implements WorldAccess,
+               AutoCloseable {</code></pre>
+
+
+Minecraft 世界分为服务端世界和客户端世界：
+</p>
+<p><pre class="code-block"><code class="language-text">World (抽象基类)
+├── ServerWorld (服务端世界 - 管理所有游戏逻辑)
+└── ClientWorld (客户端世界 - 仅负责渲染和本地模拟)</code></pre>
+
+
+<h3>1.2 核心字段解析</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">88:110:World.java
+// 世界标识 - 定义维度类型
+public static final RegistryKey&lt;World&gt; OVERWORLD = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;overworld&quot;));
+public static final RegistryKey&lt;World&gt; NETHER = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;the_nether&quot;));
+public static final RegistryKey&lt;World&gt; END = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(&quot;the_end&quot;));
+
+// 坐标边界常量
+public static final int HORIZONTAL_LIMIT = 30000000;  // X/Z 轴限制
+public static final int MAX_Y = 20000000;             // 最大高度
+public static final int MIN_Y = -20000000;             // 最小高度
+
+// 世界属性
+protected final MutableWorldProperties properties;    // 可变属性
+protected final RegistryEntry&lt;DimensionType&gt; dimensionEntry;  // 维度类型
+protected final WorldBorder border;                   // 世界边界
+protected final BiomeAccess biomeAccess;              // 生物群系访问
+protected final RegistryKey&lt;World&gt; registryKey;       // 世界注册键
+
+// 天气系统
+protected float rainGradientPrev;  // 雨量渐变（上一刻）
+protected float rainGradient;      // 雨量渐变（当前）
+protected float thunderGradientPrev;
+protected float thunderGradient;
+
+// 标识
+public final boolean isClient;     // 客户端/服务端标识</code></pre>
+
+
+<h3>1.3 包结构</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">net.minecraft.world/
+├── World.java              - 核心世界类
+├── WorldAccess.java        - 世界访问接口
+├── WorldProperties.java    - 世界属性
+├── BiomeAccess.java       - 生物群系访问
+├── Heightmap.java         - 高度图
+├── storage/               - 世界保存加载
+├── chunk/                 - 区块系统
+├── entity/                 - 实体系统
+├── biome/                  - 生物群系
+├── dimension/              - 维度管理
+├── tick/                   - Tick调度
+├── gen/                    - 世界生成
+└── block/                  - 方块交互</code></pre>
+
+
+<hr>
+
+<h2 id="2-坐标系统详解">2. 坐标系统详解</h2>
+
+
+<h3>2.1 坐标验证方法</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">117:134:World.java
+// 检查坐标是否在建筑高度限制内
+public boolean isInBuildLimit(BlockPos pos) {
+    return !this.isOutOfHeightLimit(pos) &amp;&amp; World.isValidHorizontally(pos);
+}
+
+// 静态验证方法 - 检查坐标是否有效
+public static boolean isValid(BlockPos pos) {
+    return !World.isInvalidVertically(pos.getY()) &amp;&amp; World.isValidHorizontally(pos);
+}
+
+// 水平坐标验证
+private static boolean isValidHorizontally(BlockPos pos) {
+    return pos.getX() &gt;= -30000000 &amp;&amp; pos.getZ() &gt;= -30000000 
+        &amp;&amp; pos.getX() &lt; 30000000 &amp;&amp; pos.getZ() &lt; 30000000;
+}
+
+// 垂直坐标验证
+private static boolean isInvalidVertically(int y) {
+    return y &lt; -20000000 || y &gt;= 20000000;
+}</code></pre>
+
+
+<h3>2.2 坐标系统图解</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">                    Minecraft 坐标系统
+                    
+         X轴 (东/西) ─────────────────────────►
+          -30,000,000                      +30,000,000
+              │                               │
+              │     ┌─────────────────┐       │
+              │     │                 │       │
+              │     │   可建造区域     │       │
+    Z轴       │     │   (Chunk区域)   │       │
+   (南/北)    │     │                 │       │
+    │         │     └─────────────────┘       │
+    │         │                               │
+    ▼         │                               │
+ -30,000,000 ─┼───────────────────────────────► +30,000,000
+              │                               │
+              ▼                               ▼
+         -20,000,000                      +20,000,000
+                    Y轴 (高度)
+                    
+         实际可建造高度: -64 到 319 (主世界)</code></pre>
+
+
+<hr>
+
+<h2 id="3-区块访问机制">3. 区块访问机制</h2>
+
+
+<h3>3.1 获取区块的方法</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">146:164:World.java
+// 获取指定位置的完整区块
+public WorldChunk getWorldChunk(BlockPos pos) {
+    return this.getChunk(
+        ChunkSectionPos.getSectionCoord(pos.getX()), 
+        ChunkSectionPos.getSectionCoord(pos.getZ())
+    );
+}
+
+// 获取区块（按坐标）
+@Override
+public WorldChunk getChunk(int i, int j) {
+    return (WorldChunk)this.getChunk(i, j, ChunkStatus.FULL);
+}
+
+// 通用获取方法
+@Override
+@Nullable
+public Chunk getChunk(int chunkX, int chunkZ, ChunkStatus leastStatus, boolean create) {
+    Chunk chunk = this.getChunkManager().getChunk(chunkX, chunkZ, leastStatus, create);
+    if (chunk == null &amp;&amp; create) {
+        throw new IllegalStateException(&quot;Should always be able to create a chunk!&quot;);
+    }
+    return chunk;
+}</code></pre>
+
+
+<h3>3.2 区块加载流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[请求区块坐标 chunkX, chunkZ] --> B[ChunkManager.getChunk]
+    
+    B --> C{检查缓存}
+    C -->|存在| D[返回缓存区块]
+    C -->|不存在| E{检查是否生成中}
+    
+    E -->|是| F[返回生成进度]
+    E -->|否| G{create参数}
+    
+    G -->|true| H[开始生成区块]
+    G -->|false| I[返回null]
+    
+    H --> J[异步加载/生成]
+    J --> K[完成并缓存]
+    K --> D
+    
+    D --> L[返回WorldChunk]
+    
+    style A fill:#e1f5fe
+    style L fill:#c8e6c9
+    style F fill:#fff3e0</div>
+</div>
+
+
+<hr>
+
+<h2 id="4-方块操作详解">4. 方块操作详解</h2>
+
+
+<h3>4.1 设置方块状态</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">172:207:World.java
+// 公开API - 使用默认标志
+@Override
+public boolean setBlockState(BlockPos pos, BlockState state, int flags) {
+    return this.setBlockState(pos, state, flags, 512);
+}
+
+// 完整实现
+@Override
+public boolean setBlockState(BlockPos pos, BlockState state, int flags, int maxUpdateDepth) {
+    // 1. 验证高度限制
+    if (this.isOutOfHeightLimit(pos)) {
+        return false;
+    }
+    
+    // 2. 调试世界不能修改
+    if (!this.isClient &amp;&amp; this.isDebugWorld()) {
+        return false;
+    }
+    
+    // 3. 获取目标区块
+    WorldChunk worldChunk = this.getWorldChunk(pos);
+    Block block = state.getBlock();
+    
+    // 4. 设置方块状态
+    BlockState blockState = worldChunk.setBlockState(pos, state, (flags &amp; Block.MOVED) != 0);
+    
+    if (blockState != null) {
+        BlockState blockState2 = this.getBlockState(pos);
+        
+        if (blockState2 == state) {
+            // 5. 通知监听器
+            if ((flags &amp; Block.NOTIFY_LISTENERS) != 0) {
+                this.updateListeners(pos, blockState, state, flags);
+            }
+            
+            // 6. 通知邻居
+            if ((flags &amp; Block.NOTIFY_NEIGHBORS) != 0) {
+                this.updateNeighbors(pos, blockState.getBlock());
+            }
+            
+            // 7. 递归更新邻居（可配置深度）
+            if ((flags &amp; Block.FORCE_STATE) == 0 &amp;&amp; maxUpdateDepth &gt; 0) {
+                blockState.prepare(this, pos, i, maxUpdateDepth - 1);
+                state.updateNeighbors(this, pos, i, maxUpdateDepth - 1);
+            }
+        }
+        return true;
+    }
+    return false;
+}</code></pre>
+
+
+<h3>4.2 方块标志位说明</h3>
+
+
+| 标志位 | 值 | 说明 | 典型用途 |
+|-------|---|------|---------|
+| <code>Block.MOVED</code> | 1 | 方块被移动（如活塞推动） | 活塞操作 |
+| <code>Block.NOTIFY_NEIGHBORS</code> | 2 | 通知邻居方块更新 | 红石、工具使用 |
+| <code>Block.NOTIFY_LISTENERS</code> | 4 | 触发方块事件监听器 | 一般放置 |
+| <code>Block.FORCE_STATE</code> | 8 | 强制设置，跳过递归更新 | 批量操作 |
+| <code>Block.SKIP_DROPS</code> | 16 | 跳过掉落物生成 | 爆炸、创造模式 |
+| <code>Block.NO_REDRAW</code> | 32 | 不触发客户端重绘 | 批量修改 |
+
+<h3>4.3 方块操作流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A[setBlockState调用] --> B[验证坐标范围]
+    
+    B --> C{有效坐标?}
+    C -->|否| D[返回false]
+    C -->|是| E[获取/创建WorldChunk]
+    
+    E --> F[设置方块到截面]
+    F --> G[更新高度图]
+    
+    G --> H{截面状态变化?}
+    H -->|是| I[触发光照更新]
+    H -->|否| J[跳过光照]
+    
+    I --> K{需要创建方块实体?}
+    J --> K
+    
+    K -->|是| L[创建BlockEntity]
+    K -->|否| M[标记区块需保存]
+    
+    L --> M
+    
+    M --> N{NOTIFY_LISTENERS?}
+    N -->|是| O[触发方块事件]
+    N -->|否| P{标志位检查}
+    
+    O --> P
+    P -->|NOTIFY_NEIGHBORS| Q[更新邻居]
+    Q --> R{FORCE_STATE?}
+    R -->|否| S[递归更新邻居]
+    R -->|是| T[结束]
+    
+    S --> T[完成]
+    
+    style D fill:#ffcdd2
+    style T fill:#c8e6c9</div>
+</div>
+
+
+<hr>
+
+<h2 id="5-方块实体管理">5. 方块实体管理</h2>
+
+
+<h3>5.1 获取方块实体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">607:231:World.java
+@Override
+@Nullable
+public BlockEntity getBlockEntity(BlockPos pos) {
+    // 1. 检查高度限制
+    if (this.isOutOfHeightLimit(pos)) {
+        return null;
+    }
+    
+    // 2. 服务端线程检查
+    if (!this.isClient &amp;&amp; Thread.currentThread() != this.thread) {
+        return null;
+    }
+    
+    // 3. 从区块获取
+    return this.getWorldChunk(pos).getBlockEntity(pos, WorldChunk.CreationType.IMMEDIATE);
+}</code></pre>
+
+
+<h3>5.2 添加/移除方块实体</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">234:247:World.java
+// 添加方块实体
+public void addBlockEntity(BlockEntity blockEntity) {
+    BlockPos blockPos = blockEntity.getPos();
+    if (this.isOutOfHeightLimit(blockPos)) {
+        return;
+    }
+    this.getWorldChunk(blockPos).addBlockEntity(blockEntity);
+}
+
+// 移除方块实体
+public void removeBlockEntity(BlockPos pos) {
+    if (this.isOutOfHeightLimit(pos)) {
+        return;
+    }
+    this.getWorldChunk(pos).removeBlockEntity(pos);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="6-爆炸系统">6. 爆炸系统</h2>
+
+
+<h3>6.1 爆炸创建流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">575:279:World.java
+public Explosion createExplosion(
+    @Nullable Entity entity,                    // 爆炸来源实体
+    @Nullable DamageSource damageSource,        // 伤害来源
+    @Nullable ExplosionBehavior behavior,      // 爆炸行为
+    double x, double y, double z,              // 爆炸位置
+    float power,                              // 爆炸威力
+    boolean createFire,                        // 是否生成火焰
+    ExplosionSourceType explosionSourceType,   // 爆炸源类型
+    boolean particles,                         // 是否生成粒子
+    // ... 其他参数
+) {
+    // 根据爆炸源决定破坏方式
+    Explosion.DestructionType destructionType = switch (explosionSourceType.ordinal()) {
+        case 0 -&gt; Explosion.DestructionType.KEEP;  // NONE - 不破坏
+        case 1 -&gt; this.getDestructionType(GameRules.BLOCK_EXPLOSION_DROP_DECAY);
+        case 2 -&gt; {  // MOB - 生物爆炸
+            if (this.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
+                yield this.getDestructionType(GameRules.MOB_EXPLOSION_DROP_DECAY);
+            }
+            yield Explosion.DestructionType.KEEP;
+        }
+        case 3 -&gt; this.getDestructionType(GameRules.TNT_EXPLOSION_DROP_DECAY);
+        case 4 -&gt; Explosion.DestructionType.TRIGGER_BLOCK;
+    };
+    
+    // 创建爆炸对象
+    Explosion explosion = new Explosion(this, entity, damageSource, behavior, 
+                                        x, y, z, power, createFire, destructionType, ...);
+    
+    // 收集受影响的方块和实体
+    explosion.collectBlocksAndDamageEntities();
+    
+    // 应用爆炸效果
+    explosion.affectWorld(particles);
+    
+    return explosion;
+}</code></pre>
+
+
+<h3>6.2 爆炸源类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">1067:288:World.java
+public static enum ExplosionSourceType implements StringIdentifiable {
+    NONE(&quot;none&quot;),     // 无来源 - 床在末地爆炸
+    BLOCK(&quot;block&quot;),   // 方块 - 即时爆炸（如苦力怕）
+    MOB(&quot;mob&quot;),       // 生物 - 生物引爆
+    TNT(&quot;tnt&quot;),       // TNT
+    TRIGGER(&quot;trigger&quot;);  // 触发器方块
+}</code></pre>
+
+
+<hr>
+
+<h2 id="7-实战演示">7. 实战演示</h2>
+
+
+<h3>7.1 创建自定义世界类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class VoidWorld extends World {
+    
+    public VoidWorld() {
+        super(new VoidWorldProperties(), Environment.NORMAL, 
+              new RegistryEntry&lt;&gt;(DimensionTypes.OVERWORLD));
+    }
+    
+    @Override
+    public WorldChunk getChunk(int chunkX, int chunkZ, ChunkStatus leastStatus, boolean create) {
+        // 返回虚空区块
+        return new VoidWorldChunk(this, new ChunkPos(chunkX, chunkZ));
+    }
+    
+    @Override
+    public BlockState getBlockState(BlockPos pos) {
+        return Blocks.AIR.getDefaultState();  // 始终返回空气
+    }
+    
+    // ... 其他必要方法实现
+}</code></pre>
+
+
+<h3>7.2 遍历区块内所有方块</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void iterateBlocksInChunk(ServerWorld world, int chunkX, int chunkZ) {
+    WorldChunk chunk = world.getChunk(chunkX, chunkZ);
+    
+    // 获取区块坐标范围
+    int startX = chunkX * 16;
+    int startZ = chunkZ * 16;
+    
+    // 遍历所有截面
+    for (ChunkSection section : chunk.getSectionArray()) {
+        if (section.isEmpty()) continue;
+        
+        int sectionY = section.getY();  // 截面Y坐标
+        
+        // 遍历16x16x16范围内的所有方块
+        for (int x = 0; x &lt; 16; x++) {
+            for (int y = 0; y &lt; 16; y++) {
+                for (int z = 0; z &lt; 16; z++) {
+                    BlockState state = section.getBlockState(x, y, z);
+                    
+                    if (!state.isAir()) {
+                        BlockPos pos = new BlockPos(
+                            startX + x,
+                            (sectionY &lt;&lt; 4) + y,
+                            startZ + z
+                        );
+                        
+                        // 处理非空气方块
+                        processBlock(pos, state);
+                    }
+                }
+            }
+        }
+    }
+}
+
+private void processBlock(BlockPos pos, BlockState state) {
+    Block block = state.getBlock();
+    // 自定义处理逻辑
+    if (block == Blocks.DIAMOND_ORE) {
+        System.out.println(&quot;发现钻石矿！位置: &quot; + pos);
+    }
+}</code></pre>
+
+
+<h3>7.3 天气控制</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void setWeather(ServerWorld world, int duration) {
+    MutableWorldProperties props = world.getProperties();
+    
+    // 设置晴天，持续指定时间
+    props.setClearWeather(duration);
+    props.setRaining(false);
+    props.setThundering(false);
+}
+
+// 设置暴风雨
+public void setStorm(ServerWorld world, int duration) {
+    MutableWorldProperties props = world.getProperties();
+    
+    props.setClearWeather(0);
+    props.setRaining(true);
+    props.setRainTime(duration);
+    props.setThundering(false);
+}
+
+// 设置雷暴
+public void setThunderstorm(ServerWorld world, int duration) {
+    MutableWorldProperties props = world.getProperties();
+    
+    props.setClearWeather(0);
+    props.setRaining(true);
+    props.setRainTime(duration);
+    props.setThundering(true);
+    props.setThunderTime(duration);
+}</code></pre>
+
+
+<hr>
+
+<h2 id="8-关键源码文件">8. 关键源码文件</h2>
+
+
+| 文件 | 路径 | 说明 |
+|-----|------|-----|
+| <code>World.java</code> | <code>net.minecraft.world.World</code> | 核心世界类 |
+| <code>WorldProperties.java</code> | <code>net.minecraft.world.WorldProperties</code> | 世界属性接口 |
+| <code>MutableWorldProperties.java</code> | <code>net.minecraft.world.MutableWorldProperties</code> | 可变世界属性 |
+| <code>WorldBorder.java</code> | <code>net.minecraft.world.border.WorldBorder</code> | 世界边界 |
+| <code>BiomeAccess.java</code> | <code>net.minecraft.world.BiomeAccess</code> | 生物群系访问 |
+
+<hr>
+
+<h2 id="课后自查">课后自查</h2>
+
+
+完成本章学习后，请检查你是否理解：
+
+<ul><li>[ ] World 类的三层继承结构</li></ul>
+<ul><li>[ ] 坐标系统的有效范围</li></ul>
+<ul><li>[ ] <code>getWorldChunk</code> vs <code>getChunk</code> 的区别</li></ul>
+<ul><li>[ ] 方块操作标志位的含义和使用场景</li></ul>
+<ul><li>[ ] 方块实体与世界的关联方式</li></ul>
+<ul><li>[ ] 爆炸源类型的区别</li></ul>
+
+<hr>
+
+<h2 id="延伸阅读">延伸阅读</h2>
+
+
+<ul><li><a href="10-chunk-system.html">09-Chunk区块系统</a> - 深入了解区块数据结构</li></ul>
+<ul><li><a href="13-lighting-system.html">12-光照系统</a> - 光照计算机制</li></ul>
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../Part-1-Foundation/09-bootstrap-flow.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第 09 章：启动引导流程（Bootstrap Flow）
+        </a><a href="10-chunk-system.html" class="next">
+            第 10 章：Chunk区块系统详解（Chunk System）
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

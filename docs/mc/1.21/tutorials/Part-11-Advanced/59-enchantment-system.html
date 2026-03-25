@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#404040;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>第 59 章：附魔系统（Enchantment System） - Minecraft 原版</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core---/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Minecraft 原版</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: 前置知识</div>
+            <a href="../Part-0-Prerequisites/00-course-overview.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 00 章：课程总览（Course Overview）</span>
+        </a>
+<a href="../Part-0-Prerequisites/01-java-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 01 章：Java 基础速查（Java Basics）</span>
+        </a>
+<a href="../Part-0-Prerequisites/02-development-env.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 02 章：开发环境搭建（Development Environment）</span>
+        </a>
+<a href="../Part-0-Prerequisites/03-project-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 03 章：项目结构介绍（Project Layout）</span>
+        </a>
+<a href="../Part-0-Prerequisites/04-project-structure.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：项目结构与源码阅读技巧（Project and Source Reading）</span>
+        </a>
+<a href="../Part-0-Prerequisites/05-sourcecode-guide.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：源码查找指南（Source Navigation Appendix）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: 核心基础 ⭐</div>
+            <a href="../Part-1-Foundation/04-registry-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 04 章：注册表系统（Registry System）</span>
+        </a>
+<a href="../Part-1-Foundation/05-client-server-arch.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 05 章：客户端-服务端架构（Client-Server Architecture）</span>
+        </a>
+<a href="../Part-1-Foundation/06-shared-constants.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 06 章：全局常量与版本信息（SharedConstants）</span>
+        </a>
+<a href="../Part-1-Foundation/08-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 08 章：服务器 Tick 系统（Server Tick）</span>
+        </a>
+<a href="../Part-1-Foundation/09-bootstrap-flow.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：启动引导流程（Bootstrap Flow）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: 世界系统</div>
+            <a href="../Part-2-World/09-world-core.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 09 章：World核心类详解（World Core）</span>
+        </a>
+<a href="../Part-2-World/10-chunk-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 10 章：Chunk区块系统详解（Chunk System）</span>
+        </a>
+<a href="../Part-2-World/11-biome-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 11 章：生物群系系统（Biome System）</span>
+        </a>
+<a href="../Part-2-World/12-terrain-gen.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 12 章：地形生成详解（Terrain Generation）</span>
+        </a>
+<a href="../Part-2-World/13-lighting-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 13 章：光照系统详解（Lighting System）</span>
+        </a>
+<a href="../Part-2-World/14-heightmap.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 14 章：高度图系统详解（Heightmap）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: 方块物品</div>
+            <a href="../Part-3-Block-Item/15-block-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 15 章：方块基础详解（Block Basics）</span>
+        </a>
+<a href="../Part-3-Block-Item/16-block-state.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 16 章：方块状态详解（Block State）</span>
+        </a>
+<a href="../Part-3-Block-Item/17-block-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 17 章：方块实体详解（Block Entity）</span>
+        </a>
+<a href="../Part-3-Block-Item/18-item-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 18 章：物品基础详解（Item Basics）</span>
+        </a>
+<a href="../Part-3-Block-Item/19-item-stack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 19 章：ItemStack物品堆叠详解（ItemStack）</span>
+        </a>
+<a href="../Part-3-Block-Item/20-item-component.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 20 章：组件系统详解（Data Components）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-4: 实体系统</div>
+            <a href="../Part-4-Entity/21-entity-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 21 章：实体系统入门（Entity Introduction）</span>
+        </a>
+<a href="../Part-4-Entity/22-entity-lifecycle.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 22 章：实体生命周期（Entity Lifecycle）</span>
+        </a>
+<a href="../Part-4-Entity/23-living-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 23 章：LivingEntity 有生命实体（LivingEntity）</span>
+        </a>
+<a href="../Part-4-Entity/24-mob-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 24 章：MobEntity 生物实体（MobEntity）</span>
+        </a>
+<a href="../Part-4-Entity/25-entity-attributes.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 25 章：属性系统（Entity Attributes）</span>
+        </a>
+<a href="../Part-4-Entity/26-damage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 26 章：伤害系统（Damage System）</span>
+        </a>
+<a href="../Part-4-Entity/27-spawn-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 27 章：生成系统（Spawn System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-5: AI系统</div>
+            <a href="../Part-5-AI/28-ai-brain-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 28 章：AI Brain 大脑入门（AI Brain Introduction）</span>
+        </a>
+<a href="../Part-5-AI/29-memory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 29 章：Memory 记忆系统（Memory System）</span>
+        </a>
+<a href="../Part-5-AI/30-sensor-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 30 章：Sensor 传感器（Sensor System）</span>
+        </a>
+<a href="../Part-5-AI/31-task-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 31 章：Task 任务系统（Task System）</span>
+        </a>
+<a href="../Part-5-AI/32-activity-schedule.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 32 章：Activity 与 Schedule（Activity and Schedule）</span>
+        </a>
+<a href="../Part-5-AI/33-pathfinding.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 33 章：路径导航（Pathfinding）</span>
+        </a>
+<a href="../Part-5-AI/34-ai-control-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 34 章：AI 控制系统（AI Control）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-6: 网络系统</div>
+            <a href="../Part-6-Network/35-network-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 35 章：网络系统入门（Network Introduction）</span>
+        </a>
+<a href="../Part-6-Network/36-packet-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 36 章：数据包Packet系统（Packet System）</span>
+        </a>
+<a href="../Part-6-Network/37-protocol-states.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 37 章：协议状态机（Protocol States）</span>
+        </a>
+<a href="../Part-6-Network/38-sync-mechanism.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 38 章：同步机制（Sync Mechanism）</span>
+        </a>
+<a href="../Part-6-Network/39-login-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 39 章：登录认证系统（Login Flow）</span>
+        </a>
+<a href="../Part-6-Network/40-play-packet-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 40 章：Play 阶段数据包入门（Play Phase Packets）</span>
+        </a>
+<a href="../Part-6-Network/41-chat-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 41 章：聊天系统与签名（Chat System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-7: 命令系统</div>
+            <a href="../Part-7-Command/42-command-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 42 章：命令入门（Command System Introduction）</span>
+        </a>
+<a href="../Part-7-Command/43-brigadier-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 43 章：Brigadier基础（Brigadier Basics）</span>
+        </a>
+<a href="../Part-7-Command/44-custom-command.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 44 章：自定义命令实战（Custom Command Practice）</span>
+        </a>
+<a href="../Part-7-Command/45-command-advanced.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 45 章：命令进阶（Command Advanced）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-8: 资源系统</div>
+            <a href="../Part-8-Resource/46-resource-pack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 46 章：资源包系统（Resource Pack）</span>
+        </a>
+<a href="../Part-8-Resource/47-datapack-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 47 章：数据包入门（Datapack Introduction）</span>
+        </a>
+<a href="../Part-8-Resource/48-loot-table.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 48 章：战利品表（Loot Table）</span>
+        </a>
+<a href="../Part-8-Resource/49-advancement.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 49 章：进度系统（Advancement）</span>
+        </a>
+<a href="../Part-8-Resource/50-recipe-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 50 章：配方系统（Recipe System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-9: 客户端</div>
+            <a href="../Part-9-Client/51-minecraft-client.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 51 章：MinecraftClient 主类（MinecraftClient）</span>
+        </a>
+<a href="../Part-9-Client/52-render-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 52 章：渲染系统（Rendering）</span>
+        </a>
+<a href="../Part-9-Client/53-gui-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 53 章：GUI 系统（GUI System）</span>
+        </a>
+<a href="../Part-9-Client/54-input-handling.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 54 章：输入处理（Input Handling）</span>
+        </a>
+<a href="../Part-9-Client/55-render-layer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 55 章：渲染层系统（Render Layers）</span>
+        </a>
+<a href="../Part-9-Client/56-entity-model.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 56 章：实体模型系统（Entity Models）</span>
+        </a>
+<a href="../Part-9-Client/70-sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：声音系统（Sound System）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-10: 服务端</div>
+            <a href="../Part-10-Server/57-server-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 57 章：服务端入门（Dedicated Server Intro）</span>
+        </a>
+<a href="../Part-10-Server/58-player-manager.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：玩家管理（PlayerManager）</span>
+        </a>
+<a href="../Part-10-Server/59-tick-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：Tick系统（Tick Loop）</span>
+        </a>
+<a href="../Part-10-Server/60-save-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 60 章：存档系统（Save System）</span>
+        </a>
+<a href="../Part-10-Server/61-dedicated-vs-integrated.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 61 章：独立服务器与整合服务器（Dedicated vs Integrated）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-11: 进阶主题</div>
+            <a href="58-particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 58 章：粒子系统（Particle System）</span>
+        </a>
+<a href="59-enchantment-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>第 59 章：附魔系统（Enchantment System）</span>
+        </a>
+<a href="62-datafixer.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 62 章：数据修复系统（DataFixer）</span>
+        </a>
+<a href="63-fluid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 63 章：流体系统（Fluid System）</span>
+        </a>
+<a href="64-village-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 64 章：村民系统（Village System）</span>
+        </a>
+<a href="65-raid-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 65 章：袭击系统（Raid System）</span>
+        </a>
+<a href="66-structure-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 66 章：结构系统（Structure System）</span>
+        </a>
+<a href="67-profiler-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 67 章：性能分析系统（Profiler）</span>
+        </a>
+<a href="68-explosion-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 68 章：爆炸系统（Explosion System）</span>
+        </a>
+<a href="69-vehicle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 69 章：载具系统（Vehicles）</span>
+        </a>
+<a href="70-rcon-language-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 70 章：RCON 与语言本地化系统（RCON and Language）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-12: 实战项目</div>
+            <a href="../Part-12-Practice/98-project1-block.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 98 章：项目1：添加新方块（Project 1 — New Block）</span>
+        </a>
+<a href="../Part-12-Practice/99-project2-item.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 99 章：项目2：添加新物品（Project 2 — New Item）</span>
+        </a>
+<a href="../Part-12-Practice/100-project3-entity.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 100 章：项目3：添加新生物（Project 3 — New Entity）</span>
+        </a>
+<a href="../Part-12-Practice/101-project4-datapack.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>第 101 章：项目4：创建数据包（Project 4 — Datapack）</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-13: 附加系统</div>
+            <a href="../Part-13-Additional/enchantment-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>附魔系统</span>
+        </a>
+<a href="../Part-13-Additional/inventory-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>物品栏容器系统</span>
+        </a>
+<a href="../Part-13-Additional/nbt-data-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>NBT 数据系统</span>
+        </a>
+<a href="../Part-13-Additional/particle-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 粒子系统详解</span>
+        </a>
+<a href="../Part-13-Additional/potion-effect-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 药水效果系统详解</span>
+        </a>
+<a href="../Part-13-Additional/scoreboard-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>记分板系统</span>
+        </a>
+<a href="../Part-13-Additional/sound-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 声音系统详解</span>
+        </a>
+<a href="../Part-13-Additional/stats-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>统计系统</span>
+        </a>
+<a href="../Part-13-Additional/text-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>文本系统</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="00-TUTORIAL-PLAN.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码萌新教程计划</span>
+        </a>
+<a href="01-LEARNING-ROADMAP.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 源码学习路线图</span>
+        </a>
+<a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程总入口</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>Minecraft 1.21 源码教程 - 学习总结</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Minecraft 原版</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>第 59 章：附魔系统（Enchantment System）</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    第 59 章：附魔系统（Enchantment System）
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>第 59 章：附魔系统（Enchantment System）</h1>
+
+
+<blockquote><p>本章将深入解析 Minecraft 的附魔系统，理解附魔的生成逻辑和效果应用机制。</p></blockquote>
+
+<h2 id="章节目标">章节目标</h2>
+
+
+<ul><li>理解附魔系统的架构设计</li></ul>
+<ul><li>掌握附魔生成算法</li></ul>
+<ul><li>了解附魔效果的组件化系统</li></ul>
+<ul><li>学会自定义附魔类型</li></ul>
+
+<h2 id="前置知识">前置知识</h2>
+
+
+<ul><li>熟悉 LootContext 机制</li></ul>
+<ul><li>了解数据组件系统基础</li></ul>
+<ul><li>知道什么是加权随机算法</li></ul>
+
+<h2 id="核心概念">核心概念</h2>
+
+
+<h3>附魔 = 给装备注入魔力</h3>
+
+
+想象附魔系统是一位"魔法工匠"：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                      附魔系统流程图                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  玩家                                                         │
+│    │                                                           │
+│    ▼                                                            │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                     附魔台                                  │ │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐                   │ │
+│  │  │ 书架加成 │  │ 青金石  │  │ 经验值  │                   │ │
+│  │  │  0-15   │  │  消耗   │  │  消耗   │                   │ │
+│  │  └────┬────┘  └────┬────┘  └────┬────┘                   │ │
+│  │       │             │             │                          │ │
+│  │       └─────────────┼─────────────┘                          │ │
+│  │                     ▼                                        │ │
+│  │            ┌─────────────────┐                            │ │
+│  │            │  附魔生成算法    │                            │ │
+│  │            │  - 随机选择      │                            │ │
+│  │            │  - 冲突检测      │                            │ │
+│  │            │  - 权重计算      │                            │ │
+│  │            └────────┬────────┘                            │ │
+│  └─────────────────────┼────────────────────────────────────┘ │
+│                        ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                     铁砧 (可选)                              │ │
+│  │  - 合并附魔书                                                │ │
+│  │  - 合并相同附魔                                              │ │
+│  │  - 修复物品                                                 │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                        ▼                                        │
+│                     附魔装备                                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<strong>关键比喻</strong>：
+<ul><li>Enchantment = 附魔的"身份证"</li></ul>
+<ul><li>Definition = 附魔的"属性表"</li></ul>
+<ul><li>ItemEnchantmentsComponent = 装备的"附魔列表"</li></ul>
+<ul><li>EnchantmentEffectContext = 附魔的"使用场景"</li></ul>
+
+<hr>
+
+<h2 id="1-附魔系统架构">1. 附魔系统架构</h2>
+
+
+<h3>1.1 核心类关系</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Core["核心类"]
+        E[Enchantment]
+        EH[EnchantmentHelper]
+        IEC[ItemEnchantmentsComponent]
+        EEC[EnchantmentEffectContext]
+        ELBV[EnchantmentLevelBasedValue]
+    end
+
+    subgraph Types["附魔类型"]
+        EVE[EnchantmentValueEffect]
+        EEE[EnchantmentEntityEffect]
+        ELBE[EnchantmentLocationBasedEffect]
+    end
+
+    subgraph Effects["效果实现"]
+        AddE[AddEnchantmentEffect]
+        MulE[MultiplyEnchantmentEffect]
+        SetE[SetEnchantmentEffect]
+        DmgE[DamageEntityEnchantmentEffect]
+        IgnE[IgniteEnchantmentEffect]
+    end
+
+    subgraph UI["UI组件"]
+        ESH[EnchantmentScreenHandler]
+        Anvil[Anvil System]
+    end
+
+    E --> Types
+    EH --> IEC
+    IEC --> ELBV
+    E --> Effects
+    ESH --> E
+    Anvil --> E</div>
+</div>
+
+
+<h3>1.2 附魔类型分类</h3>
+
+
+| 分类 | 说明 | 示例 |
+|------|------|------|
+| 保护类 | 减少伤害 | Protection, Fire Protection |
+| 武器类 | 增加伤害 | Sharpness, Smite, Bane of Arthropods |
+| 工具类 | 提升效率 | Efficiency, Silk Touch, Fortune |
+| 远程类 | 弓/弩强化 | Power, Punch, Flame |
+| 特殊类 | 独特效果 | Mending, Curse of Binding |
+
+<hr>
+
+<h2 id="2-核心类详解">2. 核心类详解</h2>
+
+
+<h3>2.1 Enchantment 类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public record Enchantment(
+    Text description,           // 描述文本
+    Definition definition,     // 附魔定义
+    RegistryEntryList&lt;Enchantment&gt; exclusiveSet,  // 互斥附魔列表
+    ComponentMap effects       // 效果组件映射
+) {
+    
+    // Definition 内部记录
+    public record Definition(
+        RegistryEntryList&lt;Item&gt; supportedItems,   // 支持的物品
+        Optional&lt;RegistryEntryList&lt;Item&gt;&gt; primaryItems,  // 主要物品
+        int weight,                               // 权重
+        int maxLevel,                             // 最大等级
+        Cost minCost,                            // 最小成本
+        Cost maxCost,                            // 最大成本
+        int anvilCost,                           // 铁砧成本
+        List&lt;AttributeModifierSlot&gt; slots         // 装备槽位
+    ) {}
+    
+    // Cost 记录
+    public record Cost(int base, int perLevelAboveFirst) {
+        public int forLevel(int level) {
+            return this.base + this.perLevelAboveFirst * (level - 1);
+        }
+    }
+    
+    // 判断物品是否支持该附魔
+    public boolean isSupportedItem(ItemStack stack) {
+        return stack.isIn(this.definition.supportedItems);
+    }
+    
+    // 判断两个附魔是否兼容
+    public static boolean canBeCombined(RegistryEntry&lt;Enchantment&gt; first, 
+                                        RegistryEntry&lt;Enchantment&gt; second) {
+        return !first.equals(second) &amp;&amp; 
+               !first.value().exclusiveSet.contains(second) &amp;&amp; 
+               !second.value().exclusiveSet.contains(first);
+    }
+}</code></pre>
+
+
+<h3>2.2 EnchantmentHelper 类</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class EnchantmentHelper {
+    
+    // 获取物品附魔等级
+    public static int getLevel(RegistryEntry&lt;Enchantment&gt; enchantment, ItemStack stack) {
+        ItemEnchantmentsComponent component = stack.getOrDefault(
+            DataComponentTypes.ENCHANTMENTS, 
+            ItemEnchantmentsComponent.DEFAULT
+        );
+        return component.getLevel(enchantment);
+    }
+    
+    // 获取可能的附魔条目
+    public static List&lt;EnchantmentLevelEntry&gt; getPossibleEntries(
+            int level, ItemStack stack, 
+            Stream&lt;RegistryEntry&lt;Enchantment&gt;&gt; possibleEnchantments) {
+        
+        List&lt;EnchantmentLevelEntry&gt; list = new ArrayList&lt;&gt;();
+        boolean isBook = stack.isOf(Items.BOOK);
+        
+        possibleEnchantments
+            .filter(enchantment -&gt; enchantment.value().isPrimaryItem(stack) || isBook)
+            .forEach(enchantmentEntry -&gt; {
+                Enchantment enchantment = enchantmentEntry.value();
+                for (int j = enchantment.getMaxLevel(); j &gt;= enchantment.getMinLevel(); j--) {
+                    if (level &lt; enchantment.getMinPower(j) || level &gt; enchantment.getMaxPower(j)) {
+                        continue;
+                    }
+                    list.add(new EnchantmentLevelEntry(enchantmentEntry, j));
+                    break;
+                }
+            });
+        
+        return list;
+    }
+}</code></pre>
+
+
+<h3>2.3 ItemEnchantmentsComponent</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ItemEnchantmentsComponent implements TooltipAppender {
+    // 默认空附魔
+    public static final ItemEnchantmentsComponent DEFAULT = 
+        new ItemEnchantmentsComponent(new Object2IntOpenHashMap&lt;&gt;(), true);
+    
+    // 附魔到等级的映射
+    final Object2IntOpenHashMap&lt;RegistryEntry&lt;Enchantment&gt;&gt; enchantments;
+    final boolean showInTooltip;
+    
+    // Builder 模式
+    public static class Builder {
+        public void set(RegistryEntry&lt;Enchantment&gt; enchantment, int level) {
+            if (level &lt;= 0) {
+                this.enchantments.removeInt(enchantment);
+            } else {
+                this.enchantments.put(enchantment, Math.min(level, 255));
+            }
+        }
+        
+        public void add(RegistryEntry&lt;Enchantment&gt; enchantment, int level) {
+            if (level &gt; 0) {
+                this.enchantments.merge(enchantment, Math.min(level, 255), Integer::max);
+            }
+        }
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="3-附魔生成算法">3. 附魔生成算法</h2>
+
+
+<h3>3.1 完整生成流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static List&lt;EnchantmentLevelEntry&gt; generateEnchantments(
+        Random random, 
+        ItemStack stack, 
+        int level, 
+        Stream&lt;RegistryEntry&lt;Enchantment&gt;&gt; possibleEnchantments) {
+    
+    List&lt;EnchantmentLevelEntry&gt; result = new ArrayList&lt;&gt;();
+    Item item = stack.getItem();
+    int enchantability = item.getEnchantability();
+    
+    // 物品不可附魔
+    if (enchantability &lt;= 0) {
+        return result;
+    }
+    
+    // 1. 附加随机加成
+    level += 1 + random.nextInt(enchantability / 4 + 1) + 
+             random.nextInt(enchantability / 4 + 1);
+    
+    // 2. 应用随机浮动 (±15%)
+    float variance = (random.nextFloat() + random.nextFloat() - 1.0f) * 0.15f;
+    level = MathHelper.clamp(Math.round((float)level + (float)level * variance), 
+                              1, Integer.MAX_VALUE);
+    
+    // 3. 获取可能的附魔列表
+    List&lt;EnchantmentLevelEntry&gt; possible = getPossibleEntries(level, stack, possibleEnchantments);
+    
+    if (!possible.isEmpty()) {
+        // 4. 首次加权随机选择
+        Weighting.getRandom(random, possible).ifPresent(result::add);
+        
+        // 5. 循环尝试添加更多附魔
+        while (random.nextInt(50) &lt;= level) {
+            if (!result.isEmpty()) {
+                // 移除冲突附魔
+                removeConflicts(possible, Util.getLast(result));
+            }
+            
+            if (possible.isEmpty()) break;
+            
+            // 再次随机选择
+            Weighting.getRandom(random, possible).ifPresent(result::add);
+            
+            // 等级减半
+            level /= 2;
+        }
+    }
+    
+    return result;
+}</code></pre>
+
+
+<h3>3.2 附魔生成流程图</h3>
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A([开始]) --> B{物品可附魔?}
+    B -->|否| Z([结束])
+    B -->|是| C[计算附魔功率]
+    
+    C --> D[基础值 1-8]
+    D --> E[书架加成 0-7]
+    E --> F[随机浮动 ±15%]
+    F --> G[获取可能附魔列表]
+    
+    G --> H[加权随机选择]
+    H --> I{50次循环}
+    
+    I -->|继续| J{有冲突?}
+    J -->|是| K[移除冲突附魔]
+    J -->|否| L[等级减半]
+    K --> L
+    L --> M{列表为空?}
+    M -->|否| I
+    M -->|是| N([返回附魔列表])
+    I -->|停止| N
+    
+    style H fill:#81c784
+    style K fill:#fff3e0</div>
+</div>
+
+
+<h3>3.3 书架加成公式</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int calculateRequiredExperienceLevel(Random random, int slotIndex, 
+                                                   int bookshelfCount, ItemStack stack) {
+    Item item = stack.getItem();
+    int enchantability = item.getEnchantability();
+    
+    if (enchantability &lt;= 0) {
+        return 0;
+    }
+    
+    // 书架数量限制
+    if (bookshelfCount &gt; 15) {
+        bookshelfCount = 15;
+    }
+    
+    // 基础值计算
+    int base = random.nextInt(8) + 1 + (bookshelfCount &gt;&gt; 1) + random.nextInt(bookshelfCount + 1);
+    
+    // 不同槽位对应不同经验消耗
+    if (slotIndex == 0) {
+        return Math.max(base / 3, 1);  // 槽位0: 最低
+    }
+    if (slotIndex == 1) {
+        return base * 2 / 3 + 1;       // 槽位1: 中等
+    }
+    return Math.max(base, bookshelfCount * 2);  // 槽位2: 最高
+}</code></pre>
+
+
+<hr>
+
+<h2 id="4-附魔效果系统">4. 附魔效果系统</h2>
+
+
+<h3>4.1 效果组件类型</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public interface EnchantmentEffectComponentTypes {
+    // 伤害保护
+    public static final ComponentType&lt;List&lt;EnchantmentEffectEntry&lt;...&gt;&gt;&gt; DAMAGE_PROTECTION = 
+        register(&quot;damage_protection&quot;, ...);
+    
+    // 伤害加成
+    public static final ComponentType&lt;List&lt;EnchantmentEffectEntry&lt;...&gt;&gt;&gt; DAMAGE = 
+        register(&quot;damage&quot;, ...);
+    
+    // 实体效果
+    public static final ComponentType&lt;List&lt;EnchantmentEffectEntry&lt;...&gt;&gt;&gt; POST_ATTACK = 
+        register(&quot;post_attack&quot;, ...);
+    
+    // 实体装备变化
+    public static final ComponentType&lt;List&lt;EnchantmentEffectEntry&lt;...&gt;&gt;&gt; EQUIPMENT_CHANGE = 
+        register(&quot;equipment_change&quot;, ...);
+}</code></pre>
+
+
+<h3>4.2 值效果类型</h3>
+
+
+| 类型 | 效果 | 公式 |
+|------|------|------|
+| <code>Constant</code> | 常数值 | <code>value</code> |
+| <code>Linear</code> | 线性增长 | <code>base + perLevel * (level - 1)</code> |
+| <code>LevelsSquared</code> | 平方增长 | <code>level² + added</code> |
+| <code>Clamped</code> | 限制范围 | <code>clamp(value, min, max)</code> |
+</p>
+<p><pre class="code-block"><code class="language-java">public record Linear(float base, float perLevelAboveFirst) implements EnchantmentLevelBasedValue {
+    @Override
+    public float getValue(int level) {
+        return this.base + this.perLevelAboveFirst * (float)(level - 1);
+    }
+}
+
+// 平方实现
+public record LevelsSquared(float added) implements EnchantmentLevelBasedValue {
+    @Override
+    public float getValue(int level) {
+        return (float)(level * level) + this.added;
+    }
+}</code></pre>
+
+
+<h3>4.3 实体效果类型</h3>
+
+
+| 类型 | 效果 | 说明 |
+|------|------|------|
+| <code>ApplyMobEffectEnchantmentEffect</code> | 给予药水效果 | 附魔后给予状态效果 |
+| <code>DamageEntityEnchantmentEffect</code> | 伤害实体 | 对目标造成额外伤害 |
+| <code>IgniteEnchantmentEffect</code> | 点燃目标 | 火焰附加 |
+| <code>ExplodeEnchantmentEffect</code> | 爆炸 | 击退效果 |
+| <code>SummonEntityEnchantmentEffect</code> | 召唤实体 | 召唤生物 |
+
+<h3>4.4 附魔效果上下文</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public record EnchantmentEffectContext(
+    ItemStack stack,           // 附魔物品
+    @Nullable EquipmentSlot slot,  // 装备槽位
+    @Nullable LivingEntity owner,   // 所有者
+    @Nullable Consumer&lt;Item&gt; onBreak  // 物品损坏回调
+) {
+    public EnchantmentEffectContext(ItemStack stack, EquipmentSlot slot, LivingEntity owner) {
+        this(stack, slot, owner, item -&gt; owner.sendEquipmentBreakStatus(item, slot));
+    }
+}</code></pre>
+
+
+<hr>
+
+<h2 id="5-附魔台机制">5. 附魔台机制</h2>
+
+
+<h3>5.1 附魔流程</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public boolean onButtonClick(PlayerEntity player, int id) {
+    // 检查经验和青金石
+    if (this.enchantmentPower[id] &gt; 0 &amp;&amp; 
+        !itemStack.isEmpty() &amp;&amp; 
+        (player.experienceLevel &gt;= this.enchantmentPower[id] || 
+         player.getAbilities().creativeMode)) {
+        
+        this.context.run((world, pos) -&gt; {
+            // 生成附魔选项
+            List&lt;EnchantmentLevelEntry&gt; list = this.generateEnchantments(...);
+            
+            if (!list.isEmpty()) {
+                // 消耗经验
+                player.applyEnchantmentCosts(itemStack3, this.enchantmentPower[id]);
+                
+                // 如果是书，转换为附魔书
+                if (itemStack3.isOf(Items.BOOK)) {
+                    itemStack3 = itemStack.withItem(Items.ENCHANTED_BOOK);
+                    this.inventory.setStack(0, itemStack3);
+                }
+                
+                // 添加附魔
+                for (EnchantmentLevelEntry entry : list) {
+                    itemStack3.addEnchantment(entry.enchantment, entry.level);
+                }
+                
+                // 消耗青金石
+                itemStack2.decrementUnlessCreative(i, player);
+                
+                // 播放音效
+                world.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, ...);
+            }
+        });
+    }
+}</code></pre>
+
+
+<h3>5.2 书架加成</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                      书架加成规则                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  书架检测范围: 附魔台周围 5 格内                                       │
+│                                                                     │
+│  书架数量  │  经验加成      │  可用附魔等级                           │
+│  ───────┼──────────────┼────────────────                        │
+│    0    │     +1-8      │   1-8                                │
+│    1    │     +1-9      │   1-10                               │
+│    5    │     +3-13     │   3-14                               │
+│   10    │     +6-18     │   6-20                               │
+│   15    │     +9-23     │   9-30                               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="6-铁砧机制">6. 铁砧机制</h2>
+
+
+<h3>6.1 合并逻辑</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static boolean isCompatible(Collection&lt;RegistryEntry&lt;Enchantment&gt;&gt; existing, 
+                                  RegistryEntry&lt;Enchantment&gt; candidate) {
+    for (RegistryEntry&lt;Enchantment&gt; entry : existing) {
+        if (!Enchantment.canBeCombined(entry, candidate)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// 冲突移除
+public static void removeConflicts(List&lt;EnchantmentLevelEntry&gt; possible, 
+                                  EnchantmentLevelEntry picked) {
+    possible.removeIf(entry -&gt; !Enchantment.canBeCombined(
+        picked.enchantment, entry.enchantment));
+}</code></pre>
+
+
+<h3>6.2 铁砧损坏机制</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────┐
+│                      铁砧物品损坏                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  合并次数    │  损坏概率        │  结果                           │
+│  ─────────┼──────────────┼────────────────                    │
+│    0-1    │     0%        │  正常                           │
+│    2-3    │    ~12%       │  轻微损坏                       │
+│    4-5    │    ~50%       │  严重损坏                       │
+│    6+     │    ~100%      │  消失                           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────┘</code></pre>
+
+
+<hr>
+
+<h2 id="7-自定义附魔">7. 自定义附魔</h2>
+
+
+<h3>7.1 注册自定义附魔</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class ModEnchantments {
+    public static RegistryEntry&lt;Enchantment&gt; FIRE_AURA;
+    
+    public static void bootstrap(Registerable&lt;Enchantment&gt; registry) {
+        FIRE_AURA = registry.register(
+            Identifier.of(&quot;modid&quot;, &quot;fire_aura&quot;),
+            Enchantment.builder(
+                Enchantment.definition(
+                    registryEntryLookup3.getOrThrow(ItemTags.SWORD_ENCHANTABLE),
+                    5,           // weight
+                    3,           // maxLevel
+                    Enchantment.leveledCost(10, 15),
+                    Enchantment.leveledCost(25, 15),
+                    2,           // anvilCost
+                    AttributeModifierSlot.MAINHAND
+                )
+            )
+            .addEffect(
+                EnchantmentEffectComponentTypes.POST_ATTACK,
+                new IgniteEnchantmentEffect(),
+                LootConditions.EMPTY
+            )
+            .build()
+        );
+    }
+}</code></pre>
+
+
+<h3>7.2 自定义效果组件</h3>
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class CustomEnchantmentEffect implements EnchantmentEntityEffect {
+    @Override
+    public void apply(ServerWorld world, int level, EnchantmentEffectContext context,
+                     Entity entity, Vec3d pos) {
+        if (entity instanceof LivingEntity living) {
+            living.addStatusEffect(new StatusEffectInstance(
+                StatusEffects.STRENGTH,
+                100 * level,
+                level - 1
+            ));
+        }
+    }
+}
+
+// 注册自定义效果
+public static final ComponentType&lt;List&lt;EnchantmentEffectEntry&lt;CustomEnchantmentEffect&gt;&gt;&gt; 
+    CUSTOM_EFFECT = register(&quot;custom_effect&quot;, ...);</code></pre>
+
+
+<hr>
+
+<h2 id="8-课后自查">8. 课后自查</h2>
+
+
+<ul><li>[ ] 能够解释附魔系统的架构设计</li></ul>
+<ul><li>[ ] 理解附魔生成算法的随机性</li></ul>
+<ul><li>[ ] 掌握附魔效果的组件化系统</li></ul>
+<ul><li>[ ] 了解附魔台和铁砧的工作原理</li></ul>
+<ul><li>[ ] 能够创建自定义附魔类型</li></ul>
+
+<hr>
+
+<strong>参考源码路径</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\enchantment\Enchantment.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\enchantment\EnchantmentHelper.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\enchantment\Enchantments.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\component\type\ItemEnchantmentsComponent.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\enchantment\EnchantmentLevelBasedValue.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\component\EnchantmentEffectComponentTypes.java
+D:\Minecraft-Learning\assets\mc\1.21\net\minecraft\screen\EnchantmentScreenHandler.java</code></pre>
+
+</p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="58-particle-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            第 58 章：粒子系统（Particle System）
+        </a><a href="62-datafixer.html" class="next">
+            第 62 章：数据修复系统（DataFixer）
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

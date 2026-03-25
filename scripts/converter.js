@@ -386,6 +386,22 @@ function rewriteDocLinkHref(rawUrl, currentSlug, docType) {
  * 从 ## 标题文案生成锚点 id，与教程内「目录」中的 (#xxx) 链接对齐。
  * （旧逻辑用整段标题作 id，与手写目录链不一致，导致页内跳转无效。）
  */
+/**
+ * 在已生成 <code>...</code> 的 HTML 上应用 ** / * / _ 强调，避免行内代码中的下划线被当成斜体。
+ */
+function applyInlineEmphasisOutsideCode(html) {
+    const parts = String(html).split(/(<code>[\s\S]*?<\/code>)/g);
+    return parts
+        .map(chunk => {
+            if (chunk.startsWith('<code>')) return chunk;
+            return chunk
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/_(.+?)_/g, '<em>$1</em>');
+        })
+        .join('');
+}
+
 function headingAnchorId(rawTitle) {
     let s = String(rawTitle).trim();
     s = s.replace(/[：:]/g, '');
@@ -495,10 +511,8 @@ function parseMarkdown(text, options = {}) {
     });
     html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>\n');
 
-    // 粗体和斜体
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+    // 粗体和斜体（勿处理 <code> 内文字，否则 ENTITY_TYPE、LOOT_TABLE 等会被 _ 拆成斜体）
+    html = applyInlineEmphasisOutsideCode(html);
 
     // 删除线
     html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
