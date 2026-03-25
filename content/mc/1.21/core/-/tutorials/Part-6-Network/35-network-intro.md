@@ -138,7 +138,7 @@ Minecraft 的网络协议分为多个层次，就像 OSI 模型一样：
 ```mermaid
 flowchart TD
     subgraph 应用层["🔝 应用层 - Minecraft 游戏逻辑"]
-        A1["Packet<T>"]
+        A1["Packet#lt;T#gt;"]
         A2["游戏数据"]
         A3["命令系统"]
     end

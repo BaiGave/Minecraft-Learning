@@ -368,15 +368,15 @@ flowchart TB
         end
 
         subgraph Keys["注册键 RegistryKey"]
-            K1["RegistryKey<Block>"]
-            K2["RegistryKey<Item>"]
-            K3["RegistryKey<EntityType>"]
+            K1["RegistryKey#lt;Block#gt;"]
+            K2["RegistryKey#lt;Item#gt;"]
+            K3["RegistryKey#lt;EntityType#gt;"]
         end
 
         subgraph Entries["注册条目 RegistryEntry"]
-            E1["RegistryEntry<Block>"]
-            E2["RegistryEntry<Item>"]
-            E3["RegistryEntry<EntityType>"]
+            E1["RegistryEntry#lt;Block#gt;"]
+            E2["RegistryEntry#lt;Item#gt;"]
+            E3["RegistryEntry#lt;EntityType#gt;"]
         end
     end
 

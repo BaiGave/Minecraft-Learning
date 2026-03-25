@@ -131,9 +131,9 @@ flowchart TB
         end
 
         subgraph Layer2["第二层：注册键 RegistryKey"]
-            K1["RegistryKey<Block>"]
-            K2["RegistryKey<Item>"]
-            K3["RegistryKey<EntityType>"]
+            K1["RegistryKey#lt;Block#gt;"]
+            K2["RegistryKey#lt;Item#gt;"]
+            K3["RegistryKey#lt;EntityType#gt;"]
         end
 
         subgraph Layer3["第三层：注册条目 RegistryEntry"]
