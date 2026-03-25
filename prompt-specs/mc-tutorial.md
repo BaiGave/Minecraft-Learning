@@ -1,30 +1,55 @@
 # 模组教程写作提示词（给 AI / 团队）
 
-根据**源码与既有分析文档**，为指定模组编写**面向新手**的教程系列，放入本仓库 `content/{模组slug}/` 下，布局可参考 `content/mc/1.21/tutorials/`（`Part-*` 分目录 + 章节 `.md`）。
+根据**源码与既有分析文档**，为指定模组编写**面向新手**的教程系列，放入本仓库版本分支目录下的 `tutorials/`。
 
 ---
 
-## 一、致谢与元信息（必须）
+## 一、目录结构（必须遵守）
+
+教程文档**必须**放在版本分支目录下：
+
+```
+content/{模组名}/
+└── {MC版本}-{加载器}-{模组版本}/      ← 必须使用这种格式
+    └── tutorials/                       ← 教程文档放在这里
+        └── Part-*/                      ← 按章节分目录
+            └── *.md
+```
+
+**正确示例（参考 sodium、iris）：**
+
+```
+content/sodium/1.21/fabric/0.8.6/tutorials/
+content/iris/1.21/fabric/1.7.3/tutorials/
+content/voxy/1.21.11-fabric-0.2.13-alpha/tutorials/
+```
+
+❌ **错误示例（无版本分支）：**
+
+```
+content/voxy/tutorials/              ← 缺少版本信息
+content/voxy/1.21/tutorials/        ← 缺少加载器和模组版本
+```
+
+### 版本目录命名规范
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| `{MC版本}` | Minecraft 版本号 | `1.21`、`1.21.11` |
+| `{加载器}` | 加载器小写 | `fabric`、`neoforge` |
+| `{模组版本}` | 模组版本号 | `0.2.13-alpha`、`6.0.6` |
+
+完整格式：`{MC版本}-{加载器}-{模组版本}`，三部分用**短横线分隔**，无空格。同模组下**不要混用**多种版本目录命名风格。
+
+---
+
+## 二、致谢与元信息（必须）
 
 1. 每个模组必须在 **`content/{模组slug}/README.md`** 中用 YAML 标明原作者与出处（构建后会显示在文档站模组首页）：
    - `originalAuthor`：原作者昵称或姓名  
    - `sourceUrl`：官方 GitHub / CurseForge / Modrinth 等链接（能填必填）  
    - `modVersion`、`minecraftVersion`、`loader`（如 `Fabric` / `NeoForge` / `Forge`）  
 2. 正文或教程前言中至少有一句**明确致谢原作者**，并说明本仓库文档为学习笔记、以官方授权与仓库为准。
-
----
-
-## 二、目录与版本分支（文件夹约定）
-
-构建脚本支持下列 **`content/{模组slug}/` 下**布局（择一）：
-
-| 布局 | 含义 |
-|------|------|
-| `tutorials/`、`analysis/` 直接在模组目录下 | 无 MC 版本分支 |
-| `content/{模组slug}/{MC版本}/tutorials/` | 仅按 Minecraft 版本分文档，如 `1.21`、`1.21.4` |
-| `content/{模组slug}/{MC版本}-{加载器}/tutorials/` | 同时区分加载器，如 `1.21-neoforge`、`1.20.1-fabric` |
-
-同一模组下**不要混用**多种版本目录命名风格；新模组优先使用 `{MC}-{loader}` 若需区分加载器。
 
 ---
 

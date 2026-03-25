@@ -156,13 +156,18 @@ class AutoModuleScanner {
         const tutorials = this.scanDocType(modulePath, 'tutorials', versions);
         const analysis = this.scanDocType(modulePath, 'analysis', versions);
 
-        // 获取描述
-        const description = descriptionMap[slug.toLowerCase()] || `${slug} 相关文档`;
+        // 从 README frontmatter 读取模块元信息（自动发现，无需硬编码）
+        const readmeMeta = this.readModuleReadme(modulePath);
+
+        // 描述：README priority > 硬编码表 > 通用回退
+        const description = readmeMeta.description
+            || descriptionMap[slug.toLowerCase()]
+            || `${slug} 相关文档`;
 
         return {
-            name: this.formatModuleName(slug),
+            name: readmeMeta.name || this.formatModuleName(slug),
             slug: slug,
-            icon: this.detectIcon(slug, tutorials, analysis),
+            icon: readmeMeta.icon || this.detectIcon(slug, tutorials, analysis),
             color: colorScheme.color,
             colorGradient: colorScheme.gradient,
             description: description,
@@ -172,8 +177,51 @@ class AutoModuleScanner {
             tutorials: tutorials,
             analysis: analysis,
             docCount: tutorials.length + analysis.length,
-            theme: slug
+            theme: slug,
+            sourceUrl: readmeMeta.sourceUrl || null,
+            modVersion: readmeMeta.modVersion || null,
+            minecraftVersion: readmeMeta.minecraftVersion || null,
+            loader: readmeMeta.loader || null
         };
+    }
+
+    /**
+     * 读取模组根 README.md 的 frontmatter，提取元信息。
+     * 查找顺序：content/{模组}/README.md → content/{模组}/{版本}/README.md
+     */
+    readModuleReadme(modulePath) {
+        const candidates = [path.join(modulePath, 'README.md')];
+        if (fs.existsSync(modulePath)) {
+            fs.readdirSync(modulePath, { withFileTypes: true })
+                .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+                .forEach(e => candidates.push(path.join(modulePath, e.name, 'README.md')));
+        }
+
+        for (const readmePath of candidates) {
+            if (!fs.existsSync(readmePath)) continue;
+            try {
+                const raw = fs.readFileSync(readmePath, 'utf-8');
+                const fm = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+                if (!fm) continue;
+
+                const meta = {};
+                fm[1].split('\n').forEach(line => {
+                    const m = line.match(/^(\w+):\s*(.+)$/);
+                    if (m) meta[m[1].trim()] = m[2].trim();
+                });
+
+                return {
+                    name: meta.title || null,
+                    description: meta.description || null,
+                    icon: meta.icon ? meta.icon.replace(/^fa-/, '') : null,
+                    sourceUrl: meta.sourceUrl || null,
+                    modVersion: meta.modVersion || meta.version || null,
+                    minecraftVersion: meta.minecraftVersion || meta.mcVersion || null,
+                    loader: meta.loader || null
+                };
+            } catch (_) { /* ignore */ }
+        }
+        return {};
     }
 
     /**
@@ -199,13 +247,20 @@ class AutoModuleScanner {
                 // 检查是否是 tutorials 或 analysis
                 if (entry.name === 'tutorials' || entry.name === 'analysis') {
                     // 找到了内容目录，从 parts 中提取版本信息
-                    // parts 应该包含 {MC版本, 加载器, 模组版本}
+                    // 嵌套结构：parts = {MC版本, 加载器, 模组版本}（至少 2 段）
+                    // 扁平结构：单层目录名即完整版本键，如 1.21.11-fabric-0.2.13-alpha/tutorials
                     if (parts.length >= 2) {
                         // 补齐到 3 层
                         while (parts.length < 3) {
                             parts.push('-');
                         }
                         const versionStr = parts.join('-');
+                        if (!versionSet.has(versionStr)) {
+                            versionSet.add(versionStr);
+                            versions.push(versionStr);
+                        }
+                    } else if (parts.length === 1) {
+                        const versionStr = parts[0];
                         if (!versionSet.has(versionStr)) {
                             versionSet.add(versionStr);
                             versions.push(versionStr);
@@ -268,7 +323,14 @@ class AutoModuleScanner {
         if (versions.length > 0) {
             // 有版本：扫描每个版本的文档
             for (const version of versions) {
-                // 将版本字符串转回路径：1.21-core-- -> 1.21/core/-
+                // 优先扁平目录：content/{模组}/{MC-加载器-模组版本}/{tutorials|analysis}/
+                const flatPath = path.join(modulePath, version, docType);
+                if (fs.existsSync(flatPath)) {
+                    const files = this.scanMarkdownFiles(flatPath, version);
+                    docs.push(...files);
+                    continue;
+                }
+                // 嵌套：1.21-core-- -> 1.21/core/-/
                 const versionParts = version.split('-');
                 const mcVersion = versionParts[0];
                 const loader = versionParts[1] || 'core';

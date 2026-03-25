@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 渲染核心子系统分析 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 渲染核心子系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 渲染核心子系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 45 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本文档基于 <a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">Voxy</a> v0.2.13-alpha 模组源码分析撰写。Voxy 是由 comp500 开发的 Minecraft 地形渲染优化模组，采用 AGPL-3.0 许可证。感谢原作者开源分享如此高质量的渲染系统实现。</p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-gpu-能力检测机制">GPU 能力检测机制</a></li>
+<li><a href="#2-渲染引擎架构">渲染引擎架构</a></li>
+<li><a href="#3-共享索引缓冲设计">共享索引缓冲设计</a></li>
+<li><a href="#4-mixin-集成策略">Mixin 集成策略</a></li>
+<li><a href="#5-兼容性处理">兼容性处理</a></li>
+<li><a href="#6-总结">总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-gpu-能力检测机制">1. GPU 能力检测机制</h2>
+<p>Voxy 的渲染系统高度依赖现代 GPU 特性，因此必须在初始化阶段严格检测硬件能力。<code>Capabilities</code> 类是整个渲染系统的门槛。</p>
+<h3>1.1 必需特性</h3>
+<pre class="code-block"><code class="language-53">this.sparseBuffer = cap.GL_ARB_sparse_buffer;
+this.compute = cap.glDispatchComputeIndirect != 0;
+this.indirectParameters = cap.glMultiDrawElementsIndirectCountARB != 0;
+this.repFragTest = cap.GL_NV_representative_fragment_test;
+this.meshShaders = cap.GL_NV_mesh_shader;
+this.canQueryGpuMemory = cap.GL_NVX_gpu_memory_info;</code></pre>
+<p>Voxy 的最低硬件要求：
+<ul><li><strong>compute</strong>: 必须支持 <code>glDispatchComputeIndirect</code>，用于多线程 GPU 绘制调用生成</li>
+<li><strong>indirectParameters</strong>: 必须支持 <code>GL<em>ARB</em>multi<em>draw</em>elements<em>indirect</em>count</code>，这是批量绘制的基础</li>
+<li>如果任一特性不支持，模组将直接禁用</li></ul></p>
+<pre class="code-block"><code class="language-31">boolean systemSupported = Capabilities.INSTANCE.compute &amp;&amp; Capabilities.INSTANCE.indirectParameters &amp;&amp; !Capabilities.INSTANCE.hasBrokenDepthSampler;
+if (!systemSupported) {
+     Logger.error(&quot;Voxy is unsupported on your system.&quot;);
+}</code></pre>
+<h3>1.2 扩展特性检测</h3>
+<pre class="code-block"><code class="language-61">this.INT64_t = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
+        #version 430
+        #extension GL_ARB_gpu_shader_int64 : require
+        layout(local_size_x=32) in;
+        void main() {
+            uint64_t a = 1234;
+        }
+        &quot;&quot;&quot;);
+
+if (cap.GL_KHR_shader_subgroup) {
+    this.subgroup = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
+        #version 430
+        #extension GL_KHR_shader_subgroup_basic : require
+        #extension GL_KHR_shader_subgroup_arithmetic : require
+        layout(local_size_x=32) in;
+        void main() {
+            uint a = subgroupExclusiveAdd(gl_LocalInvocationIndex);
+        }
+        &quot;&quot;&quot;);
+} else {
+    this.subgroup = false;
+}</code></pre>
+<p>关键设计：<strong>扩展检测不可靠时，通过实际编译着色器来验证</strong>。<code>INT64_t</code> 和 <code>subgroup</code> 的检测都采用了这种方式，避免了驱动报告与实际支持不符的问题。</p>
+<h3>1.3 厂商检测与特殊 Bug 处理</h3>
+<pre class="code-block"><code class="language-88">this.isMesa = glGetString(GL_VERSION).toLowerCase(Locale.ROOT).contains(&quot;mesa&quot;);
+var vendor = glGetString(GL_VENDOR).toLowerCase(Locale.ROOT);
+this.isIntel = vendor.contains(&quot;intel&quot;);
+this.isNvidia = vendor.contains(&quot;nvidia&quot;);
+this.isAmd = vendor.contains(&quot;amd&quot;)||vendor.contains(&quot;radeon&quot;);
+
+if (this.compute&amp;&amp;this.isAmd) {
+    this.hasBrokenDepthSampler = testDepthSampler();
+    if (this.hasBrokenDepthSampler) {
+        throw new IllegalStateException(&quot;it bork, amd is bork&quot;);
+    }
+}</code></pre>
+<p><strong>AMD 深度采样 Bug</strong> 是 Voxy 遇到的典型硬件兼容性问题。部分 AMD 显卡在 Compute Shader 中对深度纹理的 <code>texelFetch</code> 返回错误值。Voxy 通过运行时测试检测此问题，一旦发现直接抛出异常禁用模组。</p>
+<pre class="code-block"><code class="language-117">private static boolean testDepthSampler() {
+    // 创建深度模板纹理，测试不同 mip 级别下 texelFetch 的正确性
+    // 如果读取值与预期不符，说明该驱动存在 bug
+}</code></pre>
+<h3>1.4 内存信息查询</h3>
+<pre class="code-block"><code class="language-94">if (this.canQueryGpuMemory) {
+    this.totalDedicatedMemory = glGetInteger64(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX)*1024;
+    this.totalDynamicMemory = (glGetInteger64(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX)*1024) - this.totalDedicatedMemory;
+} else {
+    this.totalDedicatedMemory = -1;
+    this.totalDynamicMemory = -1;
+}</code></pre>
+<p>仅 NVIDIA 显卡支持通过 <code>GL<em>NVX</em>gpu<em>memory</em>info</code> 查询显存信息。这些数据用于内存管理和调度决策。</p>
+<p><hr></p>
+<h2 id="2-渲染引擎架构">2. 渲染引擎架构</h2>
+<h3>2.1 核心组件关系</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph "VoxyRenderSystem"
+        A[VoxyRenderSystem] --> B[ModelBakerySubsystem]
+        A --> C[RenderGenerationService]
+        A --> D[AsyncNodeManager]
+        A --> E[HierarchicalOcclusionTraverser]
+        A --> F[ChunkBoundRenderer]
+        A --> G[ViewportSelector]
+    end
+    
+    subgraph "Render Pipeline"
+        G --> H[Viewport]
+        H --> I[AbstractRenderPipeline]
+        I --> J[NormalRenderPipeline]
+        I --> K[IrisVoxyRenderPipeline]
+        J --> L[MDICSectionRenderer]
+        K --> L
+    end
+    
+    subgraph "Geometry Data"
+        L --> M[BasicSectionGeometryData]
+        M --> N[SharedIndexBuffer]
+    end
+    
+    subgraph "External Integration"
+        C --> O[Sodium Chunk Render]
+        D --> O
+        I --> P[Iris Shaders]
+    end</div>
+</div>
+<p><code>VoxyRenderSystem</code> 是渲染系统的入口点，协调所有子系统的生命周期：</p>
+<pre class="code-block"><code class="language-78">public VoxyRenderSystem(WorldEngine world, ServiceManager sm) {
+    // 1. 保留世界引用，防止 GC
+    world.acquireRef();
+    
+    // 2. 创建几何数据管理
+    this.geometryData = new BasicSectionGeometryData(1&lt;&lt;20, RenderResourceReuse.getOrCreateGeometryBuffer());
+    
+    // 3. 创建异步节点管理器
+    this.nodeManager = new AsyncNodeManager(1 &lt;&lt; 21, this.geometryData, this.renderGen);
+    
+    // 4. 创建分层遮挡剔除器
+    this.traversal = new HierarchicalOcclusionTraverser(this.nodeManager, this.nodeCleaner, this.renderGen);
+    
+    // 5. 创建渲染管线（普通或 Iris 集成）
+    this.pipeline = RenderPipelineFactory.createPipeline(this.nodeManager, this.nodeCleaner, this.traversal, this::frexStillHasWork);
+    
+    // 6. 创建视口选择器
+    this.viewportSelector = new ViewportSelector&lt;&gt;(sectionRenderer::createViewport);
+}</code></pre>
+<h3>2.2 渲染管线设计</h3>
+<p><code>AbstractRenderPipeline</code> 定义了渲染管线的标准流程：</p>
+<pre class="code-block"><code class="language-96">public void runPipeline(Viewport&lt;?&gt; viewport, int sourceFrameBuffer, int srcWidth, int srcHeight) {
+    int depthTexture = this.setup(viewport, sourceFrameBuffer, srcWidth, srcHeight);
+
+    // 1. 渲染不透明地形
+    rs.renderOpaque(viewport);
+    
+    // 2. GPU 遮挡查询 + 节点更新
+    this.innerPrimaryWork(viewport, depthTexture);
+    
+    // 3. 构建绘制调用
+    rs.buildDrawCalls(viewport);
+    
+    // 4. 渲染时序内容
+    rs.renderTemporal(viewport);
+    
+    // 5. 后期处理钩子
+    this.postOpaquePreTranslucent(viewport);
+    
+    // 6. 渲染半透明内容
+    if (!this.deferTranslucency) {
+        rs.renderTranslucent(viewport);
+    }
+    
+    this.finish(viewport, sourceFrameBuffer, srcWidth, srcHeight);
+}</code></pre>
+<h3>2.3 MDIC 渲染器架构</h3>
+<p><code>MDICSectionRenderer</code> 是实际执行 GPU 绘制的核心组件，使用 <code>glMultiDrawElementsIndirectCountARB</code> 实现高效批量绘制：</p>
+<pre class="code-block"><code class="language-49">public static final int OPAQUE_DRAW_COUNT = 400_000;    // 不透明绘制调用上限
+public static final int TRANSLUCENT_DRAW_COUNT = 100_000; // 半透明绘制调用上限
+public static final int TEMPORAL_DRAW_COUNT = 100_000;   // 时序绘制调用上限</code></pre>
+<p><strong>绘制流程</strong>：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant CPU as CPU<br/>(Java)
+    participant GPU as GPU<br/>(Compute)
+    participant Raster as GPU<br/>(Raster)
+    
+    Note over CPU: buildDrawCalls 阶段
+    
+    CPU->>GPU: Dispatch prepShader
+    Note right of GPU: 初始化绘制计数缓冲区
+    
+    GPU->>GPU: Dispatch cullShader
+    Note right of GPU: GPU 遮挡剔除<br/>写入 visibilityBuffer
+    
+    GPU->>GPU: Dispatch commandGenShader
+    Note right of GPU: 生成间接绘制命令<br/>写入 drawCallBuffer
+    
+    GPU->>GPU: Dispatch prefixSumShader + translucentGenShader
+    Note right of GPU: 半透明排序
+    
+    Note over Raster: renderOpaque 阶段
+    
+    Raster->>Raster: glMultiDrawElementsIndirectCountARB
+    Note right of Raster: 批量绘制不透明几何
+    
+    Note over Raster: renderTranslucent 阶段
+    
+    Raster->>Raster: glMultiDrawElementsIndirectCountARB
+    Note right of Raster: 批量绘制半透明几何</div>
+</div>
+<h3>2.4 着色器编译管线</h3>
+<pre class="code-block"><code class="language-46">public static class Builder &lt;T extends Shader&gt; {
+    public Builder&lt;T&gt; define(String name) { ... }
+    public Builder&lt;T&gt; defineIf(String name, boolean condition) { ... }
+    public Builder&lt;T&gt; add(ShaderType type, String id) { ... }
+    public Builder&lt;T&gt; addSource(ShaderType type, String source) { ... }
+    public T compile() {
+        this.defineIf(&quot;IS_INTEL&quot;, Capabilities.INSTANCE.isIntel);
+        this.defineIf(&quot;IS_WINDOWS&quot;, ThreadUtils.isWindows);
+        return this.constructor.make(this, this.compileToProgram());
+    }
+}</code></pre>
+<p>着色器 Builder 使用链式 API，支持条件编译、平台特定宏定义：</p>
+<pre class="code-block"><code class="language-58">.add(ShaderType.COMPUTE, &quot;voxy:lod/gl46/cmdgen.comp&quot;)
+.defineIf(&quot;HAS_STATISTICS&quot;, RenderStatistics.enabled)
+.defineIf(&quot;STATISTICS_BUFFER_BINDING&quot;, RenderStatistics.enabled, STATISTICS_BUFFER_BINDING)</code></pre>
+<p><hr></p>
+<h2 id="3-共享索引缓冲设计">3. 共享索引缓冲设计</h2>
+<h3>3.1 设计目标</h3>
+<p><code>SharedIndexBuffer</code> 预先生成并上传标准索引模式到 GPU，供所有渲染批次复用，避免重复创建：</p>
+<pre class="code-block"><code class="language-9">public class SharedIndexBuffer {
+    public static final int CUBE_INDEX_OFFSET = (1&lt;&lt;16)*6*2;
+    public static final SharedIndexBuffer INSTANCE = new SharedIndexBuffer();
+    public static final SharedIndexBuffer INSTANCE_BYTE = new SharedIndexBuffer(true);
+    public static final SharedIndexBuffer INSTANCE_BB_BYTE = new SharedIndexBuffer(true, true);</code></pre>
+<h3>3.2 索引模式生成</h3>
+<pre class="code-block"><code class="language-188">public static MemoryBuffer generateQuadIndicesShort(int quadCount) {
+    if ((quadCount*4) &gt;= 1&lt;&lt;16) {
+        throw new ArgumentException(&quot;Quad count to large&quot;);
+    }
+    MemoryBuffer buffer = new MemoryBuffer(quadCount * 6L * 2);
+    long ptr = buffer.address;
+    for(int i = 0; i &lt; quadCount*4; i += 4) {
+        MemoryUtil.memPutShort(ptr + (0*2), (short) (i + 1));
+        MemoryUtil.memPutShort(ptr + (1*2), (short) (i + 2));
+        MemoryUtil.memPutShort(ptr + (2*2), (short) (i + 0));
+        MemoryUtil.memPutShort(ptr + (3*2), (short) (i + 1));
+        MemoryUtil.memPutShort(ptr + (4*2), (short) (i + 3));
+        MemoryUtil.memPutShort(ptr + (5*2), (short) (i + 2));
+        ptr += 6 * 2;
+    }
+    return buffer;
+}</code></pre>
+<p>生成的四边形索引模式：</p>
+<pre class="code-block"><code class="language-text">顶点: 0,1,2,3 → 索引: 1,2,0,1,3,2 (两个三角形)</code></pre>
+<h3>3.3 多变体支持</h3>
+<table class="data-table"><thead><tr><th>变体</th><th>顶点索引类型</th><th>适用场景</th></tr></thead><tbody><tr><td><code>INSTANCE</code></td><td>16-bit short</td><td>最多 16380 个四边形</td></tr><tr><td><code>INSTANCE<em>BYTE</code></td><td>8-bit byte</td><td>最多 63 个四边形</td></tr><tr><td><code>INSTANCE</em>BB_BYTE</code></td><td>8-bit byte</td><td>仅立方体</td></tr></tbody></table>
+立方体索引预定义（用于实体渲染）：</p>
+<pre class="code-block"><code class="language-53">private static MemoryBuffer generateCubeIndexBuffer() {
+    var buffer = new MemoryBuffer(6*2*3);
+    // 每个面 2 个三角形，每个三角形 3 个顶点
+    
+    // Bottom face:  0,1,2, 3,2,1
+    // top face:    6,5,4, 5,6,7
+    // north face:  0,4,1, 5,1,4
+    // south face:  3,6,2, 6,3,7
+    // west face:   2,4,0, 4,2,6
+    // east face:   1,5,3, 7,3,5
+}</code></pre>
+<p><hr></p>
+<h2 id="4-mixin-集成策略">4. Mixin 集成策略</h2>
+<p>Voxy 通过 Mixin 与 Minecraft、Sodium、Iris 等模组深度集成：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph "Voxy Mixins"
+        A[Sodium Mixins<br/>6 classes] --> B[Chunk 渲染拦截]
+        C[Iris Mixins<br/>9 classes] --> D[着色器集成]
+        E[Flashback Mixins<br/>2 classes] --> F[录屏兼容性]
+        G[Nvidium Mixins<br/>1 class] --> H[管线集成]
+    end
+    
+    subgraph "集成目标"
+        B --> I[SodiumWorldRenderer]
+        B --> J[RenderSectionManager]
+        D --> K[IrisRenderingPipeline]
+        D --> L[CustomUniforms]
+        F --> M[FlashbackMeta]
+        H --> N[RenderPipeline]
+    end</div>
+</div>
+<h3>4.1 Sodium 集成</h3>
+<p><strong>核心目标</strong>：拦截 Sodium 的区块渲染流程，注入 Voxy 的数据处理。</p>
+<pre class="code-block"><code class="language-12">@Mixin(value = SodiumWorldRenderer.class, remap = false)
+public class MixinSodiumWorldRenderer {
+    @Inject(method = &quot;initRenderer&quot;, at = @At(&quot;TAIL&quot;), remap = false)
+    private void voxy$injectThreadUpdate(CommandList cl, CallbackInfo ci) {
+        var vi = VoxyCommon.getInstance();
+        if (vi != null) vi.updateDedicatedThreads();
+    }
+}</code></pre>
+<p><strong>区块生命周期钩子</strong>：</p>
+<pre class="code-block"><code class="language-51">@Inject(method = &quot;onChunkRemoved&quot;, at = @At(&quot;HEAD&quot;))
+private void injectIngest(int x, int z, CallbackInfo ci) {
+    if (VoxyConfig.CONFIG.ingestEnabled &amp;&amp; !BOBBY_INSTALLED) {
+        // 触发区块数据摄取
+        VoxelIngestService.tryAutoIngestChunk(chunk);
+    }
+}
+
+@Inject(method = &quot;onChunkAdded&quot;, at = @At(&quot;HEAD&quot;))
+private void voxy$ingestOnAdd(int x, int z, CallbackInfo ci) {
+    if (VoxyConfig.CONFIG.ingestEnabled) {
+        VoxelIngestService.tryAutoIngestChunk(chunk);
+    }
+}</code></pre>
+<h3>4.2 Iris 集成</h3>
+<p><strong>核心目标</strong>：将 Voxy 的地形渲染融入 Iris 着色器管线。</p>
+<pre class="code-block"><code class="language-22">@Mixin(value = IrisRenderingPipeline.class, remap = false)
+public class MixinIrisRenderingPipeline implements IGetVoxyPatchData, IGetIrisVoxyPipelineData {
+    
+    @Inject(method = &quot;&lt;init&gt;&quot;, at = @At(value = &quot;INVOKE&quot;, 
+        target = &quot;Lnet/irisshaders/iris/pipeline/transform/ShaderPrinter;resetPrintState()V&quot;, 
+        shift = At.Shift.AFTER))
+    private void voxy$injectPatchDataStore(ProgramSet programSet, CallbackInfo ci) {
+        if (IrisUtil.SHADER_SUPPORT) {
+            this.patchData = ((IGetVoxyPatchData) programSet).voxy$getPatchData();
+        }
+    }
+
+    @Inject(method = &quot;&lt;init&gt;&quot;, at = @At(value = &quot;INVOKE&quot;,
+        target = &quot;Lnet/irisshaders/iris/pipeline/IrisRenderingPipeline;createSetupComputes...&quot;))
+    private void voxy$injectPipeline(ProgramSet programSet, CallbackInfo ci) {
+        if (this.patchData != null) {
+            this.pipeline = IrisVoxyRenderPipelineData.buildPipeline(...);
+        }
+    }
+}</code></pre>
+<p><strong>着色器补丁注入</strong>：</p>
+<pre class="code-block"><code class="language-46">@Override
+public String patchOpaqueShader(AbstractSectionRenderer&lt;?, ?&gt; renderer, String input) {
+    var builder = this.buildGenericShaderHeader(renderer, input);
+    builder.append(this.data.opaqueFragPatch());
+    return builder.toString();
+}
+
+@Override
+public String patchTranslucentShader(AbstractSectionRenderer&lt;?, ?&gt; renderer, String input) {
+    if (this.data.translucentFragPatch() == null) return null;
+    var builder = this.buildGenericShaderHeader(renderer, input);
+    builder.append(this.data.translucentFragPatch());
+    return builder.toString();
+}</code></pre>
+<h3>4.3 管线工厂</h3>
+<pre class="code-block"><code class="language-15">public static AbstractRenderPipeline createPipeline(AsyncNodeManager nodeManager, 
+        NodeCleaner nodeCleaner, HierarchicalOcclusionTraverser traversal, 
+        BooleanSupplier frexSupplier) {
+    
+    AbstractRenderPipeline pipeline = null;
+    
+    // 优先尝试创建 Iris 集成管线
+    if (IrisUtil.IRIS_INSTALLED &amp;&amp; IrisUtil.SHADER_SUPPORT) {
+        pipeline = createIrisPipeline(nodeManager, nodeCleaner, traversal, frexSupplier);
+    }
+    
+    // 回退到普通管线
+    if (pipeline == null) {
+        pipeline = new NormalRenderPipeline(nodeManager, nodeCleaner, traversal, frexSupplier);
+    }
+    
+    return pipeline;
+}</code></pre>
+<p><hr></p>
+<h2 id="5-兼容性处理">5. 兼容性处理</h2>
+<h3>5.1 Flashback 录屏兼容性</h3>
+<p>Flashback 是录制回放模组，需要特殊处理 Voxy 的 LOD 数据路径：</p>
+<pre class="code-block"><code class="language-12">public class FlashbackCompat {
+    public static final boolean FLASHBACK_INSTALLED = 
+        FabricLoader.getInstance().isModLoaded(&quot;flashback&quot;);
+
+    public static Path getReplayStoragePath() {
+        if (!FLASHBACK_INSTALLED) {
+            return null;
+        }
+        
+        ReplayServer replayServer = Flashback.getReplayServer();
+        if (replayServer != null) {
+            FlashbackMeta meta = replayServer.getMetadata();
+            if (meta != null) {
+                var path = ((IFlashbackMeta)meta).getVoxyPath();
+                if (path != null &amp;&amp; path.exists()) {
+                    return path.toPath();
+                }
+            }
+        }
+        return null;
+    }
+}</code></pre>
+<p><strong>Mixin 注入</strong>：将 Voxy 存储路径保存到 Flashback 元数据中：</p>
+<pre class="code-block"><code class="language-19">@Inject(method = &quot;&lt;init&gt;&quot;, at = @At(&quot;TAIL&quot;))
+private void voxy$getStoragePath(RegistryAccess registryAccess, CallbackInfo retInf) {
+    if (VoxyCommon.isAvailable()) {
+        var instance = VoxyCommon.getInstance();
+        if (instance instanceof VoxyClientInstance ci) {
+            ((IFlashbackMeta)this.metadata).setVoxyPath(
+                ci.getStorageBasePath().toFile());
+        }
+    }
+}</code></pre>
+<p><strong>元数据序列化</strong>：</p>
+<pre class="code-block"><code class="language-28">@Inject(method = &quot;toJson&quot;, at = @At(&quot;RETURN&quot;))
+private void voxy$injectSaveVoxyPath(CallbackInfoReturnable&lt;JsonObject&gt; cir) {
+    var val = cir.getReturnValue();
+    if (val != null &amp;&amp; this.voxyPath != null) {
+        val.addProperty(&quot;voxy_storage_path&quot;, this.voxyPath.getAbsoluteFile().getPath());
+    }
+}
+
+@Inject(method = &quot;fromJson&quot;, at = @At(&quot;RETURN&quot;))
+private static void voxy$injectGetVoxyPath(JsonObject meta, 
+        CallbackInfoReturnable&lt;FlashbackMeta&gt; cir) {
+    if (meta.has(&quot;voxy_storage_path&quot;)) {
+        ((IFlashbackMeta)val).setVoxyPath(
+            new File(meta.get(&quot;voxy_storage_path&quot;).getAsString()));
+    }
+}</code></pre>
+<h3>5.2 Nvidium 集成</h3>
+<p>Nvidium 是另一个高性能渲染模组，Voxy 通过 Mixin 在其管线完成后追加渲染：</p>
+<pre class="code-block"><code class="language-18">@Mixin(value = RenderPipeline.class, remap = false)
+public class MixinRenderPipeline {
+    @Inject(method = &quot;renderFrame&quot;, at = @At(&quot;RETURN&quot;))
+    private void voxy$injectRender(TerrainRenderPass pass, Viewport frustum, 
+            FogParameters fogParameters, ChunkRenderMatrices crm, 
+            double px, double py, double pz, GpuSampler terrainSampler, 
+            CallbackInfo ci) {
+        var renderer = ((IGetVoxyRenderSystem) Minecraft.getInstance().levelRenderer)
+            .getVoxyRenderSystem();
+        if (renderer != null) {
+            renderer.renderOpaque(renderer.setupViewport(crm, fogParameters, px, py, pz));
+        }
+    }
+}</code></pre>
+<h3>5.3 Bobby 多世界支持</h3>
+<p>Bobby 是另一个扩展渲染距离的模组，Voxy 需要避免与之冲突：</p>
+<pre class="code-block"><code class="language-34">@Unique
+private static final boolean BOBBY_INSTALLED = 
+    FabricLoader.getInstance().isModLoaded(&quot;bobby&quot;);
+
+@Inject(method = &quot;onChunkRemoved&quot;, at = @At(&quot;HEAD&quot;))
+private void injectIngest(int x, int z, CallbackInfo ci) {
+    if (VoxyConfig.CONFIG.ingestEnabled &amp;&amp; !BOBBY_INSTALLED) {
+        // Bobby 已处理区块生命周期，Voxy 不再干预
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="6-总结">6. 总结</h2>
+<p>Voxy 的渲染核心子系统展现了现代游戏渲染引擎的典型架构：</p>
+<h3>架构亮点</h3>
+<p><ul><li><strong>严格的 GPU 能力检测</strong>：不依赖单一的 GL 扩展标志，通过实际运行测试验证特性可用性</li>
+<li><strong>GPU 驱动批量绘制</strong>：使用 <code>glMultiDrawElementsIndirectCountARB</code> 将成千上万的绘制调用合并为少量批量命令</li>
+<li><strong>分层设计</strong>：从 <code>AbstractRenderPipeline</code> 到具体实现的解耦，便于扩展和测试</li>
+<li><strong>Mixin 集成策略</strong>：针对 Sodium/Iris/Flashback/Nvidium 等模组的精确注入点选择</li></ul></p>
+<h3>关键技术点</h3>
+<table class="data-table"><thead><tr><th>技术</th><th>作用</th></tr></thead><tbody><tr><td>Compute Shader 遮挡剔除</td><td>GPU 端判断可见性，避免 CPU-GPU 同步</td></tr><tr><td>间接绘制命令</td><td><code>DrawElementsIndirect</code> 减少 CPU 提交开销</td></tr><tr><td>Subgroup 操作</td><td>AMD/NVIDIA 优化的 SIMD 指令</td></tr><tr><td>深度模板优化</td><td>避免深度缓冲区格式转换</td></tr><tr><td>异步几何生成</td><td><code>AsyncNodeManager</code> 后台处理几何数据</td></tr></tbody></table>
+<h3>课后自查</h3>
+<p><ul><li>为什么 Voxy 要求 <code>glMultiDrawElementsIndirectCountARB</code> 而非普通的 <code>glDrawElementsIndirect</code>？</li>
+<li>AMD 深度采样 Bug 的检测原理是什么？它影响了哪些渲染阶段？</li>
+<li><code>SharedIndexBuffer</code> 为什么提供多种变体（byte/short）？</li>
+<li>Iris 集成中，着色器补丁是如何注入到现有渲染管线的？</li>
+<li>Flashback 兼容性处理中，元数据序列化的目的是什么？</li></ul></p>
+<p><hr></p>
+<p><strong>相关文档</strong>：
+<ul><li><a href="01-architecture-overview.html">Voxy 架构概览</a></li>
+<li><a href="07-terrain-ingestion.html">地形数据摄取系统</a></li>
+<li><a href="08-hierarchical-occlusion.html">分层遮挡剔除</a></li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="05-thread-service.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 线程与服务子系统分析
+        </a><a href="07-world-importers.html" class="next">
+            Voxy 世界数据导入子系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

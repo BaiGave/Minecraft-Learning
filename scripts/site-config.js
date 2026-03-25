@@ -641,6 +641,35 @@ const SITE_CONFIG = {
             }
         },
         "defaultVersion": "1.21-core--"
+    },
+    "voxy": {
+        "id": "voxy",
+        "name": "Voxy",
+        "shortName": "Voxy",
+        "slug": "voxy",
+        "icon": "fa-folder-open",
+        "color": "#5B8C5A",
+        "colorGradient": "linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)",
+        "accentColor": "#171717",
+        "description": "Voxy的教程与源码分析文档",
+        "category": "mc",
+        "order": 53,
+        "docsDir": "docs/voxy",
+        "hasTutorials": true,
+        "hasAnalysis": true,
+        "featured": [],
+        "versions": {
+            "1.21.11-fabric-0.2.13-alpha": {
+                "name": "1.21.11-fabric-0.2.13-alpha",
+                "codename": "",
+                "isDefault": true,
+                "status": "stable",
+                "tutorialCount": 0,
+                "analysisCount": 0,
+                "releaseDate": ""
+            }
+        },
+        "defaultVersion": "1.21.11-fabric-0.2.13-alpha"
     }
 };
     if (typeof SITE_CONFIG === 'undefined' || !SITE_CONFIG.modules) return;

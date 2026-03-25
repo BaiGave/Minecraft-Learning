@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 线程与服务子系统分析 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 线程与服务子系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 线程与服务子系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本章节源码分析基于 Cortextea (The True Cortex) 的开源工作。感谢原作者在 <code>voxy-0.2.13-alpha</code> 中构建的这套精密的异步任务调度系统。源码路径：</p>
+<pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\</code></pre>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-概述">1. 概述</a></li>
+<li><a href="#2-线程模型总览">2. 线程模型总览</a></li>
+<li><a href="#3-unifiedservicethreadpool统一线程池">3. UnifiedServiceThreadPool：统一线程池</a></li>
+<li><a href="#4-multithreadprioritysemaphore优先级信号量">4. MultiThreadPrioritySemaphore：优先级信号量</a></li>
+<li><a href="#5-service-与 servicemanager-任务抽象">5. Service 与 ServiceManager：任务抽象</a></li>
+<li><a href="#6-具体服务实现">6. 具体服务实现</a></li>
+<li><a href="#7-voxyinstance-线程管理">7. VoxyInstance 线程管理</a></li>
+<li><a href="#8-课后自查">8. 课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-概述">1. 概述</h2>
+<p>Voxy 使用一套<strong>多线程专用 Worker + 优先级信号量 + Service 抽象</strong>的三层任务调度体系。核心设计目标：</p>
+<table class="data-table"><thead><tr><th>目标</th><th>实现方式</th></tr></thead><tbody><tr><td>异步区块处理</td><td>专用 Service 队列，非阻塞提交</td></tr><tr><td>多 Worker 竞争任务</td><td><code>ServiceManager</code> 加权随机选取</td></tr><tr><td>任务窃取与负载均衡</td><td><code>steal()</code> 方法跨 Service 转移任务</td></tr><tr><td>线程安全</td><td><code>ConcurrentLinkedDeque</code> + <code>AtomicInteger</code></td></tr><tr><td>优雅关闭</td><td><code>blockTillEmpty()</code> 等待队列排空</td></tr></tbody></table>
+<hr></p>
+<h2 id="2-线程模型总览">2. 线程模型总览</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph JVM
+        subgraph "Voxy Dedicated Worker Threads (Priority 3)"
+            W1["Dedicated Voxy Worker #0"]
+            W2["Dedicated Voxy Worker #1"]
+            W3["Dedicated Voxy Worker #2"]
+        end
+
+        subgraph "ServiceManager"
+            SM["加权随机选取 Service"]
+            TI["总任务计数 totalJobs"]
+        end
+
+        subgraph "Services"
+            S1["VoxelIngestService\nweight=5000"]
+            S2["SectionSavingService\nweight=100"]
+            S3["..."]
+        end
+
+        subgraph "PerThreadContextExecutor"
+            E1["Worker #0 的 Runnable"]
+            E2["Worker #1 的 Runnable"]
+            E3["Worker #2 的 Runnable"]
+        end
+
+        subgraph "Queues"
+            Q1["ConcurrentLinkedDeque\nIngest"]
+            Q2["ConcurrentLinkedDeque\nSaving"]
+        end
+    end
+
+    W1 & W2 & W3 -->|"acquire()"| MTP["MultiThreadPrioritySemaphore"]
+    MTP -->|"tryRunAJob()"| SM
+    SM -->|"runAJob0() 选取"| S1 & S2 & S3
+    S1 --> Q1
+    S2 --> Q2
+    W1 --> E1
+    W2 --> E2
+    W3 --> E3</div>
+</div>
+<h3>线程优先级为 3 的含义</h3>
+<pre class="code-block"><code class="language-10">t.setPriority(3);</code></pre>
+<p>Java 线程优先级范围是 <code>Thread.MIN<em>PRIORITY</code>(1) 到 <code>Thread.MAX</em>PRIORITY</code>(10)，默认是 <code>NORM_PRIORITY</code>(5)。</p>
+<p><strong>设为 3 的设计意图</strong>：低于正常优先级，让 Voxy Worker 在有大量任务时不会过度抢占渲染线程/主线程的时间片。设置为 3 意味着 Voxy 工作线程在系统调度中处于「低优先级」——这在 Minecraft 客户端尤其关键，渲染帧率不能被后台存储操作拖累。</p>
+<p>此外，<code>VoxyInstance</code> 中还有一个 <code>worldCleaner</code> 线程使用 <code>Thread.MIN_PRIORITY</code>（优先级 1），专门做空闲世界清理：</p>
+<pre class="code-block"><code class="language-54">this.worldCleaner.setPriority(Thread.MIN_PRIORITY);</code></pre>
+<p><hr></p>
+<h2 id="3-unifiedservicethreadpool统一线程池">3. UnifiedServiceThreadPool：统一线程池</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph 初始化
+        A["new UnifiedServiceThreadPool()"] --> B["new ThreadGroup\n'Voxy Dedicated Service'"]
+        B --> C["new ServiceManager"]
+        C --> D["new MultiThreadPrioritySemaphore"]
+        D --> E["createBlock()"]
+    end
+
+    subgraph 动态扩缩容
+        F["setNumThreads(n)"] -->|"diff > 0"| G["new Thread(workerThread)\nsetPriority(3)\nsetDaemon(true)\nstart()"]
+        F -->|"diff < 0"| H["selfBlock.release(-diff)"]
+    end</div>
+</div>
+<p><strong><code>UnifiedServiceThreadPool</code></strong> 的核心职责是管理一组专用线程：</p>
+<pre class="code-block"><code class="language-10">public class UnifiedServiceThreadPool {
+    public final ServiceManager serviceManager;
+    public final MultiThreadPrioritySemaphore groupSemaphore;
+    private final MultiThreadPrioritySemaphore.Block selfBlock;
+    private final ThreadGroup dedicatedPool;
+    private final List&lt;Thread&gt; threads = new ArrayList&lt;&gt;();</code></pre>
+<p><ul><li><strong><code>ServiceManager</code></strong>：管理所有 Service，负责选取哪个 Service 执行任务</li>
+<li><strong><code>MultiThreadPrioritySemaphore</code></strong>：协调 Worker 线程阻塞/唤醒，支持优先级调度</li>
+<li><strong><code>ThreadGroup</code></strong>：将 Voxy Worker 归入名为 <code>"Voxy Dedicated Service"</code> 的线程组，便于调试</li>
+<li><strong>Daemon 线程</strong>：设为 <code>true</code>，JVM 退出时自动销毁</li></ul></p>
+<h3>Worker 线程生命周期</h3>
+<pre class="code-block"><code class="language-29">public boolean setNumThreads(int threads) {
+    synchronized (this.threads) {
+        int diff = threads - this.threads.size();
+        if (diff==0) return false;
+        if (diff&lt;0) {
+            this.selfBlock.release(-diff);  // 释放凭证，线程自行退出
+        } else {
+            for (int i = 0; i &lt; diff; i++) {
+                var t = new Thread(this.dedicatedPool, this::workerThread, &quot;Dedicated Voxy Worker #&quot;+(this.threadId++));
+                t.setPriority(3);
+                t.setDaemon(true);
+                this.threads.add(t);
+                t.start();
+            }
+        }
+    }</code></pre>
+<p>每个 Worker 线程的执行体 <code>workerThread</code>：</p>
+<pre class="code-block"><code class="language-57">private void workerThread() {
+    this.selfBlock.acquire();  // 阻塞在此，等待信号量
+
+    // Worker 退出时将自己从列表中移除
+    synchronized (this.threads) {
+        this.threads.remove(Thread.currentThread());
+    }
+}</code></pre>
+<p><strong>动态扩缩容机制</strong>：不直接 kill 线程，而是通过 <code>selfBlock.release(n)</code> 释放 n 个许可证，让 n 个 Worker 的 <code>acquire()</code> 返回后自然退出。这比强制中断线程更安全，不会产生半完成状态。</p>
+<p><hr></p>
+<h2 id="4-multithreadprioritysemaphore优先级信号量">4. MultiThreadPrioritySemaphore：优先级信号量</h2>
+<p>这是 Voxy 线程体系中最复杂的组件。设计目标：<strong>将多个线程池统一调度，同时保证本地任务优先于「窃取」任务</strong>。</p>
+<h3>4.1 核心结构</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph "MultiThreadPrioritySemaphore"
+        PS["pooledSemaphore\nSemaphore(0)"]
+        EX["executor: IntSupplier\n(ServiceManager::tryRunAJob)"]
+        BLKS["Block[]\nvolatile Service[]"]
+    end
+
+    subgraph "每个 Block"
+        B["Block extends TrackedObject"]
+        LS["localSemaphore\nSemaphore(0)"]
+        BS["blockSemaphore\nSemaphore(0)"]
+    end
+
+    BLKS --> B
+    B --> LS
+    B --> BS</div>
+</div>
+<p>每个 Worker 线程持有一个 <code>Block</code>，Worker 通过 <code>Block.acquire()</code> 进入阻塞状态。有任务时：</p>
+<p><ul><li><strong><code>pooledRelease(permits)</code></strong> 被调用 → <code>pooledSemaphore</code> 增加计数</li>
+<li>所有 <code>Block.blockSemaphore</code> 同时增加计数</li>
+<li>Worker 从 <code>acquire()</code> 返回后：</li>
+</ul>   - 优先从 <code>localSemaphore</code> 获取（本地任务）
+   - 若无本地任务，调用 <code>man.tryRun(this)</code> 尝试执行池中任务</p>
+<h3>4.2 Block 的 acquire 逻辑</h3>
+<pre class="code-block"><code class="language-49">while (true) {
+    if (runJob) {
+        this.blockSemaphore.acquireUninterruptibly();  // 等待任何任务
+        if (this.localSemaphore.tryAcquire()) {       // 优先本地任务
+            return;
+        }
+        if (this.man.tryRun(this)) {                  // 尝试执行共享池任务
+            break;
+        }
+    } else {
+        this.localSemaphore.acquireUninterruptibly();
+        if (!this.blockSemaphore.tryAcquire()) {
+            // This is technically/actually a failure state
+        }
+        break;
+    }
+}</code></pre>
+<h3>4.3 tryRun 的返回值语义</h3>
+<pre class="code-block"><code class="language-143">while (true) {
+    int status = this.executor.getAsInt();
+    if (status == 0) return false;   // 任务成功执行
+    if (status == 1) return false;   // 无任务或无 Service
+    if (2 &lt;= status) {                // 2/3: 找到服务但无法运行，等待后重试
+        if (block.localSemaphore.tryAcquire(10, TimeUnit.MILLISECONDS)) {
+            block.blockSemaphore.tryAcquire();
+            this.pooledRelease(1);   // 归还许可证
+            return true;
+        }
+    }
+}</code></pre>
+<p><code>ServiceManager.tryRunAJob()</code> 返回的 0/1/2/3 语义由 <code>runAJob0()</code> 定义：</p>
+<table class="data-table"><thead><tr><th>返回值</th><th>含义</th></tr></thead><tbody><tr><td>0</td><td>成功执行了一个任务</td></tr><tr><td>1</td><td>无任务或无 Service（正常退出）</td></tr><tr><td>2</td><td>所有 Service 队列为空</td></tr><tr><td>3</td><td>部分 Service 被 <code>limiter</code> 跳过但可能有任务</td></tr></tbody></table>
+<hr></p>
+<h2 id="5-service-与-servicemanager任务抽象">5. Service 与 ServiceManager：任务抽象</h2>
+<h3>5.1 Service：惰性执行的任务队列</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Caller
+    participant Service
+    participant ServiceManager
+    participant Semaphore as "tasks (Semaphore)"
+
+    Caller->>Service: execute()
+    Service->>Semaphore: release(1)
+    Service->>ServiceManager: execute(this)
+    ServiceManager->>ServiceManager: totalJobs.incrementAndGet()
+    ServiceManager->>MultiThreadPrioritySemaphore: jobRelease.accept(1)
+
+    Note over Worker: 稍后，Worker 从阻塞中唤醒
+    Worker->>Service: runJob()
+    Service->>Semaphore: tryAcquire()
+    Service->>PerThreadContextExecutor: run()</div>
+</div>
+<p><code>Service</code> 是惰性执行的代表——<code>execute()</code> 只是将任务加入内部 <code>Semaphore</code> 并通知 <code>ServiceManager</code>，<strong>不执行任何实际工作</strong>。实际执行由 Worker 线程从 <code>ServiceManager.runAJob0()</code> 中选取后触发。</p>
+<pre class="code-block"><code class="language-17">private final Semaphore tasks = new Semaphore(0);
+private volatile boolean isLive = true;
+private volatile boolean isStopping = false;</code></pre>
+<h3>5.2 ServiceManager：加权随机选取算法</h3>
+<p><code>ServiceManager.runAJob0()</code> 是整个任务调度的核心，实现了一个<strong>加权随机选取</strong>算法：</p>
+<pre class="code-block"><code class="language-66">private int runAJob0() {
+    var ctx = this.accelerationContext.get();  // ThreadLocal 随机状态
+    long skipMsk = 0;
+    var services = this.services;
+    long totalWeight = 0;
+    int shiftFactor = (ctx.shiftFactor++)&amp;Integer.MAX_VALUE;  // 轮转起始偏移
+
+    // 第一遍：计算 totalWeight，检查 limiter
+    for (int i = 0; i &lt; services.length; i++) {
+        var service = services[i];
+        if (!service.isLive()) { Thread.yield(); continue; }
+        if (service.limiter!=null &amp;&amp; !service.limiter.getAsBoolean()) {
+            skipMsk |= 1L&lt;&lt;i;  // 标记跳过
+            continue;
+        }
+        totalWeight += service.numJobs() * service.weight;
+    }
+    if (totalWeight == 0) return skipMsk!=0?3:2;
+
+    // 第二遍：加权随机选取
+    long sample = ctx.rand(totalWeight);
+    for (int i = 0; i &lt; services.length; i++) {
+        var service = services[(i+shiftFactor)%services.length];
+        sample -= service.numJobs() * service.weight;
+        if (sample&lt;=0) {
+            selectedService = service;
+            break;
+        }
+    }
+    // ...
+    selectedService.runJob();
+    this.totalJobs.decrementAndGet();
+    return 0;
+}</code></pre>
+<p><strong>选取策略</strong>：
+<ul><li>每次轮转通过 <code>shiftFactor</code> 改变起始位置，避免总是从同一个 Service 开始选取（防止低权重 Service 饿死）</li>
+<li>选取概率与 <code>numJobs() * weight</code> 成正比</li>
+<li>如果某个 Service 被 <code>limiter</code> 禁用（返回 false），则跳过</li></ul></p>
+<h3>5.3 工作窃取：steal()</h3>
+<pre class="code-block"><code class="language-85">public boolean steal() {
+    if (!this.tasks.tryAcquire()) {
+        return false;
+    }
+    this.sm.remJobs(1);  // 通知 ServiceManager 任务数减 1
+    return true;
+}</code></pre>
+<p><code>steal()</code> 用于<strong>跨 Service 转移任务</strong>。典型场景是 <code>SectionSavingService</code> 的非阻塞保存：当保存队列超过软上限 5000 时，主线程直接 <code>steal()</code> 并自行处理任务，避免队列无限膨胀。</p>
+<h3>5.4 生命周期管理</h3>
+<pre class="code-block"><code class="language-72">public int shutdown() {
+    if (this.isStopping) throw new IllegalStateException(&quot;Service not live&quot;);
+    this.isStopping = true;                  // 1. 标记停止
+    this.sm.removeService(this);             // 2. 从管理器移除
+    this.executor.shutdown();                // 3. 等待运行中的任务完成
+    int remaining = this.tasks.drainPermits(); // 4. 排空队列
+    this.isLive = false;                    // 5. 标记死亡
+    this.sm.remJobs(remaining);             // 6. 更新总任务数
+    return remaining;
+}</code></pre>
+<p><hr></p>
+<h2 id="6-具体服务实现">6. 具体服务实现</h2>
+<h3>6.1 VoxelIngestService：异步区块摄取</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 提交端
+        A["enqueueIngest(WorldEngine, LevelChunk)"]
+        A --> B["遍历 chunk.getSections()"]
+        B --> C{"光照数据\n是否就绪?"}
+        C -->|"否"| D["跳过该 section"]
+        C -->|"是"| E["ingestQueue.add(IngestSection)"]
+        E --> F["service.execute()"]
+    end
+
+    subgraph 处理端
+        G["processJob() (Worker 线程)"]
+        G --> H["ingestQueue.pop()"]
+        H --> I{"section.hasOnlyAir()\n&& 无光照?"}
+        I -->|"是"| J["insertUpdate(zero())"]
+        I -->|"否"| K["WorldConversionFactory.convert()"]
+        K --> L["WorldVoxilizedSectionMipper.mipSection()"]
+        L --> J
+    end
+
+    F -.->|"通知 SM"| G</div>
+</div>
+<p><strong>关键设计</strong>：</p>
+<table class="data-table"><thead><tr><th>参数</th><th>值</th><th>说明</th></tr></thead><tbody><tr><td><code>weight</code></td><td>5000</td><td>高权重，保证区块加载优先处理</td></tr><tr><td>队列上限</td><td>无硬限制</td><td>依赖 Minecraft 区块加载管控</td></tr><tr><td>线程安全</td><td><code>ConcurrentLinkedDeque</code></td><td>允许多线程并发入队/出队</td></tr><tr><td><code>limiter</code></td><td><code>null</code></td><td>不限流</td></tr></tbody></table>
+<pre class="code-block"><code class="language-24">public class VoxelIngestService {
+    private final ConcurrentLinkedDeque&lt;IngestSection&gt; ingestQueue = new ConcurrentLinkedDeque&lt;&gt;();
+
+    public VoxelIngestService(ServiceManager pool) {
+        this.service = pool.createServiceNoCleanup(()-&gt;this::processJob, 5000, &quot;Ingest service&quot;);
+    }</code></pre>
+<h3>6.2 SectionSavingService：异步区块存储</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 提交端
+        A["enqueueSave(engine, section, nonBlocking)"]
+        A --> B{"section.exchangeIsInSaveQueue(true)\n（原子操作）"}
+        B -->|"已在队列中"| C["return（防止重复保存）"]
+        B -->|"新任务"| D{"软上限\ngetTaskCount() > 5000?"}
+        D -->|"是 && !nonBlocking"| E["service.steal()\n+ processJob() 同步处理"]
+        D -->|"否"| F["saveQueue.add(SaveEntry)"]
+        F --> G["service.execute()"]
+    end
+
+    subgraph 处理端
+        H["processJob()"]
+        H --> I["saveQueue.pop()"]
+        I --> J["section.setNotDirty()"]
+        J --> K{"exchangeIsInSaveQueue(false)"}
+        K -->|"true"| L["storage.saveSection()"]
+        K -->|"false"| M["跳过（已被其他线程保存）"]
+        L & M --> N["section.release()"]
+    end</div>
+</div>
+<p><strong>关键设计</strong>：</p>
+<table class="data-table"><thead><tr><th>参数</th><th>值</th><th>说明</th></tr></thead><tbody><tr><td><code>weight</code></td><td>100</td><td>低权重，存储操作不影响区块加载</td></tr><tr><td>软上限</td><td>5000</td><td>超过后主线程同步处理部分任务</td></tr><tr><td>硬上限</td><td>1200</td><td><code>savingServiceRateLimiter</code> 控制写入速率</td></tr><tr><td>幂等性</td><td><code>exchangeIsInSaveQueue</code></td><td>防止同一 Section 被重复入队</td></tr></tbody></table>
+<pre class="code-block"><code class="language-14">public class SectionSavingService {
+    private static final int SOFT_MAX_QUEUE_SIZE = 5_000;
+    private final Service service;
+    private final ConcurrentLinkedDeque&lt;SaveEntry&gt; saveQueue = new ConcurrentLinkedDeque&lt;&gt;();
+
+    public SectionSavingService(ServiceManager sm) {
+        this.service = sm.createServiceNoCleanup(() -&gt; this::processJob, 100, &quot;Section saving service&quot;);
+    }</code></pre>
+<p><strong><code>limiter</code> 的软限流</strong>：VoxyInstance 传入 <code>savingServiceRateLimiter = ()->this.savingService.getTaskCount()<1200</code>。当保存任务超过 1200 时，<code>ServiceManager.runAJob0()</code> 会跳过该 Service，但主线程仍可通过 <code>steal()</code> 同步处理——这是一个<strong>双层限流</strong>设计。</p>
+<p><hr></p>
+<h2 id="7-voxyinstance-线程管理">7. VoxyInstance 线程管理</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph 启动阶段
+        A["new VoxyInstance()"]
+        A --> B["new UnifiedServiceThreadPool()"]
+        B --> C["new ServiceManager + MultiThreadPrioritySemaphore"]
+        C --> D["new SectionSavingService"]
+        D --> E["new VoxelIngestService"]
+        E --> F["new Thread(worldCleaner, MIN_PRIORITY)"]
+        F --> G["worldCleaner.start()"]
+        G --> H["updateDedicatedThreads() → setNumThreads(3)"]
+    end
+
+    subgraph 关闭阶段
+        I["shutdown()"]
+        I --> J["worldCleaner.join()"]
+        J --> K["cleanIdle()"]
+        K --> L["ingestService.shutdown()\nsavingService.shutdown()"]
+        L --> M["world.free() for each"]
+        M --> N["threadPool.shutdown()"]
+    end</div>
+</div>
+<p><code>VoxyInstance</code> 是所有线程资源的总入口：</p>
+<pre class="code-block"><code class="language-34">public VoxyInstance() {
+    Logger.info(&quot;Initializing voxy instance&quot;);
+    this.threadPool = new UnifiedServiceThreadPool();
+    this.savingService = new SectionSavingService(this.getServiceManager());
+    this.ingestService = new VoxelIngestService(this.getServiceManager());
+    this.importManager = this.createImportManager();
+    this.savingServiceRateLimiter = ()-&gt;this.savingService.getTaskCount()&lt;1200;
+    this.worldCleaner = new Thread(()-&gt;{
+        try {
+            while (this.isRunning) {
+                Thread.sleep(1000);
+                this.cleanIdle();
+            }
+        } catch (InterruptedException e) { /* exit */ }
+    });
+    this.worldCleaner.setPriority(Thread.MIN_PRIORITY);
+    this.worldCleaner.setName(&quot;Active world cleaner&quot;);
+    this.worldCleaner.setDaemon(true);
+    this.worldCleaner.start();
+}</code></pre>
+<p><strong>世界清理线程</strong>：每 1 秒检查一次空闲世界（无活跃区块引用）。空闲世界的判断标准由 <code>WorldEngine.isWorldIdle()</code> 定义，清理后调用 <code>world.free()</code> 释放资源。</p>
+<p><strong>多世界管理</strong>：</p>
+<pre class="code-block"><code class="language-29">private final StampedLock activeWorldLock = new StampedLock();
+private final HashMap&lt;WorldIdentifier, WorldEngine&gt; activeWorlds = new HashMap&lt;&gt;();</code></pre>
+<p>使用 <code>StampedLock</code>（读写锁）保护活跃世界映射。读取用 <code>readLock()</code>，写入用 <code>writeLock()</code>。同时通过 <code>WeakReference<WorldEngine></code> 实现世界缓存，避免已释放的世界对象泄露。</p>
+<p><hr></p>
+<h2 id="8-课后自查">8. 课后自查</h2>
+<p><ul><li>[ ] 解释 <code>Thread.setPriority(3)</code> 在 Voxy Worker 中的作用，以及为什么不是 1 或 5</li>
+<li>[ ] <code>MultiThreadPrioritySemaphore.Block</code> 的 <code>localSemaphore</code> vs <code>blockSemaphore</code> 各自的用途是什么？</li>
+<li>[ ] <code>ServiceManager.runAJob0()</code> 中 <code>shiftFactor</code> 的作用是什么？如果去掉会怎样？</li>
+<li>[ ] 为什么 <code>VoxelIngestService</code> 的 weight 是 5000 而 <code>SectionSavingService</code> 的 weight 是 100？这个比例如何影响调度？</li>
+<li>[ ] <code>steal()</code> 在 <code>SectionSavingService</code> 中被用于什么场景？它与 <code>drain()</code> 的区别是什么？</li>
+<li>[ ] 如果 <code>limiter</code> 返回 false，<code>ServiceManager</code> 会如何处理该 Service 的任务？</li>
+<li>[ ] <code>VoxyInstance.worldCleaner</code> 的优先级设为 <code>Thread.MIN_PRIORITY</code> 的设计意图是什么？</li>
+<li>[ ] 描述从调用 <code>VoxelIngestService.enqueueIngest()</code> 到区块数据被处理的完整时序</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="04-storage-persistence.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 持久化存储子系统分析
+        </a><a href="06-rendering-core.html" class="next">
+            Voxy 渲染核心子系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

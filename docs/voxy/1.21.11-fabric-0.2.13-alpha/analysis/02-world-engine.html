@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 世界引擎子系统 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 世界引擎子系统</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 世界引擎子系统
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 45 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <blockquote><p>本文档基于 Voxy 模组 v0.2.13-alpha (MC 1.21.11) 源码分析，致谢原作者 Cortex 及其贡献者。</p></blockquote>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#概述">概述</a></li>
+<li><a href="#worldsection32³-lod-数据容器">WorldSection：32³ LOD 数据容器</a></li>
+<li><a href="#worldengine世界引擎核心">WorldEngine：世界引擎核心</a></li>
+<li><a href="#worldupdaterlod-更新传播">WorldUpdater：LOD 更新传播</a></li>
+<li><a href="#activesectiontracker双层-lru-缓存">ActiveSectionTracker：双层 LRU 缓存</a></li>
+<li><a href="#mapperblockstatebiome-id-映射">Mapper：BlockState/Biome ID 映射</a></li>
+<li><a href="#mipperlod-层压缩算法">Mipper：LOD 层压缩算法</a></li>
+<li><a href="#voxyinstance世界生命周期管理">VoxyInstance：世界生命周期管理</a></li>
+<li><a href="#系统交互关系图">系统交互关系图</a></li></ul></p>
+<p><hr></p>
+<h2 id="概述">概述</h2>
+<p>Voxy 的世界引擎是一个支持多级 LOD（Level of Detail）的区块数据管理系统。与原版 Minecraft 使用 16×16×16 的 chunk section 不同，Voxy 使用 <strong>32×32×32</strong> 的大尺寸 section，配合 0-4 五级 LOD 层，实现高效的远距离渲染和世界数据压缩。</p>
+<p>核心设计目标：
+<ul><li><strong>内存效率</strong>：通过多级 LOD 减少远距离渲染所需的数据量</li>
+<li><strong>并发安全</strong>：使用 VarHandle 和 StampedLock 保证线程安全</li>
+<li><strong>持久化</strong>：支持 Section 级别的懒加载和保存</li>
+<li><strong>缓存优化</strong>：双层 LRU 缓存减少磁盘 IO</li></ul></p>
+<p><hr></p>
+<h2 id="worldsection32-lod-数据容器">WorldSection：32³ LOD 数据容器</h2>
+<p><code>WorldSection</code> 是世界数据的基本存储单元，每个 section 覆盖 32×32×32 = 32768 个体素。</p>
+<h3>数据编码格式</h3>
+<p>每个体素用 37 bits 编码，存储在一个 <code>long[] data</code> 数组中：</p>
+<pre class="code-block"><code class="language-java">    long[] data = null;
+    volatile int nonEmptyBlockCount = 0;//Note: only needed for level 0 sections
+    volatile byte nonEmptyChildren;</code></pre>
+<p>编码布局：</p>
+<pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────────┐
+│ 63-56 (8 bits)  │  55-47 (9 bits)  │  46-27 (20 bits)  │ 26-0    │
+├──────────────────┼──────────────────┼───────────────────┼─────────┤
+│ light            │ biome            │ block             │ unused  │
+│ 亮度             │ 生物群系          │ 方块状态          │         │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+<p><ul><li><strong>light (8 bits)</strong>：光照等级，包括方块光（4 bits）和天空光（4 bits）</li>
+<li><strong>biome (9 bits)</strong>：生物群系 ID，支持最多 512 种生物群系</li>
+<li><strong>block (20 bits)</strong>：方块状态 ID，支持最多约 100 万种方块状态</li></ul></p>
+<h3>非空状态追踪</h3>
+<pre class="code-block"><code class="language-java">    // returns 0 if no change, 1 if it just updated and didnt do a major state change, 2 if it was a major state change (something -&gt; nothing, nothing -&gt; something)
+    public int updateEmptyChildState(WorldSection child) {
+        int childIdx = getChildIndex(child.x, child.y, child.z);
+        byte msk = (byte) (1&lt;&lt;childIdx);
+        byte prev, next;
+        do {
+            prev = this.getNonEmptyChildren();
+            next = (byte) ((prev&amp;(~msk))|(child.getNonEmptyChildren()!=0?msk:0));
+        } while (!NON_EMPTY_CHILD_HANDLE.compareAndSet(this, prev, next));
+
+        return ((prev!=0)^(next!=0))?2:(prev!=next?1:0);
+    }</code></pre>
+<p><ul><li><code>nonEmptyBlockCount</code>：仅 Level 0 使用，统计非空气方块数量</li>
+<li><code>nonEmptyChildren</code>：8-bit mask，标识 8 个子 section 是否为空（用于快速排除检测）</li></ul></p>
+<h3>引用计数机制</h3>
+<p>WorldSection 使用原子变量 <code>atomicState</code> 实现引用计数：</p>
+<pre class="code-block"><code class="language-java">        int prev, next;
+        do {
+            prev = (int) ATOMIC_STATE_HANDLE.get(this);
+            if ((prev&amp;1) == 0) {
+                //The object has been released so early exit
+                return false;
+            }
+            next = prev + 2;
+        } while (!ATOMIC_STATE_HANDLE.compareAndSet(this, prev, next));
+        return (next&amp;1) != 0;
+    }</code></pre>
+<p><ul><li>最低位（bit 0）：加载标志位，0 = 已释放，1 = 已加载</li>
+<li>其余位：引用计数（每 acquire +2，每次 release -2）</li></ul></p>
+<h3>数组复用缓存</h3>
+<pre class="code-block"><code class="language-java">    private static final int ARRAY_REUSE_CACHE_SIZE = 400;//500;//32*32*32*8*ARRAY_REUSE_CACHE_SIZE == number of bytes
+    private static final AtomicInteger ARRAY_REUSE_CACHE_COUNT = new AtomicInteger(0);
+    private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new ConcurrentLinkedDeque&lt;&gt;();</code></pre>
+<p>WorldSection 复用 <code>long[]</code> 数组而非每次新建，减少 GC 压力。数组大小为 32³ = 32768 longs。</p>
+<h3>Mermaid 图：WorldSection 结构</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">classDiagram
+    class WorldSection {
+        +int lvl
+        +int x, y, z
+        +long key
+        +long[] data
+        +int nonEmptyBlockCount
+        +byte nonEmptyChildren
+        +boolean isDirty
+        +tryAcquire() boolean
+        +acquire() int
+        +release() int
+        +getIndex(x,y,z) int
+        +set(x,y,z,id) long
+    }
+
+    class ActiveSectionTracker {
+        +WorldSection acquire(lvl,x,y,z, nullOnEmpty)
+        +tryUnload(section, hints)
+    }
+
+    WorldSection --> ActiveSectionTracker : tracker</div>
+</div>
+<p><hr></p>
+<h2 id="worldengine世界引擎核心">WorldEngine：世界引擎核心</h2>
+<p><code>WorldEngine</code> 是管理世界数据的主类，协调 LOD 层、Section 追踪器和持久化存储。</p>
+<h3>核心字段</h3>
+<pre class="code-block"><code class="language-java">    public static final int MAX_LOD_LAYER = 4;
+
+    public static final int UPDATE_TYPE_BLOCK_BIT = 1;
+    public static final int UPDATE_TYPE_CHILD_EXISTENCE_BIT = 2;
+    public static final int UPDATE_TYPE_DONT_SAVE = 4;
+    public static final int DEFAULT_UPDATE_FLAGS = UPDATE_TYPE_BLOCK_BIT | UPDATE_TYPE_CHILD_EXISTENCE_BIT;
+
+    public interface ISectionChangeCallback {void accept(WorldSection section, int updateFlags, int neighborMsk);}
+    public interface ISectionSaveCallback {void save(WorldEngine engine, WorldSection section, boolean nonBlocking);}
+
+    private final TrackedObject thisTracker = TrackedObject.createTrackedObject(this);
+
+    public final SectionStorage storage;
+    private final Mapper mapper;
+    private final ActiveSectionTracker sectionTracker;</code></pre>
+<h3>Section ID 编码</h3>
+<pre class="code-block"><code class="language-java">    // depending on the lvl, which should optimize colisions and whatnot
+    public static long getWorldSectionId(int lvl, int x, int y, int z) {
+        return ((long)lvl&lt;&lt;60)|((long)(y&amp;0xFF)&lt;&lt;52)|((long)(z&amp;((1&lt;&lt;24)-1))&lt;&lt;28)|((long)(x&amp;((1&lt;&lt;24)-1))&lt;&lt;4);//NOTE: 4 bits spare for whatever
+    }</code></pre>
+<p>64-bit Section ID 布局：
+<ul><li>bits 60-63：LOD level (0-4)</li>
+<li>bits 52-59：Y 坐标</li>
+<li>bits 28-51：Z 坐标</li>
+<li>bits 4-27：X 坐标</li>
+<li>bits 0-3：预留</li></ul></p>
+<h3>LOD 层级映射</h3>
+<table class="data-table"><thead><tr><th>Level</th><th>Section 大小</th><th>覆盖体素数</th><th>用途</th></tr></thead><tbody><tr><td>0</td><td>32³</td><td>32³</td><td>最高细节，近距离渲染</td></tr><tr><td>1</td><td>32³</td><td>64³</td><td>1:8 压缩</td></tr><tr><td>2</td><td>32³</td><td>128³</td><td>1:64 压缩</td></tr><tr><td>3</td><td>32³</td><td>256³</td><td>1:512 压缩</td></tr><tr><td>4</td><td>32³</td><td>512³</td><td>最低细节，远距离地平线</td></tr></tbody></table>
+每个 LOD 层的一个 section 覆盖 2^(lvl+1) 个 Level 0 sections。</p>
+<p><hr></p>
+<h2 id="worldupdaterlod-更新传播">WorldUpdater：LOD 更新传播</h2>
+<p><code>WorldUpdater</code> 负责将 Level 0 的体素更新<strong>向上传播</strong>到所有 LOD 层。</p>
+<h3>传播算法</h3>
+<pre class="code-block"><code class="language-java">    public static void insertUpdate(WorldEngine into, VoxelizedSection section) {//TODO: add a bitset of levels to update and if it should force update
+        if (!into.isLive) throw new IllegalStateException(&quot;World is not live&quot;);
+        boolean shouldCheckEmptiness = false;
+        WorldSection previousSection = null;
+        for (int lvl = 0; lvl &lt;= MAX_LOD_LAYER; lvl++) {
+            var worldSection = into.acquire(lvl, section.x &gt;&gt; (lvl + 1), section.y &gt;&gt; (lvl + 1), section.z &gt;&gt; (lvl + 1));</code></pre>
+<p>核心流程：</p>
+<p><ul><li><strong>循环遍历 0-4 级 LOD</strong>：对每个层级计算对应的 section 坐标</li>
+<li><strong>状态变更检测</strong>：<code>insertSectionLvlIntoWorld</code> 返回是否有实际变更</li>
+<li><strong>空虚状态传播</strong>：如果子 section 发生"全空↔非空"的重大变化，需要继续向上传播</li></ul></p>
+<h3>坐标计算</h3>
+<pre class="code-block"><code class="language-java">        final int bx = (section.x&amp;msk)&lt;&lt;(4-lvl);
+        final int by = (section.y&amp;msk)&lt;&lt;(4-lvl);
+        final int bz = (section.z&amp;msk)&lt;&lt;(4-lvl);</code></pre>
+<p>对于每个 LOD 层，数据在 <code>long[] data</code> 中的偏移位置不同：
+<ul><li>Level 0：每个体素占 1 个 entry</li>
+<li>Level 1：每 2³=8 个体素合并为 1 个 entry</li>
+<li>Level N：每 2^(N+1)³ 个体素合并为 1 个 entry</li></ul></p>
+<h3>Mermaid 图：LOD 传播流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["Level 0 Update<br/>(32³ voxels)"] --> B["Level 0 Section<br/>Acquire + Update"]
+    B --> C{"State Changed?"}
+    C -->|Yes| D["markDirty + Propagate"]
+    C -->|No| E["Release + Stop"]
+    D --> F{"Major Emptiness<br/>Change?"}
+    F -->|Yes| G["Level 1 Section<br/>Acquire + Update"]
+    F -->|No| H["Release + Stop"]
+    G --> I{"State Changed?"}
+    I -->|Yes| J["Propagate Up"]
+    I -->|No| K["Release + Stop"]
+    J --> L["Level 2..."]
+    L --> M["Level 3..."]
+    M --> N["Level 4 (Max)"]
+    N --> O["Release All + Done"]
+    
+    style G fill:#e1f5fe
+    style L fill:#e1f5fe
+    style M fill:#e1f5fe
+    style N fill:#fff3e0</div>
+</div>
+<p><hr></p>
+<h2 id="activesectiontracker双层-lru-缓存">ActiveSectionTracker：双层 LRU 缓存</h2>
+<p><code>ActiveSectionTracker</code> 实现了高效的 Section 加载/卸载策略，采用双层缓存设计。</p>
+<h3>缓存架构</h3>
+<pre class="code-block"><code class="language-java">    private final Long2ObjectOpenHashMap&lt;VolatileHolder&lt;WorldSection&gt;&gt;[] loadedSectionCache;
+    private final StampedLock[] locks;
+    private final SectionLoader loader;
+
+    private final int lruSize;
+    private final StampedLock lruLock = new StampedLock();
+    private final Long2ObjectLinkedOpenHashMap&lt;WorldSection&gt; lruSecondaryCache;//TODO: THIS NEEDS TO BECOME A GLOBAL STATIC CACHE</code></pre>
+<p><ul><li><strong>第一层</strong>：分片哈希表 <code>loadedSectionCache[]</code>（默认 64 个分片），存储当前加载的 sections</li>
+<li><strong>第二层</strong>：<code>lruSecondaryCache</code> 双向链表 LRU，存储已卸载但保留数据的 sections</li></ul></p>
+<h3>分片锁优化</h3>
+<pre class="code-block"><code class="language-java">        int index = this.getCacheArrayIndex(key);
+        var cache = this.loadedSectionCache[index];
+        final var lock = this.locks[index];
+        // ...
+        {
+            long stamp = lock.readLock();
+            holder = cache.get(key);
+            if (holder != null) {//Return already loaded entry
+                section = holder.obj;
+                if (section != null) {
+                    section.acquire();
+                    lock.unlockRead(stamp);
+                    return section;
+                }</code></pre>
+<p>使用 <code>StampedLock</code> 的读锁优化并发读操作，减少锁竞争。</p>
+<h3>卸载策略</h3>
+<pre class="code-block"><code class="language-java">        if (section.isDirty&amp;&amp;this.engine!=null) {
+            if (section.tryAcquire()) {
+                if (section.setNotDirty()) {//If the section is dirty we must enqueue for saving
+                    this.engine.saveSection(section);//can block
+                }
+                section.release(false, hints);//Special
+            }
+        }
+
+        if (section.getRefCount() != 0) {
+            return;
+        }
+        // ... remove from primary cache and add to secondary cache ...</code></pre>
+<p>卸载时：
+<ul><li>若 section 为脏，先保存到磁盘</li>
+<li>引用计数为 0 时，从主缓存移除</li>
+<li>添加到二级 LRU 缓存（保留 data 数组）</li>
+<li>LRU 缓存超限时，释放最旧的数组</li></ul></p>
+<h3>Mermaid 图：双层 LRU 缓存</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Primary["Primary Cache (分片哈希表)"]
+        P1["Shard 0"]
+        P2["Shard 1"]
+        PN["Shard N"]
+    end
+    
+    subgraph Secondary["Secondary Cache (LRU 双向链表)"]
+        S1["Most Recent"]
+        S2["..."]
+        SN["Least Recent"]
+    end
+    
+    Acquire["acquire()"] --> CacheHit["Cache Hit?"]
+    CacheHit -->|Yes, Primary| Return["Return Section"]
+    CacheHit -->|Yes, Secondary| Promote["Promote to Primary"]
+    CacheHit -->|No| Load["Load from Disk"]
+    
+    Release["release()"] --> Evict["Evict?"]
+    Evict -->|Yes| ToSecondary["Move to Secondary LRU"]
+    ToSecondary --> Full{"LRU Full?"}
+    Full -->|Yes| FreeArray["Free Oldest Array"]</div>
+</div>
+<p><hr></p>
+<h2 id="mapperblockstatebiome-id-映射">Mapper：BlockState/Biome ID 映射</h2>
+<p><code>Mapper</code> 负责将 Minecraft 的 BlockState 和 Biome 对象映射到紧凑的整数 ID。</p>
+<h3>双映射表设计</h3>
+<pre class="code-block"><code class="language-java">    public static final long UNKNOWN_MAPPING = -1;
+    public static final long AIR = 0;
+
+    private final ReentrantLock blockLock = new ReentrantLock();
+    private final ConcurrentHashMap&lt;BlockState, StateEntry&gt; block2stateEntry = new ConcurrentHashMap&lt;&gt;(2000,0.75f, 10);
+    private final ObjectArrayList&lt;StateEntry&gt; blockId2stateEntry = new ObjectArrayList&lt;&gt;();
+
+
+    private final ReentrantLock biomeLock = new ReentrantLock();
+    private final ConcurrentHashMap&lt;String, BiomeEntry&gt; biome2biomeEntry = new ConcurrentHashMap&lt;&gt;(2000,0.75f, 10);
+    private final ObjectArrayList&lt;BiomeEntry&gt; biomeId2biomeEntry = new ObjectArrayList&lt;&gt;();</code></pre>
+<p><ul><li><code>block2stateEntry</code>：HashMap 用于快速查找（State → ID）</li>
+<li><code>blockId2stateEntry</code>：ArrayList 用于 ID 反查（ID → State）</li>
+<li>类似结构用于 Biome</li></ul></p>
+<h3>ID 编码与解码</h3>
+<pre class="code-block"><code class="language-java">        //Note: air can mean void, cave or normal air, as the block state is remapped during ingesting
+        return (id&amp;(((1L&lt;&lt;20)-1)&lt;&lt;27)) == 0;
+    }
+
+    public static int getBlockId(long id) {
+        return (int) ((id&gt;&gt;27)&amp;((1&lt;&lt;20)-1));
+    }
+
+    public static int getBiomeId(long id) {
+        return (int) ((id&gt;&gt;47)&amp;0x1FF);
+    }
+
+    public static int getLightId(long id) {
+        return (int) ((id&gt;&gt;56)&amp;0xFF);
+    }</code></pre>
+<p>解析 64-bit 复合 ID：
+<ul><li>Block ID：bits 27-46（20 bits）</li>
+<li>Biome ID：bits 47-55（9 bits）</li>
+<li>Light ID：bits 56-63（8 bits）</li></ul></p>
+<h3>动态注册</h3>
+<pre class="code-block"><code class="language-java">        this.blockLock.lock();
+        var entry = this.block2stateEntry.get(state);
+        if (entry != null) {
+            this.blockLock.unlock();
+            return entry;
+        }
+
+        entry = new StateEntry(this.blockId2stateEntry.size(), state);
+        this.blockId2stateEntry.add(entry);
+        this.block2stateEntry.put(state, entry);
+        this.blockLock.unlock();
+
+        byte[] serialized = entry.serialize();
+        ByteBuffer buffer = MemoryUtil.memAlloc(serialized.length);
+        buffer.put(serialized);
+        buffer.rewind();
+        this.storage.putIdMapping(entry.id | (BLOCK_STATE_TYPE&lt;&lt;30), buffer);
+        MemoryUtil.memFree(buffer);
+
+        if (this.newStateCallback!=null)this.newStateCallback.accept(entry);
+        return entry;
+    }</code></pre>
+<p>遇到新的 BlockState 时动态分配 ID，并持久化到存储。</p>
+<p><hr></p>
+<h2 id="mipperlod-层压缩算法">Mipper：LOD 层压缩算法</h2>
+<p><code>Mipper</code> 实现了将 8 个子体素合并为 1 个父体素的 LOD 压缩算法。</p>
+<h3>压缩策略</h3>
+<pre class="code-block"><code class="language-java">                           long I010, long I110, long I011, long I111,
+                          Mapper mapper) {
+        // 8 个输入：对应 2×2×2 立方体的 8 个角点
+        // Ixyz: x=X, y=Y, z=Z 位置的体素
+
+        int max = -1;
+
+        // 选择不透明度的体素（优先选择顶角/表面体素）
+        if (!Mapper.isAir(I111)) {
+            max = (mapper.getBlockStateOpacity(I111)&lt;&lt;4)|0b111;
+        }
+        if (!Mapper.isAir(I110)) {
+            max = Math.max((mapper.getBlockStateOpacity(I110)&lt;&lt;4)|0b110, max);
+        }
+        // ... 对其余 6 个角点做类似处理 ...</code></pre>
+<h3>选择逻辑</h3>
+<p><ul><li><strong>优先非空气体素</strong>：空气（AIR = 0）不会遮挡视线</li>
+<li><strong>基于不透明度</strong>：使用 <code>BlockState.getLightBlock()</code> 作为不透明度的近似</li>
+<li><strong>角点位优先</strong>：当不透明度相同时，优先选择较高/较远的角点（模拟从上方俯视的视角）</li>
+<li><strong>光照平均</strong>：若 8 个体素全为空气，则平均所有光照值</li></ul></p>
+<pre class="code-block"><code class="language-java">            // All air, average the light levels
+            int blockLight = (Mapper.getLightId(I000) &amp; 0xF0) + ... + (Mapper.getLightId(I111) &amp; 0xF0);
+            int skyLight = (Mapper.getLightId(I000) &amp; 0x0F) + ... + (Mapper.getLightId(I111) &amp; 0x0F);
+            blockLight = blockLight / 8;
+            skyLight = (int) Math.ceil((double) skyLight / 8);
+
+            return withLight(I111, (blockLight &lt;&lt; 4) | skyLight);
+        }</code></pre>
+<h3>角点位编码</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph Cube["2×2×2 立方体"]
+        I000["I000<br/>(0,0,0)"] --- I100["I100<br/>(1,0,0)"]
+        I001["I001<br/>(0,0,1)"] --- I101["I101<br/>(1,0,1)"]
+        I010["I010<br/>(0,1,0)"] --- I110["I110<br/>(1,1,0)"]
+        I011["I011<br/>(0,1,1)"] --- I111["I111<br/>(1,1,1)"]
+        
+        I000 --- I001
+        I100 --- I101
+        I010 --- I011
+        I110 --- I111
+        
+        I000 --- I010
+        I100 --- I110
+        I001 --- I011
+        I101 --- I111
+    end
+    
+    Result["Mip Result<br/>Highest opacity + position hint"]</div>
+</div>
+<p><hr></p>
+<h2 id="voxyinstance世界生命周期管理">VoxyInstance：世界生命周期管理</h2>
+<p><code>VoxyInstance</code> 是整个 Voxy 系统的顶层抽象，管理多个 WorldEngine 实例的生命周期。</p>
+<h3>世界缓存策略</h3>
+<pre class="code-block"><code class="language-java">        var cache = identifier.cachedEngineObject;
+        WorldEngine world;
+        if (cache == null) {
+            world = null;
+        } else {
+            world = cache.get();
+            if (world == null) {
+                identifier.cachedEngineObject = null;
+            } else {
+                if (world.isLive()) {
+                    //Successful cache hit
+                } else {
+                    identifier.cachedEngineObject = null;
+                    world = null;
+                }
+            }
+        }</code></pre>
+<p>使用 <code>WeakReference</code> 缓存 WorldEngine，允许 GC 在内存压力时自动回收。</p>
+<h3>空闲世界清理</h3>
+<pre class="code-block"><code class="language-java">            try {
+                while (this.isRunning) {
+                    Thread.sleep(1000);
+                    this.cleanIdle();
+                }
+            } catch (InterruptedException e) {
+                //We are exiting, so just exit
+            }
+        });
+        this.worldCleaner.setPriority(Thread.MIN_PRIORITY);
+        this.worldCleaner.setName(&quot;Active world cleaner&quot;);
+        this.worldCleaner.setDaemon(true);
+        this.worldCleaner.start();</code></pre>
+<p>后台线程每 10 秒检查一次空闲世界：
+<ul><li><code>isWorldIdle()</code>：当 refCount = 0 且无加载的 sections，且超过 10 秒未活动</li>
+<li>满足条件则调用 <code>world.free()</code> 释放资源</li></ul></p>
+<h3>服务线程池</h3>
+<pre class="code-block"><code class="language-java">    protected final UnifiedServiceThreadPool threadPool;
+    protected final SectionSavingService savingService;
+    protected final VoxelIngestService ingestService;</code></pre>
+<p><ul><li><code>savingService</code>：异步保存 dirty sections</li>
+<li><code>ingestService</code>：处理世界导入/ voxelization</li>
+<li><code>savingServiceRateLimiter</code>：限制保存队列最大 1200 个任务</li></ul></p>
+<p><hr></p>
+<h2 id="系统交互关系图">系统交互关系图</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Client["客户端层"]
+        Render["渲染器"]
+        Game["游戏逻辑"]
+    end
+
+    subgraph Core["核心层"]
+        VI["VoxyInstance"]
+        WE["WorldEngine"]
+        WU["WorldUpdater"]
+        AST["ActiveSectionTracker"]
+    end
+
+    subgraph Data["数据层"]
+        WS["WorldSection"]
+        Mapper["Mapper"]
+        Mipper["Mipper"]
+        Storage["SectionStorage"]
+    end
+
+    subgraph Services["服务层"]
+        SS["SectionSavingService"]
+        VIS["VoxelIngestService"]
+    end
+
+    Render --> WE
+    Game --> WU
+    
+    VI --> WE
+    WE --> AST
+    WE --> WU
+    
+    AST --> WS
+    WS --> Mapper
+    WS --> Mipper
+    
+    WE --> Storage
+    SS --> Storage
+    
+    WU --> WS
+    
+    VI --> SS
+    VI --> VIS
+    
+    VI -.->|"WeakReference<br/>Cache"| WE</div>
+</div>
+<p><hr></p>
+<h2 id="关键设计决策总结">关键设计决策总结</h2>
+<table class="data-table"><thead><tr><th>设计点</th><th>实现方式</th><th>优势</th></tr></thead><tbody><tr><td>Section 大小</td><td>32³</td><td>平衡内存占用与批量处理效率</td></tr><tr><td>LOD 层数</td><td>5 层 (0-4)</td><td>覆盖 32³ 到 512³ 的完整距离范围</td></tr><tr><td>数据编码</td><td>37 bits/voxel</td><td>紧凑存储，支持超百万方块状态</td></tr><tr><td>并发控制</td><td>VarHandle + StampedLock</td><td>高效无锁读，写锁分片优化</td></tr><tr><td>缓存策略</td><td>双层 LRU</td><td>热数据在内存，冷数据保留数组复用</td></tr><tr><td>引用计数</td><td>atomicState 位操作</td><td>零额外开销的精确引用追踪</td></tr></tbody></table>
+<hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p><ul><li><strong>Section ID 编码</strong>：解释 <code>getWorldSectionId()</code> 如何在 64 位中编码 lvl, x, y, z</li>
+<li><strong>LOD 传播</strong>：为什么 <code>shouldCheckEmptiness</code> 在检测到"重大空虚状态变化"时才向上传播？</li>
+<li><strong>缓存一致性</strong>：当 <code>tryUnload()</code> 发现 section 为脏时，为什么先调用 <code>saveSection()</code> 再释放？</li>
+<li><strong>Mipper 选择</strong>：如果 8 个子体素都是非空气但不透明度相同，Mipper 如何选择？</li>
+<li><strong>弱引用缓存</strong>：为什么 <code>VoxyInstance</code> 使用 <code>WeakReference</code> 而非普通引用缓存 WorldEngine？</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="01-architecture-overview.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy Architecture Overview
+        </a><a href="03-voxelization-system.html" class="next">
+            Voxy 体素化子系统深度解析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

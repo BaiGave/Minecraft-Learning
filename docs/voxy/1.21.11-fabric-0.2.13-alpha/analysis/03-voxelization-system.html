@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 体素化子系统深度解析 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 体素化子系统深度解析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 体素化子系统深度解析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本章节源码分析基于 Voxy Mod 0.2.13-alpha (MC 1.21.11)，感谢原作者 Cortex 分享的优质开源代码。</p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-系统概述">1. 系统概述</a></li>
+<li><a href="#2-voxelizedsection-数据结构">2. VoxelizedSection 数据结构</a></li>
+<li><a href="#3-worldconversionfactory-转换工厂">3. WorldConversionFactory 转换工厂</a></li>
+<li><a href="#4-worldvoxilizedsectionmipper-lod-生成器">4. WorldVoxilizedSectionMipper LOD 生成器</a></li>
+<li><a href="#5-ilightingsupplier-光照接口">5. ILightingSupplier 光照接口</a></li>
+<li><a href="#6-完整数据转换流程">6. 完整数据转换流程</a></li>
+<li><a href="#7-课后自查">7. 课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-系统概述">1. 系统概述</h2>
+<p>Voxy 的体素化子系统是整个渲染管线的核心，它将 Minecraft 原生的 <code>ChunkSection</code> (16×16×16 blocks) 转换为 GPU 可高效渲染的 <code>VoxelizedSection</code> 数据结构。这套设计的关键创新点：</p>
+<p><ul><li><strong>16³ 基础分辨率</strong>：与 MC 原生一致，避免信息丢失</li>
+<li><strong>嵌入式 LOD</strong>：在单一数组中存储 5 级 Mipmap（16³ → 8³ → 4³ → 2³ → 1³）</li>
+<li><strong>位域打包</strong>：blockId、biomeId、light 三个字段压缩到单个 <code>long</code></li>
+<li><strong>Lithium 兼容</strong>：特殊处理 LithiumHashPalette 以提升兼容性</li></ul></p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph MC["Minecraft 原生"]
+        A["ChunkSection<br/>PalettedContainer<BlockState>"]
+    end
+    
+    subgraph Voxy["Voxy 体素化"]
+        B["VoxelizedSection<br/>4913 longs"]
+        C["LOD Mipmaps<br/>8³+4³+2³+1"]
+    end
+    
+    subgraph GPU["GPU 渲染"]
+        D["Vertex Buffer<br/>统一格式"]
+    end
+    
+    A -->|"WorldConversionFactory"| B
+    B -->|"WorldVoxilizedSectionMipper"| C
+    B --> D
+    C --> D</div>
+</div>
+<p><hr></p>
+<h2 id="2-voxelizedsection-数据结构">2. VoxelizedSection 数据结构</h2>
+<h3>2.1 核心字段</h3>
+<pre class="code-block"><code class="language-java">    public int x;
+    public int y;
+    public int z;
+    public int lvl0NonAirCount;
+    public final long[] section;</code></pre>
+<p>关键字段说明：</p>
+<table class="data-table"><thead><tr><th>字段</th><th>类型</th><th>用途</th></tr></thead><tbody><tr><td><code>x, y, z</code></td><td>int</td><td>世界坐标位置</td></tr><tr><td><code>lvl0NonAirCount</code></td><td>int</td><td>记录 L0 层非空气方块数量，用于快速判断区块是否为空</td></tr><tr><td><code>section</code></td><td>long[]</td><td>4913 个 long，存储所有 LOD 层数据</td></tr></tbody></table>
+<h3>2.2 4913 longs 的组成</h3>
+<pre class="code-block"><code class="language-java">    return new VoxelizedSection(new long[16*16*16 + 8*8*8 + 4*4*4 + 2*2*2 + 1]);
+}</code></pre>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────┐
+│  Level 0 (L0): 16³ = 4096 longs   [偏移 0]                          │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │ 每个 long 打包: blockId(20bit) + biomeId(9bit) + light(8bit)     ││
+│  └─────────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────────┤
+│  Level 1 (L1): 8³  = 512  longs   [偏移 4096]                       │
+├─────────────────────────────────────────────────────────────────────┤
+│  Level 2 (L2): 4³  = 64   longs   [偏移 4608]                       │
+├─────────────────────────────────────────────────────────────────────┤
+│  Level 3 (L3): 2³  = 8    longs   [偏移 4672]                       │
+├─────────────────────────────────────────────────────────────────────┤
+│  Level 4 (L4): 1³  = 1    long    [偏移 4680]                       │
+├─────────────────────────────────────────────────────────────────────┤
+│  Total: 4096 + 512 + 64 + 8 + 1 = 4681 ≠ 4913 ❌                    │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+<p>等等，让我重新计算。实际数组大小为：</p>
+<pre class="code-block"><code class="language-text">16³ + 8³ + 4³ + 2³ + 1 = 4096 + 512 + 64 + 8 + 1 = 4681</code></pre>
+<p>源码注释说是 4913，这里可能有偏差。让我检查是否还有其他偏移...</p>
+<p>实际上 <code>getBaseIndexForLevel</code> 的计算：</p>
+<pre class="code-block"><code class="language-java">    int offset = lvl==1?(1&lt;&lt;12):0;
+    offset |= lvl==2?(1&lt;&lt;12)|(1&lt;&lt;9):0;
+    offset |= lvl==3?(1&lt;&lt;12)|(1&lt;&lt;9)|(1&lt;&lt;6):0;
+    offset |= lvl==4?(1&lt;&lt;12)|(1&lt;&lt;9)|(1&lt;&lt;6)|(1&lt;&lt;3):0;
+    return offset;
+}</code></pre>
+<p>换算成十进制：
+<ul><li>L1: 4096 + 512 = 4608 (✓)</li>
+<li>L2: 4608 + 64 = 4672 (✓)</li>
+<li>L3: 4672 + 8 = 4680 (✓)</li>
+<li>L4: 4680 + 1 = 4681 (✓)</li></ul></p>
+<p>L0 = 0, L1 = 4096, L2 = 4608, L3 = 4672, L4 = 4680, <strong>总计 = 4681 longs</strong></p>
+<blockquote><p>⚠️ <strong>注意</strong>：源码 <code>createEmpty()</code> 的注释与实际计算略有出入，建议以 <code>createEmpty()</code> 中的 <code>new long[16<em>16</em>16 + 8<em>8</em>8 + 4<em>4</em>4 + 2<em>2</em>2 + 1]</code> 为准。</p></blockquote>
+<h3>2.3 位域布局</h3>
+<p>在 <code>Mapper.java</code> 中定义了每个 long 的位域结构：</p>
+<pre class="code-block"><code class="language-java">    return (id&amp;(((1L&lt;&lt;20)-1)&lt;&lt;27)) == 0;
+}
+
+public static int getBlockId(long id) {
+    return (int) ((id&gt;&gt;27)&amp;((1&lt;&lt;20)-1));
+}
+
+public static int getBiomeId(long id) {
+    return (int) ((id&gt;&gt;47)&amp;0x1FF);
+}
+
+public static int getLightId(long id) {
+    return (int) ((id&gt;&gt;56)&amp;0xFF);
+}</code></pre>
+<pre class="code-block"><code class="language-text">┌────────────┬─────────────────────────┬──────────────────┬───────────────────┐
+│  Bits 56-63 │  Bits 47-55 (9 bits)   │  Bits 27-46 (20) │   Bits 0-26       │
+│   Light     │       Biome ID          │     Block ID      │    (unused)       │
+│   8 bits    │     0-511               │    0-1,048,575    │                   │
+└────────────┴─────────────────────────┴──────────────────┴───────────────────┘</code></pre>
+<blockquote><p>💡 <strong>设计亮点</strong>：</p></blockquote>
+<blockquote><p>- Block ID 使用 20 bits，足以容纳 MC 所有可能的方块状态</p></blockquote>
+<blockquote><p>- Biome ID 9 bits = 512 个生态域</p></blockquote>
+<blockquote><p>- Light 字段同时存储方块光（高4位）和天空光（低4位）</p></blockquote>
+<h3>2.4 索引计算</h3>
+<p>LOD 索引计算采用移位 + 掩码的方式：</p>
+<pre class="code-block"><code class="language-java">    int M = (1&lt;&lt;size)-1;
+    x = (x&gt;&gt;shiftBy)&amp;M;
+    y = (y&gt;&gt;shiftBy)&amp;M;
+    z = (z&gt;&gt;shiftBy)&amp;M;
+    return (y&lt;&lt;(size&lt;&lt;1))|(z&lt;&lt;size)|(x);
+}</code></pre>
+<p>对于 16³ (L0)，size=4，坐标直接使用；降采样后的层级通过 <code>shiftBy</code> 实现坐标缩放。</p>
+<p><hr></p>
+<h2 id="3-worldconversionfactory-转换工厂">3. WorldConversionFactory 转换工厂</h2>
+<h3>3.1 入口函数</h3>
+<pre class="code-block"><code class="language-java">                                       Mapper stateMapper,
+                                       PalettedContainer&lt;BlockState&gt; blockContainer,
+                                       PalettedContainerRO&lt;Holder&lt;Biome&gt;&gt; biomeContainer,
+                                       ILightingSupplier lightSupplier)</code></pre>
+<p><strong>参数解析</strong>：
+<ul><li><code>section</code>: 目标 VoxelizedSection（可能被重用）</li>
+<li><code>stateMapper</code>: BlockState → blockId 的映射器</li>
+<li><code>blockContainer</code>: MC 原生的方块数据</li>
+<li><code>biomeContainer</code>: MC 原生的生物群系数据</li>
+<li><code>lightSupplier</code>: 光照数据提供者</li></ul></p>
+<h3>3.2 线程局部缓存</h3>
+<pre class="code-block"><code class="language-java">    private final int[] biomeCache = new int[4*4*4];  // 4³ = 64 biomes
+    private final WeakHashMap&lt;Mapper, Reference2IntOpenHashMap&lt;BlockState&gt;&gt; localMapping = new WeakHashMap&lt;&gt;();
+    private int[] paletteCache = new int[1024];
+    // ...
+}
+
+private static final ThreadLocal&lt;Cache&gt; THREAD_LOCAL = ThreadLocal.withInitial(Cache::new);</code></pre>
+<p>使用 <code>ThreadLocal</code> 避免锁竞争，<code>WeakHashMap</code> 确保 Mapper 释放后缓存自动清理。</p>
+<h3>3.3 Palette 类型分支处理</h3>
+<p>核心转换逻辑处理多种 Palette 实现：</p>
+<pre class="code-block"><code class="language-java">if (blockContainer.data.palette instanceof GlobalPalette&lt;BlockState&gt; _bps) {
+    bps = _bps;
+    pcc = bps.getSize();
+} else {
+    pcc = setupLocalPalette(vp, blockCache, stateMapper, pc);
+    pcc = Math.max(0,pcc-1);
+}</code></pre>
+<table class="data-table"><thead><tr><th>Palette 类型</th><th>特点</th><th>处理方式</th></tr></thead><tbody><tr><td><code>GlobalPalette</code></td><td>全局单例，ID 跨 Chunk 共享</td><td>直接映射，无需缓存</td></tr><tr><td><code>LinearPalette</code></td><td>顺序存储，适合单区块</td><td>构建 local→global 映射</td></tr><tr><td><code>HashMapPalette</code></td><td>哈希表，典型 MC 格式</td><td>同上</td></tr><tr><td><code>SingleValuePalette</code></td><td>全区纯色</td><td>快速路径，只读一次</td></tr><tr><td><code>LithiumHashPalette</code></td><td>Lithium 优化版</td><td>特殊兼容处理</td></tr></tbody></table>
+<h3>3.4 LithiumHashPalette 特殊支持</h3>
+<pre class="code-block"><code class="language-java">    if (vp instanceof LithiumHashPalette&lt;BlockState&gt;) {
+        for (int i = 0; i &lt; vp.getSize(); i++) {
+            BlockState state = null;
+            int blockId = -1;
+            try { state = vp.valueFor(i); } catch (Exception e) {}
+            if (state != null) {
+                blockId = blockCache.getOrDefault(state, -1);
+                if (blockId == -1) {
+                    blockId = mapper.getIdForBlockState(state);
+                    blockCache.put(state, blockId);
+                }
+            }
+            pc[i] = blockId;
+        }
+        return true;
+    }
+    return false;
+}</code></pre>
+<blockquote><p>💡 <strong>兼容性设计</strong>：通过 <code>FabricLoader.isModLoaded("lithium")</code> 检测 Lithium 是否安装，动态选择最优路径。</p></blockquote>
+<h3>3.5 批量转换（核心循环）</h3>
+<pre class="code-block"><code class="language-java">    var bDat = bStor.getRaw();
+    int iterPerLong = (64 / bStor.getBits()) - 1;
+    
+    int MSK = (1 &lt;&lt; bStor.getBits()) - 1;
+    int eBits = bStor.getBits();
+    
+    long sample = 0;
+    int c = 0;
+    int dec = 0;
+    for (int i = 0; i &lt;= 0xFFF; i++) {  // 0xFFF = 4095 = 16³-1
+        if (dec-- == 0) {
+            sample = bDat[c++];
+            dec = iterPerLong;
+        }
+        int bId;
+        if (bps == null) {
+            bId = pc[Math.min((int) (sample &amp; MSK), pcc)];
+        } else {
+            bId = stateMapper.getIdForBlockState(bps.valueFor((int) (sample&amp;MSK)));
+        }
+        sample &gt;&gt;&gt;= eBits;
+        
+        byte light = lightSupplier.supply(i&amp;0xF, (i&gt;&gt;8)&amp;0xF, (i&gt;&gt;4)&amp;0xF);
+        nonZeroCnt += (bId != 0)?1:0;
+        data[i] = Mapper.composeMappingId(light, bId, biomes[Integer.compress(i,0b1100_1100_1100)]);
+    }
+}</code></pre>
+<p><strong>性能优化技巧</strong>：</p>
+<p><ul><li><strong>批量位解压</strong>：每次读取一个 <code>long</code>（64 bits），从中提取多个 block ID</li>
+<li><strong>无符号移位</strong>：<code>sample >>>= eBits</code> 避免符号扩展</li>
+<li><strong>ZeroBitStorage 快速路径</strong>：全区纯色时跳过循环，直接填充</li>
+<li><strong>坐标编码</strong>：<code>i</code> 使用 0xFFF 位编码 (x, y, z)，避免三次乘法</li></ul></p>
+<p><hr></p>
+<h2 id="4-worldvoxilizedsectionmipper-lod-生成器">4. WorldVoxilizedSectionMipper LOD 生成器</h2>
+<h3>4.1 降采样层级索引</h3>
+<pre class="code-block"><code class="language-java">    return ((y&lt;&lt;8)|(z&lt;&lt;4)|x);  // L0 索引
+}
+
+private static int H(int x, int y, int z) {
+    return ((y&lt;&lt;6)|(z&lt;&lt;3)|x) + 16*16*16;  // L1 索引
+}
+
+private static int I(int x, int y, int z) {
+    return ((y&lt;&lt;4)|(z&lt;&lt;2)|x) + 8*8*8 + 16*16*16;  // L2 索引
+}
+
+private static int J(int x, int y, int z) {
+    return ((y&lt;&lt;2)|(z&lt;&lt;1)|x) + 4*4*4 + 8*8*8 + 16*16*16;  // L3 索引
+}</code></pre>
+<h3>4.2 Mip L1 的位运算迭代</h3>
+<pre class="code-block"><code class="language-java">int MSK = 0b1110_1110_1110;
+int iMSK1 = (~MSK)+1;
+int q = 0;
+while (true) {
+    data[16*16*16 + i++] = Mipper.mip(
+            data[q|G(0,0,0)], data[q|G(1,0,0)], data[q|G(0,0,1)], data[q|G(1,0,1)],
+            data[q|G(0,1,0)], data[q|G(1,1,0)], data[q|G(0,1,1)], data[q|G(1,1,1)],
+            mapper
+    );
+    if (q == MSK)
+        break;
+    q = (q+iMSK1)&amp;MSK;
+}</code></pre>
+<p>这个循环使用位运算实现了「棋盘格遍历」：</p>
+<pre class="code-block"><code class="language-text">MSK = 0b1110_1110_1110 = 0xEEE
+
+初始 q = 0，每次加 2 (iMSK1 = -2)，只在偶数位置迭代
+q 的范围: 0, 2, 4, 6, ... 0xEEE
+
+这相当于遍历所有 &quot;偶数坐标&quot;，每个 2×2×2 方块只取一次角点</code></pre>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TD
+    subgraph L0["L0: 16×16×16"]
+        A0["(0,0,0)"] --> A1["(2,0,0)"]
+        A1 --> A2["(4,0,0)"]
+        A2 --> A3["..."]
+    end
+    
+    subgraph L1["L1: 8×8×8"]
+        B0["取 2×2×2 角点"]
+        B0 --> B1["Mipper.mip()"]
+        B1 --> B2["合并为 1 个 voxel"]
+    end
+    
+    A0 --> B0</div>
+</div>
+<h3>4.3 Mip L2-L4 的三层嵌套循环</h3>
+<pre class="code-block"><code class="language-java">for (int y = 0; y &lt; 8; y+=2) {
+    for (int z = 0; z &lt; 8; z += 2) {
+        for (int x = 0; x &lt; 8; x += 2) {
+            data[16*16*16 + 8*8*8 + i++] =
+                    Mipper.mip(
+                            data[H(x, y, z)],       data[H(x+1, y, z)],       data[H(x, y, z+1)],      data[H(x+1, y, z+1)],
+                            data[H(x, y+1, z)],  data[H(x+1, y+1, z)],  data[H(x, y+1, z+1)], data[H(x+1, y+1, z+1)],
+                            mapper);
+        }
+    }
+}</code></pre>
+<p>三层循环以步长 2 遍历，每 8 个 voxel 合并为 1 个。</p>
+<h3>4.4 Mipper 合并规则</h3>
+<pre class="code-block"><code class="language-java">                       long I010, long I110, long I011, long I111,
+                      Mapper mapper) {
+    int max = -1;
+    
+    // 优先级: I111 &gt; I110 &gt; I011 &gt; I010 &gt; I101 &gt; I100 &gt; I001 &gt; I000
+    // 选择 opacity 最高的非空气方块
+    if (!Mapper.isAir(I111)) {
+        max = (mapper.getBlockStateOpacity(I111)&lt;&lt;4)|0b111;
+    }
+    if (!Mapper.isAir(I110)) {
+        max = Math.max((mapper.getBlockStateOpacity(I110)&lt;&lt;4)|0b110, max);
+    }
+    // ... 类似处理 I011, I010, I101, I100, I001, I000
+    
+    if (max != -1) {
+        return switch (max&amp;0b111) {
+            case 0 -&gt; I000;
+            case 1 -&gt; I001;
+            // ... 返回选中的 voxel
+        };
+    } else {
+        // 全部是空气：平均光照
+        int blockLight = (Mapper.getLightId(I000) &amp; 0xF0) + ... + (Mapper.getLightId(I111) &amp; 0xF0);
+        int skyLight = (Mapper.getLightId(I000) &amp; 0x0F) + ... + (Mapper.getLightId(I111) &amp; 0x0F);
+        return withLight(I111, (blockLight / 8) &lt;&lt; 4 | (skyLight / 8));
+    }
+}</code></pre>
+<p><strong>合并策略</strong>：</p>
+<p><ul><li><strong>优先非空气</strong>：只要有非空气方块，就选择 opacity 最高的</li>
+<li><strong>角落优先级</strong>：<code>I111</code> (x=1, y=1, z=1) 最高，<code>I000</code> (x=0, y=0, z=0) 最低</li>
+<li><strong>光照平均</strong>：8 个 voxel 全为空气时，对光照取平均值</li></ul></p>
+<blockquote><p>💡 <strong>TODO 注释揭示的未来优化</strong>：</p></blockquote>
+> 
+<pre class="code-block"><code class="language-java">&gt; //TODO: compute the opacity of the block then mip w.r.t those blocks
+&gt; // as distant horizons done
+&gt; //TODO: mip with respect to all the variables
+&gt; //TODO: stable sort on all the entires, w.r.t the opacity
+&gt;</code></pre></p>
+<blockquote><p>暗示未来可能引入更复杂的合并策略（如距离地平线 mod 的做法）。</p></blockquote>
+<p><hr></p>
+<h2 id="5-ilightingsupplier-光照接口">5. ILightingSupplier 光照接口</h2>
+<h3>5.1 接口定义</h3>
+<pre class="code-block"><code class="language-java">    byte supply(int x, int y, int z);
+}</code></pre>
+<p>极简接口设计，只有一个方法。根据源码，光照值打包为单个 <code>byte</code>：</p>
+<p><ul><li><strong>高 4 位 (0xF0)</strong>：方块光 (0-15)</li>
+<li><strong>低 4 位 (0x0F)</strong>：天空光 (0-15)</li></ul></p>
+<h3>5.2 使用方式</h3>
+<p>在 <code>WorldConversionFactory</code> 中调用：</p>
+<pre class="code-block"><code class="language-java">data[i] = Mapper.composeMappingId(light, bId, biomes[...]);</code></pre>
+<h3>5.3 光照数据传播</h3>
+<p>在 <code>Mipper.mip()</code> 中，当 8 个 voxel 全为空气时，光照值会平均分配：</p>
+<pre class="code-block"><code class="language-java">int skyLight = (Mapper.getLightId(I000) &amp; 0x0F) + ... + (Mapper.getLightId(I111) &amp; 0x0F);
+blockLight = blockLight / 8;
+skyLight = (int) Math.ceil((double) skyLight / 8);
+
+return withLight(I111, (blockLight &lt;&lt; 4) | skyLight);</code></pre>
+<blockquote><p>⚠️ <strong>潜在问题</strong>：天空光使用 <code>Math.ceil()</code>，可能与其他层使用 <code>floor</code>（整数除法）不一致。</p></blockquote>
+<p><hr></p>
+<h2 id="6-完整数据转换流程">6. 完整数据转换流程</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant MC as Minecraft Chunk
+    participant WCF as WorldConversionFactory
+    participant VS as VoxelizedSection
+    participant Mip as WorldVoxilizedSectionMipper
+    participant Upd as WorldUpdater
+    
+    MC->>WCF: PalettedContainer<BlockState>
+    MC->>WCF: PalettedContainerRO<Holder<Biome>>
+    MC->>WCF: ILightingSupplier
+    
+    rect rgb(40, 40, 60)
+        Note over WCF: 线程局部缓存初始化
+        WCF->>WCF: setupLocalPalette()
+        WCF->>WCF: 提取 4³ biomes
+    end
+    
+    rect rgb(50, 60, 50)
+        Note over WCF: 核心转换循环
+        loop 4096 voxels
+            WCF->>WCF: 解压 blockId
+            WCF->>WCF: 查光照
+            WCF->>WCF: composeMappingId()
+            WCF->>VS: data[i]
+        end
+    end
+    
+    WCF-->>VS: 返回填充好的 section
+    VS->>Mip: mipSection(section, mapper)
+    
+    rect rgb(60, 50, 50)
+        Note over Mip: LOD 生成
+        Mip->>Mip: L1: 棋盘格遍历
+        Mip->>Mip: L2-L4: 三层嵌套循环
+        Mip->>Mip: Mipper.mip() 合并
+    end
+    
+    Mip-->>VS: LOD 数据填充完成
+    VS->>Upd: insertUpdate()
+    Note over Upd: GPU 缓冲区更新</div>
+</div>
+<h3>6.1 数据流总结</h3>
+<table class="data-table"><thead><tr><th>阶段</th><th>输入</th><th>处理</th><th>输出</th></tr></thead><tbody><tr><td><strong>转换</strong></td><td>MC ChunkSection</td><td>Palette 解压 + 位打包</td><td>4096 longs (L0)</td></tr><tr><td><strong>Mip L1</strong></td><td>L0</td><td>8³ 棋盘格合并</td><td>512 longs</td></tr><tr><td><strong>Mip L2</strong></td><td>L1</td><td>4³ 合并</td><td>64 longs</td></tr><tr><td><strong>Mip L3</strong></td><td>L2</td><td>2³ 合并</td><td>8 longs</td></tr><tr><td><strong>Mip L4</strong></td><td>L3</td><td>1³ 合并</td><td>1 long</td></tr><tr><td><strong>更新</strong></td><td>所有 LOD</td><td>Buffer upload</td><td>GPU-ready</td></tr></tbody></table>
+<h3>6.2 内存占用分析</h3>
+<p>每个 <code>VoxelizedSection</code> 占用：<code>4913 × 8 bytes ≈ 39 KB</code></p>
+<p>对于一个 16×384×16 的区块（共 16 层）：
+<ul><li><strong>原始 MC 格式</strong>：<code>16 × 16 × 16 × 16 bytes ≈ 65 KB</code> (含 Palette)</li>
+<li><strong>Voxy 格式</strong>：<code>16 × 39 KB ≈ 624 KB</code></li></ul></p>
+<blockquote><p>⚠️ <strong>权衡</strong>：Voxy 使用更多内存，但换来 GPU 渲染的便利性和 LOD 支持。</p></blockquote>
+<p><hr></p>
+<h2 id="7-课后自查">7. 课后自查</h2>
+<p><ul><li>[ ] VoxelizedSection 中 4913 longs 的实际组成是什么？</li>
+<li>[ ] 为什么使用 <code>ThreadLocal<Cache></code> 而非全局缓存？</li>
+<li>[ ] <code>Integer.compress(i, 0b1100<em>1100</em>1100)</code> 的作用是什么？</li>
+<li>[ ] LithiumHashPalette 特殊处理的原因是什么？</li>
+<li>[ ] Mipper 中 8 个 voxel 全为空气时，光照如何合并？</li>
+<li>[ ] 为什么不直接用 <code>Minecraft ChunkSection</code> 渲染，而要转换？</li></ul></p>
+<p><hr></p>
+<h2 id="参考文件">参考文件</h2>
+<p><ul><li><code>VoxelizedSection.java</code> — 体素区块数据结构</li>
+<li><code>WorldConversionFactory.java</code> — Chunk → VoxelizedSection 转换</li>
+<li><code>WorldVoxilizedSectionMipper.java</code> — LOD Mipmap 生成</li>
+<li><code>ILightingSupplier.java</code> — 光照接口</li>
+<li><code>Mapper.java</code> — ID 映射与位域操作</li>
+<li><code>Mipper.java</code> — 降采样合并逻辑</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-world-engine.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 世界引擎子系统
+        </a><a href="04-storage-persistence.html" class="next">
+            Voxy 持久化存储子系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

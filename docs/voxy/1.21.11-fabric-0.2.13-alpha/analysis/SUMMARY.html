@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 架构分析总结 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 架构分析总结</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 架构分析总结
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 30 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h1>Voxy 架构分析总结</h1>
+<h2 id="概述">概述</h2>
+<p>本文档汇总 Voxy 模组各子系统的关键设计决策，作为快速参考索引。</p>
+<h2 id="lod-世界引擎">LOD 世界引擎</h2>
+<table class="data-table"><thead><tr><th>设计点</th><th>实现</th><th>优势</th></tr></thead><tbody><tr><td>Section 大小</td><td>32³</td><td>平衡内存占用与批量处理效率</td></tr><tr><td>LOD 层数</td><td>5 层 (0-4)</td><td>覆盖 32³ 到 512³ 的完整距离范围</td></tr><tr><td>数据编码</td><td>37 bits/voxel</td><td>紧凑存储，支持超百万方块状态</td></tr><tr><td>并发控制</td><td>VarHandle + StampedLock</td><td>高效无锁读，写锁分片优化</td></tr><tr><td>缓存策略</td><td>双层 LRU</td><td>热数据在内存，冷数据保留数组复用</td></tr><tr><td>引用计数</td><td>atomicState 位操作</td><td>零额外开销的精确引用追踪</td></tr></tbody></table>
+<h3>64-bit Section ID 布局</h3>
+<pre class="code-block"><code class="language-text">bits [63..60] = level (4 bits, 0-15)
+bits [59..52] = y (8 bits, 0-255)
+bits [51..28] = z (24 bits, 0-16M)
+bits [27..4]  = x (24 bits, 0-16M)
+bits [3..0]   = reserved (4 bits)</code></pre>
+<h3>37-bit Voxel 编码</h3>
+<pre class="code-block"><code class="language-text">bits 56-63: light     (8 bits)  — 方块光(4) + 天空光(4)
+bits 47-55: biome     (9 bits)  — 512 种生物群系
+bits 27-46: block     (20 bits) — ~100 万种方块状态</code></pre>
+<h2 id="体素化系统">体素化系统</h2>
+<table class="data-table"><thead><tr><th>组件</th><th>设计决策</th></tr></thead><tbody><tr><td>VoxelizedSection</td><td>16³ + 8³ + 4³ + 2³ + 1 = 4681 longs</td></tr><tr><td>缓存策略</td><td>ThreadLocal 避免锁竞争</td></tr><tr><td>Palette 处理</td><td>GlobalPalette/LinearPalette/HashMapPalette/LithiumHashPalette</td></tr><tr><td>Mipper 合并</td><td>优先非空气 + 不透明度 + 角落位编码</td></tr></tbody></table>
+<h3>Mipper 合并优先级</h3>
+<pre class="code-block"><code class="language-text">I111 (1,1,1) &gt; I110 (1,1,0) &gt; I011 (1,0,1) &gt; I010 (1,0,0)
+&gt; I101 (0,1,1) &gt; I100 (0,1,0) &gt; I001 (0,0,1) &gt; I000 (0,0,0)</code></pre>
+<h2 id="持久化存储">持久化存储</h2>
+<table class="data-table"><thead><tr><th>维度</th><th>实现</th></tr></thead><tbody><tr><td>存储引擎</td><td>RocksDB + LMDB + Redis + Memory 多后端</td></tr><tr><td>压缩</td><td>LZ4（速度优先）/ ZSTD（压缩率优先）</td></tr><tr><td>索引</td><td>BloomFilter (10 bits) + HyperClockCache (128MB)</td></tr><tr><td>持久化</td><td>WAL 128MB 保证数据安全</td></tr><tr><td>版本兼容</td><td>DataFixerUpper 支持跨版本迁移</td></tr><tr><td>Section 格式</td><td>RLE + LUT 压缩</td></tr></tbody></table>
+<h3>Column Family 配置</h3>
+<pre class="code-block"><code class="language-text">world_sections CF: NO 压缩 (LZ4 外层处理)
+id_mappings CF:    ZSTD 压缩
+default CF:       ZSTD 压缩</code></pre>
+<h2 id="线程模型">线程模型</h2>
+<table class="data-table"><thead><tr><th>组件</th><th>参数</th></tr></thead><tbody><tr><td>Worker 线程数</td><td>3 个专用线程</td></tr><tr><td>线程优先级</td><td>Priority 3 (低于正常)</td></tr><tr><td>VoxelIngestService</td><td>weight=5000，队列无硬限制</td></tr><tr><td>SectionSavingService</td><td>weight=100，软上限 5000，硬上限 1200</td></tr><tr><td>工作窃取</td><td><code>steal()</code> 跨 Service 转移任务</td></tr><tr><td>选取算法</td><td>加权随机 + shiftFactor 防饿死</td></tr></tbody></table>
+<h3>ServiceManager 选取语义</h3>
+<table class="data-table"><thead><tr><th>返回值</th><th>含义</th></tr></thead><tbody><tr><td>0</td><td>成功执行了一个任务</td></tr><tr><td>1</td><td>无任务或无 Service</td></tr><tr><td>2</td><td>所有 Service 队列为空</td></tr><tr><td>3</td><td>部分 Service 被 limiter 跳过</td></tr></tbody></table>
+<h2 id="渲染核心">渲染核心</h2>
+<table class="data-table"><thead><tr><th>必需特性</th><th>说明</th></tr></thead><tbody><tr><td><code>compute</code></td><td>glDispatchComputeIndirect</td></tr><tr><td><code>indirectParameters</code></td><td>GL<em>ARB</em>multi<em>draw</em>elements<em>indirect</em>count</td></tr><tr><td>无 AMD Bug</td><td>hasBrokenDepthSampler = false</td></tr></tbody></table>
+<h3>厂商检测与特殊处理</h3>
+<pre class="code-block"><code class="language-text">INT64_t:     实际编译着色器验证（非仅检查扩展标志）
+subgroup:    实际编译着色器验证
+AMD Bug:     深度采样运行时测试，检测到则禁用模组</code></pre>
+<h3>MDIC 渲染限制</h3>
+<pre class="code-block"><code class="language-text">OPAQUE_DRAW_COUNT:      400,000 不透明绘制调用
+TRANSLUCENT_DRAW_COUNT: 100,000 半透明绘制调用
+TEMPORAL_DRAW_COUNT:    100,000 时序绘制调用</code></pre>
+<h2 id="世界导入">世界导入</h2>
+<table class="data-table"><thead><tr><th>导入器</th><th>线程配置</th><th>背压控制</th></tr></thead><tbody><tr><td>WorldImporter</td><td>1 main + 3 service</td><td>队列差值 > 10,000 等待</td></tr><tr><td>DHImporter</td><td>1 runner + 10 service</td><td>任务队列 > 100 等待</td></tr></tbody></table>
+<h3>DHImporter 数据库 Schema</h3>
+<pre class="code-block"><code class="language-sql">SELECT Data, ColumnGenerationStep, Mapping
+FROM FullData
+WHERE DetailLevel = 0 AND PosX = ? AND PosZ = ?;</code></pre>
+<h2 id="配置系统">配置系统</h2>
+<table class="data-table"><thead><tr><th>层次</th><th>文件</th><th>作用域</th></tr></thead><tbody><tr><td>客户端配置</td><td><code>voxy-config.json</code></td><td>全局</td></tr><tr><td>世界级配置</td><td><code>world-configs.json</code></td><td>每个世界</td></tr><tr><td>存储配置</td><td><code>config.json</code></td><td>每个世界</td></tr></tbody></table>
+<h3>序列化机制</h3>
+<p><ul><li>Gson TypeAdapterFactory 实现多态序列化</li>
+<li><code>TYPE</code> 字段标识具体子类型</li>
+<li>自动注册：扫描 <code>me.cortex.voxy.*</code> 包下含 "config" 的类</li></ul></p>
+<h3>默认存储配置</h3>
+<pre class="code-block"><code class="language-text">RocksDBStorageBackend
+  + CompressionStorageAdaptor(ZSTD, level=1)
+    + SectionSerializationStorage</code></pre>
+<h2 id="子系统交互图">子系统交互图</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Ingest["摄取流"]
+        MC["Minecraft Chunk"]
+        WCF["WorldConversionFactory"]
+        VS["VoxelizedSection"]
+        MIP["WorldVoxilizedSectionMipper"]
+    end
+
+    subgraph Engine["引擎流"]
+        WU["WorldUpdater"]
+        WE["WorldEngine"]
+        AST["ActiveSectionTracker"]
+        MAP["Mapper"]
+    end
+
+    subgraph Thread["线程服务"]
+        VIST["VoxelIngestService"]
+        SSS["SectionSavingService"]
+        STP["UnifiedServiceThreadPool"]
+    end
+
+    subgraph Storage["存储流"]
+        SS["SectionStorage"]
+        RDB["RocksDB"]
+    end
+
+    subgraph Render["渲染流"]
+        VRS["VoxyRenderSystem"]
+        GL["GPU"]
+    end
+
+    MC --> WCF
+    WCF --> VS
+    VS --> MIP
+    MIP --> VIST
+    VIST --> WU
+    WU --> WE
+    WE --> AST
+    WE --> MAP
+    WE --> VRS
+    WE --> SS
+    SS --> RDB
+    VRS --> GL
+
+    STP --> VIST
+    STP --> SSS
+    SSS --> SS</div>
+</div>
+<h2 id="参考">参考</h2>
+<table class="data-table"><thead><tr><th>文档</th><th>源码路径</th></tr></thead><tbody><tr><td>架构总览</td><td><code>common/world/</code>, <code>common/thread/</code>, <code>common/config/</code></td></tr><tr><td>体素化</td><td><code>common/voxelization/</code>, <code>common/world/other/Mipper.java</code></td></tr><tr><td>存储</td><td><code>common/config/storage/</code>, <code>common/config/section/</code></td></tr><tr><td>线程</td><td><code>common/thread/</code>, <code>common/world/service/</code></td></tr><tr><td>渲染</td><td><code>client/core/</code>, <code>client/mixin/</code></td></tr><tr><td>导入</td><td><code>commonImpl/importers/</code></td></tr><tr><td>配置</td><td><code>common/config/</code>, <code>client/config/</code></td></tr></tbody></table>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="README.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 架构分析
+        </a><span class="next"></span></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

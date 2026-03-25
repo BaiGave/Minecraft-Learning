@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 世界数据导入子系统分析 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 世界数据导入子系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 世界数据导入子系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本章节分析基于 Voxy 模组 v0.2.13-alpha 源码，由 modauthor Cortex 编写。本分析仅供学习研究使用，版权归属原作者。</p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#概述">概述</a></li>
+<li><a href="#importmanager-架构">ImportManager 架构</a></li>
+<li><a href="#idataimporter-接口设计">IDataImporter 接口设计</a></li>
+<li><a href="#worldimporter---标准-mca-导入">WorldImporter - 标准 MCA 导入</a></li>
+<li><a href="#dhimporter---distant-horizons-数据导入">DHImporter - Distant Horizons 数据导入</a></li>
+<li><a href="#导入命令集成">导入命令集成</a></li>
+<li><a href="#数据流与架构图">数据流与架构图</a></li>
+<li><a href="#总结">总结</a></li></ul></p>
+<p><hr></p>
+<h2 id="概述">概述</h2>
+<p>Voxy 的世界数据导入子系统是其核心功能之一，负责将各种来源的世界数据转换为 Voxy 专有的 RocksDB 存储格式。该系统支持三种主要数据源：</p>
+<table class="data-table"><thead><tr><th>数据源</th><th>导入器</th><th>数据格式</th></tr></thead><tbody><tr><td>标准 Minecraft 世界</td><td><code>WorldImporter</code></td><td><code>.mca</code> 区域文件 (NBT)</td></tr><tr><td>Distant Horizons</td><td><code>DHImporter</code></td><td>SQLite 数据库</td></tr><tr><td><del>Bobby 模组</del></td><td><del><code>BobbyImporter</code></del></td><td><del>已移除</del></td></tr></tbody></table>
+<blockquote><p><strong>关键术语</strong>：VoxelizedSection — Voxy 内部使用的体素化区块表示，将 MC 的方块数据转换为更适合光线追踪的格式。</p></blockquote>
+<p><hr></p>
+<h2 id="importmanager-架构">ImportManager 架构</h2>
+<p><code>ImportManager</code>（<code>commonImpl/ImportManager.java</code>）是导入任务的核心调度器，采用<strong>线程安全</strong>的任务队列设计。</p>
+<h3>核心组件</h3>
+<pre class="code-block"><code class="language-10">public class ImportManager {
+    private final Map&lt;WorldEngine, ImportTask&gt; activeImporters = new HashMap&lt;&gt;();
+
+    protected class ImportTask {
+        protected final IDataImporter importer;
+        protected long startTime;
+        protected long timer;
+        protected long updateEvery = 50;
+        // ...
+    }
+}</code></pre>
+<h3>任务生命周期</h3>
+<pre class="code-block"><code class="language-61">protected synchronized ImportTask createImportTask(IDataImporter importer) {
+    return new ImportTask(importer);
+}
+
+public boolean tryRunImport(IDataImporter importer) {
+    ImportTask task;
+    synchronized (this) {
+        var importerTask = this.activeImporters.get(importer.getEngine());
+        if (importerTask != null) {
+            if (!importerTask.isCompleted()) {
+                return false;  // 任务已在运行
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+        task = this.createImportTask(importer);
+        this.activeImporters.put(importer.getEngine(), task);
+    }
+    task.start();
+    return true;
+}</code></pre>
+<h3>关键设计决策</h3>
+<p><ul><li><strong>每个 WorldEngine 只能有一个活跃导入任务</strong> — 通过 <code>activeImporters</code> Map 保证</li>
+<li><strong>双重锁定检查</strong> — <code>tryRunImport</code> 使用 synchronized 块确保线程安全</li>
+<li><strong>引用计数管理</strong> — <code>makeAndRunIfNone</code> 方法通过 <code>acquireRef()</code> / <code>releaseRef()</code> 管理引擎生命周期</li></ul></p>
+<pre class="code-block"><code class="language-85">public boolean makeAndRunIfNone(WorldEngine engine, Supplier&lt;IDataImporter&gt; factory) {
+    try {
+        engine.acquireRef();
+        synchronized (this) {
+            if (this.activeImporters.containsKey(engine)) {
+                return false;
+            }
+        }
+        return this.tryRunImport(factory.get());
+    } finally {
+        engine.releaseRef();
+    }
+}</code></pre>
+<p><ul><li><strong>优雅取消</strong> — <code>cancelImport</code> 方法可随时中断正在进行的导入</li></ul></p>
+<pre class="code-block"><code class="language-99">public boolean cancelImport(WorldEngine engine) {
+    ImportTask task;
+    synchronized (this) {
+        task = this.activeImporters.get(engine);
+        if (task == null) {
+            return false;
+        }
+    }
+    task.shutdown();
+    synchronized (this) {
+        this.activeImporters.remove(engine);
+    }
+    return true;
+}</code></pre>
+<p><hr></p>
+<h2 id="idataimporter-接口设计">IDataImporter 接口设计</h2>
+<p><code>IDataImporter</code>（<code>importers/IDataImporter.java</code>）定义了所有导入器的统一接口，采用了<strong>回调模式</strong>进行进度通知。</p>
+<pre class="code-block"><code class="language-1">public interface IDataImporter {
+    interface ICompletionCallback{void onCompletion(int chunks);}
+    interface IUpdateCallback{void onUpdate(int finished, int outOf);}
+
+    void runImport(IUpdateCallback updateCallback, ICompletionCallback completionCallback);
+
+    WorldEngine getEngine();
+
+    void shutdown();
+    boolean isRunning();
+}</code></pre>
+<h3>接口契约</h3>
+<table class="data-table"><thead><tr><th>方法</th><th>职责</th></tr></thead><tbody><tr><td><code>runImport(update, completion)</code></td><td>启动导入，传入回调函数</td></tr><tr><td><code>getEngine()</code></td><td>返回关联的 WorldEngine</td></tr><tr><td><code>shutdown()</code></td><td>立即停止导入，释放资源</td></tr><tr><td><code>isRunning()</code></td><td>查询当前运行状态</td></tr></tbody></table>
+<h3>回调模式优势</h3>
+<p><ul><li><strong>解耦</strong> — 导入器不需要了解 UI 如何显示进度</li>
+<li><strong>异步</strong> — 回调在导入器内部线程触发</li>
+<li><strong>可组合</strong> — 多个导入器可共享同一个回调实例</li></ul></p>
+<p><hr></p>
+<h2 id="worldimporter-标准-mca-导入">WorldImporter - 标准 MCA 导入</h2>
+<p><code>WorldImporter</code> 负责解析 Minecraft 标准区域文件（<code>.mca</code> 格式），是使用最广泛的导入器。</p>
+<h3>初始化与线程池</h3>
+<pre class="code-block"><code class="language-66">public WorldImporter(WorldEngine worldEngine, Level mcWorld, ServiceManager sm, BooleanSupplier runChecker) {
+    this.world = worldEngine;
+    this.service = sm.createService(()-&gt;new Pair&lt;&gt;(()-&gt;this.jobQueue.poll().run(), ()-&gt;{}), 3, &quot;World importer&quot;, runChecker);
+    // ... 注册表初始化
+}</code></pre>
+<p>关键点：
+<ul><li><strong>3 线程并发处理</strong> — 通过 <code>ServiceManager</code> 创建服务</li>
+<li><strong>作业队列</strong> — 使用 <code>ConcurrentLinkedDeque</code> 存储待处理的区块任务</li>
+<li><strong>速率限制</strong> — <code>runChecker</code> 用于控制处理速度，避免内存溢出</li></ul></p>
+<h3>区域文件解析</h3>
+<pre class="code-block"><code class="language-181">public void importRegionDirectoryAsync(File directory) {
+    var files = directory.listFiles((dir, name) -&gt; {
+        var sections = name.split(&quot;\\.&quot;);
+        if (sections.length != 4 || (!sections[0].equals(&quot;r&quot;)) || (!sections[3].equals(&quot;mca&quot;))) {
+            Logger.error(&quot;Unknown file: &quot; + name);
+            return false;
+        }
+        return true;
+    });
+    if (files == null) {
+        return;
+    }
+    Arrays.sort(files, File::compareTo);
+    this.importRegionsAsync(files, this::importRegionFile);
+}</code></pre>
+<p>文件名格式验证：<code>r.X.Z.mca</code>，其中 X、Z 是区域坐标。</p>
+<h3>MCA 文件格式解析</h3>
+<pre class="code-block"><code class="language-331">private void importRegion(MemoryBuffer regionFile, int x, int z) {
+    if (regionFile.size &lt; 8192) {// 文件头 8192 字节
+        Logger.warn(&quot;Header of region file invalid&quot;);
+        return;
+    }
+    for (int idx = 0; idx &lt; 1024; idx++) { // 每个区域最多 1024 个区块
+        int sectorMeta = Integer.reverseBytes(MemoryUtil.memGetInt(regionFile.address+idx*4));
+        if (sectorMeta == 0) continue;
+        
+        int sectorStart = sectorMeta&gt;&gt;&gt;8;
+        int sectorCount = sectorMeta&amp;((1&lt;&lt;8)-1);
+        
+        // 读取并解析区块数据...
+        var data = new MemoryBuffer(n);
+        this.jobQueue.add(()-&gt; {
+            try {
+                try (var decompressedData = this.decompress(b, data)) {
+                    var nbt = NbtIo.read(decompressedData);
+                    this.importChunkNBT(nbt, x, z);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        this.totalChunks.incrementAndGet();
+        this.service.execute();
+    }
+}</code></pre>
+<h3>Minecraft NBT 到 VoxelizedSection 转换</h3>
+<pre class="code-block"><code class="language-477">private void importSectionNBT(int x, int y, int z, CompoundTag section) {
+    if (section.getCompound(&quot;block_states&quot;).isEmpty()) {
+        return;
+    }
+
+    byte[] blockLightData = section.getByteArray(&quot;BlockLight&quot;).orElse(EMPTY);
+    byte[] skyLightData = section.getByteArray(&quot;SkyLight&quot;).orElse(EMPTY);
+    
+    // 使用 Codec 解析方块状态
+    var blockStatesRes = blockStateCodec.parse(NbtOps.INSTANCE, section.getCompound(&quot;block_states&quot;).get());
+    if (!blockStatesRes.hasResultOrPartial()) {
+        return;
+    }
+    var blockStates = blockStatesRes.getPartialOrThrow();
+    
+    // 转换为 VoxelizedSection
+    VoxelizedSection csec = WorldConversionFactory.convert(
+            SECTION_CACHE.get().setPosition(x, y, z),
+            this.world.getMapper(),
+            blockStates,
+            biomes,
+            (bx, by, bz) -&gt; (byte)(skyLight | (blockLight &lt;&lt; 4))
+    );
+
+    // 生成多级 MIP
+    WorldVoxilizedSectionMipper.mipSection(csec, this.world.getMapper());
+    WorldUpdater.insertUpdate(this.world, csec);
+}</code></pre>
+<p><strong>关键转换流程</strong>：</p>
+<pre class="code-block"><code class="language-text">MCA NBT → PalettedContainer&lt;BlockState&gt; → VoxelizedSection → RocksDB</code></pre>
+<h3>进度控制与背压</h3>
+<pre class="code-block"><code class="language-245">private &lt;T&gt; void importRegionsAsync(T[] regionFiles, IImporterMethod&lt;T&gt; importer) {
+    // ...
+    for (var file : regionFiles) {
+        importer.importRegion(file);
+        
+        // 背压控制：队列超过 10000 时等待
+        while ((this.totalChunks.get()-this.chunksProcessed.get() &gt; 10_000) &amp;&amp; this.isRunning) {
+            Thread.sleep(1);
+        }
+    }
+    // 等待所有任务完成
+    while (this.chunksProcessed.get() != this.totalChunks.get() &amp;&amp; this.isRunning) {
+        Thread.yield();
+        Thread.sleep(10);
+    }
+}</code></pre>
+<p><hr></p>
+<h2 id="dhimporter-distant-horizons-数据导入">DHImporter - Distant Horizons 数据导入</h2>
+<p><code>DHImporter</code> 处理 Distant Horizons 模组的 LOD（Level of Detail）数据，支持从其 SQLite 数据库导入预先生成的远距离渲染数据。</p>
+<h3>数据库连接与初始化</h3>
+<pre class="code-block"><code class="language-100">public DHImporter(File file, WorldEngine worldEngine, Level mcWorld, ServiceManager servicePool, BooleanSupplier rateLimiter) {
+    this.engine = worldEngine;
+    this.world = mcWorld;
+    this.biomeRegistry = mcWorld.registryAccess().lookupOrThrow(Registries.BIOME);
+    this.blockRegistry = mcWorld.registryAccess().lookupOrThrow(Registries.BLOCK);
+    
+    String con = &quot;jdbc:sqlite:&quot; + file.getPath();
+    this.db = DriverManager.getConnection(con);
+    
+    // 创建 10 线程的服务
+    this.service = servicePool.createService(()-&gt;{
+        var dataFetchStmt = this.db.prepareStatement(
+            &quot;SELECT Data,ColumnGenerationStep,Mapping FROM FullData WHERE DetailLevel = 0 AND PosX = ? AND PosZ = ?;&quot;);
+        var ctx = new WorkCTX(dataFetchStmt, this.worldHeightSections*16);
+        return new Pair&lt;&gt;(()-&gt;{
+            this.importSection(dataFetchStmt, ctx, this.tasks.poll());
+        }, ()-&gt;ctx.free());
+    }, 10, &quot;DH Importer&quot;, rateLimiter);
+}</code></pre>
+<h3>数据库 Schema</h3>
+<p>DHImporter 查询 <code>FullData</code> 表：</p>
+<table class="data-table"><thead><tr><th>列名</th><th>类型</th><th>说明</th></tr></thead><tbody><tr><td><code>PosX</code>, <code>PosZ</code></td><td>INT</td><td>DH 区块坐标（每个 DH 区块 = 4x4 MC 区块）</td></tr><tr><td><code>DetailLevel</code></td><td>INT</td><td>LOD 级别（0 = 最高细节）</td></tr><tr><td><code>Data</code></td><td>BLOB</td><td>压缩的列数据</td></tr><tr><td><code>ColumnGenerationStep</code></td><td>BLOB</td><td>生成步骤数据</td></tr><tr><td><code>Mapping</code></td><td>BLOB</td><td>方块/生物群系映射表</td></tr><tr><td><code>CompressionMode</code></td><td>INT</td><td>压缩模式（3=XZ, 4=Zstd）</td></tr><tr><td><code>DataFormatVersion</code></td><td>INT</td><td>数据格式版本</td></tr></tbody></table>
+<h3>任务调度</h3>
+<pre class="code-block"><code class="language-137">public void runImport(IUpdateCallback updateCallback, ICompletionCallback completionCallback) {
+    this.engine.acquireRef();
+    this.runner = new Thread(()-&gt; {
+        Queue&lt;Task&gt; taskQ = new PriorityQueue&lt;&gt;(Comparator.comparingLong(Task::distanceFromZero));
+        
+        // 按距离原点的距离排序，先处理近处
+        var resSet = stmt.executeQuery(
+            &quot;SELECT PosX,PosZ,CompressionMode,DataFormatVersion FROM FullData WHERE DetailLevel = 0;&quot;);
+        while (resSet.next()) {
+            taskQ.add(new Task(x, z, format, compression));
+        }
+        
+        this.totalChunks = taskQ.size() * (4*4);  // 每个 DH 区块 = 16 个 MC 区块
+        
+        // 任务队列控制：最多同时 100 个任务
+        while (this.isRunning &amp;&amp; !taskQ.isEmpty()) {
+            this.tasks.add(taskQ.poll());
+            this.service.execute();
+            while (this.tasks.size() &gt; 100 &amp;&amp; this.isRunning) {
+                Thread.sleep(500);
+            }
+        }
+    });
+}</code></pre>
+<h3>Mapping 解析</h3>
+<p>DH 数据使用自定义的 Mapping 格式，需要解析字符串形式的方块状态引用：</p>
+<pre class="code-block"><code class="language-214">private long[] readMappings(InputStream in, WorkCTX ctx) throws IOException {
+    final String BLOCK_STATE_SEPARATOR_STRING = &quot;_DH-BSW_&quot;;
+    final String STATE_STRING_SEPARATOR = &quot;_STATE_&quot;;
+    
+    var stream = new DataInputStream(in);
+    int entries = stream.readInt();
+    long[] out = new long[entries];
+    
+    for (int i = 0; i &lt; entries; i++) {
+        String encEntry = stream.readUTF();  // 格式: &quot;minecraft:oak_log_DH-BSW_minecraft:oak_log_STATE_{...}&quot;
+        int idx = encEntry.indexOf(BLOCK_STATE_SEPARATOR_STRING);
+        
+        // 解析生物群系
+        var biomeRes = Identifier.parse(encEntry.substring(0, idx));
+        biomeId = this.engine.getMapper().getIdForBiome(biome);
+        
+        // 解析方块状态
+        var bId = Identifier.parse(encEntry.substring(b, sIdx));
+        var state = block.defaultBlockState();
+        if (bStateStr != null) {
+            // 查找匹配的方块状态属性
+            for (BlockState bState : block.getStateDefinition().getPossibleStates()) {
+                if (getSerialBlockState(bState).equals(bStateStr)) {
+                    state = bState;
+                    break;
+                }
+            }
+        }
+        blockId = this.engine.getMapper().getIdForBlockState(state);
+        out[i] = Mapper.composeMappingId((byte) 0, blockId, biomeId);
+    }
+}</code></pre>
+<h3>列数据解压</h3>
+<p>DH 支持两种压缩格式：</p>
+<pre class="code-block"><code class="language-296">private static InputStream createDecompressedStream(int decompressor, InputStream in, WorkCTX ctx) {
+    if (decompressor == 3) {
+        // XZ 压缩
+        return new XZInputStream(IOUtils.toBufferedInputStream(in), -1, false, ctx.cache);
+    } else if (decompressor == 4) {
+        // Zstd 压缩
+        int decompSize = (int) Zstd.ZSTD_getFrameContentSize(ctx.zstdScratch);
+        long size = Zstd.ZSTD_decompressDCtx(ctx.zstdDCtx, ctx.zstdScratch, ctx.zstdScratch2);
+        ctx.zstdScratch2.limit((int) size);
+        return new ByteBufferBackedInputStream(ctx.zstdScratch2);
+    }
+}</code></pre>
+<h3>64x64 列数据处理</h3>
+<pre class="code-block"><code class="language-335">private void readColumnData(int X, int Z, InputStream in, WorkCTX ctx, long[] mapping) {
+    var stream = new DataInputStream(in);
+    long[] storage = ctx.storageCache;
+    VoxelizedSection section = ctx.section;
+    
+    for (int x = 0; x &lt; 64; x++) {
+        for (int z = 0; z &lt; 64; z++) {
+            short cl = stream.readShort();  // 列中条目数
+            stream.read(col, 0, cl*8);
+            
+            for (int j = 0; j &lt; cl; j++) {
+                long entry = LONG.get(col, j*8);
+                int id = getId(entry);
+                int skyLight = getSkyLight(entry);
+                int blockLight = getBlockLight(entry);
+                int startY = getMinHeight(entry);
+                int tall = getHeight(entry);
+                
+                // 填充 3D 存储数组
+                for (int y = startY; y != endY; y = (y+iMsk1)&amp;Msk) {
+                    storage[y+bPos] = Mapper.withLight(mapping[id], (blockLight &lt;&lt; 4) | skyLight);
+                }
+            }
+        }
+        
+        // 每 16 列（构成 4x4 MC 区块）处理一次
+        if ((x+1)%16==0) {
+            for (int sz = 0; sz &lt; 4; sz++) {
+                for (int sy = 0; sy &lt; this.worldHeightSections; sy++) {
+                    // 复制数据到 VoxelizedSection
+                    for (int i = 0; i &lt; 4096; i++) {
+                        dat[i] = storage[i+base];
+                    }
+                    
+                    WorldVoxilizedSectionMipper.mipSection(section, engine.getMapper());
+                    section.setPosition(X*4+(x&gt;&gt;4), sy+(bottomOfWorld&gt;&gt;4), (Z*4)+sz);
+                    WorldUpdater.insertUpdate(engine, section);
+                }
+            }
+            Arrays.fill(storage, 0);  // 重置缓冲区
+        }
+    }
+}</code></pre>
+<h3>库依赖检查</h3>
+<pre class="code-block"><code class="language-456">public static final boolean HasRequiredLibraries;
+
+static {
+    boolean hasJDBC = false;
+    try {
+        Class.forName(&quot;org.sqlite.JDBC&quot;);
+        Class.forName(&quot;org.tukaani.xz.XZInputStream&quot;);
+        hasJDBC = true;
+    } catch (ClassNotFoundException | NoClassDefFoundError e) {
+        Logger.warn(&quot;Unable to load sqlite JDBC or lzma decompressor, DHImporting wont be available&quot;);
+    }
+    HasRequiredLibraries = hasJDBC;
+}</code></pre>
+<p><hr></p>
+<h2 id="导入命令集成">导入命令集成</h2>
+<p>Voxy 通过 Fabric 的命令 API 注册 <code>/voxy</code> 命令，提供客户端命令行导入接口。</p>
+<h3>命令注册结构</h3>
+<pre class="code-block"><code class="language-39">public static LiteralArgumentBuilder&lt;FabricClientCommandSource&gt; register() {
+    var imports = ClientCommandManager.literal(&quot;import&quot;)
+            .then(ClientCommandManager.literal(&quot;world&quot;)
+                    .then(ClientCommandManager.argument(&quot;world_name&quot;, StringArgumentType.string())
+                            .suggests(VoxyCommands::importWorldSuggester)
+                            .executes(VoxyCommands::importWorld)))
+            .then(ClientCommandManager.literal(&quot;bobby&quot;)
+                    .then(ClientCommandManager.argument(&quot;world_name&quot;, StringArgumentType.string())
+                            .suggests(VoxyCommands::importBobbySuggester)
+                            .executes(VoxyCommands::importBobby)))
+            .then(ClientCommandManager.literal(&quot;raw&quot;)
+                    .then(ClientCommandManager.argument(&quot;path&quot;, StringArgumentType.string())
+                            .executes(VoxyCommands::importRaw)))
+            .then(ClientCommandManager.literal(&quot;zip&quot;)
+                    .then(ClientCommandManager.argument(&quot;zipPath&quot;, StringArgumentType.string())
+                            .executes(VoxyCommands::importZip)
+                            .then(ClientCommandManager.argument(&quot;innerPath&quot;, StringArgumentType.string())
+                                    .executes(VoxyCommands::importZip))))
+            .then(ClientCommandManager.literal(&quot;current&quot;)
+                    .executes(VoxyCommands::importCurrentWorldIn))
+            .then(ClientCommandManager.literal(&quot;cancel&quot;)
+                    .executes(VoxyCommands::cancelImport));
+
+    if (DHImporter.HasRequiredLibraries) {
+        imports = imports
+                .then(ClientCommandManager.literal(&quot;distant_horizons&quot;)
+                .then(ClientCommandManager.argument(&quot;sqlDbPath&quot;, StringArgumentType.string())
+                        .executes(VoxyCommands::importDistantHorizons)));
+    }
+    
+    return ClientCommandManager.literal(&quot;voxy&quot;)
+            .then(ClientCommandManager.literal(&quot;reload&quot;)
+                    .executes(VoxyCommands::reloadInstance))
+            .then(imports)
+            .then(debug);
+}</code></pre>
+<h3>可用命令</h3>
+<table class="data-table"><thead><tr><th>命令</th><th>说明</th></tr></thead><tbody><tr><td><code>/voxy import world <name></code></td><td>从 <code>saves/</code> 目录导入指定世界</td></tr><tr><td><code>/voxy import current</code></td><td>导入当前游戏所在的世界</td></tr><tr><td><code>/voxy import raw <path></code></td><td>从任意路径导入 <code>.mca</code> 区域文件</td></tr><tr><td><code>/voxy import zip <path> [inner]</code></td><td>从 ZIP 压缩包导入</td></tr><tr><td><code>/voxy import distant_horizons <path></code></td><td>导入 DH SQLite 数据库</td></tr><tr><td><code>/voxy import cancel</code></td><td>取消当前导入任务</td></tr><tr><td><code>/voxy reload</code></td><td>重载 Voxy 实例</td></tr></tbody></table>
+<h3>导入实现</h3>
+<pre class="code-block"><code class="language-141">private static boolean fileBasedImporter(File directory) {
+    var instance = (VoxyClientInstance)VoxyCommon.getInstance();
+    var engine = WorldIdentifier.ofEngine(Minecraft.getInstance().level);
+    if (engine==null) return false;
+    
+    return instance.getImportManager().makeAndRunIfNone(engine, ()-&gt;{
+        var importer = new WorldImporter(engine, Minecraft.getInstance().level, 
+                instance.getServiceManager(), instance.savingServiceRateLimiter);
+        importer.importRegionDirectoryAsync(directory);
+        return importer;
+    });
+}</code></pre>
+<p><hr></p>
+<h2 id="数据流与架构图">数据流与架构图</h2>
+<h3>导入架构总览</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Commands["命令层 /voxy import"]
+        W[world]
+        C[current]
+        R[raw path]
+        Z[zip archive]
+        DH[distant_horizons]
+    end
+
+    subgraph Manager["ImportManager"]
+        IM[任务调度器]
+        AT[activeImporters Map]
+    end
+
+    subgraph Importers["导入器实现"]
+        WI[WorldImporter]
+        DHI[DHImporter]
+        BI[BobbyImporter<br/><i>已移除</i>]
+    end
+
+    subgraph Processing["数据处理"]
+        NBT[NBT 解析]
+        VOX[VoxelizedSection]
+        MIP[MipMap 生成]
+        DB[(RocksDB)]
+    end
+
+    W --> IM
+    C --> IM
+    R --> IM
+    Z --> IM
+    DH --> IM
+    
+    IM --> AT
+    IM --> WI
+    IM --> DHI
+    IM --> BI
+    
+    WI --> NBT
+    DHI --> NBT
+    NBT --> VOX
+    VOX --> MIP
+    MIP --> DB</div>
+</div>
+<h3>WorldImporter 数据流</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Input["输入"]
+        MCA[r.X.Z.mca]
+    end
+
+    subgraph Parse["解析"]
+        HDR[Header 8KB]
+        CHUNK[Chunk 索引]
+        DATA[压缩数据]
+        DEC[解压]
+        NBT[NBT Tag]
+    end
+
+    subgraph Transform["转换"]
+        PS[PalettedContainer]
+        CONV[WorldConversionFactory]
+        VS[VoxelizedSection]
+        MIP[WorldVoxilizedSectionMipper]
+    end
+
+    subgraph Output["存储"]
+        QUEUE[Job Queue]
+        SVC[Service Pool]
+        UPDATE[WorldUpdater]
+        DB[(RocksDB)]
+    end
+
+    MCA --> HDR
+    HDR --> CHUNK
+    CHUNK --> DATA
+    DATA --> DEC
+    DEC --> NBT
+    NBT --> PS
+    PS --> CONV
+    CONV --> VS
+    VS --> MIP
+    MIP --> QUEUE
+    QUEUE --> SVC
+    SVC --> UPDATE
+    UPDATE --> DB</div>
+</div>
+<h3>DHImporter 数据流</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph DB["SQLite Database"]
+        QUERY[FullData 表]
+    end
+
+    subgraph Fetch["数据获取"]
+        TASK[Task Queue]
+        SQL[PreparedStatement]
+        MAPPING[Mapping Blob]
+        COLUMN[Column Blob]
+    end
+
+    subgraph Decompress["解压"]
+        XZ[XZ Stream]
+        ZSTD[Zstd Stream]
+        RAW[原始数据]
+    end
+
+    subgraph Convert["转换"]
+        PARSE[解析 Mapping]
+        FILL[填充 64x64 列]
+        SLICE[16x16xH 切片]
+        VOX[VoxelizedSection]
+    end
+
+    QUERY --> TASK
+    TASK --> SQL
+    SQL --> MAPPING
+    SQL --> COLUMN
+    MAPPING --> XZ
+    COLUMN --> ZSTD
+    XZ --> RAW
+    ZSTD --> RAW
+    RAW --> PARSE
+    PARSE --> FILL
+    FILL --> SLICE
+    SLICE --> VOX</div>
+</div>
+<p><hr></p>
+<h2 id="线程模型总结">线程模型总结</h2>
+<table class="data-table"><thead><tr><th>组件</th><th>线程数</th><th>职责</th></tr></thead><tbody><tr><td>ImportManager</td><td>1 (主)</td><td>任务调度、同步</td></tr><tr><td>WorldImporter</td><td>1 (worker) + 3 (service)</td><td>区域解析 + 并行区块处理</td></tr><tr><td>DHImporter</td><td>1 (runner) + 10 (service)</td><td>查询 + 并行列处理</td></tr></tbody></table>
+<h3>内存管理</h3>
+<pre class="code-block"><code class="language-476">private static final ThreadLocal&lt;VoxelizedSection&gt; SECTION_CACHE = ThreadLocal.withInitial(VoxelizedSection::createEmpty);</code></pre>
+<p>使用 <code>ThreadLocal</code> 复用 <code>VoxelizedSection</code> 对象，减少 GC 压力。</p>
+<h3>背压控制</h3>
+<p><ul><li>WorldImporter：队列差值 > 10,000 时等待</li>
+<li>DHImporter：任务队列 > 100 时等待</li>
+<li>两者都使用 <code>BooleanSupplier rateLimiter</code> 进行最终速率控制</li></ul></p>
+<p><hr></p>
+<h2 id="总结">总结</h2>
+<p>Voxy 的世界数据导入子系统展现了<strong>插件化架构</strong>的精妙设计：</p>
+<p><ul><li><strong>统一的导入接口</strong> — <code>IDataImporter</code> 使新增导入器变得简单</li>
+<li><strong>高效的并发模型</strong> — 生产者-消费者模式 + 线程池</li>
+<li><strong>精确的进度控制</strong> — 背压机制防止内存溢出</li>
+<li><strong>灵活的格式支持</strong> — 从标准 MC 格式到第三方模组数据</li></ul></p>
+<blockquote><p>💡 <strong>设计亮点</strong>：使用 <code>Supplier<IDataImporter></code> 工厂模式 + <code>makeAndRunIfNone</code> 方法，确保每个 WorldEngine 同时只有一个导入任务在运行，同时提供了简洁的 API。</p></blockquote>
+<p><hr></p>
+<h2 id="课后自查">课后自查</h2>
+<p><ul><li>[ ] ImportManager 如何保证每个 WorldEngine 同时只有一个导入任务？</li>
+<li>[ ] WorldImporter 如何解析 <code>.mca</code> 文件的 Header 和 Chunk 索引？</li>
+<li>[ ] DHImporter 的 Mapping 数据格式是什么？方块状态如何序列化/反序列化？</li>
+<li>[ ] 为什么 DHImporter 需要按距离原点排序处理任务？</li>
+<li>[ ] 两种导入器都使用 <code>ConcurrentLinkedDeque</code> 作为任务队列，有什么优势？</li>
+<li>[ ] 背压控制是如何实现的？<code>totalChunks</code> 和 <code>chunksProcessed</code> 的差值代表什么？</li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="06-rendering-core.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 渲染核心子系统分析
+        </a><a href="08-config-system.html" class="next">
+            Voxy 配置系统架构分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -2093,6 +2093,23 @@ function pathToVersion(mcVersion, loader, modVersion) {
     return `${mcVersion}-${loader}-${modVersion}`;
 }
 
+/**
+ * 版本化 Markdown 源目录：支持
+ * - 扁平：content/{模组}/{MC-加载器-模组版本}/{tutorials|analysis}/
+ * - 嵌套：content/{模组}/{mc}/{loader}/{modVersion}/{tutorials|analysis}/
+ */
+function resolveVersionContentDocDir(websiteRoot, moduleSlug, version, docType) {
+    if (!version) {
+        return path.resolve(websiteRoot, 'content', moduleSlug, docType);
+    }
+    const flat = path.resolve(websiteRoot, 'content', moduleSlug, version, docType);
+    if (fs.existsSync(flat)) {
+        return flat;
+    }
+    const { mcVersion, loader, modVersion } = versionToPath(version);
+    return path.resolve(websiteRoot, 'content', moduleSlug, mcVersion, loader, modVersion, docType);
+}
+
 function convertModule(moduleKey, specificVersion = null, docType = 'tutorials') {
     const module = modules[moduleKey];
     if (!module) {
@@ -2110,8 +2127,7 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
     let sourceDir;
     if (module.versions && module.versions.length > 0) {
         const version = specificVersion || module.defaultVersion || module.versions[0];
-        const { mcVersion, loader, modVersion } = versionToPath(version);
-        sourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, docType);
+        sourceDir = resolveVersionContentDocDir(websiteRoot, module.slug, version, docType);
     } else {
         sourceDir = path.resolve(websiteRoot, 'content', module.slug, docType);
     }
@@ -2154,9 +2170,8 @@ function convertModule(moduleKey, specificVersion = null, docType = 'tutorials')
             // 获取该版本的导航
             const versionNavItems = navConfig[moduleKey] || [];
 
-            // 获取该版本的源目录
-            const { mcVersion, loader, modVersion } = versionToPath(version);
-            const versionSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, docType);
+            // 获取该版本的源目录（扁平或嵌套）
+            const versionSourceDir = resolveVersionContentDocDir(websiteRoot, module.slug, version, docType);
 
             // 转换该版本的所有文档（保留 tutorials|analysis 下的子目录结构，与 MC Part-* 等一致）
             if (fs.existsSync(versionSourceDir)) {
@@ -2257,18 +2272,15 @@ function generateModuleIndexPage(moduleKey) {
     if (module.versions && module.versions.length > 0) {
         // 有版本分支 - 为每个版本生成索引页
         module.versions.forEach(version => {
-            // 将版本字符串转回路径：1.21-core-- -> mcVersion=1.21, loader=core, modVersion=-
-            const { mcVersion, loader, modVersion } = versionToPath(version);
-
             // 输出目录: docs/{模组}/{版本}/
             const versionDir = path.join(outputDir, version);
             if (!fs.existsSync(versionDir)) {
                 fs.mkdirSync(versionDir, { recursive: true });
             }
 
-            // 扫描该版本的教程和分析文件
-            const tutorialsSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, 'tutorials');
-            const analysisSourceDir = path.resolve(websiteRoot, 'content', module.slug, mcVersion, loader, modVersion, 'analysis');
+            // 扫描该版本的教程和分析文件（扁平或嵌套）
+            const tutorialsSourceDir = resolveVersionContentDocDir(websiteRoot, module.slug, version, 'tutorials');
+            const analysisSourceDir = resolveVersionContentDocDir(websiteRoot, module.slug, version, 'analysis');
 
             const actualTutorials = getActualDocFiles(tutorialsSourceDir);
             const actualAnalysis = getActualDocFiles(analysisSourceDir);

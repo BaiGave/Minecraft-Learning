@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>"Mixin 集成与模组兼容性" - Voxy</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-voxy-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"走近 Voxy：LOD 远距离渲染"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="../Part-1-Foundation/01-world-engine-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"WorldEngine：世界引擎基础"</span>
+        </a>
+<a href="../Part-1-Foundation/02-voxelized-section.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"VoxelizedSection：体素化区块数据结构"</span>
+        </a>
+<a href="../Part-1-Foundation/03-lod-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"LOD 系统详解：从区块到多远距离"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Core Mechanisms</div>
+            <a href="../Part-2-Core-Mechanisms/01-thread-model.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"线程模型与异步任务调度"</span>
+        </a>
+<a href="../Part-2-Core-Mechanisms/02-rendering-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"渲染管线：从 GPU 检测到批量绘制"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="01-mixin-integration.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>"Mixin 集成与模组兼容性"</span>
+        </a>
+<a href="02-storage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"存储系统：RocksDB 与数据持久化"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"Voxy 教程"</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"Voxy 教程总结"</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>"Mixin 集成与模组兼容性"</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    "Mixin 集成与模组兼容性"
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本章节基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 的开源源码编写，感谢原作者 Cortex 的贡献。</p>
+<blockquote><p><strong>声明</strong>：本文档为学习笔记，内容整理自源码分析，非官方文档。</p></blockquote>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-什么是-mixin">1. 什么是 Mixin？</a></li>
+<li><a href="#2-voxy-的-mixin-注入点一览">2. Voxy 的 Mixin 注入点一览</a></li>
+<li><a href="#3-扩展检测原理">3. 扩展检测原理</a></li>
+<li><a href="#4-hasbrokendepthsampler-amd-bug-处理">4. hasBrokenDepthSampler AMD Bug 处理</a></li>
+<li><a href="#5-mermaid-图mixin-注入与兼容性决策树">5. Mermaid 图：Mixin 注入与兼容性决策树</a></li>
+<li><a href="#6-课后自查">6. 课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-什么是-mixin">1. 什么是 Mixin？</h2>
+<h3>1.1 Mixin 简介</h3>
+<p><strong>Mixin</strong> 是 Fabric 模组加载器使用的运行时字节码注入框架。它允许模组在不修改原始类源码的情况下，向目标类的方法插入、修改或重定向代码。</p>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────┐
+│                    Mixin 工作原理                            │
+├─────────────────────────────────────────────────────────────┤
+│  原始类: Minecraft.class                                    │
+│       ↓                                                     │
+│  Mixin 处理器扫描 @Mixin 注解的类                            │
+│       ↓                                                     │
+│  字节码转换器 (Accessor/Redirect/Inject)                    │
+│       ↓                                                     │
+│  运行时替换方法体 / 插入回调                                 │
+│       ↓                                                     │
+│  修改后的类 → 加载到 JVM                                    │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<h3>1.2 为什么 Voxy 需要 Mixin？</h3>
+<p>Voxy 作为高性能渲染模组，必须：</p>
+<p><ul><li><strong>拦截渲染流程</strong>：接管 Sodium 的区块渲染</li>
+<li><strong>处理第三方着色器</strong>：与 Iris 着色器包兼容</li>
+<li><strong>检测硬件能力</strong>：查询 OpenGL 扩展和 GPU 特性</li>
+<li><strong>降级兼容性</strong>：在不支持的环境优雅禁用</li></ul></p>
+<p>这些都需要 Mixin 介入 Minecraft 的核心渲染代码。</p>
+<p><hr></p>
+<h2 id="2-voxy-的-mixin-注入点一览">2. Voxy 的 Mixin 注入点一览</h2>
+<h3>2.1 Mixin 包结构</h3>
+<p>Voxy 的 Mixin 按目标模组分类：</p>
+<pre class="code-block"><code class="language-text">D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\client\mixin\
+├── client.mixin.sodium/     ← Sodium 相关
+├── client.mixin.iris/       ← Iris 相关
+├── client.mixin.flashback/  ← Flashback 录像
+├── client.mixin.nvidium/    ← Nvidium 相关
+└── client.mixin.minecraft/   ← Minecraft 核心</code></pre>
+<h3>2.2 Sodium Mixin 详解</h3>
+<h4>MixinDefaultChunkRenderer</h4>
+<p>这是最核心的 Mixin，负责接管 Sodium 的区块渲染：</p>
+<pre class="code-block"><code class="language-java">@Mixin(value = DefaultChunkRenderer.class, remap = false)
+public abstract class MixinDefaultChunkRenderer extends ShaderChunkRenderer {
+
+    @Inject(method = &quot;render&quot;, at = @At(value = &quot;HEAD&quot;), cancellable = true)
+    private void cancelThingie(ChunkRenderMatrices matrices, ...) {
+        if (VoxyClient.disableSodiumChunkRender()) {
+            // 取消 Sodium 原生渲染
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = &quot;render&quot;, at = @At(value = &quot;INVOKE&quot;, target = &quot;L...ShaderChunkRenderer;end()V&quot;, shift = At.Shift.BEFORE))
+    private void injectRender(...) {
+        // 在 Sodium 渲染结束后注入 Voxy 渲染
+        this.doRender(...);
+    }
+}</code></pre>
+<table class="data-table"><thead><tr><th>注入点</th><th>行为</th><th>目的</th></tr></thead><tbody><tr><td><code>HEAD</code></td><td><code>cancellable=true</code></td><td>检查是否禁用 Sodium 渲染</td></tr><tr><td><code>INVOKE.before</code></td><td>追加渲染</td><td>在 Sodium 完成后执行 Voxy 渲染</td></tr></tbody></table>
+<h3>2.3 Iris Mixin 详解</h3>
+<h4>MixinIris</h4>
+<p>处理 Iris 着色器加载错误：</p>
+<pre class="code-block"><code class="language-java">@Mixin(value = Iris.class, remap = false)
+public class MixinIris {
+    @Redirect(method = &quot;createPipeline&quot;, 
+              at = @At(value = &quot;INVOKE&quot;, 
+                       target = &quot;Lnet/irisshaders/iris/shaderpack/ShaderPack;getProgramSet(Lnet/irisshaders/iris/shaderpack/materialmap/NamespacedId;)Lnet/irisshaders/iris/shaderpack/programs/ProgramSet;&quot;))
+    private static ProgramSet voxy$redirectProgramSet(ShaderPack shaderPack, NamespacedId dim) {
+        try {
+            return shaderPack.getProgramSet(dim);
+        } catch (ShaderLoadError e) {
+            Logger.error(e);
+            return null;  // 优雅降级
+        }
+    }
+}</code></pre>
+<blockquote><p>💡 <strong>设计亮点</strong>：使用 <code>@Redirect</code> 包装着色器加载，捕获 <code>ShaderLoadError</code> 防止崩溃。</p></blockquote>
+<h3>2.4 其他 Mixin 一览</h3>
+<table class="data-table"><thead><tr><th>Mixin 类</th><th>目标类</th><th>注入目的</th></tr></thead><tbody><tr><td><code>MixinSodiumWorldRenderer</code></td><td>SodiumWorldRenderer</td><td>区块追踪器访问器</td></tr><tr><td><code>MixinRenderRegionManager</code></td><td>RenderRegionManager</td><td>渲染区域管理</td></tr><tr><td><code>AccessorChunkTracker</code></td><td>ChunkTracker</td><td>区块更新追踪</td></tr><tr><td><code>MixinIrisSamplers</code></td><td>纹理采样器</td><td>自定义采样点处理</td></tr><tr><td><code>MixinLevelRenderer</code></td><td>LevelRenderer</td><td>雾气渲染拦截</td></tr></tbody></table>
+<hr></p>
+<h2 id="3-扩展检测原理">3. 扩展检测原理</h2>
+<h3>3.1 为什么不能依赖 GL_VERSION？</h3>
+<p>传统的 GPU 功能检测常依赖 <code>GL_VERSION</code> 字符串解析：</p>
+<pre class="code-block"><code class="language-java">String version = glGetString(GL_VERSION);
+// version = &quot;4.6.0 NVIDIA 535.98&quot;
+// version = &quot;4.6 (Core Profile) Mesa 23.1.0&quot;</code></pre>
+<p>但这种方法的局限性：</p>
+<p><ul><li><strong>厂商差异</strong>：<code>GL_VERSION</code> 格式不统一</li>
+<li><strong>驱动更新</strong>：相同版本号可能支持不同扩展</li>
+<li><strong>Profile 模式</strong>：Core vs Compatibility 行为不同</li></ul></p>
+<h3>3.2 Voxy 的能力检测策略</h3>
+<p>Voxy 的 <code>Capabilities.java</code> 采用<strong>主动探测</strong>策略：</p>
+<pre class="code-block"><code class="language-java">public class Capabilities {
+    // 1. 基础扩展查询
+    this.compute = cap.glDispatchComputeIndirect != 0;
+    this.meshShaders = cap.GL_NV_mesh_shader;
+    this.indirectParameters = cap.glMultiDrawElementsIndirectCountARB != 0;
+
+    // 2. 编译器测试 (对 int64 这种无法直接查询的特性)
+    this.INT64_t = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
+            #version 430
+            #extension GL_ARB_gpu_shader_int64 : require
+            ...
+            &quot;&quot;&quot;);
+
+    // 3. 厂商检测
+    this.isNvidia = vendor.contains(&quot;nvidia&quot;);
+    this.isAmd = vendor.contains(&quot;amd&quot;) || vendor.contains(&quot;radeon&quot;);
+    this.isIntel = vendor.contains(&quot;intel&quot;);
+    this.isMesa = glGetString(GL_VERSION).toLowerCase().contains(&quot;mesa&quot;);
+}</code></pre>
+<h3>3.3 支持的扩展一览</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>检测方式</th><th>用途</th></tr></thead><tbody><tr><td><code>compute</code></td><td>函数指针 != null</td><td>GPU 计算着色器</td></tr><tr><td><code>meshShaders</code></td><td><code>GL<em>NV</em>mesh<em>shader</code></td><td>Mesh Shader 渲染</td></tr><tr><td><code>INT64</em>t</code></td><td>着色器编译测试</td><td>64 位整数支持</td></tr><tr><td><code>subgroup</code></td><td><code>GL<em>KHR</em>shader<em>subgroup</code> + 编译测试</td><td>SIMD 子组操作</td></tr><tr><td><code>sparseBuffer</code></td><td><code>GL</em>ARB<em>sparse</em>buffer</code></td><td>稀疏缓冲区</td></tr><tr><td><code>nvBarryCoords</code></td><td><code>GL<em>NV</em>fragment<em>shader</em>barycentric</code></td><td>重心坐标插值</td></tr></tbody></table>
+<hr></p>
+<h2 id="4-hasbrokendepthsampler-amd-bug-处理">4. hasBrokenDepthSampler AMD Bug 处理</h2>
+<h3>4.1 问题背景</h3>
+<p>某些 AMD 显卡（尤其是较老的 GCN 架构）在使用深度模板纹理时存在硬件 Bug：</p>
+<p><ul><li><strong>症状</strong>：Compute Shader 中读取 <code>sampler2D depthSampler</code> 返回错误值</li>
+<li><strong>影响</strong>：Voxy 的雾效、深度感知渲染可能失效</li></ul></p>
+<h3>4.2 检测流程</h3>
+<p>Voxy 通过运行时测试验证此 Bug：</p>
+<pre class="code-block"><code class="language-java">if (this.compute &amp;&amp; this.isAmd) {
+    this.hasBrokenDepthSampler = testDepthSampler();
+    if (this.hasBrokenDepthSampler) {
+        throw new IllegalStateException(&quot;it bork, amd is bork&quot;);
+    }
+}</code></pre>
+<h3>4.3 测试原理</h3>
+<p><code>testDepthSampler()</code> 方法创建一个 Compute Shader 测试程序：</p>
+<pre class="code-block"><code class="language-glsl">#version 460 core
+layout(binding = 0) uniform sampler2D depthSampler;
+layout(binding = 1) buffer OutData { float[] outData; };
+layout(location = 2) uniform int dynamicSampleThing;
+layout(location = 3) uniform float sampleData;
+
+void main() {
+    // 读取深度值并与预期比较
+    if (abs(texelFetch(depthSampler, ivec2(gl_GlobalInvocationID.xy), dynamicSampleThing).r
+            - sampleData) &gt; 0.000001f) {
+        outData[0] = 1.0;  // 标记错误
+    }
+}</code></pre>
+<p>测试步骤：
+<ul><li>创建 256×256 的 <code>DEPTH24_STENCIL8</code> 纹理</li>
+<li>设置已知的深度值 (0.0 ~ 1.0)</li>
+<li>在 Compute Shader 中读取并验证</li>
+<li>如果读取值与写入值不符 → Bug 存在</li></ul></p>
+<h3>4.4 后续影响</h3>
+<p>当检测到 Bug 时：
+<ul><li>Voxy 会直接抛出异常终止启动</li>
+<li>用户需要切换到兼容的渲染路径（如禁用 Compute Shader 雾效）</li>
+<li>未来可能实现软件降级 fallback</li></ul></p>
+<p><hr></p>
+<h2 id="5-mermaid-图mixin-注入与兼容性决策树">5. Mermaid 图：Mixin 注入与兼容性决策树</h2>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    Start["游戏启动"] --> CheckMods["检测已安装模组"]
+
+    CheckMods --> HasSodium{"Sodium\n已安装?"}
+    CheckMods --> HasIris{"Iris\n已安装?"}
+    CheckMods --> HasNvidium{"Nvidium\n已安装?"}
+
+    HasSodium -->|是| LoadSodiumMixin["加载 client.mixin.sodium"]
+    HasSodium -->|否| SkipSodium["跳过 Sodium Mixin"]
+
+    HasIris -->|是| LoadIrisMixin["加载 client.mixin.iris"]
+    HasIris -->|否| SkipIris["跳过 Iris Mixin"]
+
+    HasNvidium -->|是| LoadNvidiumMixin["加载 client.mixin.nvidium"]
+    HasNvidium -->|否| SkipNvidium["跳过 Nvidium Mixin"]
+
+    LoadSodiumMixin --> CheckGpu["Capabilities.init()"]
+    LoadIrisMixin --> CheckGpu
+    LoadNvidiumMixin --> CheckGpu
+    SkipSodium --> CheckGpu
+    SkipIris --> CheckGpu
+    SkipNvidium --> CheckGpu
+
+    CheckGpu --> QueryGL["查询 OpenGL 扩展"]
+    QueryGL --> TestShader["编译测试 Shader"]
+
+    TestShader --> IsAmd{"isAmd?"}
+    TestShader --> IsNvidia{"isNvidia?"}
+
+    IsAmd -->|是| TestDepthSampler["testDepthSampler()"]
+    TestDepthSampler --> Broken{"hasBrokenDepthSampler?"}
+    Broken -->|是| Error["抛出异常:\namd is bork"]
+    Broken -->|否| Continue["继续启动"]
+
+    IsNvidia --> QueryMemory["查询 GPU 内存\nGL_NVX_gpu_memory_info"]
+    QueryMemory --> Continue
+
+    Continue --> VoxyInit["Voxy 渲染系统初始化"]</div>
+</div>
+<h3>渲染注入时序图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">sequenceDiagram
+    participant Minecraft
+    participant Sodium
+    participant Voxy
+    participant Iris
+
+    rect rgb(50, 50, 80)
+        Note over Minecraft,Iris: 初始化阶段
+        Minecraft->>Sodium: 加载 Sodium 模组
+        Minecraft->>Iris: 加载 Iris 模组
+        Sodium->>Voxy: 注册 Mixin
+        Iris->>Voxy: 注册 Mixin
+    end
+
+    rect rgb(50, 80, 50)
+        Note over Minecraft,Voxy: 渲染帧
+        Minecraft->>Sodium: 调用 DefaultChunkRenderer.render()
+        Sodium->>Voxy: Mixin: HEAD 拦截
+        alt Voxy 禁用 Sodium 渲染
+            Voxy->>Sodium: ci.cancel()
+        else 正常渲染
+            Sodium->>Voxy: Mixin: INVOKE.before 注入
+            Voxy->>Voxy: renderOpaque()
+        end
+        Sodium->>Voxy: Mixin: END 后注入
+        Voxy->>Iris: 如果着色器包启用
+    end</div>
+</div>
+<p><hr></p>
+<h2 id="6-课后自查">6. 课后自查</h2>
+<p><ul><li>[ ] Mixin 的 <code>@Inject(cancellable = true)</code> 与普通注入有何区别？</li>
+<li>[ ] 为什么 <code>MixinDefaultChunkRenderer</code> 需要同时使用 <code>HEAD</code> 取消和 <code>INVOKE.before</code> 注入？</li>
+<li>[ ] <code>testShaderCompilesOk()</code> 为什么比直接查询 <code>GL<em>ARB</em>gpu<em>shader</em>int64</code> 更可靠？</li>
+<li>[ ] <code>hasBrokenDepthSampler</code> 测试的深度值范围是多少？精度阈值 <code>0.000001f</code> 依据是什么？</li>
+<li>[ ] 如果用户使用 Intel 集显 + AMD 独显的混合模式，Voxy 如何检测？</li></ul></p>
+<p><hr></p>
+<h2 id="参考文件">参考文件</h2>
+<p><ul><li><code>assets/voxy/src/main/java/me/cortex/voxy/client/core/gl/Capabilities.java</code></li>
+<li><code>assets/voxy/src/main/java/me/cortex/voxy/client/mixin/sodium/MixinDefaultChunkRenderer.java</code></li>
+<li><code>assets/voxy/src/main/java/me/cortex/voxy/client/mixin/iris/MixinIris.java</code></li>
+<li><a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a></li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="../Part-2-Core-Mechanisms/02-rendering-pipeline.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            "渲染管线：从 GPU 检测到批量绘制"
+        </a><a href="02-storage-system.html" class="next">
+            "存储系统：RocksDB 与数据持久化"
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>Voxy 持久化存储子系统分析 - Voxy</title>
+    <link rel="stylesheet" href="../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">分析</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="01-architecture-overview.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy Architecture Overview
+        </a>
+<a href="02-world-engine.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界引擎子系统
+        </a>
+<a href="03-voxelization-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 体素化子系统深度解析
+        </a>
+<a href="04-storage-persistence.html" class="active">
+            <i class="fas fa-microscope"></i>
+            Voxy 持久化存储子系统分析
+        </a>
+<a href="05-thread-service.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 线程与服务子系统分析
+        </a>
+<a href="06-rendering-core.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 渲染核心子系统分析
+        </a>
+<a href="07-world-importers.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 世界数据导入子系统分析
+        </a>
+<a href="08-config-system.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 配置系统架构分析
+        </a>
+<a href="README.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析
+        </a>
+<a href="SUMMARY.html" class="">
+            <i class="fas fa-microscope"></i>
+            Voxy 架构分析总结
+        </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Voxy 持久化存储子系统分析</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag analysis">
+                        <i class="fas fa-microscope"></i>
+                        源码分析
+                    </span>
+                    Voxy 持久化存储子系统分析
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 25 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本分析基于 Voxy 模组（v0.2.13-alpha, MC 1.21.11）的开源源码，感谢原作者 Cortex 的贡献。</p>
+<p><hr></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#存储架构总览">存储架构总览</a></li>
+<li><a href="#rocksdb-存储设计">RocksDB 存储设计</a></li>
+<li><a href="#压缩策略分析">压缩策略分析</a></li>
+<li><a href="#存储后端抽象">存储后端抽象</a></li>
+<li><a href="#id-mapping-持久化">ID Mapping 持久化</a></li>
+<li><a href="#小结">小结</a></li></ul></p>
+<p><hr></p>
+<h2 id="存储架构总览">存储架构总览</h2>
+<p>Voxy 的存储子系统采用<strong>分层适配器模式</strong>，允许自由组合不同的存储后端和压缩器。以下是整体架构的 Mermaid 图：</p>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TB
+    subgraph Application["应用层"]
+        WS[WorldEngine]
+    end
+
+    subgraph Serialization["序列化层"]
+        SSS[SectionSerializationStorage]
+    end
+
+    subgraph Adaptation["适配器层"]
+        CSA[CompressionStorageAdaptor]
+    end
+
+    subgraph Backend["存储后端层"]
+        RDB[RocksDBStorageBackend]
+        LMDB[LMDBStorageBackend]
+        MEM[MemoryStorageBackend]
+        REDIS[RedisStorageBackend]
+    end
+
+    subgraph Data["数据层"]
+        DB[(RocksDB<br/>world_sections<br/>id_mappings)]
+        RAM[(内存)]
+    end
+
+    WS --> SSS
+    SSS --> CSA
+    CSA --> RDB
+    CSA --> LMDB
+    CSA --> MEM
+    CSA --> REDIS
+
+    RDB --> DB
+    LMDB --> DB
+    MEM --> RAM
+    REDIS -.->|远程| RAM</div>
+</div>
+<h3>关键设计决策</h3>
+<table class="data-table"><thead><tr><th>组件</th><th>设计模式</th><th>职责</th></tr></thead><tbody><tr><td><code>SectionStorage</code></td><td>抽象工厂</td><td>定义 Section 加载/保存接口</td></tr><tr><td><code>StorageBackend</code></td><td>策略模式</td><td>抽象底层存储操作</td></tr><tr><td><code>DelegatingStorageAdaptor</code></td><td>装饰器模式</td><td>透明转发请求给委托后端</td></tr><tr><td><code>CompressionStorageAdaptor</code></td><td>装饰器模式</td><td>在读写时透明加压缩</td></tr></tbody></table>
+<hr></p>
+<h2 id="rocksdb-存储设计">RocksDB 存储设计</h2>
+<p><code>RocksDBStorageBackend</code> 是 Voxy 的核心持久化实现，基于 Facebook 的 RocksDB 键值存储库。</p>
+<h3>Column Family 配置</h3>
+<pre class="code-block"><code class="language-19">public class RocksDBStorageBackend extends StorageBackend {
+    private final RocksDB db;
+    private final ColumnFamilyHandle worldSections;
+    private final ColumnFamilyHandle idMappings;
+    // ...
+    public RocksDBStorageBackend(String path) {
+        RocksDB.loadLibrary();
+
+        // Column Family 1: world_sections - 无内置压缩（外层处理）
+        final ColumnFamilyOptions cfWorldSecOpts = new ColumnFamilyOptions()
+                .setCompressionType(CompressionType.NO_COMPRESSION)
+                .setCompactionPriority(CompactionPriority.MinOverlappingRatio)
+                .setLevelCompactionDynamicLevelBytes(true)
+                .optimizeForPointLookup(128);
+
+        // BloomFilter 10 bits 加速点查询
+        var bCache = new HyperClockCache(128*1024L*1024L, 0, 4, false);
+        var filter = new BloomFilter(10);
+        cfWorldSecOpts.setTableFormatConfig(new BlockBasedTableConfig()
+                .setCacheIndexAndFilterBlocksWithHighPriority(true)
+                .setBlockCache(bCache)
+                .setDataBlockHashTableUtilRatio(0.75)
+                .setDataBlockIndexType(DataBlockIndexType.kDataBlockBinaryAndHash)
+                .setFilterPolicy(filter)
+        );
+
+        // Column Family 2: id_mappings - ZSTD 压缩
+        final List&lt;ColumnFamilyDescriptor&gt; cfDescriptors = Arrays.asList(
+            new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfOpts),
+            new ColumnFamilyDescriptor(&quot;world_sections&quot;.getBytes(), cfWorldSecOpts),
+            new ColumnFamilyDescriptor(&quot;id_mappings&quot;.getBytes(), cfOpts)
+        );
+
+        // WAL 128MB 防止数据丢失
+        final DBOptions options = new DBOptions()
+                .setMaxTotalWalSize(1024*1024*128);
+        // ...
+    }</code></pre>
+<h4>参数解析</h4>
+<table class="data-table"><thead><tr><th>参数</th><th>值</th><th>说明</th></tr></thead><tbody><tr><td><code>BloomFilter</code></td><td>10 bits/entry</td><td>约 0.1% 假阳性率，加速不存在的 key 查询</td></tr><tr><td><code>HyperClockCache</code></td><td>128MB</td><td>索引和过滤器块缓存</td></tr><tr><td><code>MaxTotalWalSize</code></td><td>128MB</td><td>Write-Ahead Log 大小上限</td></tr><tr><td><code>CompactionPriority</code></td><td>MinOverlappingRatio</td><td>优化顺序 I/O</td></tr></tbody></table>
+<h3>位置编码 (swizzlePos)</h3>
+<pre class="code-block"><code class="language-265">    private static long swizzlePos(long key) {
+        if (true) {
+            return key;  // 当前版本直接返回
+        }
+        // 预留的位置混淆逻辑，用于优化 RocksDB 范围查询的局部性
+        if (WorldEngine.POS_FORMAT_VERSION != 1) throw new IllegalStateException(&quot;TODO: UPDATE THIS&quot;);
+        return  (key&amp;(0xFUL&lt;&lt;60)) |
+                Long.expand((key&gt;&gt;&gt; 4)&amp;((1L&lt;&lt;24)-1), 0b01010101010101010101010101010101_001001001001001001001001L) |
+                Long.expand((key&gt;&gt;&gt;52)&amp;0xFF,         0b00000000000000000000000000000000_100100100100100100100100L) |
+                Long.expand((key&gt;&gt;&gt;28)&amp;((1L&lt;&lt;24)-1), 0b10101010101010101010101010101010_010010010010010010010010L);
+    }</code></pre>
+<p><code>swizzlePos</code> 函数的设计意图是<strong>优化 RocksDB 范围查询的局部性</strong>：
+<ul><li>将 level、y、x、z 坐标按位交叉排列</li>
+<li>使得物理相邻的区块在 RocksDB 中也相邻存储</li>
+<li>当前版本 <code>if (true)</code> 跳过了混淆，保留为未来优化空间</li></ul></p>
+<h3>Section Key 格式</h3>
+<p>Section 的 key 由 <code>WorldEngine.getWorldSectionId</code> 生成：</p>
+<pre class="code-block"><code class="language-91">    public static long getWorldSectionId(int lvl, int x, int y, int z) {
+        return ((long)lvl&lt;&lt;60)|((long)(y&amp;0xFF)&lt;&lt;52)|((long)(z&amp;((1&lt;&lt;24)-1))&lt;&lt;28)|((long)(x&amp;((1&lt;&lt;24)-1))&lt;&lt;4);
+    }</code></pre>
+<p>Key 布局（64-bit）：</p>
+<pre class="code-block"><code class="language-text">bits  [63..60] = level (4 bits, 0-15)
+bits  [59..52] = y (8 bits, 0-255)
+bits  [51..28] = z (24 bits, 0-16M)
+bits  [27..4]  = x (24 bits, 0-16M)
+bits  [3..0]   = reserved (4 bits)</code></pre>
+<p><hr></p>
+<h2 id="压缩策略分析">压缩策略分析</h2>
+<h3>双压缩器实现</h3>
+<p>Voxy 实现了两种压缩器，分别针对不同的使用场景：</p>
+<h4>LZ4 压缩器</h4>
+<pre class="code-block"><code class="language-11">public class LZ4Compressor implements StorageCompressor {
+    private static final ResizingThreadLocalMemoryBuffer SCRATCH =
+        new ResizingThreadLocalMemoryBuffer(SaveLoadSystem.BIGGEST_SERIALIZED_SECTION_SIZE + 1024);
+
+    private final net.jpountz.lz4.LZ4Compressor compressor;
+    private final net.jpountz.lz4.LZ4FastDecompressor decompressor;
+
+    public LZ4Compressor() {
+        this.decompressor = LZ4Factory.nativeInstance().fastDecompressor();
+        this.compressor = LZ4Factory.nativeInstance().fastCompressor();
+    }
+
+    @Override
+    public MemoryBuffer compress(MemoryBuffer saveData) {
+        var res = SCRATCH.get(this.compressor.maxCompressedLength((int) saveData.size)+4)
+                .createUntrackedUnfreeableReference();
+        MemoryUtil.memPutInt(res.address, (int) saveData.size);  // 前4字节存原始大小
+        int size = this.compressor.compress(saveData.asByteBuffer(), 0, (int) saveData.size,
+                                            res.asByteBuffer(), 4, (int) res.size-4);
+        return res.subSize(size+4);
+    }
+
+    @Override
+    public MemoryBuffer decompress(MemoryBuffer saveData) {
+        var res = SCRATCH.get().createUntrackedUnfreeableReference();
+        int size = this.decompressor.decompress(saveData.asByteBuffer(), 4,
+                                                res.asByteBuffer(), 0,
+                                                MemoryUtil.memGetInt(saveData.address));
+        return res.subSize(size);
+    }
+}</code></pre>
+<h4>ZSTD 压缩器</h4>
+<pre class="code-block"><code class="language-12">public class ZSTDCompressor implements StorageCompressor {
+    private static final ThreadLocal&lt;Ref&gt; COMPRESSION_CTX =
+        ThreadLocal.withInitial(ZSTDCompressor::createCleanableCompressionContext);
+    private static final ThreadLocal&lt;Ref&gt; DECOMPRESSION_CTX =
+        ThreadLocal.withInitial(ZSTDCompressor::createCleanableDecompressionContext);
+
+    @Override
+    public MemoryBuffer compress(MemoryBuffer saveData) {
+        var compressedData = SCRATCH.get(ZSTD_COMPRESSBOUND(saveData.size))
+                .createUntrackedUnfreeableReference();
+        long compressedSize = nZSTD_compressCCtx(COMPRESSION_CTX.get().ptr,
+                compressedData.address, compressedData.size,
+                saveData.address, saveData.size, this.level);
+        return compressedData.subSize(compressedSize);
+    }
+}</code></pre>
+<h3>压缩策略对比</h3>
+<table class="data-table"><thead><tr><th>特性</th><th>LZ4</th><th>ZSTD</th></tr></thead><tbody><tr><td><strong>压缩速度</strong></td><td>极快 (~5GB/s)</td><td>快 (~1GB/s)</td></tr><tr><td><strong>解压速度</strong></td><td>极快</td><td>快</td></tr><tr><td><strong>压缩率</strong></td><td>~2x</td><td>~3-5x</td></tr><tr><td><strong>内存占用</strong></td><td>低</td><td>中</td></tr><tr><td><strong>典型应用</strong></td><td>热数据、高频访问</td><td>冷数据、长期存储</td></tr><tr><td><strong>线程安全</strong></td><td>无状态，可复用</td><td>需维护上下文</td></tr></tbody></table>
+<h3>数据流图</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Write["写入流程"]
+        WS[WorldSection] --> S[SaveLoadSystem3.serialize]
+        S --> SB[原始二进制]
+        SB --> LZ4[LZ4Compressor]
+        LZ4 --> CS[CompressionStorageAdaptor]
+    end
+
+    subgraph DB["RocksDB 内部"]
+        CS --> CF1["world_sections CF<br/>LZ4 压缩"]
+    end
+
+    subgraph Read["读取流程"]
+        CF1 --> LZ4D[LZ4.decompress]
+        LZ4D --> D[deserialize]
+        D --> WC[WorldSection]
+    end</div>
+</div>
+<h3>CompressionStorageAdaptor 设计</h3>
+<pre class="code-block"><code class="language-10">public class CompressionStorageAdaptor extends DelegatingStorageAdaptor {
+    private final StorageCompressor compressor;
+
+    @Override
+    public MemoryBuffer getSectionData(long key, MemoryBuffer scratch) {
+        var data = this.delegate.getSectionData(key, scratch);
+        if (data == null) {
+            return null;
+        }
+        return this.compressor.decompress(data);
+    }
+
+    @Override
+    public void setSectionData(long key, MemoryBuffer data) {
+        var cdata = this.compressor.compress(data);
+        this.delegate.setSectionData(key, cdata);
+    }
+}</code></pre>
+<p>这种设计实现了<strong>透明压缩</strong>：调用方无需关心数据是否被压缩，适配器自动处理编解码。</p>
+<p><hr></p>
+<h2 id="存储后端抽象">存储后端抽象</h2>
+<h3>StorageBackend 接口</h3>
+<pre class="code-block"><code class="language-10">public abstract class StorageBackend implements IMappingStorage, IStoredSectionPositionIterator {
+
+    public abstract MemoryBuffer getSectionData(long key, MemoryBuffer scratch);
+
+    public abstract void setSectionData(long key, MemoryBuffer data);
+
+    public abstract void deleteSectionData(long key);
+
+    public abstract void flush();
+
+    public abstract void close();
+
+    public List&lt;StorageBackend&gt; getChildBackends() {
+        return List.of();
+    }
+
+    public final List&lt;StorageBackend&gt; collectAllBackends() {
+        List&lt;StorageBackend&gt; backends = new ArrayList&lt;&gt;();
+        backends.add(this);
+        for (var child : this.getChildBackends()) {
+            backends.addAll(child.collectAllBackends());
+        }
+        return backends;
+    }
+}</code></pre>
+<h3>多后端支持</h3>
+<p>Voxy 支持多种存储后端，通过配置自由选择：</p>
+<table class="data-table"><thead><tr><th>后端</th><th>类</th><th>特点</th></tr></thead><tbody><tr><td>RocksDB</td><td><code>RocksDBStorageBackend</code></td><td>嵌入式，持久化，高性能</td></tr><tr><td>LMDB</td><td><code>LMDBStorageBackend</code></td><td>嵌入式，持久化，内存映射</td></tr><tr><td>Memory</td><td><code>MemoryStorageBackend</code></td><td>仅内存，重启丢失</td></tr><tr><td>Redis</td><td><code>RedisStorageBackend</code></td><td>远程，支持分布式</td></tr></tbody></table>
+<h3>DelegatingStorageAdaptor 模式</h3>
+<pre class="code-block"><code class="language-11">public class DelegatingStorageAdaptor extends StorageBackend {
+    protected final StorageBackend delegate;
+
+    @Override
+    public List&lt;StorageBackend&gt; getChildBackends() {
+        return List.of(this.delegate);
+    }
+    // 其他方法透明转发给 delegate...
+}</code></pre>
+<p><code>DelegatingStorageAdaptor</code> 是所有"包装类"存储的基类，确保 <code>collectAllBackends()</code> 能递归收集所有嵌套后端，便于统一管理和关闭。</p>
+<h3>配置构建链</h3>
+<pre class="code-block"><code class="language-254">    public static class Config extends StorageConfig {
+        @Override
+        public StorageBackend build(ConfigBuildCtx ctx) {
+            return new RocksDBStorageBackend(
+                ctx.ensurePathExists(
+                    ctx.substituteString(
+                        ctx.resolvePath()
+                    )
+                )
+            );
+        }
+    }</code></pre>
+<p>配置类遵循 <strong>Builder 模式</strong>，通过 <code>ConfigBuildCtx</code> 解析路径变量（<code>{worldDir}</code> 等）。</p>
+<p><hr></p>
+<h2 id="id-mapping-持久化">ID Mapping 持久化</h2>
+<h3>IMappingStorage 接口</h3>
+<pre class="code-block"><code class="language-8">public interface IMappingStorage {
+    void putIdMapping(int id, ByteBuffer data);
+    Int2ObjectOpenHashMap&lt;byte[]&gt; getIdMappingsData();
+    void flush();
+    void close();
+}</code></pre>
+<h3>ID 编码方案</h3>
+<p>Mapper 使用复合 ID 编码区分 BlockState 和 Biome：</p>
+<pre class="code-block"><code class="language-119">            int entryType = entry.getIntKey()&gt;&gt;&gt;30;
+            int id = entry.getIntKey() &amp; ((1&lt;&lt;30)-1);</code></pre>
+<table class="data-table"><thead><tr><th>类型</th><th>高 2 bits</th><th>低 30 bits</th></tr></thead><tbody><tr><td>BlockState</td><td><code>01</code></td><td>block ID (0 ~ 2^30-1)</td></tr><tr><td>Biome</td><td><code>10</code></td><td>biome ID (0 ~ 2^30-1)</td></tr></tbody></table>
+<h3>序列化格式</h3>
+<p>BlockState 和 Biome 都使用 NBT + Zlib 压缩存储：</p>
+<pre class="code-block"><code class="language-366">        public byte[] serialize() {
+            try {
+                var serialized = new CompoundTag();
+                serialized.putInt(&quot;id&quot;, this.id);
+                serialized.put(&quot;block_state&quot;, BlockState.CODEC.encodeStart(NbtOps.INSTANCE, this.state).result().get());
+                var out = new ByteArrayOutputStream();
+                NbtIo.writeCompressed(serialized, out);  // Zlib 压缩
+                return out.toByteArray();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }</code></pre>
+<h3>数据修复机制</h3>
+<pre class="code-block"><code class="language-379">        public static StateEntry deserialize(int id, byte[] data, boolean[] forceResave) {
+            try {
+                var compound = NbtIo.readCompressed(new ByteArrayInputStream(data), NbtAccounter.unlimitedHeap());
+                // ...
+                var state = BlockState.CODEC.parse(NbtOps.INSTANCE, bsc);
+                if (state.isError()) {
+                    // 尝试 DataFixerUpper 修复旧版本数据
+                    bsc = (CompoundTag) DataFixers.getDataFixer().update(
+                        References.BLOCK_STATE,
+                        new Dynamic&lt;&gt;(NbtOps.INSTANCE, bsc),
+                        0,
+                        SharedConstants.getCurrentVersion().dataVersion().version()
+                    ).getValue();
+                    state = BlockState.CODEC.parse(NbtOps.INSTANCE, bsc);
+                    if (state.isError()) {
+                        return new StateEntry(id, Blocks.AIR.defaultBlockState());
+                    } else {
+                        forceResave[0] |= true;  // 触发重新保存
+                    }
+                }
+            }
+        }</code></pre>
+<p><strong>版本兼容处理流程</strong>：
+<ul><li>尝试直接解析 NBT</li>
+<li>若失败，调用 DataFixerUpper 升级数据格式</li>
+<li>若仍失败，回退到空气方块</li>
+<li>若任意修复发生，标记 <code>forceResave</code> 重新序列化</li></ul></p>
+<p><hr></p>
+<h2 id="section-序列化格式">Section 序列化格式</h2>
+<h3>SaveLoadSystem3</h3>
+<pre class="code-block"><code class="language-38">    public static MemoryBuffer serialize(WorldSection section) {
+        // 1. 写入 key
+        MemoryUtil.memPutLong(ptr, section.key); ptr += 8;
+
+        // 2. 预留 metadata 位置
+        long metadataPtr = ptr; ptr += 8;
+
+        // 3. 写入压缩的 block 数据
+        long blockPtr = ptr; ptr += WorldSection.SECTION_VOLUME*2;
+        long prev = data[0]; MemoryUtil.memPutLong(ptr, prev); ptr+=8;
+        Long2ShortOpenHashMap LUT = cache.lutMapCache; LUT.clear();
+        short mapping = 0;
+
+        for (long block : data) {
+            if (prev != block) {
+                prev = block;
+                mapping = LUT.putIfAbsent(block, (short) LUT.size());
+                if (mapping == -1) {
+                    mapping = (short) (LUT.size()-1);
+                    MemoryUtil.memPutLong(ptr, block); ptr+=8;
+                }
+            }
+            MemoryUtil.memPutShort(blockPtr, mapping); blockPtr+=2;
+        }
+
+        // 4. 写入 metadata
+        long metadata = 0;
+        metadata |= Integer.toUnsignedLong(LUT.size());        // 低 2 bytes: LUT 大小
+        metadata |= Byte.toUnsignedLong(section.getNonEmptyChildren())&lt;&lt;16;  // 非空子节点
+        MemoryUtil.memPutLong(metadataPtr, metadata);
+
+        return buffer.subSize(ptr-buffer.address);
+    }</code></pre>
+<h4>格式布局</h4>
+<pre class="code-block"><code class="language-text">+----------------+----------------+----------------+----------------+
+| key (8 bytes)  | metadata (8)   | indices (4096)| LUT entries    |
++----------------+----------------+----------------+----------------+</code></pre>
+<p><ul><li><strong>key</strong>: Section 唯一标识</li>
+<li><strong>metadata</strong>: <code>[LUT size: 16bits][nonEmptyChildren: 8bits][reserved: 40bits]</code></li>
+<li><strong>indices</strong>: 每个 block 2 bytes 索引到 LUT</li>
+<li><strong>LUT entries</strong>: 实际存储的 block ID 列表（去重）</li></ul></p>
+<h4>压缩优化</h4>
+<p>使用 <strong>Run-Length Encoding (RLE) + Look-Up Table</strong>：
+<ul><li>相邻相同 block 只存一次 LUT 条目</li>
+<li>典型区块空气多，压缩率可达 10-50x</li></ul></p>
+<p><hr></p>
+<h2 id="小结">小结</h2>
+<p>Voxy 的持久化存储子系统展现了成熟的技术选型：</p>
+<table class="data-table"><thead><tr><th>维度</th><th>实现</th></tr></thead><tbody><tr><td><strong>存储引擎</strong></td><td>RocksDB + LMDB + Redis + Memory 多后端</td></tr><tr><td><strong>压缩</strong></td><td>LZ4（速度优先）/ ZSTD（压缩率优先）</td></tr><tr><td><strong>索引</strong></td><td>BloomFilter + HyperClockCache</td></tr><tr><td><strong>持久化</strong></td><td>WAL 128MB 保证数据安全</td></tr><tr><td><strong>版本兼容</strong></td><td>DataFixerUpper 支持跨版本迁移</td></tr><tr><td><strong>内存管理</strong></td><td>Direct MemoryBuffer 减少 GC</td></tr></tbody></table>
+<h3>潜在优化方向</h3>
+<p><ul><li><strong>启用 swizzlePos</strong>：优化范围查询局部性</li>
+<li><strong>压缩级别配置</strong>：LOD 高层级可接受更高压缩率</li>
+<li><strong>后台 Compaction</strong>：RocksDB compaction 可能造成 I/O 峰值</li>
+<li><strong>LMDB 对比测试</strong>：与 RocksDB 在特定场景下的性能对比</li></ul></p>
+<p><hr></p>
+<h2 id="参考源码路径">参考源码路径</h2>
+<p><ul><li>存储抽象: <code>assets/voxy/src/main/java/me/cortex/voxy/common/config/storage/</code></li>
+<li>Section 存储: <code>assets/voxy/src/main/java/me/cortex/voxy/common/config/section/</code></li>
+<li>压缩器: <code>assets/voxy/src/main/java/me/cortex/voxy/common/config/compressors/</code></li>
+<li>ID 映射: <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mapper.java</code></li>
+<li>序列化: <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/SaveLoadSystem3.java</code></li>
+</ul></p>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="03-voxelization-system.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            Voxy 体素化子系统深度解析
+        </a><a href="05-thread-service.html" class="next">
+            Voxy 线程与服务子系统分析
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../script.js"></script>
+    <script src="../../../../scripts/theme.js"></script>
+    <script src="../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="docs-root" style="--module-accent:#5B8C5A;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){try{var k='mc-learning-theme';var t=localStorage.getItem(k);if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <title>"LOD 系统详解：从区块到多远距离" - Voxy</title>
+    <link rel="stylesheet" href="../../../../../styles/main.css">
+    <link rel="stylesheet" href="../../../../../styles.css">
+    <link rel="stylesheet" href="../../../../../styles/site-shell.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* 顶栏/侧栏/导航链接一律用 styles.css + CSS 变量（data-theme），勿在此写死白字，否则浅色模式侧栏不可读 */
+        .breadcrumb {
+            gap: 0.65rem 1rem !important;
+            flex-wrap: wrap;
+        }
+        .breadcrumb a { color: var(--module-accent); }
+        .breadcrumb i.fa-chevron-right {
+            color: var(--text-tertiary);
+            font-size: 0.65rem;
+            opacity: 0.85;
+            padding: 0 0.25em;
+            flex-shrink: 0;
+        }
+        .info-box { border-left: 4px solid var(--module-accent); background: color-mix(in srgb, var(--module-accent) 12%, transparent); }
+        .info-box i { color: var(--module-accent); }
+        .info-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+        /* 代码块样式 */
+        pre.code-block {
+            border: 1px solid rgba(255,255,255,0.06) !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.45) !important;
+            border-radius: 8px !important;
+            background: #16161a !important;
+        }
+        pre.code-block::before {
+            content: '> ' !important;
+            color: #ffffff !important;
+            display: block !important;
+            position: absolute !important;
+            left: 18px !important;
+            top: 16px !important;
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+        pre.code-block::after {
+            display: none !important;
+        }
+        .code-reference {
+            border: none !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
+            border-radius: 0 !important;
+            background: #1a1a1a !important;
+        }
+        .code-reference::before,
+        .code-reference::after {
+            display: none !important;
+        }
+        /* h2 / 表格表头 / 下一篇按钮：见 styles.css .docs-page（与主题色协调） */
+        .doc-content pre { border: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important; }
+        .doc-content pre code:not(.hljs) { color: #d4d4d4; }
+        pre.code-block code.hljs { background: transparent !important; padding: 0 !important; }
+        .navbar .dropdown-content {
+            z-index: 1001;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-md);
+        }
+        .navbar .dropdown-content a {
+            color: var(--text-primary);
+        }
+        .navbar .dropdown-content a:hover {
+            background: var(--bg-tertiary);
+            color: var(--module-accent);
+        }
+        /* 文档类型标签 */
+        .doc-type-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .doc-type-tag.tutorial {
+            background: linear-gradient(135deg, color-mix(in srgb, var(--module-accent) 85%, #1e293b), var(--module-accent));
+            color: white;
+        }
+        .doc-type-tag.analysis {
+            background: linear-gradient(135deg, #525252, #a3a3a3);
+            color: white;
+        }
+    </style>
+</head>
+<body class="docs-page">
+    <div class="progress-bar" id="progressBar"></div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../../../../../index.html" class="nav-logo">
+                <i class="fas fa-cube"></i>
+                <span>Minecraft Learning</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="../../../../../index.html">首页</a></li>
+                <li class="dropdown">
+                    <a href="#">文档中心 <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../../../../../docs/mc/1.21-core--/index.html">Minecraft 原版</a>
+                        <a href="../../../../../docs/iris/1.21-fabric-1.7.3/index.html">Iris 光影</a>
+                        <a href="../../../../../docs/sodium/1.21-neoforge-0.8.6/index.html">Sodium 优化</a>
+                        <a href="../../../../../docs/fabric/1.21-core--/index.html">Fabric 模组</a>
+                        <a href="../../../../../docs/forge/1.21-core--/index.html">Forge 模组</a>
+                        <a href="../../../../../docs/ImmersivePortalsMod/1.21.1-fabric-6.0.6/index.html">ImmersivePortalsMod 文档</a>
+                        <a href="../../../../../docs/neoforge/1.21-core--/index.html">NeoForge 模组</a>
+                        <a href="../../../../../docs/voxy/1.21.11-fabric-0.2.13-alpha/index.html">Voxy</a>
+                    </div>
+                </li>
+                <li><a href="../../../../../about.html">关于</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <div class="theme-toggle" role="group" aria-label="主题切换">
+                    <button type="button" class="theme-btn" data-theme="light" aria-label="浅色模式"><i class="fas fa-sun"></i></button>
+                    <button type="button" class="theme-btn" data-theme="dark" aria-label="深色模式"><i class="fas fa-moon"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="docs-layout" id="docsLayout">
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-header-text">
+                    <h3>Voxy</h3>
+                    <span class="doc-badge">教程</span>
+                </div>
+                <button type="button" class="docs-sidebar-pin-btn" data-docs-sidebar-toggle aria-label="收起侧栏" title="收起侧栏">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="sidebar-part">
+            <div class="sidebar-part-label">Part-0: Prerequisites</div>
+            <a href="../Part-0-Prerequisites/01-voxy-intro.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"走近 Voxy：LOD 远距离渲染"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-1: Foundation</div>
+            <a href="01-world-engine-basics.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"WorldEngine：世界引擎基础"</span>
+        </a>
+<a href="02-voxelized-section.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"VoxelizedSection：体素化区块数据结构"</span>
+        </a>
+<a href="03-lod-system.html" class="sidebar-nav-link active">
+            <i class="fas fa-book"></i>
+            <span>"LOD 系统详解：从区块到多远距离"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-2: Core Mechanisms</div>
+            <a href="../Part-2-Core-Mechanisms/01-thread-model.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"线程模型与异步任务调度"</span>
+        </a>
+<a href="../Part-2-Core-Mechanisms/02-rendering-pipeline.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"渲染管线：从 GPU 检测到批量绘制"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">Part-3: Advanced</div>
+            <a href="../Part-3-Advanced/01-mixin-integration.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"Mixin 集成与模组兼容性"</span>
+        </a>
+<a href="../Part-3-Advanced/02-storage-system.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"存储系统：RocksDB 与数据持久化"</span>
+        </a>
+        </div>
+<div class="sidebar-part">
+            <div class="sidebar-part-label">其他</div>
+            <a href="../README.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"Voxy 教程"</span>
+        </a>
+<a href="../SUMMARY.html" class="sidebar-nav-link ">
+            <i class="fas fa-book"></i>
+            <span>"Voxy 教程总结"</span>
+        </a>
+        </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    返回概述
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="docs-sidebar-floating-open" data-docs-sidebar-toggle aria-label="展开目录" title="展开目录">
+            <i class="fas fa-book-open" aria-hidden="true"></i>
+            <span>目录</span>
+        </button>
+
+        <main class="docs-content">
+            <div class="docs-header">
+                <nav class="breadcrumb">
+                    <a href="../../../../../index.html">文档中心</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <a href="../../index.html">Voxy</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>"LOD 系统详解：从区块到多远距离"</span>
+                </nav>
+                <h1>
+                    <span class="doc-type-tag tutorials">
+                        <i class="fas fa-graduation-cap"></i>
+                        教程
+                    </span>
+                    "LOD 系统详解：从区块到多远距离"
+                </h1>
+                <div class="docs-meta">
+                    <span><i class="fas fa-code-branch"></i> 1.21.11-fabric-0.2.13-alpha</span>
+                    <span><i class="fas fa-clock"></i> 35 分钟</span>
+                </div>
+            </div>
+
+            <div class="docs-body doc-content">
+                <h2 id="致谢">致谢</h2>
+<p>本教程基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 源码分析编写，是学习笔记而非官方文档。
+感谢原作者 <strong>Cortex</strong> 的开源贡献，原项目：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a></p>
+<h2 id="目录">目录</h2>
+<p><ul><li><a href="#1-lod-系统概述">1. LOD 系统概述</a></li>
+<li><a href="#2-5-级-lod-层级生成算法">2. 5 级 LOD 层级生成算法</a></li>
+<li><a href="#3-worldupdater-向上传播更新">3. WorldUpdater 向上传播更新</a></li>
+<li><a href="#4-section-id-64-bit-布局解析">4. Section ID 64-bit 布局解析</a></li>
+<li><a href="#5-双层-lru-缓存设计">5. 双层 LRU 缓存设计</a></li>
+<li><a href="#6-课后自查">6. 课后自查</a></li></ul></p>
+<p><hr></p>
+<h2 id="1-lod-系统概述">1. LOD 系统概述</h2>
+<h3>1.1 什么是 LOD？</h3>
+<p><strong>LOD (Level of Detail)</strong> 即多细节层级，是一种优化渲染性能的技术。核心思想是：</p>
+<pre class="code-block"><code class="language-text">近距离 → 高细节（看到单个方块）
+远距离 → 低细节（看到地形轮廓即可）</code></pre>
+<h3>1.2 Voxy 的 5 级 LOD</h3>
+<table class="data-table"><thead><tr><th>Level</th><th>Section 大小</th><th>实际覆盖范围</th><th>压缩比</th><th>典型用途</th></tr></thead><tbody><tr><td>L0</td><td>32³ voxels</td><td>32³ blocks</td><td>1:1</td><td>0-32 区块</td></tr><tr><td>L1</td><td>32³ voxels</td><td>64³ blocks</td><td>1:8</td><td>32-64 区块</td></tr><tr><td>L2</td><td>32³ voxels</td><td>128³ blocks</td><td>1:64</td><td>64-128 区块</td></tr><tr><td>L3</td><td>32³ voxels</td><td>256³ blocks</td><td>1:512</td><td>128-256 区块</td></tr><tr><td>L4</td><td>32³ voxels</td><td>512³ blocks</td><td>1:4096</td><td>远距离地平线</td></tr></tbody></table>
+<h3>1.3 LOD 的优势</h3>
+<p><ul><li><strong>内存节省</strong>：远距离使用压缩数据，减少显存占用</li>
+<li><strong>渲染加速</strong>：减少需要处理的顶点和面片数量</li>
+<li><strong>预计算</strong>：数据在导入时已计算完毕，渲染时无需额外计算</li></ul></p>
+<p><hr></p>
+<h2 id="2-5-级-lod-层级生成算法">2. 5 级 LOD 层级生成算法</h2>
+<h3>2.1 Mipper 合并规则</h3>
+<p>Mipper 是 LOD 生成的核心算法，负责将 <strong>8 个子体素合并为 1 个父体素</strong>：</p>
+<pre class="code-block"><code class="language-java">public static long mip(long I000, long I100, long I001, long I101,
+                       long I010, long I110, long I011, long I111,
+                       Mapper mapper) {
+    int max = -1;
+    
+    // 8 个输入对应 2×2×2 立方体的 8 个角点
+    // 选择不透明度最高的非空气方块
+    
+    if (!Mapper.isAir(I111)) {
+        max = (mapper.getBlockStateOpacity(I111) &lt;&lt; 4) | 0b111;
+    }
+    if (!Mapper.isAir(I110)) {
+        max = Math.max((mapper.getBlockStateOpacity(I110) &lt;&lt; 4) | 0b110, max);
+    }
+    // ... 处理其余 6 个角点 ...
+    
+    if (max != -1) {
+        return switch (max &amp; 0b111) {
+            case 0 -&gt; I000;
+            case 1 -&gt; I001;
+            // ... 返回选中的 voxel
+        };
+    } else {
+        // 全是空气：平均光照
+        int blockLight = ...;
+        int skyLight = ...;
+        return withLight(I111, (blockLight / 8) &lt;&lt; 4 | (skyLight / 8));
+    }
+}</code></pre>
+<h3>2.2 2×2×2 合并示意</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">graph TB
+    subgraph Cube["2×2×2 立方体（8 voxels）"]
+        I000["I000<br/>(0,0,0)"] --- I100["I100<br/>(1,0,0)"]
+        I001["I001<br/>(0,0,1)"] --- I101["I101<br/>(1,0,1)"]
+        I010["I010<br/>(0,1,0)"] --- I110["I110<br/>(1,1,0)"]
+        I011["I011<br/>(0,1,1)"] --- I111["I111<br/>(1,1,1)"]
+        
+        I000 --- I001
+        I100 --- I101
+        I010 --- I011
+        I110 --- I111
+        
+        I000 --- I010
+        I100 --- I110
+        I001 --- I011
+        I101 --- I111
+    end
+    
+    Result["Mip Result<br/>选择最高 opacity<br/>+ 位置提示"]
+    
+    I000 --> Result
+    I100 --> Result
+    I001 --> Result
+    I101 --> Result
+    I010 --> Result
+    I110 --> Result
+    I011 --> Result
+    I111 --> Result</div>
+</div>
+<h3>2.3 合并策略</h3>
+<p><ul><li><strong>优先非空气</strong>：只要有非空气方块，就选择它</li>
+<li><strong>基于不透明度</strong>：使用 <code>BlockState.getOpacity()</code> 评估遮蔽程度</li>
+<li><strong>角点位优先级</strong>：当不透明度相同时，选择较高/较远的角点</li>
+<li><strong>光照平均</strong>：8 个全为空气时，对光照取平均</li></ul></p>
+<h3>2.4 降采样层级索引</h3>
+<pre class="code-block"><code class="language-java">private static int G(int x, int y, int z) {
+    return ((y &lt;&lt; 8) | (z &lt;&lt; 4) | x);  // 16×16 网格
+}
+
+// L1 索引计算（偏移 16³ = 4096）
+private static int H(int x, int y, int z) {
+    return ((y &lt;&lt; 6) | (z &lt;&lt; 3) | x) + 16*16*16;
+}
+
+// L2 索引计算（偏移 16³ + 8³ = 4608）
+private static int I(int x, int y, int z) {
+    return ((y &lt;&lt; 4) | (z &lt;&lt; 2) | x) + 8*8*8 + 16*16*16;
+}
+
+// L3 索引计算（偏移 16³ + 8³ + 4³ = 4672）
+private static int J(int x, int y, int z) {
+    return ((y &lt;&lt; 2) | (z &lt;&lt; 1) | x) + 4*4*4 + 8*8*8 + 16*16*16;
+}</code></pre>
+<p><hr></p>
+<h2 id="3-worldupdater-向上传播更新">3. WorldUpdater 向上传播更新</h2>
+<h3>3.1 传播机制</h3>
+<p>当 Level 0 的数据发生变化时，需要<strong>向上更新所有父级 LOD 层</strong>：</p>
+<pre class="code-block"><code class="language-java">public static void insertUpdate(WorldEngine into, VoxelizedSection section) {
+    for (int lvl = 0; lvl &lt;= MAX_LOD_LAYER; lvl++) {
+        // 计算每个层级的 section 坐标
+        var worldSection = into.acquire(
+            lvl,
+            section.x &gt;&gt; (lvl + 1),
+            section.y &gt;&gt; (lvl + 1),
+            section.z &gt;&gt; (lvl + 1)
+        );
+        
+        // 更新该层的数据
+        // ...
+        
+        // 检测是否需要向上传播
+        if (shouldPropagate) {
+            continue; // 继续到下一层
+        } else {
+            break; // 停止传播
+        }
+    }
+}</code></pre>
+<h3>3.2 坐标转换公式</h3>
+<pre class="code-block"><code class="language-java">final int msk = (1 &lt;&lt; (lvl + 1)) - 1;
+final int bx = (section.x &amp; msk) &lt;&lt; (4 - lvl);
+final int by = (section.y &amp; msk) &lt;&lt; (4 - lvl);
+final int bz = (section.z &amp; msk) &lt;&lt; (4 - lvl);</code></pre>
+<h3>3.3 Mermaid 图：LOD 更新传播流程</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart TD
+    A["Level 0 更新<br/>(方块修改)"] --> B["获取 L0 Section"]
+    B --> C{"数据变化?"}
+    C -->|Yes| D["更新 L0 数据"]
+    C -->|No| Z["释放 + 结束"]
+    D --> E{"重大空虚状态变化?<br/>(全空↔非空)"}
+    E -->|Yes| F["获取 L1 Section"]
+    E -->|No| Z
+    F --> G["更新 L1 数据"]
+    G --> H{"数据变化?"}
+    H -->|Yes| I["继续传播"]
+    H -->|No| Z
+    I --> J{"重大空虚状态变化?"}
+    J -->|Yes| K["获取 L2 Section"]
+    J -->|No| Z
+    K --> L["更新 L2..."]
+    L --> M["获取 L3..."]
+    M --> N["获取 L4 (最高层)"]
+    N --> O["标记脏 + 释放"]
+    O --> Z
+    
+    style A fill:#e3f2fd
+    style F fill:#bbdefb
+    style K fill:#90caf9
+    style N fill:#64b5f6
+    style Z fill:#ffcdd2</div>
+</div>
+<h3>3.4 传播终止条件</h3>
+<p>LOD 传播在以下情况终止：</p>
+<p><ul><li><strong>无数据变化</strong>：当前层数据未改变，无需更新父层</li>
+<li><strong>已达最高层</strong>：L4 是最大层级，无法继续向上</li>
+<li><strong>父级未变化</strong>：即使子级变化，若父级整体不受影响，可提前终止</li></ul></p>
+<p><hr></p>
+<h2 id="4-section-id-64-bit-布局解析">4. Section ID 64-bit 布局解析</h2>
+<h3>4.1 位域结构</h3>
+<pre class="code-block"><code class="language-java">public static long getWorldSectionId(int lvl, int x, int y, int z) {
+    return ((long) lvl &lt;&lt; 60) |
+           ((long) (y &amp; 0xFF) &lt;&lt; 52) |
+           ((long) (z &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 28) |
+           ((long) (x &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 4);
+}</code></pre>
+<h3>4.2 位域图示</h3>
+<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
+│  63-60 (4 bits)  │  59-52 (8 bits)  │  51-28 (24 bits) │  27-4 (24 bits)│
+├───────────────────┼──────────────────┼───────────────────┼──────────────┤
+│       lvl         │        y         │        z          │      x       │
+│     LOD 层级       │    Y 坐标        │     Z 坐标         │     X 坐标    │
+│     0-15          │    0-255         │    0-16M          │   0-16M      │
+└─────────────────────────────────────────────────────────────────────────┘
+         ↑                                      
+    (4 bits spare)</code></pre>
+<h3>4.3 字段详解</h3>
+<table class="data-table"><thead><tr><th>字段</th><th>位范围</th><th>长度</th><th>取值范围</th><th>说明</th></tr></thead><tbody><tr><td><code>lvl</code></td><td>60-63</td><td>4 bits</td><td>0-15</td><td>LOD 层级（实际只用 0-4）</td></tr><tr><td><code>y</code></td><td>52-59</td><td>8 bits</td><td>0-255</td><td>Y 坐标（MC 高度限制 0-383，但只存 8 位）</td></tr><tr><td><code>z</code></td><td>28-51</td><td>24 bits</td><td>0-16M</td><td>Z 坐标（世界边界内）</td></tr><tr><td><code>x</code></td><td>4-27</td><td>24 bits</td><td>0-16M</td><td>X 坐标（世界边界内）</td></tr><tr><td>预留</td><td>0-3</td><td>4 bits</td><td>-</td><td>预留扩展</td></tr></tbody></table>
+<h3>4.4 提取字段</h3>
+<pre class="code-block"><code class="language-java">public static int getLvlFromKey(long key) {
+    return (int) (key &gt;&gt; 60);
+}
+
+public static int getYFromKey(long key) {
+    return (int) ((key &gt;&gt; 52) &amp; 0xFF);
+}
+
+public static int getZFromKey(long key) {
+    return (int) ((key &gt;&gt; 28) &amp; 0xFFFFFF);
+}
+
+public static int getXFromKey(long key) {
+    return (int) ((key &gt;&gt; 4) &amp; 0xFFFFFF);
+}</code></pre>
+<p><hr></p>
+<h2 id="5-双层-lru-缓存设计">5. 双层 LRU 缓存设计</h2>
+<h3>5.1 缓存架构概述</h3>
+<div class="mermaid-wrapper mermaid-container">
+<div class="mermaid">flowchart LR
+    subgraph Primary["第一层：分片哈希表"]
+        P0["Shard 0<br/>(StampedLock)"]
+        P1["Shard 1<br/>(StampedLock)"]
+        PN["Shard N<br/>(StampedLock)"]
+    end
+    
+    subgraph Secondary["第二层：LRU 双向链表"]
+        L1["Most Recent"]
+        L2["Middle"]
+        LN["Least Recent"]
+    end
+    
+    subgraph Operations["操作流程"]
+        A["acquire()"]
+        R["release()"]
+    end
+    
+    A -->|"命中"| Return["返回 Section"]
+    A -->|"未命中"| Load["从磁盘加载"]
+    R -->|"引用=0"| Move["移至 LRU"]
+    
+    Load --> P0
+    Move --> L1
+    
+    style Primary fill:#e8f5e9
+    style Secondary fill:#fff3e0</div>
+</div>
+<h3>5.2 第一层：分片哈希表</h3>
+<pre class="code-block"><code class="language-java">private final Long2ObjectOpenHashMap&lt;VolatileHolder&lt;WorldSection&gt;&gt;[] loadedSectionCache;
+private final StampedLock[] locks;
+
+// 默认 64 个分片
+private static final int DEFAULT_CACHE_SHARD_COUNT = 64;</code></pre>
+<p><strong>设计优势</strong>：
+<ul><li>减少锁竞争：不同分片可并行访问</li>
+<li><code>StampedLock</code>：读多写少场景下的高效锁</li></ul></p>
+<h3>5.3 第二层：LRU 双向链表</h3>
+<pre class="code-block"><code class="language-java">private final Long2ObjectLinkedOpenHashMap&lt;WorldSection&gt; lruSecondaryCache;
+private final StampedLock lruLock;</code></pre>
+<p><strong>作用</strong>：
+<ul><li>保存已卸载但保留数据的 sections</li>
+<li>复用 <code>long[]</code> 数组，避免频繁 GC</li>
+<li>最近访问的排在链表头部</li></ul></p>
+<h3>5.4 获取 Section (acquire)</h3>
+<pre class="code-block"><code class="language-java">public WorldSection acquire(long key, boolean nullOnEmpty) {
+    int index = getCacheArrayIndex(key);
+    var cache = loadedSectionCache[index];
+    var lock = locks[index];
+    
+    // 尝试读锁
+    long stamp = lock.readLock();
+    holder = cache.get(key);
+    if (holder != null &amp;&amp; holder.obj != null) {
+        holder.obj.acquire();
+        lock.unlockRead(stamp);
+        return holder.obj;
+    }
+    lock.unlockRead(stamp);
+    
+    // 未命中：从磁盘或二级缓存加载
+    // ...
+}</code></pre>
+<h3>5.5 释放 Section (release)</h3>
+<pre class="code-block"><code class="language-java">public void release(WorldSection section, boolean nullOnEmpty) {
+    if (section.release() != 0) {
+        return; // 仍有引用
+    }
+    
+    if (section.isDirty) {
+        engine.saveSection(section); // 持久化脏数据
+    }
+    
+    // 从主缓存移除，添加到 LRU 链表
+    removeFromPrimaryCache(section);
+    addToSecondaryLRU(section);
+}</code></pre>
+<h3>5.6 缓存容量配置</h3>
+<pre class="code-block"><code class="language-java">private static final int ARRAY_REUSE_CACHE_SIZE = 400;
+private static final AtomicInteger ARRAY_REUSE_CACHE_COUNT = new AtomicInteger(0);
+private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new ConcurrentLinkedDeque&lt;&gt;();</code></pre>
+<p>LRU 缓存满时，最旧的 <code>long[]</code> 数组被回收复用，减少 GC 压力。</p>
+<p><hr></p>
+<h2 id="6-课后自查">6. 课后自查</h2>
+<p>✅ 以下问题可以帮助你检验对本章内容的理解：</p>
+<p><ul><li><strong>LOD 层级</strong>：Voxy 有几级 LOD？L4 层一个 Section 覆盖多少原版 chunk？</li>
+<li><strong>Mipper 算法</strong>：2×2×2 合并时，如果 8 个体素都是非空气方块，Mipper 如何选择保留哪一个？</li>
+<li><strong>传播机制</strong>：WorldUpdater 在什么情况下会停止向上传播 LOD 更新？</li>
+<li><strong>Section ID</strong>：如果一个 Section ID 的 <code>lvl=2, x=1000, y=64, z=2000</code>，请计算其在 64-bit 中的十六进制值。</li>
+<li><strong>双层缓存</strong>：ActiveSectionTracker 的两级缓存分别是什么？各有何作用？</li>
+<li><strong>数组复用</strong>：为什么要有 <code>ARRAY<em>REUSE</em>CACHE</code>？它解决了什么问题？</li></ul></p>
+<p><hr></p>
+<h2 id="参考文件">参考文件</h2>
+<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>WorldUpdater.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldUpdater.java</code></td></tr><tr><td>ActiveSectionTracker.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/ActiveSectionTracker.java</code></td></tr><tr><td>WorldEngine.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldEngine.java</code></td></tr><tr><td>WorldSection.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldSection.java</code></td></tr><tr><td>Mipper.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mipper.java</code></td></tr></tbody></table>
+            </div>
+
+            <div class="docs-footer">
+                <div class="prev-next"><a href="02-voxelized-section.html" class="prev">
+            <i class="fas fa-arrow-left"></i>
+            "VoxelizedSection：体素化区块数据结构"
+        </a><a href="../Part-2-Core-Mechanisms/01-thread-model.html" class="next">
+            "线程模型与异步任务调度"
+            <i class="fas fa-arrow-right"></i>
+        </a></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../../../script.js"></script>
+    <script src="../../../../../scripts/theme.js"></script>
+    <script src="../../../../../scripts/docs-sidebar.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof hljs === 'undefined') return;
+        document.querySelectorAll('.doc-content pre code').forEach(function(el) {
+          if (el.closest('.mermaid')) return;
+          var cls = el.className || '';
+          if (cls.indexOf('language-') === -1) {
+            el.classList.add('language-plaintext');
+            return;
+          }
+          var m = cls.match(/language-(\S+)/);
+          if (m && typeof hljs.getLanguage === 'function' && !hljs.getLanguage(m[1])) {
+            el.className = cls.replace(/language-\S+/, 'language-plaintext');
+          }
+        });
+        hljs.highlightAll();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+    <script src="../../../../../scripts/mermaid-controls.js"></script>
+</body>
+</html>
