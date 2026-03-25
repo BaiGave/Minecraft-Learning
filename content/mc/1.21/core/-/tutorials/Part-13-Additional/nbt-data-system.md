@@ -522,11 +522,11 @@ public static NbtCompound saveInventory(Iterable<ItemStack> inventory) {
 
 ## 相关链接
 
-- [ItemStack 物品堆](./Part-3-Block-Item/18-item-stack.md)
-- [ComponentMap 组件系统](./Part-3-Block-Item/19-item-component.md)
-- [方块实体 BlockEntity](./Part-3-Block-Item/16-block-entity.md)
-- [存档系统 Save System](./Part-10-Server/51-save-system.md)
-- [物品组件](./Part-3-Block-Item/19-item-component.md)
+- [ItemStack 物品堆](./Part-3-Block-Item/19-item-stack.md)
+- [ComponentMap 组件系统](./Part-3-Block-Item/20-item-component.md)
+- [方块实体 BlockEntity](./Part-3-Block-Item/17-block-entity.md)
+- [存档系统 Save System](../Part-10-Server/60-save-system.md)
+- [物品组件](./Part-3-Block-Item/20-item-component.md)
 
 ---
 

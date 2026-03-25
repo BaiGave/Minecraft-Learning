@@ -19,87 +19,100 @@ flowchart TB
         P1-1["注册表系统 ⭐<br/>04-registry-system.md"]
         P1-2["客户端-服务端架构<br/>05-client-server-arch.md"]
         P1-3["全局常量与版本<br/>06-shared-constants.md"]
-        P1-4["启动引导流程<br/>07-bootstrap-flow.md"]
+        P1-4["启动引导流程<br/>09-bootstrap-flow.md"]
     end
 
     subgraph Phase2["第2部分：世界系统 (5-7天)"]
-        P2-1["World核心类<br/>08-world-core.md"]
-        P2-2["Chunk区块系统<br/>09-chunk-system.md"]
-        P2-3["Biome生物群系<br/>10-biome-system.md"]
-        P2-4["地形生成<br/>11-terrain-gen.md"]
-        P2-5["光照系统<br/>12-lighting-system.md"]
-        P2-6["Heightmap高度图<br/>13-heightmap.md"]
+        P2-1["World核心类<br/>09-world-core.md"]
+        P2-2["Chunk区块系统<br/>10-chunk-system.md"]
+        P2-3["Biome生物群系<br/>11-biome-system.md"]
+        P2-4["地形生成<br/>12-terrain-gen.md"]
+        P2-5["光照系统<br/>13-lighting-system.md"]
+        P2-6["Heightmap高度图<br/>14-heightmap.md"]
     end
 
     subgraph Phase3["第3部分：方块物品 (5-7天)"]
-        P3-1["Block方块基础<br/>14-block-basics.md"]
-        P3-2["BlockState方块状态<br/>15-block-state.md"]
-        P3-3["BlockEntity方块实体<br/>16-block-entity.md"]
-        P3-4["Item物品基础<br/>17-item-basics.md"]
-        P3-5["ItemStack物品堆叠<br/>18-item-stack.md"]
-        P3-6["Component组件系统<br/>19-item-component.md"]
+        P3-1["Block方块基础<br/>15-block-basics.md"]
+        P3-2["BlockState方块状态<br/>16-block-state.md"]
+        P3-3["BlockEntity方块实体<br/>17-block-entity.md"]
+        P3-4["Item物品基础<br/>18-item-basics.md"]
+        P3-5["ItemStack物品堆叠<br/>19-item-stack.md"]
+        P3-6["Component组件系统<br/>20-item-component.md"]
     end
 
     subgraph Phase4["第4部分：实体系统 (5-7天)"]
-        P4-1["Entity实体入门<br/>20-entity-intro.md"]
-        P4-2["实体生命周期<br/>21-entity-lifecycle.md"]
-        P4-3["LivingEntity<br/>22-living-entity.md"]
-        P4-4["MobEntity生物<br/>23-mob-entity.md"]
-        P4-5["Attribute属性<br/>24-entity-attributes.md"]
-        P4-6["Damage伤害系统<br/>25-damage-system.md"]
-        P4-7["Spawn生成系统<br/>26-spawn-system.md"]
+        P4-1["Entity实体入门<br/>21-entity-intro.md"]
+        P4-2["实体生命周期<br/>22-entity-lifecycle.md"]
+        P4-3["LivingEntity<br/>23-living-entity.md"]
+        P4-4["MobEntity生物<br/>24-mob-entity.md"]
+        P4-5["Attribute属性<br/>25-entity-attributes.md"]
+        P4-6["Damage伤害系统<br/>26-damage-system.md"]
+        P4-7["Spawn生成系统<br/>27-spawn-system.md"]
     end
 
     subgraph Phase5["第5部分：AI系统 (5-7天)"]
-        P5-1["AI Brain入门 ⭐<br/>27-ai-brain-intro.md"]
-        P5-2["Memory记忆系统<br/>28-memory-system.md"]
-        P5-3["Sensor传感器<br/>29-sensor-system.md"]
-        P5-4["Task任务系统<br/>30-task-system.md"]
-        P5-5["Activity & Schedule<br/>31-activity-schedule.md"]
-        P5-6["Pathfinding路径<br/>32-pathfinding.md"]
+        P5-1["AI Brain入门 ⭐<br/>28-ai-brain-intro.md"]
+        P5-2["Memory记忆系统<br/>29-memory-system.md"]
+        P5-3["Sensor传感器<br/>30-sensor-system.md"]
+        P5-4["Task任务系统<br/>31-task-system.md"]
+        P5-5["Activity & Schedule<br/>32-activity-schedule.md"]
+        P5-6["Pathfinding路径<br/>33-pathfinding.md"]
+        P5-7["AI控制<br/>34-ai-control-system.md"]
     end
 
     subgraph Phase6["第6部分：网络系统 (3-5天)"]
-        P6-1["Network网络入门<br/>33-network-intro.md"]
-        P6-2["Packet数据包<br/>34-packet-system.md"]
-        P6-3["Protocol协议状态<br/>35-protocol-states.md"]
-        P6-4["Sync同步机制<br/>36-sync-mechanism.md"]
+        P6-1["Network网络入门<br/>35-network-intro.md"]
+        P6-2["Packet数据包<br/>36-packet-system.md"]
+        P6-3["Protocol协议状态<br/>37-protocol-states.md"]
+        P6-4["Sync同步机制<br/>38-sync-mechanism.md"]
+        P6-5["登录流程<br/>39-login-system.md"]
+        P6-6["Play数据包入门<br/>40-play-packet-intro.md"]
+        P6-7["聊天协议<br/>41-chat-system.md"]
     end
 
     subgraph Phase7["第7部分：命令系统 (2-3天)"]
-        P7-1["Command命令入门<br/>37-command-intro.md"]
-        P7-2["Brigadier基础<br/>38-brigadier-basics.md"]
-        P7-3["自定义命令<br/>39-custom-command.md"]
+        P7-1["Command命令入门<br/>42-command-intro.md"]
+        P7-2["Brigadier基础<br/>43-brigadier-basics.md"]
+        P7-3["自定义命令<br/>44-custom-command.md"]
+        P7-4["命令进阶<br/>45-command-advanced.md"]
     end
 
     subgraph Phase8["第8部分：资源系统 (3-5天)"]
-        P8-1["ResourcePack资源包<br/>40-resource-pack.md"]
-        P8-2["Datapack数据包<br/>41-datapack-intro.md"]
-        P8-3["LootTable战利品<br/>42-loot-table.md"]
-        P8-4["Advancement进度<br/>43-advancement.md"]
-        P8-5["Recipe配方<br/>44-recipe-system.md"]
+        P8-1["ResourcePack资源包<br/>46-resource-pack.md"]
+        P8-2["Datapack数据包<br/>47-datapack-intro.md"]
+        P8-3["LootTable战利品<br/>48-loot-table.md"]
+        P8-4["Advancement进度<br/>49-advancement.md"]
+        P8-5["Recipe配方<br/>50-recipe-system.md"]
     end
 
     subgraph Phase9["第9部分：客户端 (3-5天)"]
-        P9-1["MinecraftClient<br/>45-minecraft-client.md"]
-        P9-2["Render渲染<br/>46-render-system.md"]
-        P9-3["GUI界面<br/>47-gui-system.md"]
-        P9-4["Input输入<br/>48-input-handling.md"]
+        P9-1["MinecraftClient<br/>51-minecraft-client.md"]
+        P9-2["Render渲染<br/>52-render-system.md"]
+        P9-3["GUI界面<br/>53-gui-system.md"]
+        P9-4["Input输入<br/>54-input-handling.md"]
+        P9-5["渲染层级<br/>55-render-layer.md"]
+        P9-6["实体模型<br/>56-entity-model.md"]
+        P9-7["声音系统<br/>70-sound-system.md"]
     end
 
     subgraph Phase10["第10部分：服务端 (2-3天)"]
-        P10-1["Server服务端入门<br/>49-server-intro.md"]
-        P10-2["PlayerManager玩家<br/>50-player-manager.md"]
-        P10-3["Save存档系统<br/>51-save-system.md"]
-        P10-4["独立vs整合服务器<br/>52-dedicated-vs-integrated.md"]
+        P10-1["Server服务端入门<br/>57-server-intro.md"]
+        P10-2["PlayerManager玩家<br/>58-player-manager.md"]
+        P10-3["Tick主循环<br/>59-tick-system.md"]
+        P10-4["Save存档系统<br/>60-save-system.md"]
+        P10-5["独立vs整合服务器<br/>61-dedicated-vs-integrated.md"]
     end
 
     subgraph Phase11["第11部分：进阶 (3-5天)"]
-        P11-1["DataFixer数据修复<br/>53-datafixer.md"]
-        P11-2["Fluid流体<br/>54-fluids.md"]
-        P11-3["Village村民<br/>55-village-system.md"]
-        P11-4["Raid袭击<br/>56-raid-system.md"]
-        P11-5["Structure结构<br/>57-structure-system.md"]
+        P11-1["DataFixer数据修复<br/>62-datafixer.md"]
+        P11-2["Fluid流体<br/>63-fluid-system.md"]
+        P11-3["Village村民<br/>64-village-system.md"]
+        P11-4["Raid袭击<br/>65-raid-system.md"]
+        P11-5["Structure结构<br/>66-structure-system.md"]
+        P11-6["Profiler<br/>67-profiler-system.md"]
+        P11-7["Explosion爆炸<br/>68-explosion-system.md"]
+        P11-8["Vehicle载具<br/>69-vehicle-system.md"]
+        P11-9["RCON与语言<br/>70-rcon-language-system.md"]
     end
 
     subgraph Phase12["第12部分：实战 💪"]
@@ -114,14 +127,14 @@ flowchart TB
     P1-4 --> P2-1 --> P2-2 --> P2-3 --> P2-4 --> P2-5 --> P2-6
     P2-6 --> P3-1 --> P3-2 --> P3-3 --> P3-4 --> P3-5 --> P3-6
     P3-6 --> P4-1 --> P4-2 --> P4-3 --> P4-4 --> P4-5 --> P4-6 --> P4-7
-    P4-7 --> P5-1 --> P5-2 --> P5-3 --> P5-4 --> P5-5 --> P5-6
-    P5-6 --> P6-1 --> P6-2 --> P6-3 --> P6-4
-    P6-4 --> P7-1 --> P7-2 --> P7-3
-    P7-3 --> P8-1 --> P8-2 --> P8-3 --> P8-4 --> P8-5
-    P8-5 --> P9-1 --> P9-2 --> P9-3 --> P9-4
-    P9-4 --> P10-1 --> P10-2 --> P10-3 --> P10-4
-    P10-4 --> P11-1 --> P11-2 --> P11-3 --> P11-4 --> P11-5
-    P11-5 --> P12-1
+    P4-7 --> P5-1 --> P5-2 --> P5-3 --> P5-4 --> P5-5 --> P5-6 --> P5-7
+    P5-7 --> P6-1 --> P6-2 --> P6-3 --> P6-4 --> P6-5 --> P6-6 --> P6-7
+    P6-7 --> P7-1 --> P7-2 --> P7-3 --> P7-4
+    P7-4 --> P8-1 --> P8-2 --> P8-3 --> P8-4 --> P8-5
+    P8-5 --> P9-1 --> P9-2 --> P9-3 --> P9-4 --> P9-5 --> P9-6 --> P9-7
+    P9-7 --> P10-1 --> P10-2 --> P10-3 --> P10-4 --> P10-5
+    P10-5 --> P11-1 --> P11-2 --> P11-3 --> P11-4 --> P11-5 --> P11-6 --> P11-7 --> P11-8 --> P11-9
+    P11-9 --> P12-1
     P12-1 --> P12-2 --> P12-3 --> P12-4
 
     style P1-1 fill:#ff6b6b,color:#fff

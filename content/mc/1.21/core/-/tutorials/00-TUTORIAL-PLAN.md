@@ -21,77 +21,90 @@ tutorials/
 │   ├── 04-registry-system.md     # 注册表系统（最重要！）
 │   ├── 05-client-server-arch.md  # 客户端-服务端架构
 │   ├── 06-shared-constants.md    # 全局常量与版本
-│   └── 07-bootstrap-flow.md      # 启动引导流程
+│   └── 09-bootstrap-flow.md      # 启动引导流程
 │
 ├── Part-2-World/                 # 第2部分：世界系统
-│   ├── 08-world-core.md          # 世界核心类
-│   ├── 09-chunk-system.md        # 区块系统
-│   ├── 10-biome-system.md        # 生物群系系统
-│   ├── 11-terrain-gen.md         # 地形生成
-│   ├── 12-lighting-system.md     # 光照系统
-│   └── 13-heightmap.md           # 高度图
+│   ├── 09-world-core.md          # 世界核心类
+│   ├── 10-chunk-system.md        # 区块系统
+│   ├── 11-biome-system.md        # 生物群系系统
+│   ├── 12-terrain-gen.md         # 地形生成
+│   ├── 13-lighting-system.md     # 光照系统
+│   └── 14-heightmap.md           # 高度图
 │
 ├── Part-3-Block-Item/            # 第3部分：方块与物品
-│   ├── 14-block-basics.md        # 方块基础
-│   ├── 15-block-state.md         # 方块状态
-│   ├── 16-block-entity.md        # 方块实体
-│   ├── 17-item-basics.md         # 物品基础
-│   ├── 18-item-stack.md          # 物品堆叠
-│   └── 19-item-component.md      # 物品组件（1.21新特性）
+│   ├── 15-block-basics.md        # 方块基础
+│   ├── 16-block-state.md         # 方块状态
+│   ├── 17-block-entity.md        # 方块实体
+│   ├── 18-item-basics.md         # 物品基础
+│   ├── 19-item-stack.md          # 物品堆叠
+│   └── 20-item-component.md      # 物品组件（1.21新特性）
 │
 ├── Part-4-Entity/                # 第4部分：实体系统
-│   ├── 20-entity-intro.md        # 实体入门
-│   ├── 21-entity-lifecycle.md    # 实体生命周期
-│   ├── 22-living-entity.md       # 有生命实体
-│   ├── 23-mob-entity.md          # 生物实体
-│   ├── 24-entity-attributes.md    # 属性系统
-│   ├── 25-damage-system.md       # 伤害系统
-│   └── 26-spawn-system.md        # 生成系统
+│   ├── 21-entity-intro.md        # 实体入门
+│   ├── 22-entity-lifecycle.md    # 实体生命周期
+│   ├── 23-living-entity.md       # 有生命实体
+│   ├── 24-mob-entity.md          # 生物实体
+│   ├── 25-entity-attributes.md    # 属性系统
+│   ├── 26-damage-system.md       # 伤害系统
+│   └── 27-spawn-system.md        # 生成系统
 │
 ├── Part-5-AI/                     # 第5部分：AI系统
-│   ├── 27-ai-brain-intro.md      # AI大脑入门
-│   ├── 28-memory-system.md       # 记忆系统
-│   ├── 29-sensor-system.md       # 传感器系统
-│   ├── 30-task-system.md         # 任务系统
-│   ├── 31-activity-schedule.md   # 活动与日程
-│   └── 32-pathfinding.md         # 路径导航
+│   ├── 28-ai-brain-intro.md      # AI大脑入门
+│   ├── 29-memory-system.md       # 记忆系统
+│   ├── 30-sensor-system.md       # 传感器系统
+│   ├── 31-task-system.md         # 任务系统
+│   ├── 32-activity-schedule.md   # 活动与日程
+│   ├── 33-pathfinding.md         # 路径导航
+│   └── 34-ai-control-system.md   # AI 控制与移动
 │
 ├── Part-6-Network/               # 第6部分：网络系统
-│   ├── 33-network-intro.md      # 网络入门
-│   ├── 34-packet-system.md       # 数据包系统
-│   ├── 35-protocol-states.md     # 协议状态机
-│   └── 36-sync-mechanism.md      # 同步机制
+│   ├── 35-network-intro.md       # 网络入门
+│   ├── 36-packet-system.md       # 数据包系统
+│   ├── 37-protocol-states.md     # 协议状态机
+│   ├── 38-sync-mechanism.md      # 同步机制
+│   ├── 39-login-system.md       # 登录流程
+│   ├── 40-play-packet-intro.md   # Play 阶段数据包入门
+│   └── 41-chat-system.md        # 聊天协议
 │
 ├── Part-7-Command/               # 第7部分：命令系统
-│   ├── 37-command-intro.md       # 命令入门
-│   ├── 38-brigadier-basics.md    # Brigadier基础
-│   └── 39-custom-command.md      # 自定义命令
+│   ├── 42-command-intro.md       # 命令入门
+│   ├── 43-brigadier-basics.md    # Brigadier基础
+│   ├── 44-custom-command.md      # 自定义命令
+│   └── 45-command-advanced.md    # 命令进阶
 │
 ├── Part-8-Resource/              # 第8部分：资源系统
-│   ├── 40-resource-pack.md       # 资源包系统
-│   ├── 41-datapack-intro.md      # 数据包入门
-│   ├── 42-loot-table.md          # 战利品表
-│   ├── 43-advancement.md         # 进度系统
-│   └── 44-recipe-system.md       # 配方系统
+│   ├── 46-resource-pack.md       # 资源包系统
+│   ├── 47-datapack-intro.md      # 数据包入门
+│   ├── 48-loot-table.md          # 战利品表
+│   ├── 49-advancement.md         # 进度系统
+│   └── 50-recipe-system.md       # 配方系统
 │
 ├── Part-9-Client/                # 第9部分：客户端
-│   ├── 45-minecraft-client.md     # MinecraftClient主类
-│   ├── 46-render-system.md       # 渲染系统
-│   ├── 47-gui-system.md          # GUI系统
-│   └── 48-input-handling.md      # 输入处理
+│   ├── 51-minecraft-client.md    # MinecraftClient主类
+│   ├── 52-render-system.md       # 渲染系统
+│   ├── 53-gui-system.md          # GUI系统
+│   ├── 54-input-handling.md      # 输入处理
+│   ├── 55-render-layer.md       # 渲染层级
+│   ├── 56-entity-model.md       # 实体模型
+│   └── 70-sound-system.md       # 声音系统（与 Part-8 第 49 章区分）
 │
 ├── Part-10-Server/              # 第10部分：服务端
-│   ├── 49-server-intro.md        # 服务端入门
-│   ├── 50-player-manager.md      # 玩家管理
-│   ├── 51-save-system.md         # 存档系统
-│   └── 52-dedicated-vs-integrated.md # 独立vs整合
+│   ├── 57-server-intro.md        # 服务端入门
+│   ├── 58-player-manager.md      # 玩家管理
+│   ├── 59-tick-system.md         # Tick 与主循环
+│   ├── 60-save-system.md         # 存档系统
+│   └── 61-dedicated-vs-integrated.md # 独立vs整合
 │
 ├── Part-11-Advanced/             # 第11部分：进阶主题
-│   ├── 53-datafixer.md           # 数据修复系统
-│   ├── 54-fluids.md              # 流体系统
-│   ├── 55-village-system.md      # 村民系统
-│   ├── 56-raid-system.md         # 袭击系统
-│   └── 57-structure-system.md    # 结构系统
+│   ├── 62-datafixer.md           # 数据修复系统
+│   ├── 63-fluid-system.md       # 流体系统
+│   ├── 64-village-system.md      # 村民系统
+│   ├── 65-raid-system.md         # 袭击系统
+│   ├── 66-structure-system.md    # 结构系统
+│   ├── 67-profiler-system.md     # 性能分析
+│   ├── 68-explosion-system.md    # 爆炸系统
+│   ├── 69-vehicle-system.md      # 载具系统
+│   └── 70-rcon-language-system.md # RCON 与语言文件
 │
 └── Part-12-Practice/            # 第12部分：实战项目
     ├── 98-project1-block.md       # 项目1：添加新方块
@@ -230,7 +243,7 @@ Mermaid图：
   - 查看 SharedConstants.java
 ```
 
-#### 07-bootstrap-flow.md
+#### 09-bootstrap-flow.md
 ```
 目的：理解MC启动时发生了什么
 Mermaid图：
@@ -245,7 +258,7 @@ Mermaid图：
 
 ### Part-2-World（第2部分：世界系统）
 
-#### 08-world-core.md
+#### 09-world-core.md
 ```
 目的：理解World类的核心作用
 Mermaid图：
@@ -257,7 +270,7 @@ Mermaid图：
   - 方块查询
 ```
 
-#### 09-chunk-system.md
+#### 10-chunk-system.md
 ```
 目的：理解MC如何存储和管理区块
 Mermaid图：
@@ -269,7 +282,7 @@ Mermaid图：
   - 如何获取方块
 ```
 
-#### 10-biome-system.md
+#### 11-biome-system.md
 ```
 目的：理解生物群系如何工作
 Mermaid图：
@@ -280,7 +293,7 @@ Mermaid图：
   - 生物群系ID
 ```
 
-#### 11-terrain-gen.md
+#### 12-terrain-gen.md
 ```
 目的：理解地形是如何生成的
 Mermaid图：
@@ -291,7 +304,7 @@ Mermaid图：
   - 特征生成
 ```
 
-#### 12-lighting-system.md
+#### 13-lighting-system.md
 ```
 目的：理解光照计算
 Mermaid图：
@@ -301,7 +314,7 @@ Mermaid图：
   - 光照传播算法
 ```
 
-#### 13-heightmap.md
+#### 14-heightmap.md
 ```
 目的：理解高度图的作用
 Mermaid图：
@@ -315,7 +328,7 @@ Mermaid图：
 
 ### Part-3-Block-Item（第3部分：方块与物品）
 
-#### 14-block-basics.md
+#### 15-block-basics.md
 ```
 目的：理解方块类的结构
 Mermaid图：
@@ -326,7 +339,7 @@ Mermaid图：
   - 方块属性
 ```
 
-#### 15-block-state.md
+#### 16-block-state.md
 ```
 目的：理解方块状态系统
 Mermaid图：
@@ -337,7 +350,7 @@ Mermaid图：
   - 状态转换
 ```
 
-#### 16-block-entity.md
+#### 17-block-entity.md
 ```
 目的：理解方块实体
 Mermaid图：
@@ -348,7 +361,7 @@ Mermaid图：
   - NBT数据存储
 ```
 
-#### 17-item-basics.md
+#### 18-item-basics.md
 ```
 目的：理解物品类的结构
 Mermaid图：
@@ -359,7 +372,7 @@ Mermaid图：
   - ItemGroup
 ```
 
-#### 18-item-stack.md
+#### 19-item-stack.md
 ```
 目的：理解ItemStack
 Mermaid图：
@@ -370,7 +383,7 @@ Mermaid图：
   - 组件系统
 ```
 
-#### 19-item-component.md
+#### 20-item-component.md
 ```
 目的：理解1.21的组件系统
 Mermaid图：
@@ -384,7 +397,7 @@ Mermaid图：
 
 ### Part-4-Entity（第4部分：实体系统）
 
-#### 20-entity-intro.md
+#### 21-entity-intro.md
 ```
 目的：实体系统入门
 Mermaid图：
@@ -395,7 +408,7 @@ Mermaid图：
   - EntityType注册
 ```
 
-#### 21-entity-lifecycle.md
+#### 22-entity-lifecycle.md
 ```
 目的：理解实体的生命周期
 Mermaid图：
@@ -405,7 +418,7 @@ Mermaid图：
   - Tick更新
 ```
 
-#### 22-living-entity.md
+#### 23-living-entity.md
 ```
 目的：理解有生命实体
 Mermaid图：
@@ -416,7 +429,7 @@ Mermaid图：
   - 效果
 ```
 
-#### 23-mob-entity.md
+#### 24-mob-entity.md
 ```
 目的：理解生物实体
 核心内容：
@@ -424,7 +437,7 @@ Mermaid图：
   - 导航和移动
 ```
 
-#### 24-entity-attributes.md
+#### 25-entity-attributes.md
 ```
 目的：理解属性系统
 Mermaid图：
@@ -434,7 +447,7 @@ Mermaid图：
   - 属性修改
 ```
 
-#### 25-damage-system.md
+#### 26-damage-system.md
 ```
 目的：理解伤害计算
 Mermaid图：
@@ -445,7 +458,7 @@ Mermaid图：
   - 护甲
 ```
 
-#### 26-spawn-system.md
+#### 27-spawn-system.md
 ```
 目的：理解实体生成
 Mermaid图：
@@ -459,7 +472,7 @@ Mermaid图：
 
 ### Part-5-AI（第5部分：AI系统）
 
-#### 27-ai-brain-intro.md
+#### 28-ai-brain-intro.md
 ```
 目的：AI大脑入门
 Mermaid图：
@@ -469,7 +482,7 @@ Mermaid图：
   - Brain、Task、Activity的关系
 ```
 
-#### 28-memory-system.md
+#### 29-memory-system.md
 ```
 目的：理解记忆系统
 Mermaid图：
@@ -479,7 +492,7 @@ Mermaid图：
   - 记忆过期
 ```
 
-#### 29-sensor-system.md
+#### 30-sensor-system.md
 ```
 目的：理解传感器系统
 Mermaid图：
@@ -489,7 +502,7 @@ Mermaid图：
   - 常见传感器
 ```
 
-#### 30-task-system.md
+#### 31-task-system.md
 ```
 目的：理解任务系统
 核心内容：
@@ -497,7 +510,7 @@ Mermaid图：
   - 优先级
 ```
 
-#### 31-activity-schedule.md
+#### 32-activity-schedule.md
 ```
 目的：理解活动和日程
 Mermaid图：
@@ -507,7 +520,7 @@ Mermaid图：
   - Schedule
 ```
 
-#### 32-pathfinding.md
+#### 33-pathfinding.md
 ```
 目的：理解路径导航
 Mermaid图：

@@ -1,313 +1,467 @@
-# Minecraft 1.21 源码萌新教程
+# Minecraft 1.21 源码教程总入口
 
-> 面向零基础开发者的 Minecraft 源码完全指南
+> 深入理解 Minecraft 核心架构，从源码开始
+>
+> 面向人群：想学习 Minecraft 源码、想做 Mod 开发的开发者
+>
+> 学习目标：理解 MC 架构，能读懂源码，会做 Mod
 
 ---
 
-## 教程概览
+## 课程介绍
 
-本教程旨在帮助完全不懂 Minecraft 源码的人，通过这套课程：
-1. **理解** Minecraft 的架构设计
-2. **掌握** 核心系统的实现原理
-3. **能够** 进行 Mod 开发
+本教程带你深入学习 Minecraft 1.21 源码，通过**图表化**、**游戏化**的方式，让你轻松理解复杂的游戏系统。
+
+### 你将学到什么
+
+```
+✅ Minecraft 的整体架构
+✅ 注册表系统（Registry）—— MC 最核心的概念
+✅ 客户端-服务端分离原理
+✅ 世界、方块、物品、实体的实现
+✅ AI 大脑系统（Brain）
+✅ 网络协议与数据包
+✅ 命令系统
+✅ 资源系统
+✅ 渲染引擎
+```
+
+---
 
 ## 学习路线图
 
 ```mermaid
 flowchart TB
-    subgraph Phase0["第0部分：前置知识"]
-        P0-1["Java基础"] --> P0-2["开发环境"]
-        P0-2 --> P0-3["项目结构"]
+    subgraph Part0["Part-0 前置准备"]
+        P0-1["Java 基础速查"]
+        P0-2["开发环境搭建"]
+        P0-3["项目结构介绍"]
+        P0-4["课程概述"]
     end
 
-    subgraph Phase1["第1部分：核心基础 ⭐"]
-        P0-3 --> P1-1["注册表系统"]
-        P1-1 --> P1-2["客户端-服务端"]
-        P1-2 --> P1-3["启动流程"]
+    subgraph Part1["Part-1 核心基础 ⭐"]
+        P1-1["注册表系统 ⭐<br/>MC 最核心"]
+        P1-2["客户端-服务端架构"]
+        P1-3["常量与版本"]
+        P1-4["启动引导流程"]
+        P1-5["Tick 系统"]
     end
 
-    subgraph Phase2["第2部分：世界系统"]
-        P1-3 --> P2-1["World类"]
-        P2-1 --> P2-2["Chunk"]
-        P2-2 --> P2-3["地形生成"]
+    subgraph Part2["Part-2 世界系统"]
+        P2-1["World 核心"]
+        P2-2["Chunk 区块"]
+        P2-3["Biome 生物群系"]
+        P2-4["地形生成"]
+        P2-5["光照系统"]
+        P2-6["Heightmap 高度图"]
     end
 
-    subgraph Phase3["第3部分：方块物品"]
-        P2-3 --> P3-1["方块基础"]
-        P3-1 --> P3-2["方块状态"]
-        P3-2 --> P3-3["物品系统"]
+    subgraph Part3["Part-3 方块物品"]
+        P3-1["Block 方块"]
+        P3-2["BlockState 状态"]
+        P3-3["BlockEntity 实体"]
+        P3-4["Item 物品"]
+        P3-5["ItemStack 堆叠"]
+        P3-6["Component 组件"]
     end
 
-    subgraph Phase4["第4部分：实体系统"]
-        P3-3 --> P4-1["实体入门"]
-        P4-1 --> P4-2["生命周期"]
-        P4-2 --> P4-3["属性伤害"]
+    subgraph Part4["Part-4 实体系统"]
+        P4-1["Entity 入门"]
+        P4-2["生命周期"]
+        P4-3["LivingEntity"]
+        P4-4["MobEntity"]
+        P4-5["属性系统"]
+        P4-6["伤害系统"]
+        P4-7["生成系统"]
     end
 
-    subgraph Phase5["第5部分：AI系统 ⭐"]
-        P4-3 --> P5-1["AI大脑"]
-        P5-1 --> P5-2["记忆传感器"]
-        P5-2 --> P5-3["任务活动"]
+    subgraph Part5["Part-5 AI系统 ⭐"]
+        P5-1["AI Brain ⭐<br/>最有趣"]
+        P5-2["Memory 记忆"]
+        P5-3["Sensor 传感器"]
+        P5-4["Task 任务"]
+        P5-5["Activity 日程"]
+        P5-6["Pathfinding 路径"]
+        P5-7["AI 控制"]
     end
 
-    subgraph Phase6["第6-8部分：系统"]
-        P5-3 --> P6-1["网络协议"]
-        P6-1 --> P6-2["命令系统"]
-        P6-2 --> P6-3["资源系统"]
+    subgraph Part6["Part-6 网络系统"]
+        P6-1["网络入门"]
+        P6-2["数据包"]
+        P6-3["协议状态"]
+        P6-4["同步机制"]
+        P6-5["登录流程"]
+        P6-6["Play 数据包"]
+        P6-7["聊天协议"]
     end
 
-    subgraph Phase7["第9-10部分"]
-        P6-3 --> P7-1["客户端"]
-        P7-1 --> P7-2["服务端"]
+    subgraph Part7["Part-7 命令系统"]
+        P7-1["命令入门"]
+        P7-2["Brigadier"]
+        P7-3["自定义命令"]
     end
 
-    subgraph Phase8["第11-12部分"]
-        P7-2 --> P8-1["进阶主题"]
-        P8-1 --> P8-2["实战项目 💪"]
+    subgraph Part8["Part-8 资源系统"]
+        P8-1["资源包"]
+        P8-2["数据包"]
+        P8-3["战利品表"]
+        P8-4["进度系统"]
+        P8-5["配方系统"]
     end
+
+    subgraph Part9["Part-9 客户端"]
+        P9-1["MinecraftClient"]
+        P9-2["渲染系统"]
+        P9-3["GUI 系统"]
+        P9-4["输入处理"]
+        P9-5["渲染层级"]
+        P9-6["实体模型"]
+        P9-7["声音系统"]
+    end
+
+    subgraph Part10["Part-10 服务端"]
+        P10-1["服务端入门"]
+        P10-2["玩家管理"]
+        P10-3["Tick 与主循环"]
+        P10-4["存档系统"]
+        P10-5["独立 vs 整合"]
+    end
+
+    subgraph Part11["Part-11 进阶主题"]
+        P11-1["DataFixer"]
+        P11-2["流体系统"]
+        P11-3["村庄系统"]
+        P11-4["袭击系统"]
+        P11-5["结构系统"]
+        P11-6["Profiler"]
+        P11-7["爆炸"]
+        P11-8["载具"]
+        P11-9["RCON 与语言"]
+    end
+
+    subgraph Part12["Part-12 实战项目 💪"]
+        P12-1["项目1:方块"]
+        P12-2["项目2:物品"]
+        P12-3["项目3:生物"]
+        P12-4["项目4:数据包"]
+    end
+
+    P0-1 --> P0-2 --> P0-3 --> P0-4
+    P0-4 --> P1-1 --> P1-2 --> P1-3 --> P1-4 --> P1-5
+    P1-5 --> P2-1 --> P2-2 --> P2-3 --> P2-4 --> P2-5 --> P2-6
+    P2-6 --> P3-1 --> P3-2 --> P3-3 --> P3-4 --> P3-5 --> P3-6
+    P3-6 --> P4-1 --> P4-2 --> P4-3 --> P4-4 --> P4-5 --> P4-6 --> P4-7
+    P4-7 --> P5-1 --> P5-2 --> P5-3 --> P5-4 --> P5-5 --> P5-6 --> P5-7
+    P5-7 --> P6-1 --> P6-2 --> P6-3 --> P6-4 --> P6-5 --> P6-6 --> P6-7
+    P6-7 --> P7-1 --> P7-2 --> P7-3
+    P7-3 --> P8-1 --> P8-2 --> P8-3 --> P8-4 --> P8-5
+    P8-5 --> P9-1 --> P9-2 --> P9-3 --> P9-4 --> P9-5 --> P9-6 --> P9-7
+    P9-7 --> P10-1 --> P10-2 --> P10-3 --> P10-4 --> P10-5
+    P10-5 --> P11-1 --> P11-2 --> P11-3 --> P11-4 --> P11-5 --> P11-6 --> P11-7 --> P11-8 --> P11-9
+    P11-9 --> P12-1 --> P12-2 --> P12-3 --> P12-4
 
     style P1-1 fill:#ff6b6b,color:#fff
     style P5-1 fill:#ff6b6b,color:#fff
-    style P8-2 fill:#ffd93d,color:#000
+    style P12-1 fill:#6bcb77,color:#fff
+    style P12-2 fill:#6bcb77,color:#fff
+    style P12-3 fill:#6bcb77,color:#fff
+    style P12-4 fill:#6bcb77,color:#fff
 ```
 
 ---
 
-## 教程目录
+## 每个 Part 简介
 
-### Part-0：前置知识 (5章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 课程概述 | `Part-0-Prerequisites/00-course-overview.md` | 学习路线图、课程目标 |
-| Java基础 | `Part-0-Prerequisites/01-java-basics.md` | 面向源码阅读的Java速查 |
-| 开发环境 | `Part-0-Prerequisites/02-development-env.md` | IDEA配置、调试方法 |
-| 项目结构 | `Part-0-Prerequisites/03-project-intro.md` | 5364个文件分类 |
-| 源码查找指南 | `Part-0-Prerequisites/04-sourcecode-guide.md` | ⭐ 新增！快速定位源码 |
+| Part | 名称 | 核心内容 | 重要性 |
+|------|------|----------|--------|
+| **Part-0** | 前置准备 | Java 基础、环境搭建、项目结构 | 必读 |
+| **Part-1** | 核心基础 | 注册表系统、客户端-服务端架构 | ⭐ 核心 |
+| **Part-2** | 世界系统 | World、Chunk、Biome、地形生成、光照 | 重要 |
+| **Part-3** | 方块物品 | Block、BlockEntity、Item、ItemStack | 重要 |
+| **Part-4** | 实体系统 | Entity、LivingEntity、MobEntity、属性、伤害 | 重要 |
+| **Part-5** | AI系统 | Brain、Memory、Sensor、Task、Pathfinding | ⭐ 核心 |
+| **Part-6** | 网络系统 | Packet、Protocol、Sync | 重要 |
+| **Part-7** | 命令系统 | Command、Brigadier、自定义命令 | 实用 |
+| **Part-8** | 资源系统 | ResourcePack、Datapack、战利品、配方 | 实用 |
+| **Part-9** | 客户端 | MinecraftClient、Render、GUI、Input | 进阶 |
+| **Part-10** | 服务端 | Server、PlayerManager、Save | 进阶 |
+| **Part-11** | 进阶主题 | DataFixer、Fluid、Village、Raid | 深入 |
+| **Part-12** | 实战项目 | 4 个动手项目 | 实践 |
 
-### Part-1：核心基础 (4章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 注册表系统 ⭐ | `Part-1-Foundation/04-registry-system.md` | **最重要**！三层结构 |
-| 客户端-服务端 | `Part-1-Foundation/05-client-server-arch.md` | 分离架构 |
-| 全局常量 | `Part-1-Foundation/06-shared-constants.md` | 版本信息 |
-| 启动引导 | `Part-1-Foundation/07-bootstrap-flow.md` | 初始化流程 |
+---
 
-### Part-2：世界系统 (6章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| World核心 | `Part-2-World/08-world-core.md` | 世界基类 |
-| Chunk系统 | `Part-2-World/09-chunk-system.md` | 区块管理 |
-| 生物群系 | `Part-2-World/10-biome-system.md` | Biome |
-| 地形生成 | `Part-2-World/11-terrain-gen.md` | ChunkGenerator |
-| 光照系统 | `Part-2-World/12-lighting-system.md` | 光照传播 |
-| 高度图 | `Part-2-World/13-heightmap.md` | 四种高度图 |
+## 系统依赖关系图
 
-### Part-3：方块物品 (6章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| Block基础 | `Part-3-Block-Item/14-block-basics.md` | 方块类 |
-| BlockState | `Part-3-Block-Item/15-block-state.md` | 方块状态 |
-| BlockEntity | `Part-3-Block-Item/16-block-entity.md` | 方块实体 |
-| Item基础 | `Part-3-Block-Item/17-item-basics.md` | 物品类 |
-| ItemStack | `Part-3-Block-Item/18-item-stack.md` | 物品堆叠 |
-| Component | `Part-3-Block-Item/19-item-component.md` | 1.21新组件 |
+```mermaid
+flowchart TD
+    subgraph Core["核心层"]
+        Registry["注册表 Registry<br/>⭐ 最核心"]
+        Constants["常量 SharedConstants"]
+        Bootstrap["启动 Bootstrap"]
+        Tick["Tick 循环"]
+    end
 
-### Part-4：实体系统 (7章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| Entity入门 | `Part-4-Entity/20-entity-intro.md` | 实体基类 |
-| 生命周期 | `Part-4-Entity/21-entity-lifecycle.md` | 创建到销毁 |
-| LivingEntity | `Part-4-Entity/22-living-entity.md` | 有生命实体 |
-| MobEntity | `Part-4-Entity/23-mob-entity.md` | 生物实体 |
-| 属性系统 | `Part-4-Entity/24-entity-attributes.md` | Attribute |
-| 伤害系统 | `Part-4-Entity/25-damage-system.md` | 伤害计算 |
-| 生成系统 | `Part-4-Entity/26-spawn-system.md` | 实体生成 |
+    subgraph Content["内容层"]
+        Block["方块 Block"]
+        Item["物品 Item"]
+        Entity["实体 Entity"]
+        Biome["生物群系 Biome"]
+        Fluid["流体 Fluid"]
+    end
 
-### Part-5：AI系统 (6章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| AI大脑 ⭐ | `Part-5-AI/27-ai-brain-intro.md` | **最重要**！三层架构 |
-| 记忆系统 | `Part-5-AI/28-memory-system.md` | 记忆存储 |
-| 传感器 | `Part-5-AI/29-sensor-system.md` | 感知环境 |
-| 任务系统 | `Part-5-AI/30-task-system.md` | 行为动作 |
-| 活动日程 | `Part-5-AI/31-activity-schedule.md` | 作息表 |
-| 路径导航 | `Part-5-AI/32-pathfinding.md` | GPS导航 |
+    subgraph WorldLayer["世界层"]
+        World["World 世界"]
+        Chunk["Chunk 区块"]
+        Gen["地形生成"]
+        Light["光照系统"]
+        Heightmap["高度图"]
+        Border["世界边界"]
+    end
 
-### Part-6：网络系统 (4章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 网络入门 | `Part-6-Network/33-network-intro.md` | 网络基础 |
-| 数据包 | `Part-6-Network/34-packet-system.md` | Packet |
-| 协议状态 | `Part-6-Network/35-protocol-states.md` | 状态机 |
-| 同步机制 | `Part-6-Network/36-sync-mechanism.md` | 位置同步 |
+    subgraph EntityLayer["实体层"]
+        Living["LivingEntity"]
+        Mob["MobEntity"]
+        Player["PlayerEntity"]
+    end
 
-### Part-7：命令系统 (3章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 命令入门 | `Part-7-Command/37-command-intro.md` | 命令解析 |
-| Brigadier | `Part-7-Command/38-brigadier-basics.md` | 解析库 |
-| 自定义命令 | `Part-7-Command/39-custom-command.md` | 创建命令 |
+    subgraph AILayer["AI层 ⭐"]
+        Brain["AI 大脑 Brain"]
+        Memory["记忆 Memory"]
+        Sensor["传感器"]
+        Task["任务 Task"]
+        Path["路径导航"]
+    end
 
-### Part-8：资源系统 (5章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 资源包 | `Part-8-Resource/40-resource-pack.md` | 材质加载 |
-| 数据包 | `Part-8-Resource/41-datapack-intro.md` | 数据包结构 |
-| 战利品表 | `Part-8-Resource/42-loot-table.md` | 掉落物 |
-| 进度系统 | `Part-8-Resource/43-advancement.md` | 成就 |
-| 配方系统 | `Part-8-Resource/44-recipe-system.md` | 合成配方 |
+    subgraph Network["网络层"]
+        Packet["数据包 Packet"]
+        Protocol["协议状态"]
+        Sync["同步 Sync"]
+    end
 
-### Part-9：客户端 (4章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| MinecraftClient | `Part-9-Client/45-minecraft-client.md` | 客户端核心 |
-| 渲染系统 | `Part-9-Client/46-render-system.md` | 渲染管线 |
-| GUI系统 | `Part-9-Client/47-gui-system.md` | 界面 |
-| 输入处理 | `Part-9-Client/48-input-handling.md` | 键盘鼠标 |
+    subgraph Gameplay["游戏机制"]
+        Damage["伤害系统"]
+        Spawn["生成系统"]
+        Command["命令系统"]
+        Recipe["配方系统"]
+        Loot["战利品表"]
+        Adv["进度系统"]
+    end
 
-### Part-10：服务端 (4章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 服务端入门 | `Part-10-Server/49-server-intro.md` | 服务器核心 |
-| 玩家管理 | `Part-10-Server/50-player-manager.md` | PlayerManager |
-| 存档系统 | `Part-10-Server/51-save-system.md` | 自动保存 |
-| 服务器对比 | `Part-10-Server/52-dedicated-vs-integrated.md` | 独立vs整合 |
+    subgraph Client["客户端"]
+        MCClient["MinecraftClient"]
+        Render["渲染引擎"]
+        GUI["GUI 系统"]
+        Input["输入处理"]
+    end
 
-### Part-11：进阶主题 (5章)
-| 章节 | 文件 | 内容 |
-|------|------|------|
-| 数据修复 | `Part-11-Advanced/53-datafixer.md` | 版本迁移 |
-| 流体系统 | `Part-11-Advanced/54-fluids.md` | 水/岩浆 |
-| 村民系统 | `Part-11-Advanced/55-village-system.md` | 交易 |
-| 袭击系统 | `Part-11-Advanced/56-raid-system.md` | 围城 |
-| 结构系统 | `Part-11-Advanced/57-structure-system.md` | 生成 |
+    subgraph Server["服务端"]
+        Server["MinecraftServer"]
+        PlayerMgr["玩家管理"]
+        Save["存档系统"]
+    end
 
-### Part-12：实战项目 (4个项目)
-| 项目 | 文件 | 内容 |
-|------|------|------|
-| 新方块 | `Part-12-Practice/98-project1-block.md` | 魔法水晶 |
-| 新物品 | `Part-12-Practice/99-project2-item.md` | 魔法魔杖 |
-| 新生物 | `Part-12-Practice/100-project3-entity.md` | 火焰精灵 |
-| 数据包 | `Part-12-Practice/101-project4-datapack.md` | 自定义数据包 |
+    Registry --> Block
+    Registry --> Item
+    Registry --> Entity
+    Registry --> Biome
+    Registry --> Fluid
+
+    Block --> World
+    Item --> World
+    Entity --> World
+    Biome --> World
+
+    World --> Chunk
+    World --> Gen
+    World --> Light
+    World --> Heightmap
+    World --> Border
+
+    Entity --> Living
+    Living --> Mob
+    Living --> Player
+    Mob --> Brain
+
+    Brain --> Memory
+    Brain --> Sensor
+    Brain --> Task
+    Brain --> Path
+
+    World --> Packet
+    Packet --> Sync
+
+    Tick --> Server
+    Server --> PlayerMgr
+    Server --> Save
+
+    MCClient --> Render
+    MCClient --> GUI
+    MCClient --> Input
+
+    Network <-->|数据包| Client
+    Network <-->|数据包| Server
+
+    style Registry fill:#ffd93d,color:#000
+    style Brain fill:#ff6b6b,color:#fff
+    style World fill:#6bcb77,color:#fff
+```
+
+---
+
+## 萌新必懂三大核心
+
+### 1. 注册表系统（Registry）⭐
+
+> 想象注册表是**图书馆的索引卡片**
+
+```
+图书馆                    Minecraft
+─────────                ─────────
+书架上的书    ←──对应──→  方块、物品、实体
+索引卡片    ←──对应──→  注册表 Registry
+书的编号    ←──对应──→  Identifier (如 minecraft:stone)
+
+查找 "石头"：
+1. 用 "minecraft:stone" 查注册表
+2. → 找到石头方块的代码
+```
+
+### 2. 客户端-服务端分离
+
+> 想象你和朋友**视频通话**
+
+```
+你（客户端）              朋友（服务端）
+─────────────            ─────────────
+看到画面渲染              负责游戏逻辑
+发送操作                  验证操作
+本地预测                  权威数据源
+
+MC 多人游戏：
+- 客户端渲染看到的世界
+- 服务端运行真实的世界
+- 两者通过网络包同步
+```
+
+### 3. AI 大脑系统（Brain）⭐
+
+> AI 大脑 = 记忆 + 感知 + 行动
+
+```
+┌─────────────────────────────────────┐
+│           AI 大脑 Brain              │
+├─────────────────────────────────────┤
+│  Memory 记忆 ←── 传感器感知世界        │
+│      ↓                               │
+│  Brain 决策 ←── 根据记忆做决定        │
+│      ↓                               │
+│  Task 行动 ←── 执行任务               │
+└─────────────────────────────────────┘
+```
 
 ---
 
 ## 学习建议
 
-### 萌新学习路径
+### 学习顺序
 
 ```
-第1天:   Part-0 全部
-第2-5天: Part-1 全部 (⭐注册表是核心)
-第6-10天: Part-2 全部
-第11-15天: Part-3 全部
-第16-20天: Part-4 全部
-第21-25天: Part-5 全部 (⭐AI大脑是核心)
-第26-30天: Part-6 全部
-第31-33天: Part-7 全部
-第34-37天: Part-8 全部
-第38-42天: Part-9 全部
-第43-45天: Part-10 全部
-第46-50天: Part-11 全部
-第51+:    Part-12 实战
+1️⃣  从 Part-0 开始，按顺序学习
+2️⃣  每章先看 Mermaid 图，再看文字
+3️⃣  在 IDEA 中搜索对应的源码
+4️⃣  完成每章的练习
 ```
 
-### 每章节学习方法
+### 时间规划
 
-1. **先看图** - Mermaid 图是理解概念的最佳方式
-2. **再看文字** - 带着图的理解去读文字
-3. **然后看代码** - 代码是概念的具体实现
-4. **最后做练习** - 巩固所学知识
+| 阶段 | 内容 | 建议时间 | 累计 |
+|------|------|----------|------|
+| Part-0 | 前置知识 | 2-3 天 | 2-3 天 |
+| Part-1 | 核心基础 | 3-5 天 | 5-8 天 |
+| Part-2-4 | 世界方块实体 | 15-21 天 | 20-29 天 |
+| **Part-5** | **AI系统** | **5-7 天** | **25-36 天** |
+| Part-6-8 | 网络命令资源 | 8-13 天 | 33-49 天 |
+| Part-9-11 | 客户端进阶 | 8-13 天 | 41-62 天 |
+| Part-12 | 实战项目 | 7-14 天 | 48-76 天 |
 
----
-
-## 关键系统索引
-
-| 系统 | 核心类 | 教程章节 | 难度 |
-|------|--------|---------|------|
-| 注册表 | `Registries` | Part-1 | ⭐ |
-| 客户端-服务端 | `World` | Part-1 | ⭐⭐ |
-| World | `World` | Part-2 | ⭐⭐ |
-| Chunk | `WorldChunk` | Part-2 | ⭐⭐ |
-| 方块 | `Block` | Part-3 | ⭐⭐ |
-| 物品 | `Item` | Part-3 | ⭐⭐ |
-| 实体 | `Entity` | Part-4 | ⭐⭐⭐ |
-| AI大脑 | `Brain` | Part-5 | ⭐⭐⭐ |
-| 网络 | `Packet` | Part-6 | ⭐⭐⭐ |
-| 命令 | `CommandDispatcher` | Part-7 | ⭐⭐ |
+> ⏰ **总计**：大约 48-76 天可以学完核心内容
 
 ---
 
+## 如何开始
+
+### 第一步：准备环境
+
+1. 安装 JDK 17+
+2. 安装 IntelliJ IDEA
+3. 配置反编译工具
+
+👉 [Part-0 前置准备](./Part-0-Prerequisites/)
+
+### 第二步：理解核心
+
+从最重要的**注册表系统**开始：
+
+👉 [Part-1 核心基础](./Part-1-Foundation/)
+
+### 第三步：动手实践
+
+学完基础后，尝试创建自己的内容：
+
+👉 [Part-12 实战项目](./Part-12-Practice/)
+
 ---
 
-## 最终系统覆盖情况
+## 学习检查清单
 
-### ✅ 已覆盖的系统（共 35+ 个子系统）
+完成本教程后，你应该能够：
 
-| 系统 | 包名 | 教程章节 |
-|------|------|---------|
-| 注册表系统 | `registry` | Part-1 |
-| 客户端-服务端 | - | Part-1 |
-| 启动引导 | `Bootstrap` | Part-1 |
-| 世界系统 | `world` | Part-2 (6章) |
-| 方块系统 | `block` | Part-3 |
-| 方块状态 | `state` | Part-3 |
-| 物品系统 | `item` | Part-3 (3章) |
-| 组件系统 | `component` | Part-3 |
-| 实体系统 | `entity` | Part-4 (7章) |
-| AI系统 | `entity/ai` | Part-5 (6章) |
-| 网络协议 | `network` | Part-6 (4章) |
-| 命令系统 | `command` | Part-7 (4章) |
-| 资源包 | `resource` | Part-8 |
-| 数据包 | - | Part-8 |
-| 战利品表 | `loot` | Part-8 |
-| 进度系统 | `advancement` | Part-8 |
-| 配方系统 | `recipe` | Part-8 |
-| 客户端 | `client` | Part-9 (4章) |
-| 服务端 | `server` | Part-10 (4章) |
-| 数据修复 | `datafixer` | Part-11 |
-| 流体系统 | `fluid` | Part-11 |
-| 村民系统 | `village` | Part-11 |
-| 袭击系统 | `raid` | Part-11 |
-| 结构系统 | `structure` | Part-11 |
-| **附魔系统** | `enchantment` | Part-13 |
-| **物品栏容器** | `inventory` | Part-13 |
-| **NBT数据** | `nbt` | Part-13 |
-| **声音系统** | `sound` | Part-13 |
-| **粒子系统** | `particle` | Part-13 |
-| **药水效果** | `effect` | Part-13 |
-| **记分板** | `scoreboard` | Part-13 |
-| **统计系统** | `stat` | Part-13 |
-| **文本系统** | `text` | Part-13 |
+- [ ] ✅ 理解注册表三层结构（Identifier → RegistryKey → RegistryEntry）
+- [ ] ✅ 能找到石头方块的源码代码
+- [ ] ✅ 理解客户端-服务端分离原理
+- [ ] ✅ 理解 World 和 Chunk 的关系
+- [ ] ✅ 理解 Entity 是什么
+- [ ] ✅ 理解 AI 大脑的三层结构（Memory → Brain → Task）
+- [ ] ✅ 理解网络数据包流程
+- [ ] ✅ 能创建自定义命令
+- [ ] ✅ 能创建数据包
+- [ ] ✅ 能添加新方块/物品/生物
 
-### Part-13：补充系统 (9个教程)
-| 章节 | 文件 | 内容 |
+---
+
+## 快速导航
+
+### 核心章节
+
+| 章节 | 文件 | 描述 |
 |------|------|------|
-| 附魔系统 | `Part-13-Additional/enchantment-system.md` | Enchantment、EnchantmentHelper |
-| 物品栏容器 | `Part-13-Additional/inventory-system.md` | Inventory、ScreenHandler、Hopper |
-| NBT数据 | `Part-13-Additional/nbt-data-system.md` | NbtCompound、NbtList |
-| 声音系统 | `Part-13-Additional/sound-system.md` | SoundEvent、SoundManager |
-| 粒子系统 | `Part-13-Additional/particle-system.md` | Particle、ParticleEffect |
-| 药水效果 | `Part-13-Additional/potion-effect-system.md` | StatusEffect、MobEffect |
-| 记分板 | `Part-13-Additional/scoreboard-system.md` | Scoreboard、Team |
-| 统计系统 | `Part-13-Additional/stats-system.md` | Stat、StatType |
-| 文本系统 | `Part-13-Additional/text-system.md` | Text、Style、ClickEvent |
+| 注册表系统 | [04-registry-system.md](./Part-1-Foundation/04-registry-system.md) | ⭐ 最重要 |
+| AI大脑 | [28-ai-brain-intro.md](./Part-5-AI/28-ai-brain-intro.md) | ⭐ 最有趣 |
+| Tick系统 | [08-tick-system.md](./Part-1-Foundation/08-tick-system.md) | 游戏心跳 |
+| 启动流程 | [09-bootstrap-flow.md](./Part-1-Foundation/09-bootstrap-flow.md) | 启动顺序 |
+
+### 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| 📊 详细学习路线图 | [01-LEARNING-ROADMAP.md](./01-LEARNING-ROADMAP.md) |
+| 📝 学习总结 | [SUMMARY.md](./SUMMARY.md) |
+| 🔧 源码分析 | [../-analysis/](../-analysis/) |
 
 ---
 
-## 相关资源
+## 相关链接
 
-- [官方 Minecraft Wiki](https://minecraft.fandom.com/)
-- [Minecraft 源码分析](../analysis/) - 详细源码分析
-- [学习路线图](01-LEARNING-ROADMAP.md) - 可视化学习路径
-
----
-
-## 参与贡献
-
-如果你发现错误或有改进建议，欢迎提交 Issue 或 Pull Request。
+- [Minecraft Wiki](https://minecraft.fandom.com/wiki/Minecraft_Wiki)
+- [Fabric Wiki](https://fabricmc.net/wiki/)
+- [Minecraft Forge Wiki](https://minecraftforge.net/)
+- [Brigadier 命令库](https://github.com/Mojang/brigadier)
 
 ---
 
-*教程版本: Minecraft 1.21*
-*最后更新: 2026-03-19*
+> **下一章预告**：[Part-0 前置准备](./Part-0-Prerequisites/) - Java 基础速查和开发环境搭建
+
+---
+
+*教程版本：Minecraft 1.21*
+*最后更新：2026-03-26*

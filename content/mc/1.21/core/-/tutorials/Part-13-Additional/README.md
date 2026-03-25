@@ -42,7 +42,7 @@
 
 - [Java 基础](../Part-0-Prerequisites/01-java-basics.md)
 - [物品系统](../Part-3-Block-Item/README.md)
-- [存档系统](../Part-10-Server/51-save-system.md)
+- [存档系统](../Part-10-Server/60-save-system.md)
 
 ---
 

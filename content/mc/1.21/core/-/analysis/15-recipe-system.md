@@ -868,3 +868,95 @@ classDiagram
 | 切石 | `stonecutting` | 切石加工 |
 
 配方系统遵循 **材料放置 → 配方匹配 → 物品合成 → 配方解锁** 的流程，通过 JSON 实现数据驱动的配方配置。
+
+---
+
+## 显式覆盖文件
+
+### recipe/ 目录（54 个文件）
+
+#### 核心接口与基类
+
+| 文件名 | 说明 |
+|--------|------|
+| `Recipe.java` | 配方接口 |
+| `RecipeInput.java` | 配方输入接口 |
+| `RecipeEntry.java` | 配方条目 |
+| `RecipeType.java` | 配方类型 |
+| `RecipeSerializer.java` | 配方序列化器 |
+| `RecipeManager.java` | 配方管理器 |
+| `RecipeCache.java` | 配方缓存 |
+| `RecipeMatcher.java` | 配方匹配器 |
+| `RecipeGridAligner.java` | 配方网格对齐器 |
+| `RecipeBook.java` | 配方书 |
+| `RecipeBookCategory.java` | 配方书分类 |
+| `RecipeBookOptions.java` | 配方书选项 |
+| `RecipeCategory.java` | 配方分类 |
+| `RecipeInputProvider.java` | 配方输入提供者 |
+| `RecipeUnlocker.java` | 配方解锁器 |
+| `InputSlotFiller.java` | 输入槽填充器 |
+
+#### 合成配方 (Crafting)
+
+| 文件名 | 说明 |
+|--------|------|
+| `CraftingRecipe.java` | 合成配方接口 |
+| `CraftingRecipeInput.java` | 合成配方输入 |
+| `CraftingRecipeCategory.java` | 合成配方分类 |
+| `ShapedRecipe.java` | 有形状合成配方 |
+| `ShapelessRecipe.java` | 无形状合成配方 |
+| `RawShapedRecipe.java` | 原始有形状配方 |
+| `CraftingDecoratedPotRecipe.java` | 装饰陶罐合成 |
+| `ArmorDyeRecipe.java` | 盔甲染色配方 |
+| `BannerDuplicateRecipe.java` | 旗帜复制配方 |
+| `BookCloningRecipe.java` | 书克隆配方 |
+| `FireworkRocketRecipe.java` | 烟花火箭配方 |
+| `FireworkStarRecipe.java` | 烟花之星配方 |
+| `FireworkStarFadeRecipe.java` | 烟花褪色配方 |
+| `MapCloningRecipe.java` | 地图克隆配方 |
+| `MapExtendingRecipe.java` | 地图延伸配方 |
+| `ShieldDecorationRecipe.java` | 盾牌装饰配方 |
+| `ShulkerBoxColoringRecipe.java` | 潜影盒染色配方 |
+| `SpecialCraftingRecipe.java` | 特殊合成配方 |
+| `SpecialRecipeSerializer.java` | 特殊配方序列化器 |
+| `RepairItemRecipe.java` | 物品修复配方 |
+
+#### 烹饪配方 (Cooking)
+
+| 文件名 | 说明 |
+|--------|------|
+| `AbstractCookingRecipe.java` | 抽象烹饪配方 |
+| `CookingRecipe.java` | 烹饪配方接口 |
+| `CookingRecipeSerializer.java` | 烹饪配方序列化器 |
+| `CookingRecipeCategory.java` | 烹饪配方分类 |
+| `SmeltingRecipe.java` | 熔炉烧制配方 |
+| `SmokingRecipe.java` | 烟熏配方 |
+| `BlastingRecipe.java` | 高炉配方 |
+| `CampfireCookingRecipe.java` | 营火烹饪配方 |
+
+#### 锻造配方 (Smithing)
+
+| 文件名 | 说明 |
+|--------|------|
+| `SmithingRecipe.java` | 锻造配方 |
+| `SmithingRecipeInput.java` | 锻造配方输入 |
+| `SmithingTransformRecipe.java` | 锻造转换配方 |
+| `SmithingTrimRecipe.java` | 锻造修剪配方 |
+
+#### 其他配方
+
+| 文件名 | 说明 |
+|--------|------|
+| `StonecuttingRecipe.java` | 切石配方 |
+| `BrewingRecipeRegistry.java` | 酿造配方注册表 |
+| `CuttingRecipe.java` | 切割配方 |
+| `SuspiciousStewRecipe.java` | 谜之炖菜配方 |
+| `TippedArrowRecipe.java` | 药箭配方 |
+| `Ingredient.java` | 成分接口 |
+| `SingleStackRecipeInput.java` | 单槽配方输入 |
+
+#### 内部类
+
+| 文件名 | 说明 |
+|--------|------|
+| `RawShapedRecipe` | 原始有形状配方内部表示 |

@@ -6,7 +6,7 @@
 
 ## 章节导航
 
-### [第45章 Minecraft 客户端核心](./45-minecraft-client.md)
+### [第 50 章：Minecraft 客户端核心](./51-minecraft-client.md)
 
 了解 `MinecraftClient` 这个"游戏大脑"：
 - 什么是 MinecraftClient
@@ -14,7 +14,7 @@
 - 线程模型
 - 客户端 vs 服务端
 
-### [第46章 渲染系统](./46-render-system.md)
+### [第 51 章：渲染系统](./52-render-system.md)
 
 探索"画画"的艺术：
 - GameRenderer vs WorldRenderer
@@ -22,7 +22,7 @@
 - 着色器（Shader）基础
 - 渲染层级
 
-### [第47章 GUI系统](./47-gui-system.md)
+### [第 52 章：GUI 系统](./53-gui-system.md)
 
 玩转游戏界面：
 - Screen 基类设计
@@ -30,13 +30,25 @@
 - 粒子效果系统
 - 界面层级架构
 
-### [第48章 输入处理](./48-input-handling.md)
+### [第 53 章：输入处理](./54-input-handling.md)
 
 掌控玩家的每一个动作：
 - Keyboard 和 Mouse 类
 - KeyBinding 快捷键系统
 - 客户端预测（Client Prediction）
 - 输入事件流程
+
+### [第 54 章：渲染层级](./55-render-layer.md)
+
+深入渲染层与绘制顺序（与第 51 章渲染系统衔接）。
+
+### [第 55 章：实体模型](./56-entity-model.md)
+
+实体模型与客户端展示相关基础。
+
+### [第 70 章：声音系统](./70-sound-system.md)
+
+客户端音效与 `SoundManager` 相关基础（编号 70 与 Part-8 第 49 章「配方」区分）。
 
 ## 核心组件关系图
 
@@ -136,4 +148,4 @@ A: 每个快捷键是一个 `KeyBinding` 对象，包含按键码和状态。游
 
 ---
 
-*下一章：[第45章 Minecraft 客户端核心](./45-minecraft-client.md)*
+*下一章：[第 50 章：Minecraft 客户端核心](./51-minecraft-client.md)*

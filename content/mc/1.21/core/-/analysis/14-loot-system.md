@@ -808,3 +808,151 @@ classDiagram
 | 随机序列 | randomSequenceId | `random_sequence` |
 
 战利品系统遵循 **表 → 池 → 条件检查 → 抽取 → 条目展开 → 函数应用** 的生成流程，通过 JSON 实现完全数据驱动的掉落配置。
+
+---
+
+## 显式覆盖文件
+
+### loot/ 目录（130 个文件）
+
+#### 核心接口与基类
+
+| 文件名 | 说明 |
+|--------|------|
+| `LootTable.java` | 战利品表 |
+| `LootPool.java` | 战利品池 |
+| `LootContext.java` | 战利品上下文 |
+| `LootContextType.java` | 上下文类型 |
+| `LootContextParameter.java` | 上下文参数 |
+| `LootContextParameters.java` | 上下文参数常量 |
+| `LootContextParameterSet.java` | 上下文参数集合 |
+| `LootContextAware.java` | 上下文感知接口 |
+| `LootContextLoseringCondition.java` | 上下文丢失条件 |
+| `LootDataType.java` | 战利品数据类型 |
+| `LootTableReporter.java` | 战利品表报告器 |
+| `LootTables.java` | 内置战利品表常量 |
+
+#### 战利品池条目 (Entry)
+
+| 文件名 | 说明 |
+|--------|------|
+| `LootPoolEntry.java` | 战利品池条目接口 |
+| `LootPoolEntryType.java` | 条目类型 |
+| `LootPoolEntryTypes.java` | 条目类型常量 |
+| `LootTableEntry.java` | 战利品表条目 |
+| `ItemEntry.java` | 物品条目 |
+| `TagEntry.java` | 标签条目 |
+| `AlternativeEntry.java` | 替代条目 |
+| `GroupEntry.java` | 分组条目 |
+| `SequenceEntry.java` | 序列条目 |
+| `EmptyEntry.java` | 空条目 |
+| `CombinedEntry.java` | 组合条目 |
+| `DynamicEntry.java` | 动态条目 |
+| `LeafEntry.java` | 叶子条目 |
+| `EntryCombiner.java` | 条目组合器 |
+| `LootChoice.java` | 战利品选择 |
+
+#### 条件系统 (Condition)
+
+| 文件名 | 说明 |
+|--------|------|
+| `LootCondition.java` | 条件接口 |
+| `LootConditionType.java` | 条件类型 |
+| `LootConditionTypes.java` | 条件类型常量 |
+| `LootConditionConsumingBuilder.java` | 条件消费构建器 |
+| `AlternativeLootCondition.java` | 替代条件 |
+| `AllOfLootCondition.java` | 所有条件 |
+| `AnyOfLootCondition.java` | 任意条件 |
+| `InvertedLootCondition.java` | 反转条件 |
+| `RandomChanceLootCondition.java` | 随机概率条件 |
+| `RandomChanceWithEnchantedBonusLootCondition.java` | 附魔加成概率 |
+| `SurvivesExplosionLootCondition.java` | 爆炸存活条件 |
+| `KilledByPlayerLootCondition.java` | 被玩家击杀条件 |
+| `TableBonusLootCondition.java` | 表加成条件 |
+| `EntityPropertiesLootCondition.java` | 实体属性条件 |
+| `EntityScoresLootCondition.java` | 实体计分条件 |
+| `EnchantmentCheckLootCondition.java` | 附魔检查条件 |
+| `EnchantmentActiveCheckLootCondition.java` | 附魔激活检查 |
+| `BlockStatePropertyLootCondition.java` | 方块状态条件 |
+| `LocationCheckLootCondition.java` | 位置检查条件 |
+| `MatchToolLootCondition.java` | 工具匹配条件 |
+| `ReferenceLootCondition.java` | 引用条件 |
+| `WeatherCheckLootCondition.java` | 天气检查条件 |
+| `TimeCheckLootCondition.java` | 时间检查条件 |
+| `DamageSourcePropertiesLootCondition.java` | 伤害源属性条件 |
+| `ValueCheckLootCondition.java` | 值检查条件 |
+
+#### 函数系统 (Function)
+
+| 文件名 | 说明 |
+|--------|------|
+| `LootFunction.java` | 函数接口 |
+| `LootFunctionType.java` | 函数类型 |
+| `LootFunctionTypes.java` | 函数类型常量 |
+| `LootFunctionConsumingBuilder.java` | 函数消费构建器 |
+| `ConditionalLootFunction.java` | 条件函数 |
+| `SetCountLootFunction.java` | 设置数量 |
+| `SetDamageLootFunction.java` | 设置耐久 |
+| `SetNbtLootFunction.java` | 设置 NBT |
+| `SetNameLootFunction.java` | 设置名称 |
+| `SetLoreLootFunction.java` | 设置 Lore |
+| `SetCustomDataLootFunction.java` | 设置自定义数据 |
+| `SetCustomModelDataLootFunction.java` | 设置自定义模型数据 |
+| `EnchantRandomlyLootFunction.java` | 随机附魔 |
+| `EnchantWithLevelsLootFunction.java` | 按等级附魔 |
+| `EnchantedCountIncreaseLootFunction.java` | 附魔数量增加 |
+| `FurnaceSmeltLootFunction.java` | 熔炉烧制 |
+| `CopyNameLootFunction.java` | 复制名称 |
+| `CopyNbtLootFunction.java` | 复制 NBT |
+| `CopyStateLootFunction.java` | 复制状态 |
+| `CopyComponentsLootFunction.java` | 复制组件 |
+| `SetComponentsLootFunction.java` | 设置组件 |
+| `SetContentsLootFunction.java` | 设置内容物 |
+| `SetPotionLootFunction.java` | 设置药水 |
+| `SetStewEffectLootFunction.java` | 设置炖菜效果 |
+| `SetInstrumentLootFunction.java` | 设置乐器 |
+| `SetBannerPatternLootFunction.java` | 设置旗帜图案 |
+| `SetFireworkExplosionLootFunction.java` | 设置烟花爆炸 |
+| `SetFireworksLootFunction.java` | 设置烟花 |
+| `SetAttributesLootFunction.java` | 设置属性 |
+| `SetItemLootFunction.java` | 设置物品 |
+| `SetOminousBottleAmplifierLootFunction.java` | 设置不祥瓶子等级 |
+| `ExplorationMapLootFunction.java` | 探索地图 |
+| `FillPlayerHeadLootFunction.java` | 填充玩家头颅 |
+| `LimitCountLootFunction.java` | 限制数量 |
+| `ReferenceLootFunction.java` | 引用函数 |
+| `ApplyBonusLootFunction.java` | 应用加成 |
+| `FilteredLootFunction.java` | 过滤函数 |
+| `ModifyContentsLootFunction.java` | 修改内容物 |
+| `SetBookCoverLootFunction.java` | 设置书封面 |
+| `SetWritableBookPagesLootFunction.java` | 设置可写书页 |
+| `SetWrittenBookPagesLootFunction.java` | 设置成书页 |
+| `ExplosionDecayLootFunction.java` | 爆炸衰减 |
+| `ToggleTooltipsLootFunction.java` | 切换提示 |
+| `AndLootFunction.java` | 与函数 |
+| `StorageLootNbtProvider.java` | 存储 NBT 提供者 |
+| `LootNbtProvider.java` | NBT 提供者接口 |
+| `LootNbtProviderType.java` | NBT 提供者类型 |
+| `LootNbtProviderTypes.java` | NBT 提供者类型常量 |
+| `ContextLootNbtProvider.java` | 上下文 NBT 提供者 |
+| `ContainerComponentModifier.java` | 容器组件修饰符 |
+| `ContainerComponentModifiers.java` | 容器组件修饰符常量 |
+| `LootScoreProvider.java` | 计分提供者接口 |
+| `LootScoreProviderType.java` | 计分提供者类型 |
+| `LootScoreProviderTypes.java` | 计分提供者类型常量 |
+| `FixedLootScoreProvider.java` | 固定计分提供者 |
+| `ContextLootScoreProvider.java` | 上下文计分提供者 |
+
+#### 数值提供者 (Number Provider)
+
+| 文件名 | 说明 |
+|--------|------|
+| `LootNumberProvider.java` | 数值提供者接口 |
+| `LootNumberProviderType.java` | 数值提供者类型 |
+| `LootNumberProviderTypes.java` | 数值提供者类型常量 |
+| `ConstantLootNumberProvider.java` | 常量数值提供者 |
+| `UniformLootNumberProvider.java` | 均匀分布提供者 |
+| `BinomialLootNumberProvider.java` | 二项分布提供者 |
+| `EnchantmentLevelLootNumberProvider.java` | 附魔等级提供者 |
+| `ScoreLootNumberProvider.java` | 计分提供者 |
+| `BoundedIntUnaryOperator.java` | 有界整数一元运算符 |

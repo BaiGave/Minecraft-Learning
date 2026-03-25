@@ -18,8 +18,8 @@ readingTime: 15
 - Java 基础（类、接口、枚举）
 - Minecraft 资源包概念（resources/assets）
 - 游戏刻（tick）基础
-- [实体系统](../Part-4-Entity/20-entity-intro.md)
-- [物品系统](../Part-3-Block-Item/17-item-basics.md)
+- [实体系统](../Part-4-Entity/21-entity-intro.md)
+- [物品系统](../Part-3-Block-Item/18-item-basics.md)
 
 ## 核心概念
 
@@ -434,10 +434,10 @@ actualVolume = Math.min(actualVolume, 1.0f);  // 最大1.0f
 ## 相关链接
 
 ### 内部链接
-- [实体系统基础](../Part-4-Entity/20-entity-intro.md) - 声音常与实体交互
-- [物品系统](../Part-3-Block-Item/17-item-basics.md) - 物品触发声音
+- [实体系统基础](../Part-4-Entity/21-entity-intro.md) - 声音常与实体交互
+- [物品系统](../Part-3-Block-Item/18-item-basics.md) - 物品触发声音
 - [粒子系统](./particle-system.md) - 声音与粒子配合使用
-- [资源系统](../Part-8-Resource/40-resource-pack.md) - 声音文件配置
+- [资源系统](../Part-8-Resource/46-resource-pack.md) - 声音文件配置
 
 ### 外部资源
 - [Minecraft Wiki: sounds.json](https://minecraft.fandom.com/wiki/Sounds.json)

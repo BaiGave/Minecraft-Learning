@@ -13,16 +13,16 @@ readingTime: 15
 
 | 章节 | 标题 | 内容简介 |
 |------|------|----------|
-| [40](./40-resource-pack.md) | 资源包：游戏的外观与音效 | ResourcePack、ResourceManager、Identifier |
-| [41](./41-datapack-intro.md) | 数据包：游戏数据定义 | Datapack 结构、namespace、path |
+| [45](./46-resource-pack.md) | 资源包：游戏的外观与音效 | ResourcePack、ResourceManager、Identifier |
+| [46](./47-datapack-intro.md) | 数据包：游戏数据定义 | Datapack 结构、namespace、path |
 
 ### 核心数据系统
 
 | 章节 | 标题 | 内容简介 |
 |------|------|----------|
-| [42](./42-loot-table.md) | 战利品表：掉落物定义 | Pool、Entry、Condition、Function |
-| [43](./43-advancement.md) | 进度系统：成就与任务 | Criterion、Trigger、Reward |
-| [44](./44-recipe-system.md) | 配方系统：物品合成 | ShapedRecipe、CookingRecipe、Smithing |
+| [47](./48-loot-table.md) | 战利品表：掉落物定义 | Pool、Entry、Condition、Function |
+| [48](./49-advancement.md) | 进度系统：成就与任务 | Criterion、Trigger、Reward |
+| [49](./50-recipe-system.md) | 配方系统：物品合成 | ShapedRecipe、CookingRecipe、Smithing |
 
 ## 学习路径
 

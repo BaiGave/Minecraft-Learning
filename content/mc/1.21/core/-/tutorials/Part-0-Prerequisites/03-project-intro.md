@@ -1,9 +1,9 @@
 ---
-title: 项目结构介绍
+title: 第 03 章：项目结构介绍（Project Layout）
 readingTime: 20
 ---
 
-# 项目结构介绍
+# 第 03 章：项目结构介绍（Project Layout）
 
 > **面向读者**：准备开始阅读 Minecraft 源码的人
 > 
@@ -492,7 +492,7 @@ flowchart LR
 |------|------|
 | 注册表系统 | [04-registry-system.md](../Part-1-Foundation/04-registry-system.md) |
 | 客户端架构 | [05-client-server-arch.md](../Part-1-Foundation/05-client-server-arch.md) |
-| 启动流程 | [07-bootstrap-flow.md](../Part-1-Foundation/07-bootstrap-flow.md) |
+| 启动流程 | [09-bootstrap-flow.md](../Part-1-Foundation/09-bootstrap-flow.md) |
 
 ---
 

@@ -22,7 +22,7 @@ readingTime: 17
 - Java 基础语法
 - Minecraft 的物品系统 (ItemStack)
 - 注册表系统 (Registry) 的基本概念
-- [Part-3: 物品基础](../Part-3-Block-Item/17-item-basics.md) - 了解物品基础
+- [Part-3: 物品基础](../Part-3-Block-Item/18-item-basics.md) - 了解物品基础
 
 ---
 
@@ -632,8 +632,8 @@ Enchantments.register(registry, VAMPIRIC,
 
 ### 内部链接
 
-- [Part-3: 物品基础](../Part-3-Block-Item/17-item-basics.md) - 物品基础知识
-- [Part-4: 实体系统](../Part-4-Entity/20-entity-intro.md) - 实体与附魔交互
+- [Part-3: 物品基础](../Part-3-Block-Item/18-item-basics.md) - 物品基础知识
+- [Part-4: 实体系统](../Part-4-Entity/21-entity-intro.md) - 实体与附魔交互
 - [Part-13: 物品栏系统](./inventory-system.md) - 物品容器基础
 
 ### 源码文件

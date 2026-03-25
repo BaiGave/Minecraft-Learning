@@ -1,588 +1,326 @@
 ---
-title: Java 基础速查
+title: 第 01 章：Java 基础速查（Java Basics）
 readingTime: 30
 ---
 
-# Java 基础速查
 
-> **面向读者**：需要阅读 Minecraft 源码的人
-> 
-> **目标**：快速掌握阅读 MC 源码所需的 Java 知识
+# 第 01 章：Java 基础速查（Java Basics）
 
----
-
-## 目标
+## 章节目标
 
 学完本章后，你将能够：
-
-```
-✅ 理解类和对象的概念
-✅ 理解继承和接口的区别
-✅ 读懂泛型代码 <T>
-✅ 理解 Lambda 表达式 () -> {}
-✅ 使用 List、Map、Set 集合
-✅ 在 MC 源码中找到对应的代码
-```
-
----
+- 理解 Minecraft 源码中常见的 Java 语法和模式
+- 读懂泛型、接口默认方法、lambda 表达式
+- 识别常见的集合类型和 Stream API 用法
 
 ## 前置知识
 
-```
-📖 知道什么是编程语言
-💻 会安装软件
-🧠 有抽象思维（会分类）
-```
-
----
+假设你已有 Java 基础，本章聚焦于阅读 Minecraft 源码时可能遇到的关键语法。
 
 ## 核心概念
 
-### 什么是类（Class）？
+### 1. 泛型通配符
 
-> 类就是** blueprints 蓝图**📐
-
-```
-现实世界：           Java 世界：
-─────────           ─────────
-汽车设计图    ←──→  类 Class
-具体的车    ←──→  对象 Object
-
-类 定义了"这种东西应该有什么"：
-- 有 4 个轮子
-- 有方向盘
-- 能前进、后退、刹车
-
-对象 是根据图纸造出来的具体东西：
-- 我的红色宝马
-- 你的黑色奔驰
-```
-
-### 什么是继承（Inheritance）？
-
-> 继承就是** 子承父业**👨‍👦
-
-```
-Animal（动物）
-    ├── eat()   // 吃东西
-    └── sleep() // 睡觉
-
-    Dog（狗）继承 Animal
-        ├── eat()   // 狗也吃东西 ✓
-        ├── sleep() // 狗也睡觉 ✓
-        └── bark()  // 狗还会叫 ✨
-
-    Cat（猫）继承 Animal
-        ├── eat()   // 猫也吃东西 ✓
-        ├── sleep() // 猫也睡觉 ✓
-        └── meow()  // 猫会喵喵叫 ✨
-```
-
-### 什么是接口（Interface）？
-
-> 接口就是** 能力清单**📋
-
-```
-接口定义：          现实例子：
-─────────         ─────────
-implements        能力认证
-Readable          能被读取
-Writable          能被写入
-Serializable      能被序列化
-
-Comparable        能比较大小
-Runnable          能被执行
-```
-
-**类和接口的区别**：
-
-```
-类（class）        接口（interface）
-─────────         ───────────────
-只能继承一个        可以实现多个
-可以有具体代码      只能有抽象方法
-可以有成员变量      只能有常量
-"是什么"          "能做什么"
-```
-
-### 什么是泛型（Generics）？
-
-> 泛型就是** 模板**📄
-
-```
-不用泛型：              用泛型：
-─────────              ─────────
-List list = new ArrayList();   List<String> list = new ArrayList<>();
-list.add(123);                 list.add("Hello");
-list.add("World");             list.add("World");
-int num = (int) list.get(0);  String s = list.get(0);
-// 需要强制转换              不需要！类型安全
-// 可能出错                 不容易出错
-```
-
----
-
-## 图解
-
-### 类和对象的关系
-
-```mermaid
-classDiagram
-    class Block {
-        +String name
-        +float hardness
-        +register()
-        +unregister()
-    }
-
-    class Stone {
-        +hardness = 1.5f
-        +register()
-    }
-
-    class Dirt {
-        +hardness = 0.5f
-        +register()
-    }
-
-    Block <|-- Stone : 继承
-    Block <|-- Dirt : 继承
-
-    class World {
-        +List~Block~ blocks
-        +getBlock()
-        +setBlock()
-    }
-
-    World o-- Block : 包含
-```
-
-### 集合类型对比
-
-```mermaid
-flowchart LR
-    subgraph List["📝 List 列表<br/>有序、可重复"]
-        L1["[A, B, C, D]"]
-        L2["按索引访问"]
-        L3["ArrayList<br/>查询快"]
-        L4["LinkedList<br/>插入快"]
-    end
-
-    subgraph Set["📦 Set 集合<br/>无序、不重复"]
-        S1["{A, B, C}"]
-        S2["去重"]
-        S3["HashSet<br/>最快"]
-        S4["TreeSet<br/>有序"]
-    end
-
-    subgraph Map["🗺️ Map 映射<br/>键值对"]
-        M1["{A→1, B→2}"]
-        M2["键不能重复"]
-        M3["HashMap<br/>最快"]
-        M4["TreeMap<br/>键有序"]
-    end
-
-    L1 --> L3 --> L4
-    S1 --> S3 --> S4
-    M1 --> M3 --> M4
-```
-
-### 继承层次示例
-
-```mermaid
-classDiagram
-    class Entity {
-        +Vec3d position
-        +move()
-        +tick()
-    }
-
-    class LivingEntity {
-        +float health
-        +applyDamage()
-        +heal()
-    }
-
-    class MobEntity {
-        +Navigation navigation
-        +setTarget()
-        +tickAI()
-    }
-
-    class Pig {
-        +breed()
-        +interact()
-    }
-
-    class Zombie {
-        +attackPlayer()
-        +transform()
-    }
-
-    class PlayerEntity {
-        +Inventory inventory
-        +sendMessage()
-    }
-
-    Entity <|-- LivingEntity
-    LivingEntity <|-- MobEntity
-    MobEntity <|-- Pig
-    MobEntity <|-- Zombie
-    LivingEntity <|-- PlayerEntity
-```
-
----
-
-## 核心代码
-
-### 1. 类的定义
+Minecraft 源码中大量使用泛型通配符：
 
 ```java
-// Minecraft 中的方块类
-public class Block {
-    // 成员变量（属性）
-    private String name;
-    private float hardness;  // 硬度
-    private float resistance; // 抗爆性
-
-    // 构造方法（创建对象时调用）
-    public Block(Settings settings) {
-        this.hardness = settings.hardness;
-        this.resistance = settings.resistance;
+// 无上界通配符 - 只能读取，不能写入
+void printItems(List<?> list) {
+    for (Object item : list) {  // 只能当 Object 读
+        System.out.println(item);
     }
+}
 
-    // 方法（行为）
-    public void onBreak(World world) {
-        // 挖掘方块时的逻辑
-        dropItems(world);
+// 上界通配符 - 只能读取 T 的方法
+void printBlocks(List<? extends Block> blocks) {
+    for (Block block : blocks) {  // 可以当 Block 读
+        block.getDefaultState();  // ✅ 合法
+        // blocks.add(new Block());  ❌ 非法
     }
+}
 
-    // Getter 和 Setter
-    public float getHardness() {
-        return this.hardness;
-    }
+// 下界通配符 - 只能写入 T 的子类型
+void addIntegers(List<? super Integer> list) {
+    list.add(1);      // ✅ 合法
+    list.add(2.0);    // ❌ 非法
+    Object obj = list.get(0);  // 只能当 Object 读
 }
 ```
 
-**逐行解析**：
+### 2. 接口默认方法
 
-```
-1. public class Block
-   └─ 公开的类，名字叫 Block
-
-2. private float hardness;
-   └─ 私有变量，外部不能直接访问
-
-3. public Block(Settings settings)
-   └─ 构造方法，创建 Block 时传入设置
-
-4. public void onBreak(World world)
-   └─ 公开方法，参数是 World，返回空
-```
-
-### 2. 继承的实现
+Java 8+ 支持接口的默认实现：
 
 ```java
-// 石头方块继承自 Block
-public class StoneBlock extends Block {
-    // 子类可以添加自己的变量
-    private final BlockState defaultState;
-
-    // 子类可以添加自己的方法
-    public void polish() {
-        // 抛光石头的逻辑
+public interface Registry<T> {
+    
+    // 抽象方法 - 必须实现
+    T get(RegistryKey<T> key);
+    
+    // 默认方法 - 可选覆盖
+    default T getOrThrow(RegistryKey<T> key) {
+        T value = get(key);
+        if (value == null) {
+            throw new IllegalStateException("Missing: " + key);
+        }
+        return value;
     }
-
-    // 子类可以重写父类的方法
-    @Override
-    public float getHardness() {
-        return 2.0f;  // 石头比普通方块硬
+    
+    // 静态方法 - 接口自带的工具方法
+    static <T> RegistryKey<T> of(String namespace, String path) {
+        return RegistryKey.of(RegistryKeys.ROOT, 
+            Identifier.of(namespace, path));
     }
 }
 ```
 
-**逐行解析**：
-
-```
-1. extends Block
-   └─ 表示继承自 Block 类
-
-2. @Override
-   └─ 注解，表示这个方法是重写父类的
-
-3. private final BlockState defaultState;
-   └─ final 表示这个引用不能改变
-```
-
-### 3. 接口的实现
+### 3. Lambda 表达式与方法引用
 
 ```java
-// 让实体能够被命名
-public interface Nameable {
-    Component getCustomName();      // 获取名称
-    void setCustomName(Component);  // 设置名称
-}
+// Lambda 基本形式
+(x, y) -> x + y                    // 计算两数之和
+() -> new Block()                   // 无参数构造
+block -> block.getDefaultState()    // 单参数调用方法
 
-// 让实体能够呼吸
-public interface Breathable {
-    boolean canBreathe();
-    void breathe();
-}
-
-// 生物实体实现多个接口
-public class PigEntity extends AnimalEntity implements Nameable, Breathable {
-    private Component customName;
-
-    @Override
-    public Component getCustomName() {
-        return this.customName;
-    }
-
-    @Override
-    public boolean canBreathe() {
-        return true;  // 猪可以在水下屏息
-    }
-}
+// 方法引用
+Block::getDefaultState              // 静态方法引用
+Block::new                          // 构造方法引用
+player::getName                     // 实例方法引用
+System.out::println                 // 特定对象的实例方法
 ```
 
-### 4. 泛型的使用
+### 4. 嵌套类和枚举
 
 ```java
-// Minecraft 中的注册表 - 典型的泛型使用
-public class Registry~T~ {
-    private final Map~Identifier, T~ entries;
-    private final Map~T, Identifier~ ids;
-
-    // 注册一个东西
-    public void register(Identifier id, T value) {
-        entries.put(id, value);
-        ids.put(value, id);
+public class World {
+    
+    // 静态内部类
+    public static class ChunkPos {
+        public final int x;
+        public final int z;
     }
-
-    // 根据 ID 获取
-    public @Nullable T get(Identifier id) {
-        return entries.get(id);
+    
+    // 非静态内部类（隐式持有外部类引用）
+    public class NeighborUpdater {
+        public void update() {
+            World.this.setBlock(...);  // 显式引用外部类
+        }
     }
-
-    // 根据值获取 ID
-    public @Nullable Identifier getId(T value) {
-        return ids.get(value);
+    
+    // 匿名内部类 - 常用于回调
+    Runnable task = new Runnable() {
+        @Override
+        public void run() {
+            // 异步任务
+        }
+    };
+    
+    // 枚举
+    public enum Difficulty {
+        PEACEFUL(0),
+        EASY(1),
+        NORMAL(2),
+        HARD(3);
+        
+        private final int value;
+        Difficulty(int value) {
+            this.value = value;
+        }
     }
 }
-
-// 实际使用
-Registry~Block~ BLOCK_REGISTRY = new Registry<>();
-Registry~Item~ ITEM_REGISTRY = new Registry<>();
-Registry~EntityType~ ENTITY_REGISTRY = new Registry~();
 ```
 
-### 5. Lambda 表达式
+## Minecraft 常用集合
+
+### ImmutableList vs List
 
 ```java
-// 传统写法
-Runnable r1 = new Runnable() {
-    @Override
-    public void run() {
-        System.out.println("Hello");
-    }
-};
+import com.google.common.collect.ImmutableList;
 
-// Lambda 写法（简洁！）
-Runnable r2 = () -> System.out.println("Hello");
+// Minecraft 倾向于使用不可变集合
+ImmutableList<Block> AIR_BLOCKS = ImmutableList.of(
+    Blocks.AIR, 
+    Blocks.CAVE_AIR, 
+    Blocks.VOID_AIR
+);
 
-// 带参数
-Consumer~String~ c1 = (String name) -> System.out.println(name);
-Consumer~String~ c2 = name -> System.out.println(name); // 类型可以省略
-
-// 多行代码用 {}
-Runnable r3 = () -> {
-    System.out.println("第一行");
-    System.out.println("第二行");
-};
-
-// Minecraft 中的实际用法
-// 事件监听
-EventCallback callback = (event) -> {
-    // 处理事件
-    event.cancel();
-};
+// 使用 Builder 构建复杂不可变列表
+ImmutableList<String> names = ImmutableList.<String>builder()
+    .add("Alice")
+    .addAll(otherNames)
+    .build();
 ```
 
-### 6. 集合的使用
+### ObjectArrayList
 
 ```java
-// List - 有序列表
-List~String~ inventory = new ArrayList~();
-inventory.add("diamond");
-inventory.add("sword");
-inventory.add("apple");
-String first = inventory.get(0);  // "diamond"
+// Minecraft 自定义的高性能数组列表
+ObjectArrayList<Entity> entities = new ObjectArrayList<>();
+entities.add(entity);
+Entity first = entities.get(0);
 
-// Set - 无序集合（自动去重）
-Set~Identifier~ registeredBlocks = new HashSet~();
-registeredBlocks.add(new Identifier("minecraft:stone"));
-registeredBlocks.add(new Identifier("minecraft:stone")); // 不会重复添加
-boolean hasStone = registeredBlocks.contains(new Identifier("minecraft:stone"));
-
-// Map - 键值对
-Map~String, Block~ blockRegistry = new HashMap~();
-blockRegistry.put("stone", new StoneBlock());
-blockRegistry.put("dirt", new DirtBlock());
-
-Block stone = blockRegistry.get("stone"); // 获取石头
-for (Map.Entry~String, Block~ entry : blockRegistry.entrySet()) {
-    String name = entry.getKey();
-    Block block = entry.getValue();
-}
-
-// Minecraft 中的实际例子 - 获取所有生物群系
-Registry~Biome~ biomeRegistry = Registries.BIOME;
-for (Biome biome : biomeRegistry) {
-    Identifier id = biomeRegistry.getId(biome);
-    System.out.println("Biome: " + id);
-}
+// 用于减少 GC 压力的频繁添加/移除
 ```
 
----
-
-## 实战演示
-
-### 在 MC 源码中找类
-
-**任务**：找到 `Entity` 类的定义
-
-```
-在 IDEA 中操作：
-1. 按两下 Shift（快速搜索）
-2. 输入 "Entity.java"
-3. 回车打开文件
-
-你会看到：
-..../source/net/minecraft/entity/Entity.java
-```
-
-**找到后观察**：
+### Maps 工具类
 
 ```java
-public abstract class Entity implements Nameable, SyncedEntityProperties, CommandSource {
-    // 这是实体类的定义
-    // - abstract 表示抽象类，不能直接创建
-    // - implements 表示实现了多个接口
-}
+import com.google.common.collect.Maps;
+
+// 创建并发安全的 Map
+Map<String, Registry<?>> map = Maps.newConcurrentMap();
+
+// 创建有序 Map
+Map<String, Block> sortedBlocks = Maps.newTreeMap();
+
+// 转换 Map
+Map<Block, Item> blockToItem = Maps.asMap(
+    blockRegistry, 
+    block -> block.asItem()
+);
 ```
 
-### 练习：找一找
-
-1. 找到 `PlayerEntity` 类
-   - 它继承自哪个类？
-   - 它实现了哪些接口？
-
-2. 找到 `Block` 类
-   - 它有哪些重要的成员变量？
-   - 它有哪些重要的方法？
-
-3. 找到 `World` 类
-   - 这个类主要负责什么？
-
----
-
-## 小结
-
-```
-✅ 类是蓝图，对象是实例
-✅ 继承用 extends，一个类只能继承一个父类
-✅ 接口用 implements，一个类可以实现多个接口
-✅ 泛型 <T> 让代码更安全
-✅ Lambda () -> {} 让代码更简洁
-✅ List/Set/Map 是最常用的集合
-```
-
----
-
-## 练习
-
-### 思考题
-
-1. **类和对象的区别是什么？**
-   - 用 Minecraft 的例子说明
-
-2. **为什么 MC 的 Entity 是抽象类？**
-   - 不能直接 `new Entity()` 吗？
-
-3. **List 和 Set 的区别是什么？**
-   - 什么时候用 List？什么时候用 Set？
-
-4. **为什么要用泛型？**
-   - 不用泛型可以吗？
-
-### 编码练习
+## Stream API 实战
 
 ```java
-// 1. 创建一个简单的类（假设你是 MC 开发者）
-// 创建一个小猪 Pig 类
+// 过滤并收集
+List<Block> stoneBlocks = Registries.BLOCK.stream()
+    .filter(block -> block.getId().getPath().contains("stone"))
+    .collect(Collectors.toList());
 
-public class Pig {
-    // 成员变量
-    private String name;
-    private int health;
-    private boolean isBaby;
+// 查找第一个匹配的
+Optional<Block> diamondOre = Registries.BLOCK.stream()
+    .filter(block -> block.getId().equals(Identifier.ofVanilla("diamond_ore")))
+    .findFirst();
 
-    // 构造方法
-    public Pig(String name) {
-        this.name = name;
-        this.health = 10;
-        this.isBaby = false;
-    }
+// 映射转换
+Set<Identifier> allBlockIds = Registries.BLOCK.stream()
+    .map(Registries.BLOCK::getId)
+    .collect(Collectors.toSet());
 
-    // 方法
-    public void eat() {
-        System.out.println(name + " 在吃东西");
-        health += 2;
-    }
+// 分组
+Map<Rarity, List<Item>> itemsByRarity = Registries.ITEM.stream()
+    .collect(Collectors.groupingBy(Item::getRarity));
 
-    public void makeSound() {
-        System.out.println(name + " 发出哼哼声");
-    }
+// 计数
+long totalBlocks = Registries.BLOCK.stream().count();
 
-    // Getter
-    public int getHealth() {
-        return health;
-    }
-
-    public boolean isBaby() {
-        return isBaby;
-    }
-}
-
-// 2. 使用这个类
-public class Test {
-    public static void main(String[] args) {
-        Pig myPig = new Pig("小猪一号");
-        myPig.eat();
-        myPig.makeSound();
-        System.out.println("生命值: " + myPig.getHealth());
-    }
-}
+// 任意匹配
+boolean hasDiamond = Registries.BLOCK.stream()
+    .anyMatch(block -> block.getId().getPath().equals("diamond_block"));
 ```
 
----
+## 常用注解
 
-## 相关链接
+```java
+// Minecraft 特有注解
+@Environment(EnvType.CLIENT)      // 仅客户端可用
+@Environment(EnvType.SERVER)      // 仅服务端可用
 
-> ⚠️ **注意**：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。
+// Fabric 注解
+@ImplementedInterface(factory = ...)  // 实现接口工厂
+@Mixin(targets = Entity.class)         // Mixin 注入目标
 
-| 内容 | 链接 |
-|------|------|
-| Java 官方教程 | https://docs.oracle.com/javase/tutorial/ |
-| Java 基础速查 | [01-java-basics.md](./01-java-basics.md) |
-| 开发环境搭建 | [02-development-env.md](./02-development-env.md) |
-| 项目结构介绍 | [03-project-intro.md](./03-project-intro.md) |
-| 注册表系统 | [04-registry-system.md](../Part-1-Foundation/04-registry-system.md) |
+// 标准注解
+@Override                           // 方法重写
+@Nullable                           // 可能为 null
+@NotNull                            // 不可能为 null
+@Deprecated                         // 已废弃
+```
 
----
+## Optional 最佳实践
 
-> **下一章预告**：[开发环境搭建](./02-development-env.md) - 学会配置 IDEA、导入源码、调试 MC
+```java
+// 创建 Optional
+Optional<Block> block = Optional.of(Blocks.DIAMOND);
+Optional<Block> empty = Optional.empty();
 
----
+// 使用 map 转换
+Optional<Item> item = block.map(Block::asItem);
 
-*文档更新时间: 2026-03-19*
+// 使用 orElse 提供默认值
+Block result = block.orElse(Blocks.AIR);
+
+// 使用 orElseThrow
+Block result = block.orElseThrow(
+    () -> new IllegalStateException("Block not found")
+);
+
+// 使用 ifPresent
+block.ifPresent(b -> System.out.println(b.getName()));
+
+// 链式操作
+String name = block
+    .map(Block::asItem)
+    .map(Item::getName)
+    .map(Text::getString)
+    .orElse("Unknown");
+```
+
+## 函数式接口速查
+
+```java
+// Minecraft 常用函数式接口
+Supplier<T>           // () -> T
+Consumer<T>           // (T) -> void
+Function<T, R>        // (T) -> R
+Predicate<T>           // (T) -> boolean
+BiFunction<T, U, R>   // (T, U) -> R
+BiConsumer<T, U>       // (T, U) -> void
+Runnable              // () -> void
+Callable<V>           // () throws Exception
+BooleanSupplier       // () -> boolean
+IntSupplier           // () -> int
+```
+
+## 实战：阅读 Minecraft 源码片段
+
+### 示例 1：泛型嵌套
+
+```java
+// MinecraftServer.java:89
+private final Map<RegistryKey<World>, ServerWorld> worlds;
+```
+
+解读：
+- `Map` 的 key 是 `RegistryKey<World>`
+- `Map` 的 value 是 `ServerWorld`
+- 这是一个从世界键到服务端世界的映射
+
+### 示例 2：方法引用链
+
+```java
+// Bootstrap.java:480-485
+Bootstrap.collectMissingTranslations(
+    Registries.ATTRIBUTE, 
+    EntityAttribute::getTranslationKey, 
+    set
+);
+```
+
+解读：
+- `EntityAttribute::getTranslationKey` 是方法引用
+- 等价于 `attr -> attr.getTranslationKey()`
+
+### 示例 3：Stream + Lambda
+
+```java
+// 实际 Minecraft 代码风格
+List<Item> valuableItems = Registries.ITEM.stream()
+    .filter(item -> item.getMaxCount() > 1)
+    .filter(item -> !item.isFood())
+    .collect(Collectors.toList());
+```
+
+## 课后自查
+
+1. 能否解释 `List<? extends Block>` 和 `List<? super Block>` 的区别？
+2. `Block::getDefaultState` 属于哪种方法引用？
+3. Minecraft 为什么倾向于使用 ImmutableList？
+4. 如何使用 Stream API 统计所有物品的数量？
+5. Optional 的 `map` 和 `flatMap` 有什么区别？
+
+## 参考资源
+
+- [Java 官方文档 - 泛型](https://docs.oracle.com/javase/tutorial/java/generics/)
+- [Guava ImmutableList](https://github.com/google/guava/wiki/ImmutableCollectionsExplained)

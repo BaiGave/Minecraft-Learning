@@ -16,8 +16,8 @@ readingTime: 17
 ## 前置知识
 
 - Java 基础（类、抽象类、枚举）
-- [实体系统](../Part-4-Entity/20-entity-intro.md) - 药水效果作用于实体
-- [属性系统](../Part-4-Entity/24-entity-attributes.md) - 效果可以修改属性
+- [实体系统](../Part-4-Entity/21-entity-intro.md) - 药水效果作用于实体
+- [属性系统](../Part-4-Entity/25-entity-attributes.md) - 效果可以修改属性
 - [粒子系统](./particle-system.md) - 效果会显示粒子
 
 ## 核心概念
@@ -632,10 +632,10 @@ public boolean willEffectBeReplaced(LivingEntity entity, StatusEffect effect, in
 ## 相关链接
 
 ### 内部链接
-- [实体系统](../Part-4-Entity/20-entity-intro.md) - 药水效果应用于实体
-- [属性系统](../Part-4-Entity/24-entity-attributes.md) - 效果修改实体属性
+- [实体系统](../Part-4-Entity/21-entity-intro.md) - 药水效果应用于实体
+- [属性系统](../Part-4-Entity/25-entity-attributes.md) - 效果修改实体属性
 - [粒子系统](./particle-system.md) - 效果显示彩色粒子
-- [物品系统](../Part-3-Block-Item/17-item-basics.md) - 药水是特殊的物品
+- [物品系统](../Part-3-Block-Item/18-item-basics.md) - 药水是特殊的物品
 
 ### 外部资源
 - [Minecraft Wiki: Effects](https://minecraft.fandom.com/wiki/Effect)

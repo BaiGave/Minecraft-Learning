@@ -17,8 +17,8 @@ readingTime: 16
 
 - Java 基础（类、接口、抽象类）
 - [声音系统](./sound-system.md) - 粒子常与声音配合使用
-- [实体系统](../Part-4-Entity/20-entity-intro.md) - 实体是粒子的主要生产者
-- [属性系统](../Part-4-Entity/24-entity-attributes.md) - 了解属性修饰符
+- [实体系统](../Part-4-Entity/21-entity-intro.md) - 实体是粒子的主要生产者
+- [属性系统](../Part-4-Entity/25-entity-attributes.md) - 了解属性修饰符
 
 ## 核心概念
 
@@ -530,9 +530,9 @@ public void spawnMagicOrb(World world, Vec3d pos) {
 
 ### 内部链接
 - [声音系统](./sound-system.md) - 声音与粒子配合
-- [实体系统](../Part-4-Entity/20-entity-intro.md) - 实体产生粒子
-- [物品系统](../Part-3-Block-Item/17-item-basics.md) - 物品消耗产生粒子
-- [方块实体](../Part-3-Block-Item/16-block-entity.md) - 创建能发射粒子的方块
+- [实体系统](../Part-4-Entity/21-entity-intro.md) - 实体产生粒子
+- [物品系统](../Part-3-Block-Item/18-item-basics.md) - 物品消耗产生粒子
+- [方块实体](../Part-3-Block-Item/17-block-entity.md) - 创建能发射粒子的方块
 
 ### 外部资源
 - [Minecraft Wiki: Particles](https://minecraft.fandom.com/wiki/Particle)

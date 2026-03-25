@@ -501,8 +501,8 @@ mindmap
 
 ### 内部链接
 
-- [Part-3: 物品基础](../Part-3-Block-Item/17-item-basics.md) - 物品基础知识
-- [Part-3: 方块实体](../Part-3-Block-Item/16-block-entity.md) - 方块实体教程
+- [Part-3: 物品基础](../Part-3-Block-Item/18-item-basics.md) - 物品基础知识
+- [Part-3: 方块实体](../Part-3-Block-Item/17-block-entity.md) - 方块实体教程
 - [Part-13: NBT 数据系统](./nbt-data-system.md) - 数据存储
 
 ### 源码文件

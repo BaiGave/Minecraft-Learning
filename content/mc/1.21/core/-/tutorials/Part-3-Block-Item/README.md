@@ -8,17 +8,17 @@
 
 | 章节 | 标题 | 内容简介 |
 |------|------|----------|
-| [14](./14-block-basics.md) | Block 类：方块的基础 | Block 类的定义、继承关系、属性设置 |
-| [15](./15-block-state.md) | BlockState：方块的不同状态 | Property 接口、方块状态管理 |
-| [16](./16-block-entity.md) | BlockEntity：需要存储数据的方块 | NBT 存储、Tickable 接口、客户端-服务端同步 |
+| [第 14 章](./15-block-basics.md) | Block 类：方块的基础 | Block 类的定义、继承关系、属性设置 |
+| [第 15 章](./16-block-state.md) | BlockState：方块的不同状态 | Property 接口、方块状态管理 |
+| [第 16 章](./17-block-entity.md) | BlockEntity：需要存储数据的方块 | NBT 存储、Tickable 接口、客户端-服务端同步 |
 
 ### 物品部分
 
 | 章节 | 标题 | 内容简介 |
 |------|------|----------|
-| [17](./17-item-basics.md) | Item 类：物品的基础 | Item 类的定义、BlockItem、自定义物品行为 |
-| [18](./18-item-stack.md) | ItemStack：物品堆叠 | 数量管理、耐久度、物品比较 |
-| [19](./19-item-component.md) | ComponentMap：1.21新版物品数据 | Component 系统、组件操作、自定义组件 |
+| [第 17 章](./18-item-basics.md) | Item 类：物品的基础 | Item 类的定义、BlockItem、自定义物品行为 |
+| [第 18 章](./19-item-stack.md) | ItemStack：物品堆叠 | 数量管理、耐久度、物品比较 |
+| [第 19 章](./20-item-component.md) | ComponentMap：1.21新版物品数据 | Component 系统、组件操作、自定义组件 |
 
 ## 学习路径
 

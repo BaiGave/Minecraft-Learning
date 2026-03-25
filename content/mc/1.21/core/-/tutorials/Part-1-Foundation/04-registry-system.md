@@ -1,641 +1,488 @@
 ---
-title: 注册表系统（Registry System）
-readingTime: 40
+title: 第 04 章：注册表系统（Registry System）
+readingTime: 45
 ---
 
-# 第四章：注册表系统（Registry System）
+# 第 04 章：注册表系统（Registry System）
 
-> ⭐ **这是 Minecraft 源码中最重要的系统！学完这章，你就能理解MC如何管理所有的游戏内容。**
+## 章节目标
 
-> ⚠️ **注意**：以下源码示例来源于 CFR 反编译代码，变量名和方法名可能与原始源码有所差异。部分代码经过简化以便于理解。
-
----
-
-## 目标
-
-学完本章后，你将理解：
-
-1. **注册表是什么** - MC用来管理所有游戏元素的"图书馆"
-2. **三层结构** - Identifier → RegistryKey → RegistryEntry 的关系
-3. **如何查找游戏内容** - 找到石头方块、钻石剑在哪里定义
-4. **如何注册新内容** - Mod开发的核心技能
-
----
+学完本章后，你将能够：
+- 理解 Minecraft 注册表系统的核心概念
+- 区分 Identifier、RegistryKey、RegistryEntry 三层架构
+- 掌握注册新物品/方块/实体的完整流程
+- 理解标签（Tag）系统的使用方法
 
 ## 前置知识
 
-- 了解 Java 的基本语法（类、接口、泛型）
-- 知道什么是 `Map`（键值对存储）
+- Java 泛型基础
+- 基本的数据结构（Map、List）
+- 理解什么是"注册"的概念
 
----
+## 核心概念 ⭐
 
-## 核心概念：用比喻理解注册表
+### 注册表系统 = 图书馆索引系统
 
-### 比喻：图书馆的索引系统
+> **生活比喻**：想象 Minecraft 是一个大型图书馆
+>
+> | 图书馆组件 | Minecraft 对应 | 示例 |
+>|-----------|---------------|------|
+>| 书籍 ISBN 号 | `Identifier` | `minecraft:diamond_block` |
+>| 分类卡片 | `RegistryKey` | `RegistryKey.of(BLOCK, "diamond_block")` |
+>| 索引卡 | `RegistryEntry` | 记录书籍位置、借阅状态 |
+>| 索引柜 | `Registries` | 所有分类的总和 |
 
-想象 Minecraft 是一个**巨大的图书馆**，里面有：
-
-| 图书馆概念 | Minecraft 对应 |
-|-----------|---------------|
-| 图书馆 | `Registries`（所有注册表的总入口） |
-| 书架 | `Registry`（每种类型的注册表，如 BLOCK、ITEM） |
-| 书架上的书 | 注册表中的具体内容（如石头、钻石剑、猪） |
-| 书的编号 | `Identifier`（如 `minecraft:stone`） |
-| 借书证 | `RegistryKey`（精确指向某本书） |
-| 书的副本 | `RegistryEntry`（实际的书本对象） |
-
-### 为什么需要这三层？
-
-```mermaid
-flowchart LR
-    subgraph 现实例子["现实例子"]
-        A1["图书编号<br/>如 'CS-001'"] --> A2["图书馆系统<br/>知道在哪排书架"]
-        A2 --> A3["实际的书本<br/>你手里拿的书"]
-    end
-    
-    subgraph Minecraft对应["Minecraft对应"]
-        B1["Identifier<br/>'minecraft:stone'"] --> B2["RegistryKey<br/>指向BLOCK注册表"]
-        B2 --> B3["RegistryEntry<br/>实际的Block对象"]
-    end
-    
-    style B1 fill:#ffd93d,color:#000
-    style B2 fill:#4d96ff,color:#fff
-    style B3 fill:#6bcb77,color:#fff
-```
-
----
-
-## 图解：注册表三层结构
+### 三层标识系统
 
 ```mermaid
 flowchart TB
-    subgraph ROOT["Registries - 根注册表<br/>所有注册表的总入口"]
-        direction TB
-        ROOT1["静态注册表<br/>游戏内置内容"]
-        ROOT2["动态注册表<br/>数据包可修改"]
+    subgraph 三层标识["三层标识系统"]
+        A["Identifier<br/>命名空间:路径<br/>例: minecraft:diamond"] --> B["RegistryKey<br/>注册表 + 标识符<br/>RegistryKey.of(BLOCK, diamond)"]
+        B --> C["RegistryEntry<br/>值 + 生命周期<br/>引用已注册的内容"]
     end
     
-    subgraph Registries静态["内置注册表示例"]
-        BLOCK["Registry&lt;Block&gt;<br/>方块注册表"]
-        ITEM["Registry&lt;Item&gt;<br/>物品注册表"]
-        ENTITY["Registry&lt;EntityType&gt;<br/>实体类型注册表"]
-        BIOME["Registry&lt;Biome&gt;<br/>生物群系注册表"]
+    subgraph 容器["容器"]
+        D["Registries<br/>静态注册表容器<br/>游戏内置"]
+        E["DynamicRegistryManager<br/>动态注册表管理器<br/>数据包驱动"]
     end
     
-    subgraph 三层结构["三层结构详解"]
-        ID["Identifier<br/>标识符<br/>'minecraft:stone'"]
-        KEY["RegistryKey&lt;T&gt;<br/>注册键<br/>指向具体注册表"]
-        ENTRY["RegistryEntry&lt;T&gt;<br/>注册条目<br/>实际对象引用"]
-    end
-    
-    ROOT --> Registries静态
-    Registries静态 --> BLOCK
-    Registries静态 --> ITEM
-    
-    ID -->|"创建"| KEY
-    KEY -->|"查询"| ENTRY
-    
-    BLOCK -->|"包含"| STONE["Stone方块"]
-    ITEM -->|"包含"| DIAMOND["Diamond剑"]
-    
-    style ROOT fill:#9b59b6,color:#fff
-    style BLOCK fill:#ff6b6b,color:#fff
-    style ID fill:#ffd93d,color:#000
-    style KEY fill:#4d96ff,color:#fff
-    style ENTRY fill:#6bcb77,color:#fff
+    C --> D
+    C --> E
 ```
 
----
+## 源码解析
 
-## 第一层：Identifier（标识符）
-
-### 是什么？
-
-`Identifier` 是 Minecraft 中**唯一标识符**，格式为 `命名空间:路径`。
-
-### 生活中的例子
-
-就像网购时的**快递单号**：`顺丰-SF123456789`
-
-- `顺丰` = 命名空间（namespace）
-- `SF123456789` = 路径（path）
-
-### Minecraft 中的例子
-
-| Identifier | 命名空间 | 路径 |
-|-----------|---------|-----|
-| `minecraft:stone` | minecraft | stone |
-| `minecraft:diamond_sword` | minecraft | diamond_sword |
-| `minecraft:pig` | minecraft | pig |
-| `minecraft:the_nether` | minecraft | the_nether |
-| `fabric:stone` | fabric | stone |
-
-### 源码解析
-
-```12:28:net/minecraft/util/Identifier.java
-public static final String DEFAULT_NAMESPACE = "minecraft";  // 默认命名空间
-public static final char NAMESPACE_SEPARATOR = ':';          // 分隔符
-```
-
-```139:144:net/minecraft/util/Identifier.java
-// 创建 Identifier 的方式
-public static Identifier of(String namespace, String path) {
-    return Identifier.ofValidated(namespace, path);
-}
-
-public static Identifier ofVanilla(String path) {
-    // 快捷方法：自动使用 minecraft 命名空间
-    return new Identifier(DEFAULT_NAMESPACE, path);
-}
-```
-
-### 命名空间规则
-
-```mermaid
-flowchart LR
-    subgraph 命名空间类型["命名空间类型"]
-        MC["minecraft<br/>原版内容"]
-        FABRIC["fabric/mod_id<br/>Mod内容"]
-        REALMS["realms<br/>服务器内容"]
-    end
-    
-    subgraph 命名规则["命名规则"]
-        VALID["✅ 可用字符<br/>a-z, 0-9, _, -, ."]
-        INVALID["❌ 不可用<br/>大写字母, 中文, 空格"]
-    end
-    
-    MC --> VALID
-    FABRIC --> VALID
-    REALMS --> VALID
-```
-
----
-
-## 第二层：RegistryKey（注册键）
-
-### 是什么？
-
-`RegistryKey` = Registry（注册表类型）+ Identifier（具体内容）
-
-就像图书馆里的**借书证**，上面写着：
-- 在哪个图书馆？（REGISTRY）
-- 要借哪本书？（IDENTIFIER）
-
-### 源码解析
-
-```58:60:net/minecraft/registry/RegistryKey.java
-public static <T> RegistryKey<T> of(
-    RegistryKey<? extends Registry<T>> registry,  // 在哪个注册表
-    Identifier value                              // 什么标识符
-) {
-    return RegistryKey.of(registry.value, value);
-}
-```
-
-### 创建 RegistryKey 的例子
+### 1. Identifier - 资源标识符
 
 ```java
-// 石头方块的注册键
-RegistryKey<Block> STONE_KEY = RegistryKey.of(
-    Registries.BLOCK.getKey(),      // 方块注册表
-    Identifier.ofVanilla("stone")  // "minecraft:stone"
-);
-
-// 等价于
-RegistryKey<Block> STONE_KEY = RegistryKey.of(
-    RegistryKeys.BLOCK,
-    new Identifier("minecraft", "stone")
-);
-```
-
-### RegistryKeys 预定义常量
-
-```116:152:net/minecraft/registry/RegistryKeys.java
-public class RegistryKeys {
-    public static final RegistryKey<Registry<Block>> BLOCK = of("block");
-    public static final RegistryKey<Registry<Item>> ITEM = of("item");
-    public static final RegistryKey<Registry<EntityType<?>>> ENTITY_TYPE = of("entity_type");
-    public static final RegistryKey<Registry<Biome>> BIOME = of("worldgen/biome");
-    public static final RegistryKey<Registry<World>> WORLD = of("dimension");
-    // ... 还有80多个注册键
+// net/minecraft/util/Identifier.java
+public class Identifier implements Comparable<Identifier> {
+    
+    private final String namespace;  // 命名空间
+    private final String value;      // 路径
+    
+    // 创建方式
+    public static Identifier of(String namespace, String path) {
+        return new Identifier(namespace, path);
+    }
+    
+    // 便捷方法：minecraft 命名空间
+    public static Identifier ofVanilla(String path) {
+        return new Identifier("minecraft", path);
+    }
 }
 ```
 
----
+**使用示例：**
 
-## 第三层：RegistryEntry（注册条目）
+```java
+// 定义标识符
+Identifier diamondId = Identifier.ofVanilla("diamond");
+Identifier myModId = Identifier.of("mymod", "custom_item");
 
-### 是什么？
-
-`RegistryEntry` 是注册表中的**实际对象引用**。
-
-类比：借书证上写的书，最终指向**书架上真正的书**。
-
-### 两种类型
-
-```mermaid
-flowchart TB
-    subgraph RegistryEntry["RegistryEntry<T>"]
-        direction TB
-        REF["Reference 引用条目<br/>已注册到注册表的对象"]
-        DIR["Direct 直接条目<br/>临时创建的引用"]
-    end
-    
-    REF -->|"用途"| REF_USE["⭐ 正常使用<br/>所有已注册内容"]
-    DIR -->|"用途"| DIR_USE["数据包临时内容<br/>不需预先注册"]
-    
-    style REF fill:#6bcb77,color:#fff
-    style DIR fill:#ffd93d,color:#000
+// 字符串格式
+String str = diamondId.toString();  // "minecraft:diamond"
 ```
 
-### 源码中的 RegistryEntry
+### 2. RegistryKey - 注册表键
 
-```40:42:net/minecraft/registry/entry/RegistryEntry.java
-public interface RegistryEntry<T> {
-    T value();                    // 获取实际对象
-    boolean hasKeyAndValue();     // 是否有键值对
-    Optional<RegistryKey<T>> getKey();  // 获取注册键
+```java
+// net/minecraft/registry/RegistryKey.java
+public class RegistryKey<T> {
+    
+    private final Identifier registry;  // 注册表标识符
+    private final Identifier value;     // 值标识符
+    
+    // 创建注册表键
+    public static <T> RegistryKey<T> of(
+        RegistryKey<? extends Registry<T>> registry,  // 注册表类型
+        Identifier value                                // 值标识符
+    ) {
+        return new RegistryKey<>(registry.value, value);
+    }
+    
+    // 获取值标识符
+    public Identifier getValue() {
+        return value;
+    }
 }
 ```
 
----
+**使用示例：**
 
-## 注册表查找流程图
+```java
+// 创建方块键
+RegistryKey<Block> diamondBlockKey = RegistryKey.of(
+    RegistryKeys.BLOCK,                           // BLOCK 注册表
+    Identifier.ofVanilla("diamond_block")         // "minecraft:diamond_block"
+);
 
-```mermaid
-flowchart TD
-    subgraph 起点["查找石头方块"]
-        START["我想找到石头方块"]
-    end
-    
-    subgraph 第一步["创建 Identifier"]
-        ID1["Identifier<br/>ofVanilla('stone')"]
-        ID2["结果: 'minecraft:stone'"]
-        START --> ID1
-        ID1 --> ID2
-    end
-    
-    subgraph 第二步["创建 RegistryKey"]
-        KEY1["RegistryKey.of<br/>BLOCK, 'stone'"]
-        KEY2["结果: RegistryKey<Block>"]
-        ID2 --> KEY1
-        KEY1 --> KEY2
-    end
-    
-    subgraph 第三步["从注册表查询"]
-        REG["Registries.BLOCK"]
-        QUERY["blockRegistry.get<br/>registryKey"]
-        KEY2 --> REG
-        KEY2 --> QUERY
-    end
-    
-    subgraph 第四步["获取 RegistryEntry"]
-        ENTRY["RegistryEntry<Block>"]
-        VALUE["Block 对象<br/>Stone 方块实例"]
-        QUERY --> ENTRY
-        ENTRY --> VALUE
-    end
-    
-    subgraph 快捷方法["一步到位"]
-        FAST["Registries.BLOCK<br/>.get<br/>'stone'"]
-        VALUE2["Stone 方块"]
-        START2["直接获取"] 
-        START2 --> FAST
-        FAST --> VALUE2
-    end
-    
-    style START fill:#ffd93d,color:#000
-    style VALUE fill:#6bcb77,color:#fff
-    style VALUE2 fill:#6bcb77,color:#fff
+// 创建物品键
+RegistryKey<Item> diamondKey = RegistryKey.of(
+    RegistryKeys.ITEM,
+    Identifier.ofVanilla("diamond")
+);
 ```
 
----
+### 3. Registry 接口
 
-## 内置注册表列表
+```java
+// net/minecraft/registry/Registry.java
+public interface Registry<T>
+extends Keyable, IndexedIterable<T> {
+    
+    // 获取注册表键
+    RegistryKey<? extends Registry<T>> getKey();
+    
+    // 根据 ID 获取值
+    @Nullable T get(@Nullable Identifier id);
+    
+    // 根据键获取值
+    @Nullable T get(@Nullable RegistryKey<T> key);
+    
+    // 获取原始数字 ID
+    int getRawId(@Nullable T value);
+    
+    // 获取值对应的键
+    Optional<RegistryKey<T>> getKey(T value);
+    
+    // 检查是否包含
+    boolean contains(RegistryKey<T> key);
+    
+    // 冻结注册表（静态注册表初始化后冻结）
+    Registry<T> freeze();
+}
+```
 
-Minecraft 内置了 **80+ 个注册表**，最常用的有：
+### 4. Registries 全局注册表容器
 
-| 注册表 | 源码字段 | 管理的类型 |
-|--------|----------|-----------|
-| BLOCK | `Registries.BLOCK` | 方块（石头、泥土、草方块...） |
-| ITEM | `Registries.ITEM` | 物品（钻石剑、金苹果...） |
-| ENTITY_TYPE | `Registries.ENTITY_TYPE` | 实体类型（猪、牛、僵尸...） |
-| BIOME | `Registries.BIOME` | 生物群系（平原、森林、沙漠...） |
-| SOUND_EVENT | `Registries.SOUND_EVENT` | 音效 |
-| POTION | `Registries.POTION` |药水 |
-| PARTICLE_TYPE | `Registries.PARTICLE_TYPE` | 粒子效果 |
-| ENCHANTMENT | `Registries.ENCHANTMENT` | 附魔 |
-| ITEM_GROUP | `Registries.ITEM_GROUP` | 创造模式物品栏 |
-
-### 源码中的注册表定义
-
-```134:143:net/minecraft/registry/Registries.java
+```java
+// net/minecraft/registry/Registries.java
 public class Registries {
-    // 方块注册表 - 默认值是空气方块
-    public static final DefaultedRegistry<Block> BLOCK = 
-        Registries.createIntrusive(RegistryKeys.BLOCK, "air", registry -> Blocks.AIR);
     
-    // 物品注册表 - 默认值是空气物品
-    public static final DefaultedRegistry<Item> ITEM = 
-        Registries.createIntrusive(RegistryKeys.ITEM, "air", registry -> Items.AIR);
-    
-    // 实体类型注册表 - 默认值是猪
-    public static final DefaultedRegistry<EntityType<?>> ENTITY_TYPE = 
-        Registries.createIntrusive(RegistryKeys.ENTITY_TYPE, "pig", registry -> EntityType.PIG);
-}
-```
-
----
-
-## 实战：找到石头方块的注册代码
-
-### 步骤1：找到 Blocks.java
-
-```
-source/net/minecraft/block/Blocks.java
-```
-
-### 步骤2：找到 STONE 常量
-
-```java
-// 石头方块的定义（简化）
-public class Blocks {
-    // 每个方块都调用 register 方法注册
-    public static final Block STONE = register(
-        "stone",                    // 标识符路径
-        new Block(AbstractBlock.Settings...)  // 方块属性
-    );
-}
-```
-
-### 步骤3：理解注册流程
-
-```mermaid
-sequenceDiagram
-    participant B as Blocks.java
-    participant R as Registry静态注册
-    participant I as Identifier
-    
-    B->>I: ofVanilla("stone")
-    Note over I: "minecraft:stone"
-    
-    I->>R: Registry.register(Registries.BLOCK, id, STONE)
-    Note over R: 添加到 BLOCK 注册表
-    
-    R-->>B: 注册完成
-```
-
----
-
-## 如何注册一个新方块（Mod开发基础）
-
-### 方法1：使用 Registry.register
-
-```java
-// 在 Mod 初始化时调用
-public class MyMod {
-    public static final Block MY_CUSTOM_BLOCK = 
-        Registry.register(
-            Registries.BLOCK,                          // 注册到方块注册表
-            Identifier.of("mymod", "magic_block"),     // ID: mymod:magic_block
-            new Block(AbstractBlock.Settings.of(Material.STONE))  // 创建方块
+    // 根注册表（注册表的注册表）
+    private static final MutableRegistry<MutableRegistry<?>> ROOT = 
+        new SimpleRegistry(
+            RegistryKey.ofRegistry(RegistryKeys.ROOT), 
+            Lifecycle.stable()
         );
+    
+    // 核心注册表
+    public static final DefaultedRegistry<Block> BLOCK = 
+        createIntrusive(RegistryKeys.BLOCK, "air", registry -> Blocks.AIR);
+    
+    public static final DefaultedRegistry<Item> ITEM = 
+        createIntrusive(RegistryKeys.ITEM, "air", registry -> Items.AIR);
+    
+    public static final DefaultedRegistry<EntityType<?>> ENTITY_TYPE = 
+        createIntrusive(RegistryKeys.ENTITY_TYPE, "pig", registry -> EntityType.PIG);
+    
+    public static final Registry<SoundEvent> SOUND_EVENT = 
+        create(RegistryKeys.SOUND_EVENT, registry -> SoundEvents.ENTITY_ITEM_PICKUP);
+    
+    // 更多注册表...
 }
 ```
 
-### 关键点说明
-
-```mermaid
-flowchart LR
-    subgraph 注册三要素["注册三要素"]
-        A["Registries.XXX<br/>注册到哪个表"]
-        B["Identifier<br/>叫什么名字"]
-        C["new XXX<br/>实际对象"]
-    end
-    
-    A -->|"组合"| REG["Registry.register()"]
-    B -->|"组合"| REG
-    C -->|"组合"| REG
-    
-    REG -->|"返回"| RESULT["已注册的实例"]
-    
-    style A fill:#4d96ff,color:#fff
-    style B fill:#ffd93d,color:#000
-    style C fill:#6bcb77,color:#fff
-```
-
-### 常见错误
-
-| 错误 | 原因 | 解决方法 |
-|------|------|----------|
-| `Registry is frozen` | 注册表已冻结 | 在正确的时机注册 |
-| `Missing default` | 默认值不存在 | DefaultedRegistry 需要默认值 |
-| `Intrusive holder` | 条件注册导致崩溃 | 对象创建也要条件化 |
-
----
-
-## DefaultedRegistry（带默认值的注册表）
-
-有些注册表有一个**默认值**，当找不到某个ID时返回这个默认值。
-
-```mermaid
-flowchart LR
-    subgraph DefaultedRegistry["DefaultedRegistry<T>"]
-        D["默认值<br/>如 'air'"]
-        O1["其他内容<br/>stone, grass..."]
-        O2["其他内容<br/>dirt, sand..."]
-    end
-    
-    查询1["查询不存在的 ID"] -->|"找不到"| 返回["返回默认值 air"]
-    查询2["查询 stone"] -->|"找到"| STONE["返回 stone"]
-    
-    style D fill:#ff6b6b,color:#fff
-```
-
-### 源码示例
-
-```140:144:net/minecraft/registry/Registries.java
-// DefaultedRegistry - 有默认值 "air"
-public static final DefaultedRegistry<Block> BLOCK = 
-    Registries.createIntrusive(
-        RegistryKeys.BLOCK, 
-        "air",                    // 默认值 ID
-        registry -> Blocks.AIR    // 默认值对象
-    );
-
-// 普通 Registry - 没有默认值
-public static final Registry<Potion> POTION = 
-    Registries.create(RegistryKeys.POTION, Potions::registerAndGetDefault);
-```
-
----
-
-## 常用代码片段
-
-### 1. 获取物品
+### 5. RegistryEntry - 注册表条目
 
 ```java
-// 方法1：通过 Identifier
+// net/minecraft/registry/entry/RegistryEntry.java
+public interface RegistryEntry<T> {
+    
+    // 获取所有者
+    RegistryEntryOwner<T> getOwner();
+    
+    // 获取键
+    RegistryKey<T> registryKey();
+    
+    // 检查是否匹配键
+    boolean matches(RegistryKey<T> key);
+    
+    // 检查是否在标签中
+    boolean isIn(TagKey<T> tag);
+    
+    // 引用实现
+    public static class Reference<T> implements RegistryEntry<T> {
+        private final RegistryEntryOwner<T> owner;
+        private RegistryKey<T> registryKey;
+        private final T value;
+        
+        public T value() {
+            return value;
+        }
+        
+        public RegistryKey<T> registryKey() {
+            return registryKey;
+        }
+    }
+}
+```
+
+### 6. 注册流程 - register 方法
+
+```java
+// 简化版注册流程
+public static <V, T extends V> T register(
+    Registry<V> registry,      // 注册表
+    RegistryKey<V> key,       // 注册键
+    T entry                   // 要注册的条目
+) {
+    // 调用可变注册表的 add 方法
+    ((MutableRegistry<V>)registry).add(key, entry, RegistryEntryInfo.DEFAULT);
+    return entry;
+}
+
+// 在注册表冻结后尝试注册会抛出异常
+private void assertNotFrozen(RegistryKey<?> key) {
+    if (this.frozen) {
+        throw new IllegalStateException(
+            "Registry is already frozen (trying to add key: " + key + ")");
+    }
+}
+```
+
+## 实战：注册自定义物品
+
+### 完整示例
+
+```java
+// 1. 定义物品
+public static final Item MY_CUSTOM_ITEM = register(
+    Registries.ITEM,
+    Identifier.of("mymod", "custom_item"),  // 模组ID:物品ID
+    new Item(new Item.Settings()
+        .maxCount(64)
+        .rarity(Rarity.RARE)
+        .food(FoodComponents.GOLDEN_APPLE)
+    )
+);
+
+// 2. 使用 RegistryKey 方式（推荐）
+RegistryKey<Item> MY_ITEM_KEY = RegistryKey.of(
+    RegistryKeys.ITEM,
+    Identifier.of("mymod", "my_item")
+);
+
+public static final Item MY_ITEM = register(
+    Registries.ITEM,
+    MY_ITEM_KEY,
+    new Item(new Item.Settings())
+);
+
+// 3. 获取已注册的物品
 Item diamond = Registries.ITEM.get(Identifier.ofVanilla("diamond"));
-
-// 方法2：通过 RegistryKey
-RegistryKey<Item> diamondKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.ofVanilla("diamond"));
-Item diamond2 = Registries.ITEM.get(diamondKey);
-
-// 方法3：通过 getOrThrow（推荐，更安全）
-Item diamond3 = Registries.ITEM.getOrThrow(diamondKey);
+Item diamond2 = Registries.ITEM.getOrThrow(
+    RegistryKey.of(RegistryKeys.ITEM, Identifier.ofVanilla("diamond"))
+);
 ```
 
-### 2. 检查是否存在
+### 方块注册
 
 ```java
-Identifier id = Identifier.ofVanilla("stone");
-boolean exists = Registries.BLOCK.containsId(id);  // true
+// 方块注册
+public static final Block MY_BLOCK = register(
+    Registries.BLOCK,
+    Identifier.of("mymod", "my_block"),
+    new Block(AbstractBlock.Settings.create()
+        .strength(3.0f)
+        .requiresTool()
+    )
+);
 
-Identifier fakeId = Identifier.ofVanilla("fake_block");
-boolean fakeExists = Registries.BLOCK.containsId(fakeId);  // false
+// 方块自动生成对应物品
+// Minecraft 会自动为方块创建物品形式
 ```
 
-### 3. 遍历所有内容
+## 标签系统 (Tag)
+
+### TagKey 标签键
 
 ```java
-// 遍历所有方块
-for (Block block : Registries.BLOCK) {
-    System.out.println(Registries.BLOCK.getId(block));
+// 定义标签
+TagKey<Block> MINEABLE_PICKAXE = TagKey.of(
+    RegistryKeys.BLOCK,
+    Identifier.ofVanilla("mineable/pickaxe")
+);
+
+// 检查物品是否在标签中
+boolean canMineWithPickaxe = block.getRegistryEntry()
+    .isIn(TagKey.of(RegistryKeys.BLOCK, 
+        Identifier.ofVanilla("mineable/pickaxe")));
+```
+
+### JSON 中的标签定义
+
+```json
+{
+    "replace": false,
+    "values": [
+        "minecraft:cobblestone",
+        "minecraft:stone",
+        "#minecraft:needs_iron_tool",
+        "#minecraft:needs_diamond_tool"
+    ]
 }
-
-// 流式遍历
-Registries.BLOCK.stream()
-    .filter(block -> block.getDefaultState().isSolid())
-    .forEach(System.out::println);
 ```
 
-### 4. 创建 RegistryEntry 引用
+### 使用标签查询
 
 ```java
-// 获取 RegistryEntry（用于数据包等场景）
-RegistryEntry<Block> stoneEntry = Registries.BLOCK.getEntry(Identifier.ofVanilla("stone"));
-stoneEntry.ifPresent(entry -> {
-    Block block = entry.value();
-    System.out.println(block);
+// 获取标签中的所有条目
+Optional<RegistryEntryList.Named<Block>> tag = 
+    Registries.BLOCK.getEntryList(MINEABLE_PICKAXE);
+
+tag.ifPresent(entries -> {
+    for (RegistryEntry<Block> entry : entries) {
+        Block block = entry.value();
+        // 处理每个可挖的方块
+    }
 });
 ```
 
----
-
-## Registry 接口方法速查
-
-```java
-// 获取值
-registry.get(Identifier)           // 通过 ID 获取
-registry.get(RegistryKey)          // 通过键获取
-registry.getOrThrow(RegistryKey)   // 获取，不存在抛异常
-
-// 查询
-registry.containsId(Identifier)    // 是否包含该 ID
-registry.contains(RegistryKey)     // 是否包含该键
-registry.getId(T)                  // 获取对象的 ID
-registry.getKey(T)                 // 获取对象的键
-
-// 遍历
-registry.forEach()                // 遍历所有
-registry.stream()                  // 流式处理
-registry.getIds()                  // 获取所有 ID
-registry.getKeys()                 // 获取所有键
-
-// 注册
-Registry.register(registry, id, value)  // 注册新值
-```
-
----
-
-## 小结
+## 静态 vs 动态注册表
 
 ```mermaid
 flowchart TB
-    subgraph 核心要点["本章核心要点"]
-        E1["1. Identifier = 命名空间 + 路径<br/>如 'minecraft:stone'"]
-        E2["2. RegistryKey = 注册表 + 标识符<br/>精确指向某个内容"]
-        E3["3. RegistryEntry = 注册表中的引用<br/>实际对象的句柄"]
-        E4["4. Registries 包含所有内置注册表<br/>BLOCK、ITEM、ENTITY_TYPE..."]
-        E5["5. 注册 = 把对象放到注册表中<br/>需要三要素：注册表、ID、对象"]
+    subgraph 静态注册表["静态注册表 (SimpleRegistry)"]
+        A["Registries.BLOCK"]
+        A1["Registries.ITEM"]
+        A2["Registries.ENTITY_TYPE"]
     end
     
-    style E1 fill:#ffd93d,color:#000
-    style E2 fill:#4d96ff,color:#fff
-    style E3 fill:#6bcb77,color:#fff
-    style E4 fill:#ff6b6b,color:#fff
-    style E5 fill:#9b59b6,color:#fff
+    subgraph 动态注册表["动态注册表 (DynamicRegistry)"]
+        B["Biome 生物群系"]
+        B1["LootTable 战利品表"]
+        B2["Advancement 进度"]
+        B3["Recipe 配方"]
+    end
+    
+    静态注册表 --> |"初始化后冻结"| C["内置内容"]
+    动态注册表 --> |"数据包驱动"| D["可扩展内容"]
 ```
 
-### 记住这个顺序
+| 类型 | 特点 | 示例 |
+|------|------|------|
+| **静态注册表** | 游戏内置、初始化后冻结 | BLOCK, ITEM, ENTITY_TYPE |
+| **动态注册表** | 数据包驱动、可扩展 | BIOME, LOOT_TABLE, RECIPE |
 
-```
-Identifier (String) 
-    ↓ 创建
-RegistryKey<T> (指向哪个注册表 + 标识符)
-    ↓ 查询
-RegistryEntry<T> (注册表中的引用)
-    ↓ 获取值
-T (实际对象，如 Block、Item)
-```
-
----
-
-## 练习
-
-### 练习1：查找代码
-
-在源码中找到以下内容：
-
-1. 找到 `diamond_sword` 物品的注册代码
-2. 找到 `pig` 实体类型的注册代码
-3. 找到 `plains` 生物群系的注册代码
-
-### 练习2：理解输出
-
-阅读以下代码，说出输出结果：
+## 生命周期追踪
 
 ```java
-Identifier id = Identifier.of("fabric", "my_item");
-RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, id);
-System.out.println("ID: " + id);
-System.out.println("Namespace: " + id.getNamespace());
-System.out.println("Path: " + id.getPath());
-System.out.println("Key: " + key.getValue());
+// Lifecycle 枚举
+public enum Lifecycle {
+    stable(),           // 稳定版本
+    experimental(),     // 实验版本
+    deprecated(),        // 废弃版本
+    experimental_worldgen()  // 实验性世界生成
+}
+
+// 注册时指定生命周期
+Registry.register(registry, key, entry, 
+    new RegistryEntryInfo(Lifecycle.experimental()));
 ```
 
-### 练习3：模拟注册
+## 常见错误与排查
 
-假设你要创建一个 Mod，想添加一个"魔法水晶"方块，写出注册代码（不需要实际运行，理解思路即可）。
+### 错误 1: 在注册表冻结后注册
 
----
+```
+Error: Adding duplicate key (...) or Registry is already frozen
+```
 
-## 相关链接
+**原因**: 在 Bootstrap 初始化完成后仍尝试注册
+**解决**: 确保注册代码在 mod 初始化阶段执行
 
-### 源码文件
+### 错误 2: 标识符冲突
 
-| 文件 | 路径 | 作用 |
-|------|------|------|
-| `Registries.java` | `net/minecraft/registry/Registries.java` | 所有内置注册表 |
-| `RegistryKey.java` | `net/minecraft/registry/RegistryKey.java` | 注册键定义 |
-| `Identifier.java` | `net/minecraft/util/Identifier.java` | 标识符定义 |
-| `Registry.java` | `net/minecraft/registry/Registry.java` | 注册表接口 |
-| `RegistryEntry.java` | `net/minecraft/registry/entry/RegistryEntry.java` | 注册条目 |
-| `RegistryKeys.java` | `net/minecraft/registry/RegistryKeys.java` | 预定义注册键常量 |
+```
+Error: Duplicate key: minecraft:diamond
+```
 
-### 进阶阅读
+**原因**: 使用了已存在的标识符
+**解决**: 使用唯一的命名空间（如模组ID）
 
-> ⚠️ **注意**：以下链接指向的文档可能尚未完成或位置可能变化
-- 下一章：[第五章：客户端-服务端架构](./05-client-server-arch.md) - 理解客户端和服务端如何共享注册表
-- 下一章：[第六章：共享常量](./06-shared-constants.md) - 了解游戏的基本数值设定
-- 进阶主题：数据包系统 - 理解动态注册表如何被数据包修改
+### 错误 3: 获取不存在的注册表
 
----
+```java
+// ❌ 错误
+Block block = Registries.BLOCK.get("nonexistent");
 
-> 📝 **提示**：注册表系统是 Minecraft 源码的核心，几乎所有系统都会用到它。确保你完全理解这章内容后再继续！
+// ✅ 正确
+Block block = Registries.BLOCK.getOrThrow(
+    RegistryKey.of(RegistryKeys.BLOCK, Identifier.ofVanilla("nonexistent"))
+);
+```
 
----
+## 课后自查
 
-*文档版本：Minecraft 1.21, Protocol 767, World Version 3953*
-*最后更新：2026-03-19*
+1. 能否解释 Identifier、RegistryKey、RegistryEntry 三者的区别？
+2. 如何注册一个新的物品？写出完整代码。
+3. 标签系统和注册表有什么区别？
+4. 什么是注册表的"冻结"机制？为什么需要它？
+5. 如何检查一个方块是否可以挖掘？
+
+## 架构图
+
+```mermaid
+classDiagram
+    class Identifier {
+        +String namespace
+        +String value
+        +of(namespace, path)
+        +ofVanilla(path)
+    }
+    
+    class RegistryKey~T~ {
+        +Identifier registry
+        +Identifier value
+        +of(registry, value)
+        +getValue()
+    }
+    
+    class Registry~T~ {
+        <<interface>>
+        +get(key)
+        +get(id)
+        +freeze()
+    }
+    
+    class RegistryEntry~T~ {
+        <<interface>>
+        +registryKey()
+        +matches(key)
+        +isIn(tag)
+    }
+    
+    class Reference~T~ {
+        +RegistryKey~T~ key
+        +T value
+    }
+    
+    class Registries {
+        +BLOCK: DefaultedRegistry~Block~
+        +ITEM: DefaultedRegistry~Item~
+        +ENTITY_TYPE: DefaultedRegistry~EntityType~~
+    }
+    
+    Identifier --> RegistryKey : 组成
+    RegistryKey --> RegistryEntry : 关联
+    RegistryEntry <|.. Reference : 实现
+    Registry --> RegistryEntry : 管理
+    Registries --> Registry : 持有
+```
+
+## 参考文件
+
+| 文件 | 描述 |
+|------|------|
+| `net/minecraft/util/Identifier.java` | 资源标识符 |
+| `net/minecraft/registry/RegistryKey.java` | 注册表键 |
+| `net/minecraft/registry/Registry.java` | 注册表接口 |
+| `net/minecraft/registry/Registries.java` | 全局注册表容器 |
+| `net/minecraft/registry/SimpleRegistry.java` | 注册表实现 |
+| `net/minecraft/registry/entry/RegistryEntry.java` | 注册表条目 |
+
+## 下一步
+
+注册表系统是 Minecraft 的核心！现在让我们学习 [客户端-服务端架构](./05-client-server-arch.md)。

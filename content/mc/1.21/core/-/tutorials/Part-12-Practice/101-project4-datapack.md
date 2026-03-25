@@ -1,17 +1,20 @@
 ---
-title: 项目4：创建数据包
-readingTime: 18
+title: 第 101 章：项目4：创建数据包（Project 4 — Datapack）
+readingTime: 50
 ---
 
-# 项目4：创建数据包
+# 第 101 章：项目4：创建数据包（Project 4 — Datapack）
 
-> 创建一个包含配方、进度和战利品的数据包！
+>创建一个包含配方、进度和战利品的数据包！
+>
+>本项目基于 Minecraft 1.21 配方系统和战利品系统源码分析。
 
 ---
 
 ## 项目目标
 
 学完这个项目后，你将掌握：
+
 - 数据包的基本结构
 - 如何创建函数（Functions）
 - 如何添加进度（Advancements）
@@ -39,22 +42,22 @@ flowchart TD
 
 ---
 
-## 所需知识
+## 前置知识
 
-- 数据包基础（Part-8 第41章）
-- 战利品表（Part-8 第42章）
-- 进度系统（Part-8 第43章）
-- 配方系统（Part-8 第44章）
+| 知识 | 说明 |
+|------|------|
+| JSON 基础 | 理解 JSON 格式 |
+| 数据包结构 | 了解 `data/` 目录结构 |
+| 战利品表 | 了解掉落系统 |
+| 配方系统 | 了解合成配方 |
 
 ---
 
 ## 步骤详解
 
-### 步骤 1：什么是数据包？
+### 步骤 1：理解数据包架构
 
-#### 核心概念
-
-数据包是一种不需要 Mod 就能自定义游戏内容的方式：
+#### 数据包 vs Mod
 
 ```
 ┌─────────────────────────────────────────┐
@@ -62,7 +65,7 @@ flowchart TD
 │                                         │
 │  Mod（模组）                            │
 │    ├─ 需要安装到游戏目录                │
-│    ├─ 需要编程知识                      │
+│    ├─ 需要编程知识（Java）              │
 │    └─ 可以添加新方块/物品/实体          │
 │                                         │
 │  数据包（Datapack）                     │
@@ -73,20 +76,16 @@ flowchart TD
 └─────────────────────────────────────────┘
 ```
 
-#### 生活中的比喻
+#### 数据包用途
 
-```
-数据包就像游戏规则的"说明书"：
-
-┌─────────────────────────────────────────┐
-│  说明书内容        │  相当于数据包的     │
-├─────────────────┼─────────────────────  │
-│  菜谱            │  合成配方           │
-│  成就清单        │  进度系统           │
-│  掉落规则        │  战利品表           │
-│  任务提示        │  函数命令           │
-└─────────────────────────────────────────┘
-```
+| 用途 | 说明 |
+|------|------|
+| 配方 | 添加/修改合成配方 |
+| 进度 | 添加自定义成就 |
+| 战利品 | 添加/修改掉落表 |
+| 函数 | 执行一系列命令 |
+| 标签 | 组合物品/方块/实体 |
+| 结构 | 生成建筑结构 |
 
 ---
 
@@ -100,7 +99,8 @@ MyFirstDatapack/
 └── data/
     ├── mymod/               # 命名空间（你的标识）
     │   ├── advancement/     # 进度
-    │   │   └── my_advancement.json
+    │   │   ├── root.json
+    │   │   └── first_craft.json
     │   ├── function/        # 函数
     │   │   ├── tick.mcfunction
     │   │   └── hello.mcfunction
@@ -110,7 +110,8 @@ MyFirstDatapack/
     │   │   └── entities/
     │   │       └── my_mob.json
     │   └── recipe/          # 配方
-    │       └── my_recipe.json
+    │       ├── my_recipe.json
+    │       └── magic_staff.json
     └── minecraft/           # 可以覆盖原版
         └── tags/
             └── function/
@@ -225,7 +226,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 │  玩家行为 → 检查条件 → 触发进度 → 给予奖励│
 │                                         │
 │  例如：                                  │
-│  玩家挖矿 → 背包有钻石 → "钻石猎手"成就  │
+│  玩家合成 → 背包有新物品 → "初学者"成就  │
 │                        ↓                │
 │                    给予奖励：            │
 │                    - 经验                │
@@ -245,30 +246,31 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
         "icon": {
             "item": "minecraft:enchanted_book"
         },
-        "title": {
-            "translate": "成就.初次魔法"
-        },
-        "description": {
-            "translate": "成就.初次魔法.desc"
-        },
+        "title": "初次魔法",
+        "description": "制作你的第一件魔法物品",
         "frame": "task",
         "show_toast": true,
         "announce_to_chat": true,
-        "hidden": false
+        "hidden": false,
+        "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png"
     },
     "parent": "mymod:root",
     "criteria": {
-        "learned": {
-            "trigger": "minecraft:recipe_unlocked",
+        "crafted": {
+            "trigger": "minecraft:inventory_changed",
             "conditions": {
-                "recipe": "mymod:magic_staff"
+                "items": [
+                    {
+                        "items": ["mymod:magic_wand"]
+                    }
+                ]
             }
         }
     },
     "rewards": {
         "experience": 50,
         "loot": ["mymod:chests/magic_reward"],
-        "recipes": ["mymod:magic_crystal"]
+        "function": "mymod:give_reward"
     }
 }
 ```
@@ -307,31 +309,52 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 | `enter_block` | 进入方块 | 检查方块 |
 | `effects_changed` | 效果变化 | 检查药水效果 |
 | `consume_item` | 消耗物品 | 检查消耗的物品 |
+| `tick` | 每刻触发 | 无条件 |
+| `impossible` | 不可能触发 | 无条件 |
 
 ---
 
 ### 步骤 5：创建战利品表（Loot Tables）
 
-#### 什么是战利品表？
+#### 战利品表系统架构
 
-战利品表定义了什么情况下给予什么物品：
+根据 Minecraft 1.21 源码，战利品表的核心组件：
 
 ```
-┌─────────────────────────────────────────┐
-│           战利品表用途                    │
-│                                         │
-│  1. 实体掉落（猪、牛、僵尸...）          │
-│  2. 箱子战利品（地牢、神殿...）          │
-│  3. 钓鱼奖励                            │
-│  4. 村民交易礼物                        │
-│  5. 考古奖励                            │
-│                                         │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   战利品表核心架构                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   LootTable       │   │     LootContext             │   │
+│  │   (战利品表)       │◄──│     (上下文)                │   │
+│  └────────┬─────────┘   └──────────────┬─────────────┘   │
+│           │                              │                  │
+│           ▼                              ▼                  │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   LootPool        │   │  LootContextParameters      │   │
+│  │   (战利品池)       │   │  (上下文参数)                │   │
+│  └────────┬─────────┘   └──────────────────────────────┘   │
+│           │                                             │
+│    ┌─────┴─────┐                                       │
+│    ▼           ▼                                        │
+│ ┌─────────┐ ┌──────────┐                                 │
+│ │LootEntry│ │LootCondition│                               │
+│ │(条目)   │ │(条件)     │                                 │
+│ └─────────┘ └──────────┘                                 │
+│    │                                                        │
+│    ▼                                                        │
+│ ┌──────────┐                                                │
+│ │LootFunction│                                               │
+│ │(函数)    │                                                │
+│ └──────────┘                                                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 #### 实体掉落战利品表
 
-创建 `data/mymod/loot_tables/entities/magic_beast.json`：
+创建 `data/mymod/loot_tables/entities/flame_spirit.json`：
 
 ```json
 {
@@ -341,7 +364,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
             "entries": [
                 {
                     "type": "item",
-                    "name": "minecraft:diamond",
+                    "name": "minecraft:blaze_rod",
                     "weight": 1,
                     "functions": [
                         {
@@ -349,7 +372,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
                             "count": {
                                 "type": "minecraft:uniform",
                                 "min": 1,
-                                "max": 3
+                                "max": 2
                             }
                         }
                     ]
@@ -366,12 +389,12 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
             "entries": [
                 {
                     "type": "item",
-                    "name": "mymod:magic_essence",
+                    "name": "mymod:flame_essence",
                     "weight": 5,
                     "conditions": [
                         {
                             "condition": "minecraft:random_chance",
-                            "chance": 0.2
+                            "chance": 0.1
                         }
                     ]
                 }
@@ -381,130 +404,109 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 }
 ```
 
-#### 箱子战利品表
+#### 常用条件
 
-创建 `data/mymod/loot_tables/chests/magic_treasure.json`：
+| 条件 | JSON ID | 说明 |
+|------|---------|------|
+| 被玩家击杀 | `killed_by_player` | 只有玩家击杀才掉落 |
+| 随机概率 | `random_chance` | `chance: 0.1` 表示10% |
+| 实体属性 | `entity_properties` | 检查实体是否着火等 |
+| 附魔检查 | `enchantment_check` | 检查抢夺附魔等级 |
+| 爆炸存活 | `survives_explosion` | 爆炸中存活才掉落 |
+| 表加成 | `table_bonus` | 抢夺/时运加成 |
 
-```json
-{
-    "pools": [
-        {
-            "rolls": {
-                "type": "minecraft:uniform",
-                "min": 2,
-                "max": 4
-            },
-            "entries": [
-                {
-                    "type": "item",
-                    "name": "minecraft:iron_ingot",
-                    "weight": 10,
-                    "functions": [
-                        {
-                            "function": "minecraft:set_count",
-                            "count": {
-                                "type": "minecraft:uniform",
-                                "min": 1,
-                                "max": 5
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "item",
-                    "name": "minecraft:gold_ingot",
-                    "weight": 5,
-                    "functions": [
-                        {
-                            "function": "minecraft:set_count",
-                            "count": {
-                                "type": "minecraft:uniform",
-                                "min": 1,
-                                "max": 3
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "item",
-                    "name": "minecraft:diamond",
-                    "weight": 2,
-                    "functions": [
-                        {
-                            "function": "minecraft:set_count",
-                            "count": {
-                                "type": "minecraft:uniform",
-                                "min": 1,
-                                "max": 2
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
-```
+#### 常用函数
+
+| 函数 | JSON ID | 说明 |
+|------|---------|------|
+| 设置数量 | `set_count` | 设置物品数量 |
+| 随机数量 | `set_count` | 使用 `uniform` 随机 |
+| 随机附魔 | `enchant_randomly` | 随机附魔 |
+| 抢夺加成 | `looting_enchant` | 根据抢夺等级增加 |
+| 烧制 | `furnace_smelt` | 熔炉烧制 |
+| 复制NBT | `copy_nbt` | 从上下文复制NBT |
+| 设置NBT | `set_nbt` | 设置固定NBT |
 
 ---
 
 ### 步骤 6：创建配方（Recipes）
 
-#### 什么是配方？
+#### 配方系统架构
 
-配方定义如何合成物品：
+根据 Minecraft 1.21 源码，配方系统的核心组件：
 
 ```
-┌─────────────────────────────────────────┐
-│           配方类型                        │
-│                                         │
-│  1. 有形状合成（需要按形状排列）         │
-│     ┌───┬───┬───┐                      │
-│     │ A │ A │   │  A = 钻石            │
-│     ├───┼───┼───┤  S = 木棍            │
-│     │   │ S │   │                      │
-│     ├───┼───┼───┤                      │
-│     │   │ S │   │                      │
-│     └───┴───┴───┘                      │
-│     = 钻石剑                            │
-│                                         │
-│  2. 无形状合成（材料随意摆放）           │
-│     需要：钻石x2 + 木棍x1               │
-│     = 钻石剑                            │
-│                                         │
-│  3. 熔炉配方（烧制）                    │
-│     输入 + 燃料 → 输出                  │
-│                                         │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   配方系统核心架构                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │   Recipe          │   │     RecipeType               │   │
+│  │   (配方接口)       │◄──│     (配方类型)                │   │
+│  └────────┬─────────┘   └──────────────┬─────────────┘   │
+│           │                              │                  │
+│           ▼                              ▼                  │
+│  ┌──────────────────┐   ┌──────────────────────────────┐   │
+│  │  RecipeSerializer │   │    RecipeManager             │   │
+│  │  (序列化器)        │   │    (配方管理器)               │   │
+│  └──────────────────┘   └──────────────────────────────┘   │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │                    配方类型继承树                        │  │
+│  │  Recipe~I~                                            │  │
+│  │     │                                                 │  │
+│  │     ├── CraftingRecipe                               │  │
+│  │     │     ├── ShapedRecipe                          │  │
+│  │     │     └── ShapelessRecipe                       │  │
+│  │     ├── CookingRecipe                                │  │
+│  │     │     ├── SmeltingRecipe                       │  │
+│  │     │     ├── SmokingRecipe                        │  │
+│  │     │     └── BlastingRecipe                       │  │
+│  │     ├── SmithingRecipe                               │  │
+│  │     └── StonecuttingRecipe                           │  │
+│  │                                                        │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 #### 有形状合成配方
 
-创建 `data/mymod/recipe/magic_staff.json`：
+创建 `data/mymod/recipe/magic_wand.json`：
 
 ```json
 {
     "type": "minecraft:crafting_shaped",
     "category": "equipment",
-    "group": "magic_staffs",
+    "group": "magic_wands",
     "pattern": [
-        "  D",
+        "  E",
         " S ",
         "S  "
     ],
     "key": {
-        "D": {
-            "item": "minecraft:diamond"
+        "E": {
+            "item": "minecraft:ender_eye"
         },
         "S": {
             "item": "minecraft:stick"
         }
     },
     "result": {
-        "item": "mymod:magic_staff",
+        "item": "mymod:magic_wand",
         "count": 1
     }
 }
+```
+
+**配方图示**：
+```
+合成台预览：
+  [ ] [E] [ ]     E = 末影之眼
+  [S] [ ] [ ]  =  S = 木棍
+  [S] [ ] [ ]
+  
+结果：魔法魔杖 x1
 ```
 
 #### 无形状合成配方
@@ -547,11 +549,122 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 }
 ```
 
+#### 配方类型对照
+
+| 类型 | JSON ID | 说明 |
+|------|---------|------|
+| 有形状合成 | `crafting_shaped` | 按图案排列 |
+| 无形状合成 | `crafting_shapeless` | 任意排列 |
+| 熔炉烧制 | `smelting` | 200 ticks (10秒) |
+| 烟熏炉 | `smoking` | 100 ticks (5秒) |
+| 高炉 | `blasting` | 100 ticks (5秒) |
+| 锻造 | `smithing_transform` | 升级装备 |
+| 切石 | `stonecutting` | 切石加工 |
+
 ---
 
-### 步骤 7：测试数据包
+## 完整数据包示例
 
-#### 测试步骤
+### 目录结构
+
+```
+MagicDatapack/
+├── pack.mcmeta
+└── data/
+    ├── mymod/
+    │   ├── advancement/
+    │   │   ├── root.json
+    │   │   └── first_craft.json
+    │   ├── function/
+    │   │   ├── welcome.mcfunction
+    │   │   └── tick.mcfunction
+    │   ├── loot_tables/
+    │   │   ├── entities/
+    │   │   │   └── flame_spirit.json
+    │   │   └── chests/
+    │   │       └── magic_reward.json
+    │   └── recipe/
+    │       ├── magic_wand.json
+    │       └── magic_crystal.json
+    └── minecraft/
+        └── tags/
+            └── function/
+                └── tick.json
+```
+
+### pack.mcmeta
+
+```json
+{
+    "pack": {
+        "pack_format": 34,
+        "description": "魔法数据包 - 添加魔法物品和成就"
+    }
+}
+```
+
+### welcome.mcfunction
+
+```mcfunction
+# 欢迎消息
+tellraw @s {"text":"欢迎来到魔法冒险！","color":"gold"}
+
+# 给予起始物品
+give @s minecraft:diamond 5
+
+# 播放音效
+playsound minecraft:entity.player.levelup player @s ~ ~ ~ 1.0 1.0
+```
+
+### tick.mcfunction
+
+```mcfunction
+# 检查站在岩浆块上的玩家
+execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s minecraft:fire_resistance 5 0
+```
+
+### 进度文件
+
+**root.json**:
+```json
+{
+    "display": {
+        "icon": {"item": "minecraft:nether_star"},
+        "title": "魔法冒险",
+        "description": "开始你的魔法冒险之旅",
+        "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png"
+    },
+    "criteria": {
+        "tick": {"trigger": "minecraft:tick"}
+    }
+}
+```
+
+**first_craft.json**:
+```json
+{
+    "display": {
+        "icon": {"item": "minecraft:enchanted_book"},
+        "title": "初次魔法",
+        "description": "制作你的第一件魔法物品"
+    },
+    "parent": "mymod:root",
+    "criteria": {
+        "crafted": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [{"items": ["mymod:magic_wand"]}]
+            }
+        }
+    }
+}
+```
+
+---
+
+## 测试步骤
+
+### 测试步骤
 
 1. **打包数据包**
    ```
@@ -573,13 +686,29 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 4. **测试功能**
    ```
-   - 检查配方：/recipe give @s mymod:magic_staff
+   - 检查配方：/recipe give @s mymod:magic_wand
    - 检查进度：/advancement grant @s everything
-   - 测试战利品：/loot give @s loot mymod:entities/magic_beast
+   - 测试战利品：/loot give @s loot mymod:entities/flame_spirit
    - 执行函数：/function mymod:welcome
    ```
 
-#### 常见问题排查
+### 预期结果
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     测试预期结果                          │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  1. 数据包加载成功                                    │
+│  2. 配方出现在合成台中                                 │
+│  3. 进度显示在进度界面                                 │
+│  4. 击杀生物触发战利品掉落                            │
+│  5. 执行 /function mymod:welcome 给予物品              │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 常见问题排查
 
 | 问题 | 原因 | 解决方法 |
 |------|------|----------|
@@ -590,83 +719,7 @@ execute as @a at @s if block ~ ~-1 minecraft:magma_block run effect give @s mine
 
 ---
 
-## 完整数据包示例
-
-### 目录结构
-
-```
-MagicDatapack/
-├── pack.mcmeta
-└── data/
-    ├── mymod/
-    │   ├── advancement/
-    │   │   ├── root.json
-    │   │   └── first_craft.json
-    │   ├── function/
-    │   │   ├── welcome.mcfunction
-    │   │   └── tick.mcfunction
-    │   ├── loot_tables/
-    │   │   ├── blocks/
-    │   │   │   └── magic_crystal.json
-    │   │   └── entities/
-    │   │       └── magic_beast.json
-    │   └── recipe/
-    │       ├── magic_crystal.json
-    │       └── magic_staff.json
-    └── minecraft/
-        └── tags/
-            └── function/
-                └── tick.json
-```
-
-### pack.mcmeta
-
-```json
-{
-    "pack": {
-        "pack_format": 34,
-        "description": "魔法数据包 - 添加魔法物品和成就"
-    }
-}
-```
-
----
-
-## 遇到问题怎么办？
-
-### 调试技巧
-
-1. **查看日志**
-   ```
-   游戏启动时的日志会显示数据包加载情况
-   ```
-
-2. **使用 /datapack 命令**
-   ```
-   /datapack list          - 列出已加载的数据包
-   /datapack enable "..."  - 启用数据包
-   /datapack disable "..." - 禁用数据包
-   ```
-
-3. **检查 JSON 格式**
-   ```
-   使用在线 JSON 验证器检查语法
-   ```
-
-### 常见错误
-
-| 错误信息 | 原因 | 解决方法 |
-|----------|------|----------|
-| `Invalid json` | JSON 格式错误 | 检查逗号、引号 |
-| `Unknown trigger` | 触发器不存在 | 检查触发器名称 |
-| `No namespace` | namespace 缺失 | 确保在 data/ 下有 namespace |
-| `Pack format mismatch` | 版本不匹配 | 更新 pack_format |
-
----
-
 ## 扩展挑战
-
-完成了基础项目？试试这些挑战：
 
 ### 挑战 1：创建自定义进度树
 
@@ -726,10 +779,10 @@ execute if entity @s[advancements={mymod:first_craft=true}] run function mymod:g
 
 ### 相关章节
 
-- [数据包基础](../Part-8-Resource/41-datapack-intro.md)
-- [战利品表](../Part-8-Resource/42-loot-table.md)
-- [进度系统](../Part-8-Resource/43-advancement.md)
-- [配方系统](../Part-8-Resource/44-recipe-system.md)
+| 章节 | 内容 |
+|------|------|
+| [配方系统分析](../../-analysis/15-recipe-system.md) | 配方系统的完整源码分析 |
+| [战利品系统分析](../../-analysis/14-loot-system.md) | 战利品系统的完整源码分析 |
 
 ### 在线资源
 
@@ -737,6 +790,48 @@ execute if entity @s[advancements={mymod:first_craft=true}] run function mymod:g
 - [Minecraft Wiki - Advancement](https://minecraft.fandom.com/wiki/Advancement)
 - [Minecraft Wiki - Loot table](https://minecraft.fandom.com/wiki/Loot_table)
 - [Minecraft Wiki - Recipe](https://minecraft.fandom.com/wiki/Recipe)
+
+### 源码参考
+
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| `LootTable.java` | `net/minecraft/loot/LootTable.java` | 战利品表 |
+| `LootPool.java` | `net/minecraft/loot/LootPool.java` | 战利品池 |
+| `RecipeManager.java` | `net/minecraft/recipe/RecipeManager.java` | 配方管理器 |
+| `ShapedRecipe.java` | `net/minecraft/recipe/ShapedRecipe.java` | 有形状合成 |
+| `CookingRecipe.java` | `net/minecraft/recipe/CookingRecipe.java` | 烹饪配方 |
+
+### 关键代码位置
+
+```java
+// LootTable 生成 - LootTable.java
+public void generateLoot(LootContextParameterSet parameters,
+                        Consumer<ItemStack> lootConsumer) {
+    // 创建上下文
+    LootContext context = new LootContext.Builder(parameters)
+        .withRandom(this.randomSequenceId)
+        .build(this.type);
+
+    // 为每个池生成战利品
+    for (LootPool pool : this.pools) {
+        if (pool.checkCondition(context)) {
+            pool.addLoot(lootConsumer, context);
+        }
+    }
+}
+
+// 配方匹配 - ShapedRecipe.java
+public boolean matches(CraftingInventory inventory, World world) {
+    for (int y = 0; y <= inventory.getHeight() - this.height; y++) {
+        for (int x = 0; x <= inventory.getWidth() - this.width; x++) {
+            if (this.matchesPattern(inventory, x, y)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+```
 
 ---
 
@@ -755,8 +850,9 @@ execute if entity @s[advancements={mymod:first_craft=true}] run function mymod:g
 - 学习服务端-客户端同步机制
 - 研究性能优化
 
-> [返回 Part-12 目录](../README.md)
+> [返回 Part-12 目录](./README.md)
 
 ---
 
+*文档版本：Minecraft 1.21, Protocol 767, World Version 3953*
 *本教程基于 Minecraft 1.21 源码编写*

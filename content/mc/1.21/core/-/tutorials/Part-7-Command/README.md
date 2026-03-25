@@ -11,10 +11,10 @@ readingTime: 15
 
 | 章节 | 标题 | 主要内容 |
 |------|------|----------|
-| [第37章](./37-command-intro.md) | 命令系统入门 | 命令、命令源、命令上下文、解析流程 |
-| [第38章](./38-brigadier-basics.md) | Brigadier 基础 | Brigadier 解析库、ArgumentBuilder、内置参数类型 |
-| [第39章](./39-custom-command.md) | 自定义命令 | 创建命令、参数定义、权限检查、/hello 实战 |
-| [第40章](./40-command-advanced.md) | 命令进阶 | 条件执行、子命令、重定向、转发 |
+| [第 41 章](./42-command-intro.md) | 命令系统入门 | 命令、命令源、命令上下文、解析流程 |
+| [第 42 章](./43-brigadier-basics.md) | Brigadier 基础 | Brigadier 解析库、ArgumentBuilder、内置参数类型 |
+| [第 43 章](./44-custom-command.md) | 自定义命令 | 创建命令、参数定义、权限检查、/hello 实战 |
+| [第 44 章](./45-command-advanced.md) | 命令进阶 | 条件执行、子命令、重定向、转发 |
 
 ## 🎯 学习目标
 
@@ -28,7 +28,7 @@ readingTime: 15
 
 ## 📖 章节介绍
 
-### 第37章 命令系统入门
+### 第 41 章 命令系统入门
 
 介绍命令系统的基本概念，包括：
 - 命令是什么（玩家输入的指令）
@@ -36,7 +36,7 @@ readingTime: 15
 - 命令上下文（CommandContext）—— 命令的所有信息
 - 命令从输入到执行的完整流程
 
-### 第38章 Brigadier 基础
+### 第 42 章 Brigadier 基础
 
 深入了解 Brigadier 命令解析库：
 - Brigadier 是什么（Mojang 的命令解析库）
@@ -44,7 +44,7 @@ readingTime: 15
 - 内置参数类型（实体、坐标、数值等）
 - 命令注册的基本方法
 
-### 第39章 自定义命令
+### 第 43 章 自定义命令
 
 动手创建第一个自定义命令：
 - 命令的基本结构
@@ -52,7 +52,7 @@ readingTime: 15
 - 权限检查机制
 - 实战：创建完整的 /hello 命令
 
-### 第40章 命令进阶
+### 第 44 章 命令进阶
 
 提升命令开发技能：
 - 条件执行（if/unless）
@@ -124,7 +124,7 @@ readingTime: 15
 
 ## 📝 练习答案
 
-### 第37章
+### 第 41 章
 
 **练习 1：追踪命令源信息**
 
@@ -161,7 +161,7 @@ public class PermissionCheckCommand {
 }
 ```
 
-### 第38章
+### 第 42 章
 
 **练习 1：问候命令**
 

@@ -1,425 +1,260 @@
 ---
-title: Minecraft 源码入门教程 - 课程总览
-readingTime: 15
+title: 第 00 章：课程总览（Course Overview）
+readingTime: 20
 ---
 
-# Minecraft 源码入门教程 - 课程总览
+# 第 00 章：课程总览（Course Overview）
 
-> **面向人群**：想学习 Minecraft 源码、想做 Mod 开发的零基础萌新
-> 
-> **学习目标**：理解 MC 架构，能读懂源码，会做 Mod
+## 目录
 
----
-
-## 目标
-
-学完这套教程后，你将能够：
-
-```
-✅ 理解 Minecraft 的整体架构
-✅ 读懂 Minecraft 核心源码
-✅ 理解注册表系统（最重要的概念）
-✅ 掌握客户端-服务端分离原理
-✅ 学会创建自己的方块、物品、生物
-✅ 能够编写数据包和自定义命令
-```
+- [编号与命名说明](#编号与命名说明)
+- [课程目标](#课程目标)
+- [学习路径图](#学习路径图)
+- [Part-0 章节一览](#part-0-章节一览)
+- [主线教程（Part-1～Part-12）](#主线教程part1part12)
+- [核心概念速览](#核心概念速览)
+- [前置知识要求](#前置知识要求)
+- [源码获取方式](#源码获取方式)
+- [学习方法建议](#学习方法建议)
+- [版本信息](#版本信息)
+- [常见问题](#常见问题)
+- [下一步](#下一步)
 
 ---
 
-## 前置知识
+## 编号与命名说明
 
-在开始之前，你需要准备：
+为与侧边栏、文件名一致，约定如下：
 
-```
-📦 Java 基础（会写简单代码即可）
-💻 一台电脑（内存 8GB 以上更好）
-🎯 耐心（源码有 5000+ 个文件，别慌！）
-```
+| 范围 | 含义 | 示例 |
+|------|------|------|
+| **Part-0：00～05** | 前置准备，文件名 `00`～`05` | 本文件为 `00-course-overview.md` |
+| **Part-1 起：04～** | 正式源码章节的两位数字前缀与文件名一致 | 如 `04-registry-system.md` 即第 4 章（注册表） |
 
-> 💡 **不用担心**：本教程 Part-0 会带你快速过一遍 Java 基础
+Part-0 各篇标题统一为 **「第 0X 章：中文标题（English）」**；侧栏若显示不同样式，以本仓库 Markdown 的 `title` 与一级标题为准。
+
+**主线章节（Part-1 起）** 一律使用同一格式：**YAML `title` 与正文首个一级标题 `#` 保持一致**，写法为 `第 NN 章：主题（可选英文副标题）`，其中 **NN 与文件名前缀两位或三位数字相同**（如 `09-world-core.md` 对应「第 08 章」）。请勿混用「第四章」「08 - 」等其它前缀，以免与侧栏、搜索不一致。
+
+扩展阅读见仓库根目录 [教程总入口](../README.md) 与 [学习路线图](../01-LEARNING-ROADMAP.md)。
 
 ---
 
-## 学习路线图
+## 课程目标
+
+本系列教程帮助 Java 开发者系统理解 **Minecraft 1.21** 核心源码结构，建立「从注册表到网络、从世界到 AI」的整体心智模型，并能用 IDE 自主深挖。
+
+---
+
+## 学习路径图
+
+下列示意图与当前目录 **Part-0～Part-12** 对齐（不含可选的 `Part-13-Additional` 补充篇）。
 
 ```mermaid
 flowchart TB
-    subgraph P0["📚 Part-0: 前置知识 (2-3天)"]
-        direction TB
-        P0-1["Java 基础速查<br/>类和对象、继承、泛型"]
-        P0-2["开发环境搭建<br/>IDEA、反编译、调试"]
-        P0-3["项目结构介绍<br/>5000+ 文件怎么看"]
+    subgraph P0["Part-0 前置知识"]
+        P0a["00 总览"]
+        P0b["01-05 环境与读码"]
     end
 
-    subgraph P1["🏠 Part-1: 核心基础 (3-5天)"]
-        direction TB
-        P1-1["⭐ 注册表系统<br/>MC 最核心的概念"]
-        P1-2["客户端-服务端架构<br/>为什么分客户端和服务端"]
-        P1-3["启动引导流程<br/>MC 启动时发生了什么"]
+    subgraph P1["Part-1 核心基础"]
+        P1a["注册表 ⭐"]
+        P1b["客户端/服务端"]
+        P1c["常量与启动"]
     end
 
-    subgraph P2["🌍 Part-2: 世界系统 (5-7天)"]
-        direction TB
-        P2-1["World 世界核心"]
-        P2-2["Chunk 区块系统"]
-        P2-3["Biome 生物群系"]
-        P2-4["地形生成"]
-        P2-5["光照系统"]
+    subgraph P2["Part-2 世界"]
+        P2a["World / Chunk"]
+        P2b["群系 / 生成 / 光照"]
     end
 
-    subgraph P3["🧱 Part-3: 方块物品 (5-7天)"]
-        direction TB
-        P3-1["Block 方块"]
-        P3-2["BlockState 方块状态"]
-        P3-3["BlockEntity 方块实体"]
-        P3-4["Item 物品"]
-        P3-5["ItemStack 物品堆叠"]
+    subgraph P3["Part-3 方块与物品"]
+        P3a["Block / Item"]
+        P3b["状态 / 方块实体 / 组件"]
     end
 
-    subgraph P4["🐄 Part-4: 实体系统 (5-7天)"]
-        direction TB
-        P4-1["Entity 实体入门"]
-        P4-2["LivingEntity 有生命实体"]
-        P4-3["MobEntity 生物"]
-        P4-4["属性与伤害"]
+    subgraph P4["Part-4 实体"]
+        P4a["Entity / Living / Mob"]
+        P4b["属性 / 伤害 / 生成"]
     end
 
-    subgraph P5["🤖 Part-5: AI 系统 (5-7天)"]
-        direction TB
-        P5-1["⭐ AI Brain 大脑<br/>MC 最有趣的系统"]
-        P5-2["Memory 记忆系统"]
-        P5-3["Sensor 传感器"]
-        P5-4["Task 任务系统"]
+    subgraph P5["Part-5 AI"]
+        P5a["Brain / Memory / Task"]
+        P5b["路径 / AI 控制"]
     end
 
-    subgraph P6["📡 Part-6: 网络系统 (3-5天)"]
-        P6-1["数据包 Packet"]
-        P6-2["协议状态机"]
-        P6-3["同步机制"]
+    subgraph P6["Part-6 网络"]
+        P6a["数据包 / 协议 / 同步"]
+        P6b["登录 / Play / 聊天"]
     end
 
-    subgraph P7["💪 Part-7+: 进阶实战"]
-        P7-1["命令系统"]
-        P7-2["资源包/数据包"]
-        P7-3["客户端渲染"]
-        P7-4["实战项目"]
+    subgraph P789["Part-7～9 命令·资源·客户端"]
+        P7["命令 Brigadier"]
+        P8["资源包与数据包"]
+        P9["渲染 / GUI / 输入"]
     end
 
-    P0-1 --> P0-2 --> P0-3
-    P0-3 --> P1-1 --> P1-2 --> P1-3
-    P1-3 --> P2-1 --> P2-2 --> P2-3 --> P2-4 --> P2-5
-    P2-5 --> P3-1 --> P3-2 --> P3-3 --> P3-4 --> P3-5
-    P3-5 --> P4-1 --> P4-2 --> P4-3 --> P4-4
-    P4-4 --> P5-1 --> P5-2 --> P5-3 --> P5-4
-    P5-4 --> P6-1 --> P6-2 --> P6-3
-    P6-3 --> P7-1 --> P7-2 --> P7-3 --> P7-4
+    subgraph P1011["Part-10～11 服务与进阶"]
+        P10["服务端 / Tick / 存档"]
+        P11["DataFixer / 流体 / 村袭结构等"]
+    end
 
-    style P1-1 fill:#ff6b6b,color:#fff
-    style P5-1 fill:#ff6b6b,color:#fff
-    style P7-4 fill:#6bcb77,color:#fff
+    subgraph P12["Part-12 实战"]
+        P12a["方块·物品·实体·数据包项目"]
+    end
+
+    P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> P9 --> P10 --> P11 --> P12
 ```
 
 ---
 
-## 为什么要学习 MC 源码？
+## Part-0 章节一览
 
-### 1. 理解 Mod 的原理
+按推荐顺序阅读（全部在 `Part-0-Prerequisites/` 下）。
 
-当你安装一个 Mod 时，你是否好奇它是怎么实现的？
+| 编号 | 文件 | 内容 | 建议时间 |
+|------|------|------|----------|
+| 00 | [00-course-overview.md](./00-course-overview.md) | 课程总览与路线图（本文） | 20 分钟 |
+| 01 | [01-java-basics.md](./01-java-basics.md) | Java 基础速查（Java Basics） | 30 分钟 |
+| 02 | [02-development-env.md](./02-development-env.md) | 开发环境搭建（Development Environment） | 30 分钟 |
+| 03 | [03-project-intro.md](./03-project-intro.md) | 项目结构介绍（Project Layout） | 20 分钟 |
+| 04 | [04-project-structure.md](./04-project-structure.md) | 项目结构与源码阅读技巧 | 15 分钟 |
+| 05 | [05-sourcecode-guide.md](./05-sourcecode-guide.md) | 附录：源码查找指南 | 20 分钟 |
 
-```
-没有看过源码：      看过源码后：
-┌─────────────┐    ┌─────────────┐
-│   我装了     │    │   我知道    │
-│   Xaeros    │    │   小地图    │
-│   小地图    │    │   是怎么    │
-│   Mod      │    │   实现的！  │
-└─────────────┘    └─────────────┘
-```
-
-### 2. 自己做 Mod
-
-市面上的 Mod 还不够？自己动手！
-
-```
-你的想法 ──────→ [理解源码] ──────→ 自己写 Mod
-    │                                  │
-    └──────────────────────────────────┘
-              不需要学完也能开始！
-```
-
-### 3. 理解游戏设计
-
-Minecraft 的代码是精心设计的，值得学习！
-
-```
-学完这套教程后，你会：
-├── 理解什么是"客户端预测"
-├── 理解区块是怎么存储的
-├── 理解生物的 AI 是怎么工作的
-└── 理解数据包是什么
-```
+说明：**03** 侧重「目录与模块划分」，**04** 侧重「读大型仓库的策略与技巧」，**05** 为可反复查阅的查找手册，可与正式章节穿插使用。
 
 ---
 
-## 课程结构介绍
+## 主线教程（Part-1～Part-12）
 
-### 每个章节的组成
+| Part | 目录 | 核心主题 |
+|------|------|----------|
+| Part-1 | [Part-1-Foundation](../Part-1-Foundation/) | 注册表、架构、常量、启动、Tick |
+| Part-2 | [Part-2-World](../Part-2-World/) | World、Chunk、群系、生成、光照、高度图 |
+| Part-3 | [Part-3-Block-Item](../Part-3-Block-Item/) | 方块、状态、方块实体、物品与组件 |
+| Part-4 | [Part-4-Entity](../Part-4-Entity/) | 实体生命周期、生物、属性、伤害、生成 |
+| Part-5 | [Part-5-AI](../Part-5-AI/) | Brain、记忆、感知、任务、日程、路径、AI 控制 |
+| Part-6 | [Part-6-Network](../Part-6-Network/) | 网络入门、数据包、协议、同步、登录、Play、聊天 |
+| Part-7 | [Part-7-Command](../Part-7-Command/) | 命令与 Brigadier |
+| Part-8 | [Part-8-Resource](../Part-8-Resource/) | 资源包、数据包、战利品、进度、配方 |
+| Part-9 | [Part-9-Client](../Part-9-Client/) | 客户端、渲染、GUI、输入、渲染层级、实体模型 |
+| Part-10 | [Part-10-Server](../Part-10-Server/) | 服务端、玩家管理、Tick、存档、独立/整合服 |
+| Part-11 | [Part-11-Advanced](../Part-11-Advanced/) | DataFixer、流体、村庄、袭击、结构及进阶专题 |
+| Part-12 | [Part-12-Practice](../Part-12-Practice/) | 实战项目（方块、物品、实体、数据包） |
 
-每个章节都包含以下内容：
-
-```mermaid
-flowchart LR
-    subgraph 章节结构
-        A["🎯 目标<br/>学完能做什么"] 
-        B["📖 核心概念<br/>简单解释"]
-        C["📊 图解<br/>Mermaid 图"]
-        D["💻 核心代码<br/>关键代码"]
-        E["🛠️ 实战演示<br/>动手练习"]
-        F["📝 小结<br/>要点总结"]
-    end
-
-    A --> B --> C --> D --> E --> F
-```
-
-### 萌新友好原则
-
-```
-1️⃣  图先于文字 ─ 先看图理解，再看文字
-2️⃣  比喻法     ─ 用生活例子解释概念
-3️⃣  代码简化   ─ 只展示关键片段
-4️⃣  前后关联   ─ 告诉你在哪里用过
-```
+可选补充：[Part-13-Additional](../Part-13-Additional/)（粒子、附魔、音效等扩展主题，编号独立于主线）。
 
 ---
 
-## 系统依赖关系图
+## 核心概念速览
 
-```mermaid
-flowchart TD
-    subgraph 核心层["🧠 核心系统"]
-        Registry["注册表 Registry<br/>MC 最核心的概念"]
-        Constants["常量 SharedConstants"]
-        Bootstrap["启动 Bootstrap"]
-    end
+### 注册表系统 (Registry)
 
-    subgraph 内容层["🎮 游戏内容"]
-        Block["方块 Block"]
-        Item["物品 Item"]
-        Entity["实体 Entity"]
-        Biome["生物群系 Biome"]
-    end
+> **比喻**：注册表像图书馆的**索引系统**。
+>
+> - **Identifier**：`minecraft:diamond_block` 一类的「书目编号」
+> - **RegistryKey / RegistryEntry**：索引与条目
+> - **Registries**：各注册表集合
 
-    subgraph 世界层["🌍 世界"]
-        World["World 世界"]
-        Chunk["Chunk 区块"]
-        Gen["地形生成"]
-        Light["光照"]
-    end
+### 客户端-服务端架构
 
-    subgraph AI层["🤖 AI 系统"]
-        Brain["AI 大脑 Brain"]
-        Memory["记忆 Memory"]
-        Sensor["传感器"]
-        Task["任务 Task"]
-    end
+> **比喻**：服务端像掌握全部规则的**权威**，客户端负责**展示与输入**，双方通过**数据包**同步。
 
-    subgraph 网络层["📡 网络"]
-        Packet["数据包 Packet"]
-        Sync["同步 Sync"]
-    end
+### 启动引导流程
 
-    Registry --> Block
-    Registry --> Item
-    Registry --> Entity
-    Registry --> Biome
-    
-    Block --> World
-    Item --> World
-    Entity --> World
-    Biome --> World
-    
-    World --> Chunk
-    World --> Gen
-    World --> Light
-    
-    Entity --> Brain
-    Brain --> Memory
-    Brain --> Sensor
-    Brain --> Task
-    
-    World --> Packet
-    Packet --> Sync
-
-    style Registry fill:#ffd93d,color:#000
-    style Brain fill:#ff6b6b,color:#fff
-    style World fill:#6bcb77,color:#fff
-```
+> 启动顺序可粗略理解为：Bootstrap 与注册表初始化 → 再进入客户端或服务端主循环（含 Tick）。
 
 ---
 
-## 如何使用这套教程
+## 前置知识要求
 
-### 建议的学习顺序
+### 必须掌握
 
-```
-1️⃣  按顺序学习 Part-0 → Part-12
-2️⃣  每章都要看图！图片比文字重要
-3️⃣  尝试在 IDEA 中搜索对应的代码
-4️⃣  做每章后面的练习题
-```
+- Java 语法（类、接口、继承、泛型）
+- 基本集合（Map、List、Set）与常见 API
+- 面向对象基本概念
 
-### 学习时间规划
+### 建议掌握
 
-| 部分 | 内容 | 建议时间 | 累计 |
-|------|------|----------|------|
-| Part-0 | 前置知识 | 2-3 天 | 2-3 天 |
-| Part-1 | 核心基础 | 3-5 天 | 5-8 天 |
-| Part-2 | 世界系统 | 5-7 天 | 10-15 天 |
-| Part-3 | 方块物品 | 5-7 天 | 15-22 天 |
-| Part-4 | 实体系统 | 5-7 天 | 20-29 天 |
-| Part-5 | AI 系统 | 5-7 天 | 25-36 天 |
-| Part-6-12 | 进阶实战 | 20-35 天 | 45-71 天 |
+- Maven / Gradle 基础
+- 常见设计模式
+- Git
 
-> ⏰ **总计**：大约 45-71 天可以学完核心内容
-> 
-> 💡 **不急**：按自己的节奏来，学懂最重要
+### 可选了解
+
+- Java NIO 或 Netty
+- 数据序列化概念
 
 ---
 
-## 萌新必懂的核心概念
+## 源码获取方式
 
-### 什么是注册表（Registry）？
-
-> 想象注册表是**图书馆的索引卡片**📇
+本教程默认对照本地反编译或映射后的源码，例如：
 
 ```
-图书馆                    Minecraft
-─────────                ─────────
-书架上的书    ←──对应──→  方块、物品、实体
-索引卡片    ←──对应──→  注册表 Registry
-书的编号    ←──对应──→  Identifier (如 minecraft:stone)
-
-当你需要找一本书时：
-1. 查索引卡片 → 找到书架位置 → 拿到书
-
-当你需要找"石头"时：
-1. 用 "minecraft:stone" 查注册表 → 找到石头方块
+D:\Minecraft-Learning\assets\minecraft\source\net\minecraft\
 ```
 
-### 什么是客户端-服务端分离？
-
-> 想象你和朋友**视频通话**📱
-
-```
-你（客户端）              朋友（服务端）
-─────────────            ─────────────
-看到画面渲染              负责游戏逻辑
-发送操作                  验证操作
-本地预测                  权威数据源
-
-视频通话：
-- 你看到的是"预测"的画面
-- 朋友的画面是"权威"的
-- 网络不好时，你可能会"卡顿"
-
-MC 多人游戏：
-- 客户端渲染看到的世界
-- 服务端运行真实的世界
-- 两者通过网络包同步
-```
-
-### 什么是 Tick？
-
-> Tick 就是游戏的**心跳**💓
-
-```
-现实世界：           MC 世界：
-1秒 = 1次心跳        1秒 = 20次 Tick
-
-每次 Tick 发生：
-├── 所有实体移动一步
-├── 所有方块检查是否需要更新
-├── 天气变化
-└── 检查各种游戏逻辑
-
-每分钟 = 1200 次 Tick
-每小时 = 72000 次 Tick
-```
+推荐使用 [Fabric Loom](https://github.com/FabricMC/fabric-loom) 或 IDE 插件 [Minecraft Development](https://plugins.jetbrains.com/plugin/8322-minecraft-development) 生成可导航工程。
 
 ---
 
-## 学习检查点
+## 学习方法建议
 
-```mermaid
-flowchart LR
-    subgraph 检查点
-        C1["✅ 理解注册表三层结构"]
-        C2["✅ 能找到石头方块的代码"]
-        C3["✅ 理解客户端-服务端分离"]
-        C4["✅ 理解 World 和 Chunk 的关系"]
-        C5["✅ 理解 Entity 是什么"]
-        C6["✅ 理解 AI 大脑的三层结构"]
-        C7["✅ 理解网络数据包流程"]
-        C8["✅ 能创建自定义命令"]
-        C9["✅ 能创建数据包"]
-        C10["✅ 能添加新方块/物品"]
-    end
+### 1. 带着问题阅读
 
-    C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7 --> C8 --> C9 --> C10
-    C10 --> Done["🎉 完成基础学习！"]
+例如：「物品如何注册？」「移动对应哪些数据包？」
 
-    style Done fill:#6bcb77,color:#fff
-```
+### 2. 善用 IDE
+
+- 跳转到定义、查找用法、类层次结构
+- 全文搜索包名与关键类名
+
+### 3. 对照游戏现象
+
+读代码时结合游戏内表现验证推断。
+
+### 4. 自己画架构图
+
+每学完一个 Part，用一张图总结输入输出与依赖关系。
 
 ---
 
-## 小结
+## 版本信息
 
-```
-✅ 本教程面向零基础萌新
-✅ 共 12 个部分，预计 45-71 天学完
-✅ 每个章节都有图解、代码、练习
-✅ 核心概念：注册表、客户端-服务端分离、AI 大脑
-```
-
----
-
-## 练习
-
-### 思考题
-
-1. **为什么 Minecraft 需要注册表系统？**
-   - 如果没有注册表，游戏怎么知道有哪些方块？
-
-2. **客户端和服务端各负责什么？**
-   - 哪边的 World 是"权威"的？
-
-3. **Tick 是什么？**
-   - MC 为什么是 20 Tick/秒，而不是 60？
-
-### 行动清单
-
-- [ ] 安装 IDEA 开发环境（详见下一章）
-- [ ] 导入 Minecraft 源码项目
-- [ ] 搜索 `Registries` 类，了解注册表结构
-- [ ] 搜索 `Identifier` 类，了解命名规则
+| 信息 | 值 |
+|------|-----|
+| Minecraft 版本 | 1.21 |
+| 协议版本 | 767 |
+| 世界版本 | 3953 |
+| 资源包版本 | 34 |
+| 数据包版本 | 48 |
 
 ---
 
-## 相关链接
+## 常见问题
 
-| 章节 | 内容 |
-|------|------|
-| [01-java-basics.md](./01-java-basics.md) | Java 基础速查 |
-| [02-development-env.md](./02-development-env.md) | 开发环境搭建 |
-| [03-project-intro.md](./03-project-intro.md) | 项目结构介绍 |
-| [04-registry-system.md](../Part-1-Foundation/04-registry-system.md) | 注册表系统（核心！） |
+### Q: 需要读完所有 Java 源文件吗？
+
+**A**: 不需要。教程围绕核心子系统组织，掌握路径后可有选择地深入。
+
+### Q: 反编译代码难读怎么办？
+
+**A**: 类名与方法签名通常可辨；可配合映射（Mappings）与官方命名习惯逐步适应。
+
+### Q: 做模组是否要学完全部？
+
+**A**: 使用 Fabric / NeoForge 等 API 时许多细节可封装；理解源码有助于排查性能与兼容问题。
 
 ---
 
-> **下一章预告**：[Java 基础速查](01-java-basics.md) - 快速过一遍阅读源码需要的 Java 知识
+## 下一步
 
----
+请按顺序完成 Part-0：
 
-*文档更新时间: 2026-03-19*
+1. [第 01 章：Java 基础速查](./01-java-basics.md)
+2. [第 02 章：开发环境搭建](./02-development-env.md)
+3. [第 03 章：项目结构介绍](./03-project-intro.md)
+4. [第 04 章：项目结构与源码阅读技巧](./04-project-structure.md)
+5. [第 05 章：源码查找指南](./05-sourcecode-guide.md)
+
+完成后进入 [Part-1 核心基础](../Part-1-Foundation/)。
