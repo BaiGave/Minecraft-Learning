@@ -393,7 +393,11 @@ const autoModules = {
             }
         ],
         "docCount": 41,
-        "theme": "fabric"
+        "theme": "fabric",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
     },
     "forge": {
         "name": "Forge 模组",
@@ -429,12 +433,16 @@ const autoModules = {
         ],
         "analysis": [],
         "docCount": 2,
-        "theme": "forge"
+        "theme": "forge",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
     },
     "ImmersivePortalsMod": {
-        "name": "Immersiveportalsmod",
+        "name": "ImmersivePortalsMod 文档",
         "slug": "ImmersivePortalsMod",
-        "icon": "paint-brush",
+        "icon": "door-open",
         "color": "#3498DB",
         "colorGradient": "linear-gradient(135deg, #3498DB 0%, #5DADE2 100%)",
         "description": "ImmersivePortalsMod 相关文档",
@@ -628,7 +636,11 @@ const autoModules = {
             }
         ],
         "docCount": 20,
-        "theme": "ImmersivePortalsMod"
+        "theme": "ImmersivePortalsMod",
+        "sourceUrl": "https://github.com/qouteall/ImmersivePortals",
+        "modVersion": "6.0.6",
+        "minecraftVersion": "1.21.1",
+        "loader": "Fabric"
     },
     "iris": {
         "name": "Iris 光影",
@@ -818,7 +830,11 @@ const autoModules = {
             }
         ],
         "docCount": 19,
-        "theme": "iris"
+        "theme": "iris",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
     },
     "mc": {
         "name": "Minecraft 原版",
@@ -1629,12 +1645,16 @@ const autoModules = {
             }
         ],
         "docCount": 88,
-        "theme": "mc"
+        "theme": "mc",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
     },
     "neoforge": {
         "name": "NeoForge 模组",
         "slug": "neoforge",
-        "icon": "fire",
+        "icon": "hammer",
         "color": "#9B59B6",
         "colorGradient": "linear-gradient(135deg, #9B59B6 0%, #B370CF 100%)",
         "description": "NeoForge 模组开发框架详解",
@@ -1909,7 +1929,11 @@ const autoModules = {
             }
         ],
         "docCount": 29,
-        "theme": "neoforge"
+        "theme": "neoforge",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
     },
     "sodium": {
         "name": "Sodium 优化",
@@ -2307,7 +2331,214 @@ const autoModules = {
             }
         ],
         "docCount": 42,
-        "theme": "sodium"
+        "theme": "sodium",
+        "sourceUrl": null,
+        "modVersion": null,
+        "minecraftVersion": null,
+        "loader": null
+    },
+    "voxy": {
+        "name": "Voxy",
+        "slug": "voxy",
+        "icon": "voxel",
+        "color": "#5B8C5A",
+        "colorGradient": "linear-gradient(135deg, #5B8C5A 0%, #6FA070 100%)",
+        "description": "Voxy 远距离 LOD 与体素化渲染模组架构解析",
+        "versions": [
+            "1.21.11-fabric-0.2.13-alpha"
+        ],
+        "defaultVersion": "1.21.11-fabric-0.2.13-alpha",
+        "docsDir": "docs/voxy",
+        "tutorials": [
+            {
+                "file": "Part-0-Prerequisites/01-voxy-intro",
+                "htmlPath": "Part-0-Prerequisites/01-voxy-intro.html",
+                "title": "\"走近 Voxy：LOD 远距离渲染\"",
+                "part": "0",
+                "partSuffix": "Prerequisites",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-0-Prerequisites\\01-voxy-intro.md"
+            },
+            {
+                "file": "Part-1-Foundation/01-world-engine-basics",
+                "htmlPath": "Part-1-Foundation/01-world-engine-basics.html",
+                "title": "\"WorldEngine：世界引擎基础\"",
+                "part": "1",
+                "partSuffix": "Foundation",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-1-Foundation\\01-world-engine-basics.md"
+            },
+            {
+                "file": "Part-1-Foundation/02-voxelized-section",
+                "htmlPath": "Part-1-Foundation/02-voxelized-section.html",
+                "title": "\"VoxelizedSection：体素化区块数据结构\"",
+                "part": "1",
+                "partSuffix": "Foundation",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-1-Foundation\\02-voxelized-section.md"
+            },
+            {
+                "file": "Part-1-Foundation/03-lod-system",
+                "htmlPath": "Part-1-Foundation/03-lod-system.html",
+                "title": "\"LOD 系统详解：从区块到多远距离\"",
+                "part": "1",
+                "partSuffix": "Foundation",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-1-Foundation\\03-lod-system.md"
+            },
+            {
+                "file": "Part-2-Core-Mechanisms/01-thread-model",
+                "htmlPath": "Part-2-Core-Mechanisms/01-thread-model.html",
+                "title": "\"线程模型与异步任务调度\"",
+                "part": "2",
+                "partSuffix": "Core-Mechanisms",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-2-Core-Mechanisms\\01-thread-model.md"
+            },
+            {
+                "file": "Part-2-Core-Mechanisms/02-rendering-pipeline",
+                "htmlPath": "Part-2-Core-Mechanisms/02-rendering-pipeline.html",
+                "title": "\"渲染管线：从 GPU 检测到批量绘制\"",
+                "part": "2",
+                "partSuffix": "Core-Mechanisms",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-2-Core-Mechanisms\\02-rendering-pipeline.md"
+            },
+            {
+                "file": "Part-3-Advanced/01-mixin-integration",
+                "htmlPath": "Part-3-Advanced/01-mixin-integration.html",
+                "title": "\"Mixin 集成与模组兼容性\"",
+                "part": "3",
+                "partSuffix": "Advanced",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-3-Advanced\\01-mixin-integration.md"
+            },
+            {
+                "file": "Part-3-Advanced/02-storage-system",
+                "htmlPath": "Part-3-Advanced/02-storage-system.html",
+                "title": "\"存储系统：RocksDB 与数据持久化\"",
+                "part": "3",
+                "partSuffix": "Advanced",
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\Part-3-Advanced\\02-storage-system.md"
+            },
+            {
+                "file": "README",
+                "htmlPath": "README.html",
+                "title": "\"Voxy 教程\"",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\README.md"
+            },
+            {
+                "file": "SUMMARY",
+                "htmlPath": "SUMMARY.html",
+                "title": "\"Voxy 教程总结\"",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\tutorials\\SUMMARY.md"
+            }
+        ],
+        "analysis": [
+            {
+                "file": "01-architecture-overview",
+                "htmlPath": "01-architecture-overview.html",
+                "title": "Voxy Architecture Overview",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\01-architecture-overview.md"
+            },
+            {
+                "file": "02-world-engine",
+                "htmlPath": "02-world-engine.html",
+                "title": "Voxy 世界引擎子系统",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\02-world-engine.md"
+            },
+            {
+                "file": "03-voxelization-system",
+                "htmlPath": "03-voxelization-system.html",
+                "title": "Voxy 体素化子系统深度解析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\03-voxelization-system.md"
+            },
+            {
+                "file": "04-storage-persistence",
+                "htmlPath": "04-storage-persistence.html",
+                "title": "Voxy 持久化存储子系统分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\04-storage-persistence.md"
+            },
+            {
+                "file": "05-thread-service",
+                "htmlPath": "05-thread-service.html",
+                "title": "Voxy 线程与服务子系统分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\05-thread-service.md"
+            },
+            {
+                "file": "06-rendering-core",
+                "htmlPath": "06-rendering-core.html",
+                "title": "Voxy 渲染核心子系统分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\06-rendering-core.md"
+            },
+            {
+                "file": "07-world-importers",
+                "htmlPath": "07-world-importers.html",
+                "title": "Voxy 世界数据导入子系统分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\07-world-importers.md"
+            },
+            {
+                "file": "08-config-system",
+                "htmlPath": "08-config-system.html",
+                "title": "Voxy 配置系统架构分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\08-config-system.md"
+            },
+            {
+                "file": "README",
+                "htmlPath": "README.html",
+                "title": "Voxy 架构分析",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\README.md"
+            },
+            {
+                "file": "SUMMARY",
+                "htmlPath": "SUMMARY.html",
+                "title": "Voxy 架构分析总结",
+                "part": "Other",
+                "partSuffix": null,
+                "version": "1.21.11-fabric-0.2.13-alpha",
+                "fullPath": "D:\\Minecraft-Learning\\content\\voxy\\1.21.11-fabric-0.2.13-alpha\\analysis\\SUMMARY.md"
+            }
+        ],
+        "docCount": 20,
+        "theme": "voxy",
+        "sourceUrl": "https://github.com/MCRcortex/voxy",
+        "modVersion": "0.2.13-alpha",
+        "minecraftVersion": "1.21.11",
+        "loader": "fabric"
     }
 };
 

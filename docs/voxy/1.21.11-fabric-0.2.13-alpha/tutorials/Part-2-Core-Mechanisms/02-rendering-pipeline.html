@@ -243,37 +243,64 @@
 
             <div class="docs-body doc-content">
                 <h2 id="致谢">致谢</h2>
-<p>本文档为 Voxy 模组学习笔记，基于 <a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a> 源码分析撰写。Voxy 是由 comp500 开发的 Minecraft 地形渲染优化模组，采用 AGPL-3.0 许可证。</p>
+
+
+本文档为 Voxy 模组学习笔记，基于 <a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a> 源码分析撰写。Voxy 是由 comp500 开发的 Minecraft 地形渲染优化模组，采用 AGPL-3.0 许可证。
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#1-为什么需要-gpu-能力检测">为什么需要 GPU 能力检测</a></li>
-<li><a href="#2-gpu-能力检测三要素">GPU 能力检测三要素</a></li>
-<li><a href="#3-扩展检测的可靠性问题">扩展检测的可靠性问题</a></li>
-<li><a href="#4-批量绘制核心glmultielementsindirectcountarb">批量绘制核心：glMultiDrawElementsIndirectCountARB</a></li>
-<li><a href="#5-sharedindexbuffer预生成索引模式复用">SharedIndexBuffer：预生成索引模式复用</a></li>
-<li><a href="#6-mdic-渲染限制">MDIC 渲染限制</a></li>
-<li><a href="#7-渲染管线流程图">渲染管线流程图</a></li>
-<li><a href="#8-简化示例gpu-能力检测">简化示例：GPU 能力检测</a></li>
-<li><a href="#课后自查">课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#1-为什么需要-gpu-能力检测">为什么需要 GPU 能力检测</a></li></ul>
+<ul><li><a href="#2-gpu-能力检测三要素">GPU 能力检测三要素</a></li></ul>
+<ul><li><a href="#3-扩展检测的可靠性问题">扩展检测的可靠性问题</a></li></ul>
+<ul><li><a href="#4-批量绘制核心glmultielementsindirectcountarb">批量绘制核心：glMultiDrawElementsIndirectCountARB</a></li></ul>
+<ul><li><a href="#5-sharedindexbuffer预生成索引模式复用">SharedIndexBuffer：预生成索引模式复用</a></li></ul>
+<ul><li><a href="#6-mdic-渲染限制">MDIC 渲染限制</a></li></ul>
+<ul><li><a href="#7-渲染管线流程图">渲染管线流程图</a></li></ul>
+<ul><li><a href="#8-简化示例gpu-能力检测">简化示例：GPU 能力检测</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="1-为什么需要-gpu-能力检测">1. 为什么需要 GPU 能力检测</h2>
-<p>Voxy 的渲染系统高度依赖现代 GPU 特性——Compute Shader 用于遮挡剔除、间接绘制命令减少 CPU 开销、64 位整数运算处理数据。这些特性并非所有 GPU 都支持。</p>
-<p>如果直接使用不存在的 GPU 功能，会导致：
-<ul><li><strong>着色器编译失败</strong>：程序崩溃</li>
-<li><strong>驱动崩溃</strong>：GPU 死锁或 TDR（超时检测恢复）</li>
-<li><strong>渲染错误</strong>：贴图错位、深度测试失败</li></ul></p>
-<p>因此，Voxy 在启动时严格检测硬件能力，如果不满足最低要求，直接禁用模组并输出错误信息。</p>
-<p><hr></p>
+
+
+Voxy 的渲染系统高度依赖现代 GPU 特性——Compute Shader 用于遮挡剔除、间接绘制命令减少 CPU 开销、64 位整数运算处理数据。这些特性并非所有 GPU 都支持。
+
+如果直接使用不存在的 GPU 功能，会导致：
+<ul><li><strong>着色器编译失败</strong>：程序崩溃</li></ul>
+<ul><li><strong>驱动崩溃</strong>：GPU 死锁或 TDR（超时检测恢复）</li></ul>
+<ul><li><strong>渲染错误</strong>：贴图错位、深度测试失败</li></ul>
+
+因此，Voxy 在启动时严格检测硬件能力，如果不满足最低要求，直接禁用模组并输出错误信息。
+
+<hr>
+
 <h2 id="2-gpu-能力检测三要素">2. GPU 能力检测三要素</h2>
-<p><code>Capabilities</code> 类是渲染系统的门槛，检测三个关键能力：</p>
+
+
+<code>Capabilities</code> 类是渲染系统的门槛，检测三个关键能力：
+
 <h3>2.1 compute：Compute Shader 间接调度</h3>
-<pre class="code-block"><code class="language-java">this.compute = cap.glDispatchComputeIndirect != 0;</code></pre>
-<p><strong>作用</strong>：支持 <code>glDispatchComputeIndirect</code>，允许 GPU 端生成绘制命令。Voxy 的遮挡剔除和命令生成完全在 GPU 上执行，CPU 只需发起一次调度。</p>
-<p><strong>无此能力的 GPU</strong>：所有 GPU 都支持基础 Compute Shader，但 <code>glDispatchComputeIndirect</code> 需要 OpenGL 4.3+。</p>
+
+</p>
+<p><pre class="code-block"><code class="language-java">this.compute = cap.glDispatchComputeIndirect != 0;</code></pre>
+
+
+<strong>作用</strong>：支持 <code>glDispatchComputeIndirect</code>，允许 GPU 端生成绘制命令。Voxy 的遮挡剔除和命令生成完全在 GPU 上执行，CPU 只需发起一次调度。
+
+<strong>无此能力的 GPU</strong>：所有 GPU 都支持基础 Compute Shader，但 <code>glDispatchComputeIndirect</code> 需要 OpenGL 4.3+。
+
 <h3>2.2 indirectParameters：批量绘制计数</h3>
-<pre class="code-block"><code class="language-java">this.indirectParameters = cap.glMultiDrawElementsIndirectCountARB != 0;</code></pre>
-<p><strong>作用</strong>：支持 <code>GL<em>ARB</em>multi<em>draw</em>elements<em>indirect</em>count</code>，这是批量绘制的核心。没有它，Voxy 无法高效渲染数十万个绘制调用。</p>
-<p><strong>为什么必须</strong>：</p>
-<pre class="code-block"><code class="language-text">传统方式（1万个绘制调用）：
+
+</p>
+<p><pre class="code-block"><code class="language-java">this.indirectParameters = cap.glMultiDrawElementsIndirectCountARB != 0;</code></pre>
+
+
+<strong>作用</strong>：支持 <code>GL<em>ARB</em>multi<em>draw</em>elements<em>indirect</em>count</code>，这是批量绘制的核心。没有它，Voxy 无法高效渲染数十万个绘制调用。
+
+<strong>为什么必须</strong>：</p>
+<p><pre class="code-block"><code class="language-text">传统方式（1万个绘制调用）：
 ┌──────────┐    ┌──────────┐    ┌──────────┐
 │ Draw #1  │ →  │ Draw #2  │ →  │ Draw #3  │ → ... → CPU 瓶颈
 └──────────┘    └──────────┘    └──────────┘
@@ -283,25 +310,39 @@ MDIC 方式（1万个调用）：
 │ glMultiDrawElementsIndirectCountARB         │
 │ 一次性提交所有绘制命令，GPU 自行解析          │
 └─────────────────────────────────────────────┘</code></pre>
+
+
 <h3>2.3 hasBrokenDepthSampler：AMD 深度采样 Bug</h3>
-<pre class="code-block"><code class="language-java">if (this.compute &amp;&amp; this.isAmd) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">if (this.compute &amp;&amp; this.isAmd) {
     this.hasBrokenDepthSampler = testDepthSampler();
     if (this.hasBrokenDepthSampler) {
         throw new IllegalStateException(&quot;it bork, amd is bork&quot;);
     }
 }</code></pre>
-<p><strong>作用</strong>：检测部分 AMD 显卡的深度纹理采样 Bug。部分 AMD 驱动在 Compute Shader 中使用 <code>texelFetch</code> 读取深度纹理时返回错误值。</p>
-<p><strong>检测原理</strong>：
-<ul><li>创建深度模板纹理</li>
-<li>设置已知深度值</li>
-<li>在 Compute Shader 中读取</li>
-<li>比较读取值与预期值</li>
-<li>如果不符，说明驱动存在 bug</li></ul></p>
-<p><hr></p>
+
+
+<strong>作用</strong>：检测部分 AMD 显卡的深度纹理采样 Bug。部分 AMD 驱动在 Compute Shader 中使用 <code>texelFetch</code> 读取深度纹理时返回错误值。
+
+<strong>检测原理</strong>：
+<ul><li>创建深度模板纹理</li></ul>
+<ul><li>设置已知深度值</li></ul>
+<ul><li>在 Compute Shader 中读取</li></ul>
+<ul><li>比较读取值与预期值</li></ul>
+<ul><li>如果不符，说明驱动存在 bug</li></ul>
+
+<hr>
+
 <h2 id="3-扩展检测的可靠性问题">3. 扩展检测的可靠性问题</h2>
+
+
 <h3>3.1 扩展标志不一定可靠</h3>
-<p>驱动报告支持某扩展，不代表实际可用。Voxy 对此有深刻教训：</p>
-<pre class="code-block"><code class="language-java">// this.INT64_t = cap.GL_ARB_gpu_shader_int64;
+
+
+驱动报告支持某扩展，不代表实际可用。Voxy 对此有深刻教训：
+</p>
+<p><pre class="code-block"><code class="language-java">// this.INT64_t = cap.GL_ARB_gpu_shader_int64;
 
 // ✅ 可靠：实际编译着色器验证
 this.INT64_t = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
@@ -312,8 +353,12 @@ this.INT64_t = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
         uint64_t a = 1234;
     }
     &quot;&quot;&quot;);</code></pre>
+
+
 <h3>3.2 INT64_t 和 subgroup 检测</h3>
-<pre class="code-block"><code class="language-java">if (cap.GL_KHR_shader_subgroup) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">if (cap.GL_KHR_shader_subgroup) {
     this.subgroup = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
         #version 430
         #extension GL_KHR_shader_subgroup_basic : require
@@ -324,36 +369,67 @@ this.INT64_t = testShaderCompilesOk(ShaderType.COMPUTE, &quot;&quot;&quot;
         }
         &quot;&quot;&quot;);
 }</code></pre>
-<p><strong>关键设计</strong>：通过实际编译着色器来验证特性，而非仅依赖驱动报告的扩展标志。</p>
+
+
+<strong>关键设计</strong>：通过实际编译着色器来验证特性，而非仅依赖驱动报告的扩展标志。
+
 <h3>3.3 厂商检测与特殊处理</h3>
-<pre class="code-block"><code class="language-java">var vendor = glGetString(GL_VENDOR).toLowerCase(Locale.ROOT);
+
+</p>
+<p><pre class="code-block"><code class="language-java">var vendor = glGetString(GL_VENDOR).toLowerCase(Locale.ROOT);
 this.isIntel = vendor.contains(&quot;intel&quot;);
 this.isNvidia = vendor.contains(&quot;nvidia&quot;);
 this.isAmd = vendor.contains(&quot;amd&quot;) || vendor.contains(&quot;radeon&quot;);</code></pre>
-<p><strong>NVIDIA 显存查询</strong>：</p>
-<pre class="code-block"><code class="language-java">if (this.canQueryGpuMemory) {
+
+
+<strong>NVIDIA 显存查询</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">if (this.canQueryGpuMemory) {
     this.totalDedicatedMemory = glGetInteger64(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX) * 1024;
     this.totalDynamicMemory = (glGetInteger64(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) * 1024) 
                               - this.totalDedicatedMemory;
 }</code></pre>
-<p>仅 NVIDIA 显卡支持通过 <code>GL<em>NVX</em>gpu<em>memory</em>info</code> 查询显存信息。</p>
-<p><hr></p>
+
+
+仅 NVIDIA 显卡支持通过 <code>GL<em>NVX</em>gpu<em>memory</em>info</code> 查询显存信息。
+
+<hr>
+
 <h2 id="4-批量绘制核心glmultidrawelementsindirectcountarb">4. 批量绘制核心：glMultiDrawElementsIndirectCountARB</h2>
+
+
 <h3>4.1 为什么需要批量绘制</h3>
-<p>Minecraft 地形包含数十万个 mesh，每个 mesh 理论上需要一次 <code>glDrawElements</code> 调用。CPU 端提交这么多调用会成为瓶颈。</p>
-<p><strong>MDIC 解决方案</strong>：在 GPU 端预生成所有绘制命令，一次性提交。</p>
+
+
+Minecraft 地形包含数十万个 mesh，每个 mesh 理论上需要一次 <code>glDrawElements</code> 调用。CPU 端提交这么多调用会成为瓶颈。
+
+<strong>MDIC 解决方案</strong>：在 GPU 端预生成所有绘制命令，一次性提交。
+
 <h3>4.2 绘制命令格式</h3>
-<pre class="code-block"><code class="language-c">struct DrawElementsIndirectCommand {
+
+</p>
+<p><pre class="code-block"><code class="language-c">struct DrawElementsIndirectCommand {
     uint  count;         // 索引数量
     uint  primCount;     // 实例数量
     uint  firstIndex;    // 首个索引的偏移
     int   baseVertex;    // 基础顶点偏移
     uint  baseInstance;  // 基础实例偏移
 };</code></pre>
+
+
 <h3>4.3 MDIC 与普通 Indirect 的区别</h3>
-<table class="data-table"><thead><tr><th>特性</th><th>glDrawElementsIndirect</th><th>glMultiDrawElementsIndirectCountARB</th></tr></thead><tbody><tr><td>绘制调用数</td><td>单个</td><td>多个</td></tr><tr><td>计数来源</td><td>命令中指定</td><td>GPU 原子计数</td></tr><tr><td>适用场景</td><td>已知调用数</td><td>调用数由 GPU 决定</td></tr><tr><td>Voxy 支持</td><td>不支持</td><td><strong>必须</strong></td></tr></tbody></table>
-Voxy 使用 GPU 原子计数器统计可见图元数量，然后使用 MDIC 绘制：</p>
-<div class="mermaid-wrapper mermaid-container">
+
+
+| 特性 | glDrawElementsIndirect | glMultiDrawElementsIndirectCountARB |
+|------|------------------------|-------------------------------------|
+| 绘制调用数 | 单个 | 多个 |
+| 计数来源 | 命令中指定 | GPU 原子计数 |
+| 适用场景 | 已知调用数 | 调用数由 GPU 决定 |
+| Voxy 支持 | 不支持 | <strong>必须</strong> |
+
+Voxy 使用 GPU 原子计数器统计可见图元数量，然后使用 MDIC 绘制：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">sequenceDiagram
     participant CPU
     participant GPU as GPU (Compute)
@@ -371,14 +447,31 @@ Voxy 使用 GPU 原子计数器统计可见图元数量，然后使用 MDIC 绘�
     Raster->>Raster: 4. glMultiDrawElementsIndirectCountARB
     Note right of Raster: 按计数绘制可见几何</div>
 </div>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="5-sharedindexbuffer预生成索引模式复用">5. SharedIndexBuffer：预生成索引模式复用</h2>
+
+
 <h3>5.1 设计目标</h3>
-<p>Voxy 所有渲染批次复用相同的索引模式，无需为每个 mesh 生成新索引。<code>SharedIndexBuffer</code> 预先生成并上传标准索引模式到 GPU。</p>
+
+
+Voxy 所有渲染批次复用相同的索引模式，无需为每个 mesh 生成新索引。<code>SharedIndexBuffer</code> 预先生成并上传标准索引模式到 GPU。
+
 <h3>5.2 三种变体</h3>
-<table class="data-table"><thead><tr><th>变体</th><th>索引类型</th><th>最大四边形数</th><th>适用场景</th></tr></thead><tbody><tr><td><code>INSTANCE</code></td><td>16-bit short</td><td>16,380</td><td>标准渲染</td></tr><tr><td><code>INSTANCE<em>BYTE</code></td><td>8-bit byte</td><td>63</td><td>少量几何</td></tr><tr><td><code>INSTANCE</em>BB_BYTE</code></td><td>8-bit byte</td><td>仅立方体</td><td>实体/AABB</td></tr></tbody></table>
+
+
+| 变体 | 索引类型 | 最大四边形数 | 适用场景 |
+|------|----------|-------------|---------|
+| <code>INSTANCE</code> | 16-bit short | 16,380 | 标准渲染 |
+| <code>INSTANCE_BYTE</code> | 8-bit byte | 63 | 少量几何 |
+| <code>INSTANCE<em>BB</em>BYTE</code> | 8-bit byte | 仅立方体 | 实体/AABB |
+
 <h3>5.3 索引模式生成</h3>
-<pre class="code-block"><code class="language-java">public static MemoryBuffer generateQuadIndicesShort(int quadCount) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static MemoryBuffer generateQuadIndicesShort(int quadCount) {
     if ((quadCount * 4) &gt;= 1 &lt;&lt; 16) {
         throw new ArgumentException(&quot;Quad count too large&quot;);
     }
@@ -395,10 +488,16 @@ Voxy 使用 GPU 原子计数器统计可见图元数量，然后使用 MDIC 绘�
     }
     return buffer;
 }</code></pre>
-<p><strong>四边形索引模式</strong>：</p>
-<pre class="code-block"><code class="language-text">顶点: 0, 1, 2, 3 → 索引: 1, 2, 0, 1, 3, 2 (两个三角形)</code></pre>
+
+
+<strong>四边形索引模式</strong>：</p>
+<p><pre class="code-block"><code class="language-text">顶点: 0, 1, 2, 3 → 索引: 1, 2, 0, 1, 3, 2 (两个三角形)</code></pre>
+
+
 <h3>5.4 立方体索引预定义</h3>
-<pre class="code-block"><code class="language-java">private static MemoryBuffer generateCubeIndexBuffer() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static MemoryBuffer generateCubeIndexBuffer() {
     var buffer = new MemoryBuffer(6 * 2 * 3);
     // 每个面 2 个三角形，每个三角形 3 个顶点
     
@@ -409,20 +508,42 @@ Voxy 使用 GPU 原子计数器统计可见图元数量，然后使用 MDIC 绘�
     // West face:   2,4,0, 4,2,6
     // East face:   1,5,3, 7,3,5
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="6-mdic-渲染限制">6. MDIC 渲染限制</h2>
-<p><code>MDICSectionRenderer</code> 定义了渲染器的硬性限制：</p>
-<pre class="code-block"><code class="language-java">public static final int OPAQUE_DRAW_COUNT = 400_000;      // 不透明绘制上限
+
+
+<code>MDICSectionRenderer</code> 定义了渲染器的硬性限制：
+</p>
+<p><pre class="code-block"><code class="language-java">public static final int OPAQUE_DRAW_COUNT = 400_000;      // 不透明绘制上限
 public static final int TRANSLUCENT_DRAW_COUNT = 100_000;  // 半透明绘制上限
 public static final int TEMPORAL_DRAW_COUNT = 100_000;     // 时序绘制上限</code></pre>
+
+
 <h3>6.1 为什么需要限制</h3>
-<p>间接绘制命令存储在固定大小的 GPU 缓冲区中。缓冲区大小决定了最大可存储的绘制命令数量。</p>
+
+
+间接绘制命令存储在固定大小的 GPU 缓冲区中。缓冲区大小决定了最大可存储的绘制命令数量。
+
 <h3>6.2 限制的意义</h3>
-<table class="data-table"><thead><tr><th>阶段</th><th>上限</th><th>说明</th></tr></thead><tbody><tr><td>OPAQUE</td><td>400,000</td><td>不透明地形，数量最多</td></tr><tr><td>TRANSLUCENT</td><td>100,000</td><td>半透明地形，需要排序</td></tr><tr><td>TEMPORAL</td><td>100,000</td><td>时序内容（水、肺等）</td></tr></tbody></table>
-如果实际绘制调用超过限制，超出的部分将被忽略（不渲染）。这是性能与正确性的权衡。</p>
-<p><hr></p>
+
+
+| 阶段 | 上限 | 说明 |
+|------|------|------|
+| OPAQUE | 400,000 | 不透明地形，数量最多 |
+| TRANSLUCENT | 100,000 | 半透明地形，需要排序 |
+| TEMPORAL | 100,000 | 时序内容（水、肺等） |
+
+如果实际绘制调用超过限制，超出的部分将被忽略（不渲染）。这是性能与正确性的权衡。
+
+<hr>
+
 <h2 id="7-渲染管线流程图">7. 渲染管线流程图</h2>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph Init["初始化阶段"]
         A1[Capabilities 检测] --> A2{是否支持?}
@@ -459,8 +580,11 @@ public static final int TEMPORAL_DRAW_COUNT = 100_000;     // 时序绘制上限
     B3 --> C7
     B9 --> C7</div>
 </div>
-<p><strong>渲染管线时序</strong>：</p>
-<div class="mermaid-wrapper mermaid-container">
+
+
+<strong>渲染管线时序</strong>：
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">sequenceDiagram
     participant FE as 前端<br/>(Java)
     participant GC as GPU Compute<br/>(遮挡剔除)
@@ -478,9 +602,14 @@ public static final int TEMPORAL_DRAW_COUNT = 100_000;     // 时序绘制上限
     GR->>GR: glMultiDrawElementsIndirectCountARB
     Note over GR: 读取计数 + 批量绘制</div>
 </div>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="8-简化示例gpu-能力检测">8. 简化示例：GPU 能力检测</h2>
-<pre class="code-block"><code class="language-java">public class GpuCapabilityChecker {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class GpuCapabilityChecker {
     
     public static boolean checkMinimumRequirements() {
         var cap = GL.getCapabilities();
@@ -528,27 +657,41 @@ public static final int TEMPORAL_DRAW_COUNT = 100_000;     // 时序绘制上限
         }
     }
 }</code></pre>
-<p><strong>检测结果处理</strong>：</p>
-<pre class="code-block"><code class="language-java">boolean systemSupported = Capabilities.INSTANCE.compute &amp;&amp; 
+
+
+<strong>检测结果处理</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">boolean systemSupported = Capabilities.INSTANCE.compute &amp;&amp; 
                           Capabilities.INSTANCE.indirectParameters &amp;&amp; 
                           !Capabilities.INSTANCE.hasBrokenDepthSampler;
 if (!systemSupported) {
     Logger.error(&quot;Voxy is unsupported on your system.&quot;);
     // 显示友好的错误消息而非崩溃
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="课后自查">课后自查</h2>
-<p><ul><li><strong>能力检测</strong>：为什么 Voxy 要求 <code>glMultiDrawElementsIndirectCountARB</code> 而非普通的 <code>glDrawElementsIndirect</code>？两者有何本质区别？</li></ul></p>
-<p><ul><li><strong>AMD Bug</strong>：AMD 深度采样 Bug 的检测原理是什么？它影响了 Voxy 的哪些渲染阶段？</li></ul></p>
-<p><ul><li><strong>索引复用</strong>：<code>SharedIndexBuffer</code> 为什么提供多种变体（byte/short）？如何选择合适的变体？</li></ul></p>
-<p><ul><li><strong>渲染限制</strong>：MDIC 渲染限制中的三个上限（400k/100k/100k）分别对应什么渲染阶段？为什么不透明渲染的上限最高？</li></ul></p>
-<p><ul><li><strong>可靠性</strong>：为什么某些 GPU 特性的检测不能仅依赖扩展标志？Voxy 采用了什么替代方案？</li></ul></p>
-<p><hr></p>
-<p><strong>相关文档</strong>：
-<ul><li><a href="../01-architecture-overview.html">Voxy 架构概览</a></li>
-<li><a href="../../analysis/06-rendering-core.html">渲染核心子系统分析</a></li>
-<li><a href="../Part-1-Foundation/01-world-ingestion.html">地形数据摄取系统</a></li>
-</ul></p>
+
+
+<ul><li><strong>能力检测</strong>：为什么 Voxy 要求 <code>glMultiDrawElementsIndirectCountARB</code> 而非普通的 <code>glDrawElementsIndirect</code>？两者有何本质区别？</li></ul>
+
+<ul><li><strong>AMD Bug</strong>：AMD 深度采样 Bug 的检测原理是什么？它影响了 Voxy 的哪些渲染阶段？</li></ul>
+
+<ul><li><strong>索引复用</strong>：<code>SharedIndexBuffer</code> 为什么提供多种变体（byte/short）？如何选择合适的变体？</li></ul>
+
+<ul><li><strong>渲染限制</strong>：MDIC 渲染限制中的三个上限（400k/100k/100k）分别对应什么渲染阶段？为什么不透明渲染的上限最高？</li></ul>
+
+<ul><li><strong>可靠性</strong>：为什么某些 GPU 特性的检测不能仅依赖扩展标志？Voxy 采用了什么替代方案？</li></ul>
+
+<hr>
+
+<strong>相关文档</strong>：
+<ul><li><a href="../01-architecture-overview.html">Voxy 架构概览</a></li></ul>
+<ul><li><a href="../../analysis/06-rendering-core.html">渲染核心子系统分析</a></li></ul>
+<ul><li><a href="../Part-1-Foundation/01-world-ingestion.html">地形数据摄取系统</a></li></ul>
+</p>
             </div>
 
             <div class="docs-footer">

@@ -243,9 +243,14 @@
 
             <div class="docs-body doc-content">
                 <h1>Voxy 教程总结</h1>
-<p>本页面汇总 Voxy 教程系列的核心知识点，方便快速查阅。</p>
+
+
+本页面汇总 Voxy 教程系列的核心知识点，方便快速查阅。
+
 <h2 id="学习路径">学习路径</h2>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph Phase0["入门阶段 (25 分钟)"]
         P0["Part-0: 前置知识<br/>走近 Voxy"]
@@ -276,53 +281,140 @@
     style Phase2 fill:#fff9c4
     style Phase3 fill:#ffccbc</div>
 </div>
+
+
 <h2 id="核心要点速查表">核心要点速查表</h2>
+
+
 <h3>Part 0：前置知识</h3>
-<table class="data-table"><thead><tr><th>概念</th><th>要点</th></tr></thead><tbody><tr><td><strong>LOD</strong></td><td>Level of Detail，根据距离切换不同精度模型</td></tr><tr><td><strong>5 级 LOD</strong></td><td>L0(32³) → L1(64³) → L2(128³) → L3(256³) → L4(512³)</td></tr><tr><td><strong>Section 大小</strong></td><td>32×32×32 = 32,768 体素</td></tr><tr><td><strong>压缩比</strong></td><td>L4 相比 L0 达到 1:4096</td></tr></tbody></table>
+
+
+| 概念 | 要点 |
+|------|------|
+| <strong>LOD</strong> | Level of Detail，根据距离切换不同精度模型 |
+| <strong>5 级 LOD</strong> | L0(32³) → L1(64³) → L2(128³) → L3(256³) → L4(512³) |
+| <strong>Section 大小</strong> | 32×32×32 = 32,768 体素 |
+| <strong>压缩比</strong> | L4 相比 L0 达到 1:4096 |
+
 <h3>Part 1：核心基础</h3>
-<table class="data-table"><thead><tr><th>组件</th><th>核心要点</th></tr></thead><tbody><tr><td><strong>WorldSection</strong></td><td>32³ 数据容器，引用计数机制（最低位=加载标志）</td></tr><tr><td><strong>VoxelizedSection</strong></td><td>4913 longs 存储 5 级 LOD，每体素 37 bits 编码</td></tr><tr><td><strong>WorldEngine</strong></td><td>世界引擎主控制器，64-bit Section ID 编码</td></tr><tr><td><strong>WorldUpdater</strong></td><td>LOD 更新向上传播，支持传播终止优化</td></tr><tr><td><strong>Mipper</strong></td><td>8→1 合并算法，基于不透明度选择保留体素</td></tr><tr><td><strong>ActiveSectionTracker</strong></td><td>分片哈希表 + LRU 双向链表，双层缓存设计</td></tr></tbody></table>
+
+
+| 组件 | 核心要点 |
+|------|----------|
+| <strong>WorldSection</strong> | 32³ 数据容器，引用计数机制（最低位=加载标志） |
+| <strong>VoxelizedSection</strong> | 4913 longs 存储 5 级 LOD，每体素 37 bits 编码 |
+| <strong>WorldEngine</strong> | 世界引擎主控制器，64-bit Section ID 编码 |
+| <strong>WorldUpdater</strong> | LOD 更新向上传播，支持传播终止优化 |
+| <strong>Mipper</strong> | 8→1 合并算法，基于不透明度选择保留体素 |
+| <strong>ActiveSectionTracker</strong> | 分片哈希表 + LRU 双向链表，双层缓存设计 |
+
 <h3>Part 2：核心机制</h3>
-<table class="data-table"><thead><tr><th>组件</th><th>核心要点</th></tr></thead><tbody><tr><td><strong>UnifiedServiceThreadPool</strong></td><td>3 个 Worker 线程，优先级 3，守护线程</td></tr><tr><td><strong>ServiceManager</strong></td><td>加权随机选取算法（shiftFactor 公平性）</td></tr><tr><td><strong>VoxelIngestService</strong></td><td>weight=5000，无限流，区块摄入</td></tr><tr><td><strong>SectionSavingService</strong></td><td>weight=100，双层限流，软上限 5000</td></tr><tr><td><strong>Capabilities</strong></td><td>GPU 能力检测（Compute/Indirect/INT64）</td></tr><tr><td><strong>MDIC</strong></td><td>glMultiDrawElementsIndirectCountARB，批量绘制</td></tr><tr><td><strong>SharedIndexBuffer</strong></td><td>预生成索引模式复用</td></tr></tbody></table>
+
+
+| 组件 | 核心要点 |
+|------|----------|
+| <strong>UnifiedServiceThreadPool</strong> | 3 个 Worker 线程，优先级 3，守护线程 |
+| <strong>ServiceManager</strong> | 加权随机选取算法（shiftFactor 公平性） |
+| <strong>VoxelIngestService</strong> | weight=5000，无限流，区块摄入 |
+| <strong>SectionSavingService</strong> | weight=100，双层限流，软上限 5000 |
+| <strong>Capabilities</strong> | GPU 能力检测（Compute/Indirect/INT64） |
+| <strong>MDIC</strong> | glMultiDrawElementsIndirectCountARB，批量绘制 |
+| <strong>SharedIndexBuffer</strong> | 预生成索引模式复用 |
+
 <h3>Part 3：进阶主题</h3>
-<table class="data-table"><thead><tr><th>组件</th><th>核心要点</th></tr></thead><tbody><tr><td><strong>MixinDefaultChunkRenderer</strong></td><td>@Inject(cancellable)，HEAD 取消 + INVOKE.before 注入</td></tr><tr><td><strong>AMD Bug</strong></td><td>hasBrokenDepthSampler，深度纹理采样测试</td></tr><tr><td><strong>RocksDB</strong></td><td>Column Family (world<em>sections, id</em>mappings)</td></tr><tr><td><strong>BloomFilter</strong></td><td>10 bits/entry，约 0.1% 假阳性率</td></tr><tr><td><strong>LZ4+ZSTD</strong></td><td>热数据用 LZ4（快），冷数据用 ZSTD（高压缩率）</td></tr><tr><td><strong>CompressionStorageAdaptor</strong></td><td>装饰器模式，透明压缩</td></tr></tbody></table>
+
+
+| 组件 | 核心要点 |
+|------|----------|
+| <strong>MixinDefaultChunkRenderer</strong> | @Inject(cancellable)，HEAD 取消 + INVOKE.before 注入 |
+| <strong>AMD Bug</strong> | hasBrokenDepthSampler，深度纹理采样测试 |
+| <strong>RocksDB</strong> | Column Family (world<em>sections, id</em>mappings) |
+| <strong>BloomFilter</strong> | 10 bits/entry，约 0.1% 假阳性率 |
+| <strong>LZ4+ZSTD</strong> | 热数据用 LZ4（快），冷数据用 ZSTD（高压缩率） |
+| <strong>CompressionStorageAdaptor</strong> | 装饰器模式，透明压缩 |
+
 <h2 id="源码路径速查">源码路径速查</h2>
-<table class="data-table"><thead><tr><th>组件</th><th>路径</th></tr></thead><tbody><tr><td><strong>WorldSection</strong></td><td><code>common/world/WorldSection.java</code></td></tr><tr><td><strong>WorldEngine</strong></td><td><code>common/world/WorldEngine.java</code></td></tr><tr><td><strong>VoxelizedSection</strong></td><td><code>common/voxelization/VoxelizedSection.java</code></td></tr><tr><td><strong>WorldUpdater</strong></td><td><code>common/world/WorldUpdater.java</code></td></tr><tr><td><strong>ActiveSectionTracker</strong></td><td><code>common/world/ActiveSectionTracker.java</code></td></tr><tr><td><strong>Mapper</strong></td><td><code>common/world/other/Mapper.java</code></td></tr><tr><td><strong>Mipper</strong></td><td><code>common/world/other/Mipper.java</code></td></tr><tr><td><strong>UnifiedServiceThreadPool</strong></td><td><code>common/thread/UnifiedServiceThreadPool.java</code></td></tr><tr><td><strong>ServiceManager</strong></td><td><code>common/thread/ServiceManager.java</code></td></tr><tr><td><strong>Capabilities</strong></td><td><code>client/core/gl/Capabilities.java</code></td></tr><tr><td><strong>MixinDefaultChunkRenderer</strong></td><td><code>client/mixin/sodium/MixinDefaultChunkRenderer.java</code></td></tr><tr><td><strong>RocksDBStorageBackend</strong></td><td><code>common/config/storage/rocksdb/RocksDBStorageBackend.java</code></td></tr><tr><td><strong>CompressionStorageAdaptor</strong></td><td><code>common/config/storage/other/CompressionStorageAdaptor.java</code></td></tr></tbody></table>
+
+
+| 组件 | 路径 |
+|------|------|
+| <strong>WorldSection</strong> | <code>common/world/WorldSection.java</code> |
+| <strong>WorldEngine</strong> | <code>common/world/WorldEngine.java</code> |
+| <strong>VoxelizedSection</strong> | <code>common/voxelization/VoxelizedSection.java</code> |
+| <strong>WorldUpdater</strong> | <code>common/world/WorldUpdater.java</code> |
+| <strong>ActiveSectionTracker</strong> | <code>common/world/ActiveSectionTracker.java</code> |
+| <strong>Mapper</strong> | <code>common/world/other/Mapper.java</code> |
+| <strong>Mipper</strong> | <code>common/world/other/Mipper.java</code> |
+| <strong>UnifiedServiceThreadPool</strong> | <code>common/thread/UnifiedServiceThreadPool.java</code> |
+| <strong>ServiceManager</strong> | <code>common/thread/ServiceManager.java</code> |
+| <strong>Capabilities</strong> | <code>client/core/gl/Capabilities.java</code> |
+| <strong>MixinDefaultChunkRenderer</strong> | <code>client/mixin/sodium/MixinDefaultChunkRenderer.java</code> |
+| <strong>RocksDBStorageBackend</strong> | <code>common/config/storage/rocksdb/RocksDBStorageBackend.java</code> |
+| <strong>CompressionStorageAdaptor</strong> | <code>common/config/storage/other/CompressionStorageAdaptor.java</code> |
+
 <h2 id="关键数据总结">关键数据总结</h2>
+
+
 <h3>VoxelizedSection 内存布局</h3>
-<pre class="code-block"><code class="language-text">4096 longs (L0: 16³)   [偏移 0]
+
+</p>
+<p><pre class="code-block"><code class="language-text">4096 longs (L0: 16³)   [偏移 0]
  512 longs (L1: 8³)    [偏移 4096]
   64 longs (L2: 4³)    [偏移 4608]
    8 longs (L3: 2³)    [偏移 4672]
    1 long  (L4: 1³)    [偏移 4680]
 ───────────────────────────────
 总计: 4681 longs ≈ 37 KB per section</code></pre>
+
+
 <h3>37 bits 体素编码</h3>
-<pre class="code-block"><code class="language-text">Bits 63-56 (8 bits): light    (0-255)
+
+</p>
+<p><pre class="code-block"><code class="language-text">Bits 63-56 (8 bits): light    (0-255)
 Bits 47-55 (9 bits): biome    (0-511)
 Bits 27-46 (20 bits): block   (0-1,048,575)</code></pre>
+
+
 <h3>Section ID 64-bit 布局</h3>
-<pre class="code-block"><code class="language-text">Bits 60-63: lvl    (LOD 层级, 0-15)
+
+</p>
+<p><pre class="code-block"><code class="language-text">Bits 60-63: lvl    (LOD 层级, 0-15)
 Bits 52-59: y      (Y 坐标, 0-255)
 Bits 28-51: z      (Z 坐标, 0-16M)
 Bits  4-27: x      (X 坐标, 0-16M)
 Bits  0-3:  spare  (预留扩展)</code></pre>
+
+
 <h3>线程权重配置</h3>
-<table class="data-table"><thead><tr><th>Service</th><th>Weight</th><th>相对比例</th></tr></thead><tbody><tr><td>VoxelIngestService</td><td>5000</td><td>98%</td></tr><tr><td>SectionSavingService</td><td>100</td><td>2%</td></tr></tbody></table>
+
+
+| Service | Weight | 相对比例 |
+|---------|--------|----------|
+| VoxelIngestService | 5000 | 98% |
+| SectionSavingService | 100 | 2% |
+
 <h2 id="相关链接">相关链接</h2>
+
+
 <h3>分析文档</h3>
-<p><ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/01-architecture-overview.html">架构总览</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/02-world-engine.html">世界引擎</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/03-voxelization-system.html">体素化系统</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/04-storage-persistence.html">持久化存储</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/05-thread-service.html">线程服务</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/06-rendering-core.html">渲染核心</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/07-world-importers.html">世界导入器</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/08-config-system.html">配置系统</a></li>
-<li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/SUMMARY.html">分析总结</a></li></ul></p>
+
+
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/01-architecture-overview.html">架构总览</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/02-world-engine.html">世界引擎</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/03-voxelization-system.html">体素化系统</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/04-storage-persistence.html">持久化存储</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/05-thread-service.html">线程服务</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/06-rendering-core.html">渲染核心</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/07-world-importers.html">世界导入器</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/08-config-system.html">配置系统</a></li></ul>
+<ul><li><a href="../1.21.11-fabric-0.2.13-alpha/analysis/SUMMARY.html">分析总结</a></li></ul>
+
 <h3>外部资源</h3>
-<p><ul><li>官方仓库：https://github.com/comp500/voxy</li>
-<li>模组下载：https://modrinth.com/mod/voxy</li>
-</ul></p>
+
+
+<ul><li>官方仓库：https://github.com/comp500/voxy</li></ul>
+<ul><li>模组下载：https://modrinth.com/mod/voxy</li></ul>
+</p>
             </div>
 
             <div class="docs-footer">

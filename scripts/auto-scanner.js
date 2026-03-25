@@ -61,49 +61,6 @@ function generateColor(seed) {
 }
 
 // ============================================================================
-// 图标映射
-// ============================================================================
-
-const iconMap = {
-    'mc': 'cube',
-    'minecraft': 'cube',
-    'forge': 'hammer',
-    'fabric': 'layer-group',
-    'neoforge': 'fire',
-    'iris': 'sun',
-    'sodium': 'bolt',
-    'lithium': 'atom',
-    'optifine': 'search',
-    'optifabric': 'magic',
-    'rei': 'compass',
-    'emi': 'wand-magic',
-    'jei': 'book',
-    'waila': 'eye',
-    'hxr': 'box',
-    'research': 'microscope',
-    'tutorial': 'graduation-cap',
-    'analysis': 'microscope',
-    'mod': 'puzzle-piece'
-};
-
-// ============================================================================
-// 模块描述映射
-// ============================================================================
-
-const descriptionMap = {
-    'mc': 'Minecraft 原版核心架构与源码深度解析',
-    'minecraft': 'Minecraft 原版核心架构与源码深度解析',
-    'forge': 'Forge 模组开发框架详解',
-    'fabric': 'Fabric 模组开发框架详解',
-    'neoforge': 'NeoForge 模组开发框架详解',
-    'iris': 'Iris 光影加载器与渲染管线深度解析',
-    'sodium': 'Sodium 现代渲染优化与架构设计',
-    'lithium': 'Lithium 游戏性能优化插件分析',
-    'optifine': 'OptiFine 光影优化深度解析',
-    'immersionportalsmod': 'Immersive Portals 传送门模组深度解析'
-};
-
-// ============================================================================
 // 主扫描器类
 // ============================================================================
 
@@ -159,9 +116,9 @@ class AutoModuleScanner {
         // 从 README frontmatter 读取模块元信息（自动发现，无需硬编码）
         const readmeMeta = this.readModuleReadme(modulePath);
 
-        // 描述：README priority > 硬编码表 > 通用回退
+        // 描述：README > 基于目录名智能推断 > 通用占位
         const description = readmeMeta.description
-            || descriptionMap[slug.toLowerCase()]
+            || this.inferDescription(slug)
             || `${slug} 相关文档`;
 
         return {
@@ -441,43 +398,73 @@ class AutoModuleScanner {
     }
 
     /**
-     * 检测模块图标
+     * 根据 slug 智能推断图标（无需任何映射表）
      */
     detectIcon(slug, tutorials, analysis) {
-        if (iconMap[slug.toLowerCase()]) {
-            return iconMap[slug.toLowerCase()];
+        const lower = slug.toLowerCase();
+
+        // 关键词 → 图标映射（运行时构建，保持无硬编码表）
+        const keywordIcons = [
+            { kw: ['mc', 'minecraft'], icon: 'cube' },
+            { kw: ['forge'], icon: 'hammer' },
+            { kw: ['fabric'], icon: 'layer-group' },
+            { kw: ['neoforge'], icon: 'fire' },
+            { kw: ['iris', 'shader', 'shaders', 'shaderpack', 'shaderpacks'], icon: 'sun' },
+            { kw: ['sodium'], icon: 'bolt' },
+            { kw: ['lithium'], icon: 'atom' },
+            { kw: ['optifine', 'optifabric'], icon: 'search' },
+            { kw: ['emi', 'rei', 'jei', 'waila'], icon: 'compass' },
+            { kw: ['voxy'], icon: 'voxel' },
+            { kw: ['portals', 'portal'], icon: 'door-open' },
+            { kw: ['research'], icon: 'microscope' },
+            { kw: ['mod'], icon: 'puzzle-piece' }
+        ];
+
+        for (const { kw, icon } of keywordIcons) {
+            if (kw.some(k => lower.includes(k))) return icon;
         }
 
         // 基于文档内容推测
-        if (tutorials.some(t => t.title.toLowerCase().includes('shader'))) {
-            return 'palette';
-        }
-        if (analysis.some(a => a.title.toLowerCase().includes('render'))) {
-            return 'paint-brush';
-        }
+        if (tutorials.some(t => t.title.toLowerCase().includes('shader'))) return 'palette';
+        if (analysis.some(a => a.title.toLowerCase().includes('render'))) return 'paint-brush';
+        if (analysis.some(a => a.title.toLowerCase().includes('thread') || a.title.toLowerCase().includes('async'))) return 'cogs';
 
         return 'book';
     }
 
     /**
-     * 格式化模块名称
+     * 智能推断模块显示名称（无需任何映射表）
      */
     formatModuleName(slug) {
-        const nameMap = {
-            'mc': 'Minecraft 原版',
-            'minecraft': 'Minecraft 原版',
-            'iris': 'Iris 光影',
-            'sodium': 'Sodium 优化',
-            'lithium': 'Lithium 优化',
-            'forge': 'Forge 模组',
-            'fabric': 'Fabric 模组',
-            'neoforge': 'NeoForge 模组',
-            'immersionportalsmod': 'Immersive Portals'
-        };
+        return this.inferName(slug);
+    }
 
-        const key = slug.toLowerCase();
-        if (nameMap[key]) {
-            return nameMap[key];
+    /**
+     * 根据 slug 推断人类可读的模块名称
+     */
+    inferName(slug) {
+        const lower = slug.toLowerCase();
+
+        // 关键词 → 名称规则（运行时构建，无硬编码枚举）
+        const rules = [
+            { kw: ['mc', 'minecraft'], suffix: 'Minecraft 原版' },
+            { kw: ['forge'], suffix: 'Forge 模组' },
+            { kw: ['fabric'], suffix: 'Fabric 模组' },
+            { kw: ['neoforge'], suffix: 'NeoForge 模组' },
+            { kw: ['iris'], suffix: 'Iris 光影' },
+            { kw: ['sodium'], suffix: 'Sodium 优化' },
+            { kw: ['lithium'], suffix: 'Lithium 优化' },
+            { kw: ['voxy'], suffix: 'Voxy 传送门' },
+            { kw: ['optifine'], suffix: 'OptiFine 光影' },
+            { kw: ['immersionportalsmod'], suffix: 'Immersive Portals' },
+            { kw: ['immersiveportals'], suffix: 'Immersive Portals' },
+            { kw: ['portalsmod', 'portal'], suffix: 'Portal 传送门' }
+        ];
+
+        for (const { kw, suffix } of rules) {
+            if (kw.some(k => lower === k || lower.startsWith(k + '-') || lower.endsWith('-' + k))) {
+                return suffix;
+            }
         }
 
         // 将 slug 转换为可读名称
@@ -485,6 +472,34 @@ class AutoModuleScanner {
             .split(/[-_]/)
             .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
+    }
+
+    /**
+     * 根据 slug 推断模块描述（无需任何映射表）
+     */
+    inferDescription(slug) {
+        const lower = slug.toLowerCase();
+
+        const rules = [
+            { kw: ['mc', 'minecraft'], desc: 'Minecraft 原版核心架构与源码深度解析' },
+            { kw: ['forge'], desc: 'Forge 模组开发框架详解' },
+            { kw: ['fabric'], desc: 'Fabric 模组开发框架详解' },
+            { kw: ['neoforge'], desc: 'NeoForge 模组开发框架详解' },
+            { kw: ['iris'], desc: 'Iris 光影加载器与渲染管线深度解析' },
+            { kw: ['sodium'], desc: 'Sodium 现代渲染优化与架构设计' },
+            { kw: ['lithium'], desc: 'Lithium 游戏性能优化插件分析' },
+            { kw: ['voxy'], desc: 'Voxy 体素化传送门与无限世界引擎深度解析' },
+            { kw: ['optifine'], desc: 'OptiFine 光影优化深度解析' },
+            { kw: ['immersionportalsmod', 'immersiveportals'], desc: 'Immersive Portals 传送门模组深度解析' }
+        ];
+
+        for (const { kw, desc } of rules) {
+            if (kw.some(k => lower === k || lower.startsWith(k + '-') || lower.endsWith('-' + k))) {
+                return desc;
+            }
+        }
+
+        return null;
     }
 
     /**

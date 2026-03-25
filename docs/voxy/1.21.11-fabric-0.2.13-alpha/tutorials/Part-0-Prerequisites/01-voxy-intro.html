@@ -243,28 +243,54 @@
 
             <div class="docs-body doc-content">
                 <blockquote><p>本文档为 Voxy 模组学习笔记，基于源码分析编写。感谢原作者 <strong>Cortex</strong> 的开源贡献。</p></blockquote>
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#什么是-lod">什么是 LOD？</a></li>
-<li><a href="#minecraft-原版渲染-vs-voxy-lod">Minecraft 原版渲染 vs Voxy LOD</a></li>
-<li><a href="#voxy-5-级-lod-层级详解">Voxy 5 级 LOD 层级详解</a></li>
-<li><a href="#voxy-核心组件一览">Voxy 核心组件一览</a></li>
-<li><a href="#voxy-数据流总览">Voxy 数据流总览</a></li>
-<li><a href="#适用读者与前置知识">适用读者与前置知识</a></li>
-<li><a href="#课后自查">课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#什么是-lod">什么是 LOD？</a></li></ul>
+<ul><li><a href="#minecraft-原版渲染-vs-voxy-lod">Minecraft 原版渲染 vs Voxy LOD</a></li></ul>
+<ul><li><a href="#voxy-5-级-lod-层级详解">Voxy 5 级 LOD 层级详解</a></li></ul>
+<ul><li><a href="#voxy-核心组件一览">Voxy 核心组件一览</a></li></ul>
+<ul><li><a href="#voxy-数据流总览">Voxy 数据流总览</a></li></ul>
+<ul><li><a href="#适用读者与前置知识">适用读者与前置知识</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="什么是-lod">什么是 LOD？</h2>
-<p><strong>LOD（Level of Detail）</strong> 是一种图形渲染优化技术。它的核心思想是：</p>
+
+
+<strong>LOD（Level of Detail）</strong> 是一种图形渲染优化技术。它的核心思想是：
+
 <blockquote><p>根据物体与摄像机的距离，动态切换不同精度的模型/数据。远距离使用简化版本，节省计算资源。</p></blockquote>
+
 <h3>为什么 Minecraft 需要 LOD？</h3>
-<table class="data-table"><thead><tr><th>渲染距离</th><th>原版最大区块数</th><th>内存占用</th><th>FPS 压力</th></tr></thead><tbody><tr><td>16 chunks</td><td>~400</td><td>中等</td><td>适中</td></tr><tr><td>32 chunks</td><td>~1600</td><td>翻倍</td><td>翻倍</td></tr><tr><td>64 chunks</td><td>~6400</td><td>4倍</td><td>卡顿</td></tr></tbody></table>
-原版 Minecraft 所有距离使用相同精度，远处的精细渲染是<strong>巨大的浪费</strong>。</p>
+
+
+| 渲染距离 | 原版最大区块数 | 内存占用 | FPS 压力 |
+|----------|---------------|----------|----------|
+| 16 chunks | ~400 | 中等 | 适中 |
+| 32 chunks | ~1600 | 翻倍 | 翻倍 |
+| 64 chunks | ~6400 | 4倍 | 卡顿 |
+
+原版 Minecraft 所有距离使用相同精度，远处的精细渲染是<strong>巨大的浪费</strong>。
+
 <h3>LOD 的直观理解</h3>
-<pre class="code-block"><code class="language-text">近处：每块石头单独渲染 → 高精度
+
+</p>
+<p><pre class="code-block"><code class="language-text">近处：每块石头单独渲染 → 高精度
 远处：8×8×8 石头合并为 1 块 → 低精度</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="minecraft-原版渲染-vs-voxy-lod">Minecraft 原版渲染 vs Voxy LOD</h2>
+
+
 <h3>原版 Minecraft</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
 │                    Minecraft 原版                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
@@ -280,8 +306,12 @@
 │                                                          │
 │   ⚠️ 远处仍然渲染全部细节 → 性能浪费                      │
 └─────────────────────────────────────────────────────────┘</code></pre>
+
+
 <h3>Voxy LOD 渲染</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────┐
 │                    Voxy LOD 渲染                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
@@ -297,25 +327,48 @@
 │                                                          │
 │   ✅ 远处使用简化数据 → 性能优化                         │
 └─────────────────────────────────────────────────────────┘</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="voxy-5-级-lod-层级详解">Voxy 5 级 LOD 层级详解</h2>
-<p>Voxy 将世界划分为 <strong>5 个 LOD 层级（Level 0-4）</strong>，每个层级代表不同的细节级别：</p>
-<table class="data-table"><thead><tr><th>层级</th><th>Section 大小</th><th>覆盖范围</th><th>压缩比</th><th>实际覆盖</th></tr></thead><tbody><tr><td><strong>Level 0</strong></td><td>32³</td><td>32³</td><td>1:1</td><td>原始精度，近距离渲染</td></tr><tr><td><strong>Level 1</strong></td><td>32³</td><td>64³</td><td>1:8</td><td>2×2×2 合并</td></tr><tr><td><strong>Level 2</strong></td><td>32³</td><td>128³</td><td>1:64</td><td>4×4×4 合并</td></tr><tr><td><strong>Level 3</strong></td><td>32³</td><td>256³</td><td>1:512</td><td>8×8×8 合并</td></tr><tr><td><strong>Level 4</strong></td><td>32³</td><td>512³</td><td>1:4096</td><td>16×16×16 合并</td></tr></tbody></table>
+
+
+Voxy 将世界划分为 <strong>5 个 LOD 层级（Level 0-4）</strong>，每个层级代表不同的细节级别：
+
+| 层级 | Section 大小 | 覆盖范围 | 压缩比 | 实际覆盖 |
+|------|-------------|----------|--------|----------|
+| <strong>Level 0</strong> | 32³ | 32³ | 1:1 | 原始精度，近距离渲染 |
+| <strong>Level 1</strong> | 32³ | 64³ | 1:8 | 2×2×2 合并 |
+| <strong>Level 2</strong> | 32³ | 128³ | 1:64 | 4×4×4 合并 |
+| <strong>Level 3</strong> | 32³ | 256³ | 1:512 | 8×8×8 合并 |
+| <strong>Level 4</strong> | 32³ | 512³ | 1:4096 | 16×16×16 合并 |
+
 <h3>覆盖范围可视化</h3>
-<pre class="code-block"><code class="language-text">Level 0:  ████ 32³
+
+</p>
+<p><pre class="code-block"><code class="language-text">Level 0:  ████ 32³
 Level 1:  ████████████████ 64³
 Level 2:  ████████████████████████████████ 128³
 Level 3:  ████████████████████████████████████████████████████████████████ 256³
 Level 4:  █████████████████████████████████████████████████████████████████... 512³
           └─────────────────────────────────────────────────────────────────┘
                                               地平线</code></pre>
+
+
 <h3>关键发现</h3>
-<p><ul><li><strong>每个 Level N 的 section 覆盖 2^(N+1) 个 Level 0 sections</strong></li>
-<li>Level 4 的一个 section 覆盖 <strong>512×512×64 = 16,777,216</strong> 个方块位置</li>
-<li>这使得渲染超远距离成为可能</li></ul></p>
-<p><hr></p>
+
+
+<ul><li><strong>每个 Level N 的 section 覆盖 2^(N+1) 个 Level 0 sections</strong></li></ul>
+<ul><li>Level 4 的一个 section 覆盖 <strong>512×512×64 = 16,777,216</strong> 个方块位置</li></ul>
+<ul><li>这使得渲染超远距离成为可能</li></ul>
+
+<hr>
+
 <h2 id="voxy-核心组件一览">Voxy 核心组件一览</h2>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph Client["客户端模块"]
         CORE["core/ 渲染核心"]
@@ -356,11 +409,26 @@ Level 4:  ███████████████████████�
     MAPPER --> WS
     MIPPER --> WU</div>
 </div>
+
+
 <h3>组件职责速查</h3>
-<table class="data-table"><thead><tr><th>组件</th><th>职责</th></tr></thead><tbody><tr><td><strong>WorldEngine</strong></td><td>世界引擎主控制器，管理所有 LOD 层</td></tr><tr><td><strong>WorldSection</strong></td><td>单个 32×32×32 数据块，含引用计数</td></tr><tr><td><strong>WorldUpdater</strong></td><td>向上传播 Level 0 更新到所有 LOD 层</td></tr><tr><td><strong>ActiveSectionTracker</strong></td><td>LRU 缓存管理，section 加载/卸载</td></tr><tr><td><strong>Mapper</strong></td><td>BlockState/Biome → 整数 ID 映射</td></tr><tr><td><strong>Mipper</strong></td><td>8 个子体素合并为 1 个父体素</td></tr></tbody></table>
-<hr></p>
+
+
+| 组件 | 职责 |
+|------|------|
+| <strong>WorldEngine</strong> | 世界引擎主控制器，管理所有 LOD 层 |
+| <strong>WorldSection</strong> | 单个 32×32×32 数据块，含引用计数 |
+| <strong>WorldUpdater</strong> | 向上传播 Level 0 更新到所有 LOD 层 |
+| <strong>ActiveSectionTracker</strong> | LRU 缓存管理，section 加载/卸载 |
+| <strong>Mapper</strong> | BlockState/Biome → 整数 ID 映射 |
+| <strong>Mipper</strong> | 8 个子体素合并为 1 个父体素 |
+
+<hr>
+
 <h2 id="voxy-数据流总览">Voxy 数据流总览</h2>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph Input["输入层"]
         MC["Minecraft ChunkSection<br/>(16³ PalettedContainer)"]
@@ -401,8 +469,12 @@ Level 4:  ███████████████████████�
     style GPU fill:#fff3e0
     style WE fill:#e8f5e9</div>
 </div>
+
+
 <h3>数据流步骤详解</h3>
-<pre class="code-block"><code class="language-text">1. Minecraft ChunkSection (16³ blocks)
+
+</p>
+<p><pre class="code-block"><code class="language-text">1. Minecraft ChunkSection (16³ blocks)
        ↓ WorldConversionFactory.convert()
 2. VoxelizedSection (16³ → 4913 longs 编码)
        ↓ WorldVoxilizedSectionMipper.mipSection()
@@ -417,34 +489,65 @@ Level 4:  ███████████████████████�
 7. VoxyRenderSystem.renderOpaque()
        ↓
 8. GPU (通过 Sodium/Iris 集成)</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="适用读者与前置知识">适用读者与前置知识</h2>
+
+
 <h3>目标读者</h3>
-<p><ul><li>Minecraft 模组开发<strong>新手</strong></li>
-<li>对渲染优化、图形学感兴趣的开发者</li>
-<li>想学习 LOD 技术的 Java 程序员</li></ul></p>
+
+
+<ul><li>Minecraft 模组开发<strong>新手</strong></li></ul>
+<ul><li>对渲染优化、图形学感兴趣的开发者</li></ul>
+<ul><li>想学习 LOD 技术的 Java 程序员</li></ul>
+
 <h3>建议前置知识</h3>
-<table class="data-table"><thead><tr><th>知识点</th><th>了解程度</th><th>说明</th></tr></thead><tbody><tr><td>Java 基础</td><td>✅ 必需</td><td>理解类、接口、泛型</td></tr><tr><td>Minecraft 模组开发</td><td>⭐ 推荐</td><td>了解 Chunk、ChunkSection</td></tr><tr><td>基本图形学概念</td><td>⭐ 推荐</td><td>知道什么是顶点、网格</td></tr><tr><td>Gradle/Fabric</td><td>⭐ 推荐</td><td>能跑通官方示例模组</td></tr></tbody></table>
+
+
+| 知识点 | 了解程度 | 说明 |
+|--------|----------|------|
+| Java 基础 | ✅ 必需 | 理解类、接口、泛型 |
+| Minecraft 模组开发 | ⭐ 推荐 | 了解 Chunk、ChunkSection |
+| 基本图形学概念 | ⭐ 推荐 | 知道什么是顶点、网格 |
+| Gradle/Fabric | ⭐ 推荐 | 能跑通官方示例模组 |
+
 <h3>你将学到什么</h3>
-<p><ul><li>LOD 的基本原理与实现思路</li>
-<li>Voxy 世界引擎的架构设计</li>
-<li>如何高效存储和查询体素数据</li>
-<li>线程池与异步处理模式</li>
-<li>GPU 渲染管线集成</li></ul></p>
-<p><hr></p>
+
+
+<ul><li>LOD 的基本原理与实现思路</li></ul>
+<ul><li>Voxy 世界引擎的架构设计</li></ul>
+<ul><li>如何高效存储和查询体素数据</li></ul>
+<ul><li>线程池与异步处理模式</li></ul>
+<ul><li>GPU 渲染管线集成</li></ul>
+
+<hr>
+
 <h2 id="课后自查">课后自查</h2>
-<p>✅ <strong>学完本章后，你能回答这些问题吗？</strong></p>
-<p><ul><li><strong>LOD 是什么？</strong> 为什么远处的方块不需要完整渲染？</li></ul></p>
-<p><ul><li><strong>Voxy 有几个 LOD 层级？</strong> 最高层级（Level 4）覆盖多少个方块？</li></ul></p>
-<p><ul><li><strong>Level 0 和 Level 4 的精度差异有多大？</strong> 压缩比是多少？</li></ul></p>
-<p><ul><li><strong>WorldEngine 的主要职责是什么？</strong> 它管理哪些组件？</li></ul></p>
-<p><ul><li><strong>从 MC ChunkSection 到 GPU 渲染，数据经过哪几个主要转换步骤？</strong></li></ul></p>
-<p><hr></p>
+
+
+✅ <strong>学完本章后，你能回答这些问题吗？</strong>
+
+<ul><li><strong>LOD 是什么？</strong> 为什么远处的方块不需要完整渲染？</li></ul>
+
+<ul><li><strong>Voxy 有几个 LOD 层级？</strong> 最高层级（Level 4）覆盖多少个方块？</li></ul>
+
+<ul><li><strong>Level 0 和 Level 4 的精度差异有多大？</strong> 压缩比是多少？</li></ul>
+
+<ul><li><strong>WorldEngine 的主要职责是什么？</strong> 它管理哪些组件？</li></ul>
+
+<ul><li><strong>从 MC ChunkSection 到 GPU 渲染，数据经过哪几个主要转换步骤？</strong></li></ul>
+
+<hr>
+
 <h2 id="参考资料">参考资料</h2>
-<p><ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">voxy</a></li>
-<li>源码路径：<code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\</code></li>
-<li>分析文档：<code>content/voxy/1.21.11-fabric-0.2.13-alpha/analysis/</code></li>
-</ul></p>
+
+
+<ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">voxy</a></li></ul>
+<ul><li>源码路径：<code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\</code></li></ul>
+<ul><li>分析文档：<code>content/voxy/1.21.11-fabric-0.2.13-alpha/analysis/</code></li></ul>
+</p>
             </div>
 
             <div class="docs-footer">

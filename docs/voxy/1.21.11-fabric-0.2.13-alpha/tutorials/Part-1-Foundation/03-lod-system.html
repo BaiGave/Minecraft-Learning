@@ -243,32 +243,64 @@
 
             <div class="docs-body doc-content">
                 <h2 id="致谢">致谢</h2>
-<p>本教程基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 源码分析编写，是学习笔记而非官方文档。
-感谢原作者 <strong>Cortex</strong> 的开源贡献，原项目：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a></p>
+
+
+本教程基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 源码分析编写，是学习笔记而非官方文档。
+感谢原作者 <strong>Cortex</strong> 的开源贡献，原项目：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a>
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#1-lod-系统概述">1. LOD 系统概述</a></li>
-<li><a href="#2-5-级-lod-层级生成算法">2. 5 级 LOD 层级生成算法</a></li>
-<li><a href="#3-worldupdater-向上传播更新">3. WorldUpdater 向上传播更新</a></li>
-<li><a href="#4-section-id-64-bit-布局解析">4. Section ID 64-bit 布局解析</a></li>
-<li><a href="#5-双层-lru-缓存设计">5. 双层 LRU 缓存设计</a></li>
-<li><a href="#6-课后自查">6. 课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#1-lod-系统概述">1. LOD 系统概述</a></li></ul>
+<ul><li><a href="#2-5-级-lod-层级生成算法">2. 5 级 LOD 层级生成算法</a></li></ul>
+<ul><li><a href="#3-worldupdater-向上传播更新">3. WorldUpdater 向上传播更新</a></li></ul>
+<ul><li><a href="#4-section-id-64-bit-布局解析">4. Section ID 64-bit 布局解析</a></li></ul>
+<ul><li><a href="#5-双层-lru-缓存设计">5. 双层 LRU 缓存设计</a></li></ul>
+<ul><li><a href="#6-课后自查">6. 课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="1-lod-系统概述">1. LOD 系统概述</h2>
+
+
 <h3>1.1 什么是 LOD？</h3>
-<p><strong>LOD (Level of Detail)</strong> 即多细节层级，是一种优化渲染性能的技术。核心思想是：</p>
-<pre class="code-block"><code class="language-text">近距离 → 高细节（看到单个方块）
+
+
+<strong>LOD (Level of Detail)</strong> 即多细节层级，是一种优化渲染性能的技术。核心思想是：
+</p>
+<p><pre class="code-block"><code class="language-text">近距离 → 高细节（看到单个方块）
 远距离 → 低细节（看到地形轮廓即可）</code></pre>
+
+
 <h3>1.2 Voxy 的 5 级 LOD</h3>
-<table class="data-table"><thead><tr><th>Level</th><th>Section 大小</th><th>实际覆盖范围</th><th>压缩比</th><th>典型用途</th></tr></thead><tbody><tr><td>L0</td><td>32³ voxels</td><td>32³ blocks</td><td>1:1</td><td>0-32 区块</td></tr><tr><td>L1</td><td>32³ voxels</td><td>64³ blocks</td><td>1:8</td><td>32-64 区块</td></tr><tr><td>L2</td><td>32³ voxels</td><td>128³ blocks</td><td>1:64</td><td>64-128 区块</td></tr><tr><td>L3</td><td>32³ voxels</td><td>256³ blocks</td><td>1:512</td><td>128-256 区块</td></tr><tr><td>L4</td><td>32³ voxels</td><td>512³ blocks</td><td>1:4096</td><td>远距离地平线</td></tr></tbody></table>
+
+
+| Level | Section 大小 | 实际覆盖范围 | 压缩比 | 典型用途 |
+|-------|-------------|-------------|--------|----------|
+| L0 | 32³ voxels | 32³ blocks | 1:1 | 0-32 区块 |
+| L1 | 32³ voxels | 64³ blocks | 1:8 | 32-64 区块 |
+| L2 | 32³ voxels | 128³ blocks | 1:64 | 64-128 区块 |
+| L3 | 32³ voxels | 256³ blocks | 1:512 | 128-256 区块 |
+| L4 | 32³ voxels | 512³ blocks | 1:4096 | 远距离地平线 |
+
 <h3>1.3 LOD 的优势</h3>
-<p><ul><li><strong>内存节省</strong>：远距离使用压缩数据，减少显存占用</li>
-<li><strong>渲染加速</strong>：减少需要处理的顶点和面片数量</li>
-<li><strong>预计算</strong>：数据在导入时已计算完毕，渲染时无需额外计算</li></ul></p>
-<p><hr></p>
+
+
+<ul><li><strong>内存节省</strong>：远距离使用压缩数据，减少显存占用</li></ul>
+<ul><li><strong>渲染加速</strong>：减少需要处理的顶点和面片数量</li></ul>
+<ul><li><strong>预计算</strong>：数据在导入时已计算完毕，渲染时无需额外计算</li></ul>
+
+<hr>
+
 <h2 id="2-5-级-lod-层级生成算法">2. 5 级 LOD 层级生成算法</h2>
+
+
 <h3>2.1 Mipper 合并规则</h3>
-<p>Mipper 是 LOD 生成的核心算法，负责将 <strong>8 个子体素合并为 1 个父体素</strong>：</p>
-<pre class="code-block"><code class="language-java">public static long mip(long I000, long I100, long I001, long I101,
+
+
+Mipper 是 LOD 生成的核心算法，负责将 <strong>8 个子体素合并为 1 个父体素</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">public static long mip(long I000, long I100, long I001, long I101,
                        long I010, long I110, long I011, long I111,
                        Mapper mapper) {
     int max = -1;
@@ -297,8 +329,12 @@
         return withLight(I111, (blockLight / 8) &lt;&lt; 4 | (skyLight / 8));
     }
 }</code></pre>
+
+
 <h3>2.2 2×2×2 合并示意</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">graph TB
     subgraph Cube["2×2×2 立方体（8 voxels）"]
         I000["I000<br/>(0,0,0)"] --- I100["I100<br/>(1,0,0)"]
@@ -328,13 +364,20 @@
     I011 --> Result
     I111 --> Result</div>
 </div>
+
+
 <h3>2.3 合并策略</h3>
-<p><ul><li><strong>优先非空气</strong>：只要有非空气方块，就选择它</li>
-<li><strong>基于不透明度</strong>：使用 <code>BlockState.getOpacity()</code> 评估遮蔽程度</li>
-<li><strong>角点位优先级</strong>：当不透明度相同时，选择较高/较远的角点</li>
-<li><strong>光照平均</strong>：8 个全为空气时，对光照取平均</li></ul></p>
+
+
+<ul><li><strong>优先非空气</strong>：只要有非空气方块，就选择它</li></ul>
+<ul><li><strong>基于不透明度</strong>：使用 <code>BlockState.getOpacity()</code> 评估遮蔽程度</li></ul>
+<ul><li><strong>角点位优先级</strong>：当不透明度相同时，选择较高/较远的角点</li></ul>
+<ul><li><strong>光照平均</strong>：8 个全为空气时，对光照取平均</li></ul>
+
 <h3>2.4 降采样层级索引</h3>
-<pre class="code-block"><code class="language-java">private static int G(int x, int y, int z) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static int G(int x, int y, int z) {
     return ((y &lt;&lt; 8) | (z &lt;&lt; 4) | x);  // 16×16 网格
 }
 
@@ -352,11 +395,19 @@ private static int I(int x, int y, int z) {
 private static int J(int x, int y, int z) {
     return ((y &lt;&lt; 2) | (z &lt;&lt; 1) | x) + 4*4*4 + 8*8*8 + 16*16*16;
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="3-worldupdater-向上传播更新">3. WorldUpdater 向上传播更新</h2>
+
+
 <h3>3.1 传播机制</h3>
-<p>当 Level 0 的数据发生变化时，需要<strong>向上更新所有父级 LOD 层</strong>：</p>
-<pre class="code-block"><code class="language-java">public static void insertUpdate(WorldEngine into, VoxelizedSection section) {
+
+
+当 Level 0 的数据发生变化时，需要<strong>向上更新所有父级 LOD 层</strong>：
+</p>
+<p><pre class="code-block"><code class="language-java">public static void insertUpdate(WorldEngine into, VoxelizedSection section) {
     for (int lvl = 0; lvl &lt;= MAX_LOD_LAYER; lvl++) {
         // 计算每个层级的 section 坐标
         var worldSection = into.acquire(
@@ -377,13 +428,21 @@ private static int J(int x, int y, int z) {
         }
     }
 }</code></pre>
+
+
 <h3>3.2 坐标转换公式</h3>
-<pre class="code-block"><code class="language-java">final int msk = (1 &lt;&lt; (lvl + 1)) - 1;
+
+</p>
+<p><pre class="code-block"><code class="language-java">final int msk = (1 &lt;&lt; (lvl + 1)) - 1;
 final int bx = (section.x &amp; msk) &lt;&lt; (4 - lvl);
 final int by = (section.y &amp; msk) &lt;&lt; (4 - lvl);
 final int bz = (section.z &amp; msk) &lt;&lt; (4 - lvl);</code></pre>
+
+
 <h3>3.3 Mermaid 图：LOD 更新传播流程</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TD
     A["Level 0 更新<br/>(方块修改)"] --> B["获取 L0 Section"]
     B --> C{"数据变化?"}
@@ -411,22 +470,37 @@ final int bz = (section.z &amp; msk) &lt;&lt; (4 - lvl);</code></pre>
     style N fill:#64b5f6
     style Z fill:#ffcdd2</div>
 </div>
+
+
 <h3>3.4 传播终止条件</h3>
-<p>LOD 传播在以下情况终止：</p>
-<p><ul><li><strong>无数据变化</strong>：当前层数据未改变，无需更新父层</li>
-<li><strong>已达最高层</strong>：L4 是最大层级，无法继续向上</li>
-<li><strong>父级未变化</strong>：即使子级变化，若父级整体不受影响，可提前终止</li></ul></p>
-<p><hr></p>
+
+
+LOD 传播在以下情况终止：
+
+<ul><li><strong>无数据变化</strong>：当前层数据未改变，无需更新父层</li></ul>
+<ul><li><strong>已达最高层</strong>：L4 是最大层级，无法继续向上</li></ul>
+<ul><li><strong>父级未变化</strong>：即使子级变化，若父级整体不受影响，可提前终止</li></ul>
+
+<hr>
+
 <h2 id="4-section-id-64-bit-布局解析">4. Section ID 64-bit 布局解析</h2>
+
+
 <h3>4.1 位域结构</h3>
-<pre class="code-block"><code class="language-java">public static long getWorldSectionId(int lvl, int x, int y, int z) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static long getWorldSectionId(int lvl, int x, int y, int z) {
     return ((long) lvl &lt;&lt; 60) |
            ((long) (y &amp; 0xFF) &lt;&lt; 52) |
            ((long) (z &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 28) |
            ((long) (x &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 4);
 }</code></pre>
+
+
 <h3>4.2 位域图示</h3>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
 │  63-60 (4 bits)  │  59-52 (8 bits)  │  51-28 (24 bits) │  27-4 (24 bits)│
 ├───────────────────┼──────────────────┼───────────────────┼──────────────┤
 │       lvl         │        y         │        z          │      x       │
@@ -435,10 +509,23 @@ final int bz = (section.z &amp; msk) &lt;&lt; (4 - lvl);</code></pre>
 └─────────────────────────────────────────────────────────────────────────┘
          ↑                                      
     (4 bits spare)</code></pre>
+
+
 <h3>4.3 字段详解</h3>
-<table class="data-table"><thead><tr><th>字段</th><th>位范围</th><th>长度</th><th>取值范围</th><th>说明</th></tr></thead><tbody><tr><td><code>lvl</code></td><td>60-63</td><td>4 bits</td><td>0-15</td><td>LOD 层级（实际只用 0-4）</td></tr><tr><td><code>y</code></td><td>52-59</td><td>8 bits</td><td>0-255</td><td>Y 坐标（MC 高度限制 0-383，但只存 8 位）</td></tr><tr><td><code>z</code></td><td>28-51</td><td>24 bits</td><td>0-16M</td><td>Z 坐标（世界边界内）</td></tr><tr><td><code>x</code></td><td>4-27</td><td>24 bits</td><td>0-16M</td><td>X 坐标（世界边界内）</td></tr><tr><td>预留</td><td>0-3</td><td>4 bits</td><td>-</td><td>预留扩展</td></tr></tbody></table>
+
+
+| 字段 | 位范围 | 长度 | 取值范围 | 说明 |
+|------|--------|------|----------|------|
+| <code>lvl</code> | 60-63 | 4 bits | 0-15 | LOD 层级（实际只用 0-4） |
+| <code>y</code> | 52-59 | 8 bits | 0-255 | Y 坐标（MC 高度限制 0-383，但只存 8 位） |
+| <code>z</code> | 28-51 | 24 bits | 0-16M | Z 坐标（世界边界内） |
+| <code>x</code> | 4-27 | 24 bits | 0-16M | X 坐标（世界边界内） |
+| 预留 | 0-3 | 4 bits | - | 预留扩展 |
+
 <h3>4.4 提取字段</h3>
-<pre class="code-block"><code class="language-java">public static int getLvlFromKey(long key) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int getLvlFromKey(long key) {
     return (int) (key &gt;&gt; 60);
 }
 
@@ -453,10 +540,17 @@ public static int getZFromKey(long key) {
 public static int getXFromKey(long key) {
     return (int) ((key &gt;&gt; 4) &amp; 0xFFFFFF);
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="5-双层-lru-缓存设计">5. 双层 LRU 缓存设计</h2>
+
+
 <h3>5.1 缓存架构概述</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart LR
     subgraph Primary["第一层：分片哈希表"]
         P0["Shard 0<br/>(StampedLock)"]
@@ -485,24 +579,38 @@ public static int getXFromKey(long key) {
     style Primary fill:#e8f5e9
     style Secondary fill:#fff3e0</div>
 </div>
+
+
 <h3>5.2 第一层：分片哈希表</h3>
-<pre class="code-block"><code class="language-java">private final Long2ObjectOpenHashMap&lt;VolatileHolder&lt;WorldSection&gt;&gt;[] loadedSectionCache;
+
+</p>
+<p><pre class="code-block"><code class="language-java">private final Long2ObjectOpenHashMap&lt;VolatileHolder&lt;WorldSection&gt;&gt;[] loadedSectionCache;
 private final StampedLock[] locks;
 
 // 默认 64 个分片
 private static final int DEFAULT_CACHE_SHARD_COUNT = 64;</code></pre>
-<p><strong>设计优势</strong>：
-<ul><li>减少锁竞争：不同分片可并行访问</li>
-<li><code>StampedLock</code>：读多写少场景下的高效锁</li></ul></p>
+
+
+<strong>设计优势</strong>：
+<ul><li>减少锁竞争：不同分片可并行访问</li></ul>
+<ul><li><code>StampedLock</code>：读多写少场景下的高效锁</li></ul>
+
 <h3>5.3 第二层：LRU 双向链表</h3>
-<pre class="code-block"><code class="language-java">private final Long2ObjectLinkedOpenHashMap&lt;WorldSection&gt; lruSecondaryCache;
+
+</p>
+<p><pre class="code-block"><code class="language-java">private final Long2ObjectLinkedOpenHashMap&lt;WorldSection&gt; lruSecondaryCache;
 private final StampedLock lruLock;</code></pre>
-<p><strong>作用</strong>：
-<ul><li>保存已卸载但保留数据的 sections</li>
-<li>复用 <code>long[]</code> 数组，避免频繁 GC</li>
-<li>最近访问的排在链表头部</li></ul></p>
+
+
+<strong>作用</strong>：
+<ul><li>保存已卸载但保留数据的 sections</li></ul>
+<ul><li>复用 <code>long[]</code> 数组，避免频繁 GC</li></ul>
+<ul><li>最近访问的排在链表头部</li></ul>
+
 <h3>5.4 获取 Section (acquire)</h3>
-<pre class="code-block"><code class="language-java">public WorldSection acquire(long key, boolean nullOnEmpty) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public WorldSection acquire(long key, boolean nullOnEmpty) {
     int index = getCacheArrayIndex(key);
     var cache = loadedSectionCache[index];
     var lock = locks[index];
@@ -520,8 +628,12 @@ private final StampedLock lruLock;</code></pre>
     // 未命中：从磁盘或二级缓存加载
     // ...
 }</code></pre>
+
+
 <h3>5.5 释放 Section (release)</h3>
-<pre class="code-block"><code class="language-java">public void release(WorldSection section, boolean nullOnEmpty) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public void release(WorldSection section, boolean nullOnEmpty) {
     if (section.release() != 0) {
         return; // 仍有引用
     }
@@ -534,23 +646,45 @@ private final StampedLock lruLock;</code></pre>
     removeFromPrimaryCache(section);
     addToSecondaryLRU(section);
 }</code></pre>
+
+
 <h3>5.6 缓存容量配置</h3>
-<pre class="code-block"><code class="language-java">private static final int ARRAY_REUSE_CACHE_SIZE = 400;
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static final int ARRAY_REUSE_CACHE_SIZE = 400;
 private static final AtomicInteger ARRAY_REUSE_CACHE_COUNT = new AtomicInteger(0);
 private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new ConcurrentLinkedDeque&lt;&gt;();</code></pre>
-<p>LRU 缓存满时，最旧的 <code>long[]</code> 数组被回收复用，减少 GC 压力。</p>
-<p><hr></p>
+
+
+LRU 缓存满时，最旧的 <code>long[]</code> 数组被回收复用，减少 GC 压力。
+
+<hr>
+
 <h2 id="6-课后自查">6. 课后自查</h2>
-<p>✅ 以下问题可以帮助你检验对本章内容的理解：</p>
-<p><ul><li><strong>LOD 层级</strong>：Voxy 有几级 LOD？L4 层一个 Section 覆盖多少原版 chunk？</li>
-<li><strong>Mipper 算法</strong>：2×2×2 合并时，如果 8 个体素都是非空气方块，Mipper 如何选择保留哪一个？</li>
-<li><strong>传播机制</strong>：WorldUpdater 在什么情况下会停止向上传播 LOD 更新？</li>
-<li><strong>Section ID</strong>：如果一个 Section ID 的 <code>lvl=2, x=1000, y=64, z=2000</code>，请计算其在 64-bit 中的十六进制值。</li>
-<li><strong>双层缓存</strong>：ActiveSectionTracker 的两级缓存分别是什么？各有何作用？</li>
-<li><strong>数组复用</strong>：为什么要有 <code>ARRAY<em>REUSE</em>CACHE</code>？它解决了什么问题？</li></ul></p>
-<p><hr></p>
+
+
+✅ 以下问题可以帮助你检验对本章内容的理解：
+
+<ul><li><strong>LOD 层级</strong>：Voxy 有几级 LOD？L4 层一个 Section 覆盖多少原版 chunk？</li></ul>
+<ul><li><strong>Mipper 算法</strong>：2×2×2 合并时，如果 8 个体素都是非空气方块，Mipper 如何选择保留哪一个？</li></ul>
+<ul><li><strong>传播机制</strong>：WorldUpdater 在什么情况下会停止向上传播 LOD 更新？</li></ul>
+<ul><li><strong>Section ID</strong>：如果一个 Section ID 的 <code>lvl=2, x=1000, y=64, z=2000</code>，请计算其在 64-bit 中的十六进制值。</li></ul>
+<ul><li><strong>双层缓存</strong>：ActiveSectionTracker 的两级缓存分别是什么？各有何作用？</li></ul>
+<ul><li><strong>数组复用</strong>：为什么要有 <code>ARRAY<em>REUSE</em>CACHE</code>？它解决了什么问题？</li></ul>
+
+<hr>
+
 <h2 id="参考文件">参考文件</h2>
-<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>WorldUpdater.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldUpdater.java</code></td></tr><tr><td>ActiveSectionTracker.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/ActiveSectionTracker.java</code></td></tr><tr><td>WorldEngine.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldEngine.java</code></td></tr><tr><td>WorldSection.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldSection.java</code></td></tr><tr><td>Mipper.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mipper.java</code></td></tr></tbody></table>
+
+
+| 文件 | 路径 |
+|------|------|
+| WorldUpdater.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldUpdater.java</code> |
+| ActiveSectionTracker.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/ActiveSectionTracker.java</code> |
+| WorldEngine.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldEngine.java</code> |
+| WorldSection.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/WorldSection.java</code> |
+| Mipper.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mipper.java</code> |
+</p>
             </div>
 
             <div class="docs-footer">

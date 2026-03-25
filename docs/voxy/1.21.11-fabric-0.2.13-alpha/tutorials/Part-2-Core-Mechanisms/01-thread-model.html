@@ -243,28 +243,51 @@
 
             <div class="docs-body doc-content">
                 <h2 id="致谢">致谢</h2>
-<p>本教程基于 Cortextea (The True Cortex) 的开源项目 Voxy 编写。感谢原作者的开源贡献，使得学习这套精密的异步任务调度系统成为可能。</p>
-<p><ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">comp500/voxy</a></li>
-<li>本笔记仅为学习记录，代码版权归属原作者</li></ul></p>
-<p><hr></p>
+
+
+本教程基于 Cortextea (The True Cortex) 的开源项目 Voxy 编写。感谢原作者的开源贡献，使得学习这套精密的异步任务调度系统成为可能。
+
+<ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">comp500/voxy</a></li></ul>
+<ul><li>本笔记仅为学习记录，代码版权归属原作者</li></ul>
+
+<hr>
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#1-为什么要用专用线程池">1. 为什么要用专用线程池？</a></li>
-<li><a href="#2-线程模型总览">2. 线程模型总览</a></li>
-<li><a href="#3-3-个-worker-线程的角色分工">3. 3 个 Worker 线程的角色分工</a></li>
-<li><a href="#4-servicemanager-加权随机选取算法">4. ServiceManager 加权随机选取算法</a></li>
-<li><a href="#5-service-返回值语义">5. Service 返回值语义</a></li>
-<li><a href="#6-voxelingestservice-vs-sectionsavingservice">6. VoxelIngestService vs SectionSavingService</a></li>
-<li><a href="#7-代码示例加权随机选取算法简化实现">7. 代码示例：加权随机选取算法简化实现</a></li>
-<li><a href="#8-课后自查">8. 课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#1-为什么要用专用线程池">1. 为什么要用专用线程池？</a></li></ul>
+<ul><li><a href="#2-线程模型总览">2. 线程模型总览</a></li></ul>
+<ul><li><a href="#3-3-个-worker-线程的角色分工">3. 3 个 Worker 线程的角色分工</a></li></ul>
+<ul><li><a href="#4-servicemanager-加权随机选取算法">4. ServiceManager 加权随机选取算法</a></li></ul>
+<ul><li><a href="#5-service-返回值语义">5. Service 返回值语义</a></li></ul>
+<ul><li><a href="#6-voxelingestservice-vs-sectionsavingservice">6. VoxelIngestService vs SectionSavingService</a></li></ul>
+<ul><li><a href="#7-代码示例加权随机选取算法简化实现">7. 代码示例：加权随机选取算法简化实现</a></li></ul>
+<ul><li><a href="#8-课后自查">8. 课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="1-为什么要用专用线程池">1. 为什么要用专用线程池？</h2>
-<p>Minecraft 的主线程负责处理游戏逻辑、渲染、物理模拟等大量工作。当 Voxy 需要处理体素化、存储等耗时操作时，如果在主线程执行会造成<strong>帧率暴跌、画面卡顿</strong>。</p>
-<p>Voxy 的解决方案是：<strong>创建专用 Worker 线程池</strong>，将所有耗时操作异步化。</p>
-<table class="data-table"><thead><tr><th>对比维度</th><th>主线程处理</th><th>专用线程池处理</th></tr></thead><tbody><tr><td>帧率影响</td><td>直接卡顿</td><td>完全独立</td></tr><tr><td>并发能力</td><td>单线程串行</td><td>多线程并行</td></tr><tr><td>响应延迟</td><td>高（需等待完成）</td><td>低（异步提交即可）</td></tr><tr><td>复杂度</td><td>简单</td><td>需要协调同步</td></tr></tbody></table>
-💡 <strong>关键设计</strong>：这 3 个 Worker 线程<strong>不参与游戏逻辑</strong>，只专注处理 Voxy 的体素化和存储任务。</p>
-<p><hr></p>
+
+
+Minecraft 的主线程负责处理游戏逻辑、渲染、物理模拟等大量工作。当 Voxy 需要处理体素化、存储等耗时操作时，如果在主线程执行会造成<strong>帧率暴跌、画面卡顿</strong>。
+
+Voxy 的解决方案是：<strong>创建专用 Worker 线程池</strong>，将所有耗时操作异步化。
+
+| 对比维度 | 主线程处理 | 专用线程池处理 |
+|---------|-----------|---------------|
+| 帧率影响 | 直接卡顿 | 完全独立 |
+| 并发能力 | 单线程串行 | 多线程并行 |
+| 响应延迟 | 高（需等待完成） | 低（异步提交即可） |
+| 复杂度 | 简单 | 需要协调同步 |
+
+💡 <strong>关键设计</strong>：这 3 个 Worker 线程<strong>不参与游戏逻辑</strong>，只专注处理 Voxy 的体素化和存储任务。
+
+<hr>
+
 <h2 id="2-线程模型总览">2. 线程模型总览</h2>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph JVM进程
         subgraph VoxyWorkerThreads["Voxy Worker 线程组 (Priority=3)"]
@@ -296,25 +319,50 @@
     S1 --> Q1
     S2 --> Q2</div>
 </div>
+
+
 <h3>关键组件</h3>
-<table class="data-table"><thead><tr><th>组件</th><th>职责</th></tr></thead><tbody><tr><td><code>UnifiedServiceThreadPool</code></td><td>管理 Worker 线程生命周期</td></tr><tr><td><code>ServiceManager</code></td><td>调度任务，决定哪个 Service 执行</td></tr><tr><td><code>MultiThreadPrioritySemaphore</code></td><td>协调 Worker 阻塞/唤醒</td></tr><tr><td><code>Service</code></td><td>任务队列抽象，惰性执行</td></tr></tbody></table>
-<hr></p>
+
+
+| 组件 | 职责 |
+|------|------|
+| <code>UnifiedServiceThreadPool</code> | 管理 Worker 线程生命周期 |
+| <code>ServiceManager</code> | 调度任务，决定哪个 Service 执行 |
+| <code>MultiThreadPrioritySemaphore</code> | 协调 Worker 阻塞/唤醒 |
+| <code>Service</code> | 任务队列抽象，惰性执行 |
+
+<hr>
+
 <h2 id="3-3-个-worker-线程的角色分工">3. 3 个 Worker 线程的角色分工</h2>
+
+
 <h3>3.1 线程创建</h3>
-<p>源码路径：<code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\common\thread\UnifiedServiceThreadPool.java</code></p>
-<pre class="code-block"><code class="language-java">var t = new Thread(this.dedicatedPool, this::workerThread, &quot;Dedicated Voxy Worker #&quot; + (this.threadId++));
+
+
+源码路径：<code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\common\thread\UnifiedServiceThreadPool.java</code>
+</p>
+<p><pre class="code-block"><code class="language-java">var t = new Thread(this.dedicatedPool, this::workerThread, &quot;Dedicated Voxy Worker #&quot; + (this.threadId++));
 t.setPriority(3);      // 低优先级
 t.setDaemon(true);     // JVM 退出时自动销毁
 this.threads.add(t);
 t.start();</code></pre>
+
+
 <h3>3.2 优先级 3 的设计意图</h3>
-<p>Java 线程优先级范围是 <code>Thread.MIN<em>PRIORITY</code>(1) 到 <code>Thread.MAX</em>PRIORITY</code>(10)，默认是 <code>NORM_PRIORITY</code>(5)。</p>
-<p><strong>设为 3 的原因</strong>：</p>
-<p><ul><li><strong>低于正常优先级</strong>：让 Voxy Worker 不会过度抢占渲染线程/主线程的时间片</li>
-<li><strong>不影响帧率</strong>：大量任务堆积时不会拖慢游戏</li>
-<li><strong>专为 I/O 优化</strong>：存储操作优先级低，可随时被渲染让路</li></ul></p>
+
+
+Java 线程优先级范围是 <code>Thread.MIN<em>PRIORITY</code>(1) 到 <code>Thread.MAX</em>PRIORITY</code>(10)，默认是 <code>NORM_PRIORITY</code>(5)。
+
+<strong>设为 3 的原因</strong>：
+
+<ul><li><strong>低于正常优先级</strong>：让 Voxy Worker 不会过度抢占渲染线程/主线程的时间片</li></ul>
+<ul><li><strong>不影响帧率</strong>：大量任务堆积时不会拖慢游戏</li></ul>
+<ul><li><strong>专为 I/O 优化</strong>：存储操作优先级低，可随时被渲染让路</li></ul>
+
 <h3>3.3 动态扩缩容</h3>
-<pre class="code-block"><code class="language-java">public boolean setNumThreads(int threads) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public boolean setNumThreads(int threads) {
     int diff = threads - this.threads.size();
     if (diff &lt; 0) {
         this.selfBlock.release(-diff);  // 释放许可证，线程自然退出
@@ -324,18 +372,36 @@ t.start();</code></pre>
         }
     }
 }</code></pre>
-<p>💡 <strong>优雅退出</strong>：不直接 kill 线程，而是释放许可证让 Worker 的 <code>acquire()</code> 返回后自然退出，避免半完成状态。</p>
-<p><hr></p>
+
+
+💡 <strong>优雅退出</strong>：不直接 kill 线程，而是释放许可证让 Worker 的 <code>acquire()</code> 返回后自然退出，避免半完成状态。
+
+<hr>
+
 <h2 id="4-servicemanager-加权随机选取算法">4. ServiceManager 加权随机选取算法</h2>
+
+
 <h3>4.1 核心思想</h3>
-<p>当多个 Service 都有任务时，<code>ServiceManager.runAJob0()</code> 使用<strong>加权随机选取</strong>算法决定执行哪个。</p>
-<p>选取概率 = <code>Service 任务数 × weight / 所有 Service 总权重</code></p>
+
+
+当多个 Service 都有任务时，<code>ServiceManager.runAJob0()</code> 使用<strong>加权随机选取</strong>算法决定执行哪个。
+
+选取概率 = <code>Service 任务数 × weight / 所有 Service 总权重</code>
+
 <h3>4.2 shiftFactor 技巧</h3>
-<p>为了避免低权重 Service 被饿死，每次轮转通过 <code>shiftFactor</code> 改变起始位置：</p>
-<pre class="code-block"><code class="language-java">int shiftFactor = (ctx.shiftFactor++) &amp; Integer.MAX_VALUE;</code></pre>
-<p>这样第 N 次调用会从 <code>(N % services.length)</code> 位置开始遍历，确保公平性。</p>
+
+
+为了避免低权重 Service 被饿死，每次轮转通过 <code>shiftFactor</code> 改变起始位置：
+</p>
+<p><pre class="code-block"><code class="language-java">int shiftFactor = (ctx.shiftFactor++) &amp; Integer.MAX_VALUE;</code></pre>
+
+
+这样第 N 次调用会从 <code>(N % services.length)</code> 位置开始遍历，确保公平性。
+
 <h3>4.3 算法流程</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TD
     A["start: runAJob0()"] --> B["计算 totalWeight\n遍历所有 Service"]
     B --> C{"totalWeight == 0?"}
@@ -350,12 +416,26 @@ t.start();</code></pre>
     H --> K["selectedService.runJob()"]
     K --> L["return 0 (成功)"]</div>
 </div>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="5-service-返回值语义">5. Service 返回值语义</h2>
-<p><code>ServiceManager.tryRunAJob()</code> 返回值含义：</p>
-<table class="data-table"><thead><tr><th>返回值</th><th>含义</th><th>后续动作</th></tr></thead><tbody><tr><td><code>0</code></td><td>成功执行一个任务</td><td>正常退出</td></tr><tr><td><code>1</code></td><td>无任务或无 Service</td><td>正常退出</td></tr><tr><td><code>2</code></td><td>所有 Service 队列为空</td><td>正常退出</td></tr><tr><td><code>3</code></td><td>部分 Service 被 limiter 跳过但可能有任务</td><td>等待后重试</td></tr></tbody></table>
+
+
+<code>ServiceManager.tryRunAJob()</code> 返回值含义：
+
+| 返回值 | 含义 | 后续动作 |
+|-------|------|---------|
+| <code>0</code> | 成功执行一个任务 | 正常退出 |
+| <code>1</code> | 无任务或无 Service | 正常退出 |
+| <code>2</code> | 所有 Service 队列为空 | 正常退出 |
+| <code>3</code> | 部分 Service 被 limiter 跳过但可能有任务 | 等待后重试 |
+
 <h3>MultiThreadPrioritySemaphore 的处理</h3>
-<pre class="code-block"><code class="language-java">int status = this.executor.getAsInt();
+
+</p>
+<p><pre class="code-block"><code class="language-java">int status = this.executor.getAsInt();
 if (status == 0) return false;   // 任务成功执行
 if (status == 1) return false;   // 无任务或无 Service
 if (2 &lt;= status) {                // 2/3: 找到服务但无法运行
@@ -365,24 +445,48 @@ if (2 &lt;= status) {                // 2/3: 找到服务但无法运行
         return true;
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="6-voxelingestservice-vs-sectionsavingservice">6. VoxelIngestService vs SectionSavingService</h2>
-<table class="data-table"><thead><tr><th>对比维度</th><th>VoxelIngestService</th><th>SectionSavingService</th></tr></thead><tbody><tr><td><strong>权重 (weight)</strong></td><td>5000</td><td>100</td></tr><tr><td><strong>任务类型</strong></td><td>体素化摄入</td><td>持久化存储</td></tr><tr><td><strong>队列上限</strong></td><td>无硬限制</td><td>软上限 5000，硬上限 1200</td></tr><tr><td><strong>limiter</strong></td><td><code>null</code> (不限流)</td><td><code>() -> taskCount < 1200</code></td></tr><tr><td><strong>阻塞策略</strong></td><td>纯异步</td><td>超过软上限时主线程同步处理</td></tr><tr><td><strong>优先级</strong></td><td>极高</td><td>较低</td></tr></tbody></table>
+
+
+| 对比维度 | VoxelIngestService | SectionSavingService |
+|---------|-------------------|---------------------|
+| <strong>权重 (weight)</strong> | 5000 | 100 |
+| <strong>任务类型</strong> | 体素化摄入 | 持久化存储 |
+| <strong>队列上限</strong> | 无硬限制 | 软上限 5000，硬上限 1200 |
+| <strong>limiter</strong> | <code>null</code> (不限流) | <code>() -> taskCount < 1200</code> |
+| <strong>阻塞策略</strong> | 纯异步 | 超过软上限时主线程同步处理 |
+| <strong>优先级</strong> | 极高 | 较低 |
+
 <h3>权重差异的影响</h3>
-<p>权重比 5000:100 = 50:1，意味着：
-<ul><li>同样有 10 个任务时，VoxelIngestService 被选中的概率是 SectionSavingService 的 50 倍</li>
-<li><strong>区块加载优先于存储</strong>：玩家不会因为存储慢而看到黑块</li></ul></p>
+
+
+权重比 5000:100 = 50:1，意味着：
+<ul><li>同样有 10 个任务时，VoxelIngestService 被选中的概率是 SectionSavingService 的 50 倍</li></ul>
+<ul><li><strong>区块加载优先于存储</strong>：玩家不会因为存储慢而看到黑块</li></ul>
+
 <h3>SectionSavingService 的双层限流</h3>
-<pre class="code-block"><code class="language-java">if (getTaskCount() &gt; 5000 &amp;&amp; !nonBlocking) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">if (getTaskCount() &gt; 5000 &amp;&amp; !nonBlocking) {
     service.steal();  // 主线程同步处理
 }
 
 // 第二层：硬上限 1200 (通过 limiter)
 limiter = () -&gt; savingService.getTaskCount() &lt; 1200;</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="7-代码示例加权随机选取算法简化实现">7. 代码示例：加权随机选取算法简化实现</h2>
-<p>以下是加权随机选取算法的简化实现，帮助理解核心逻辑：</p>
-<pre class="code-block"><code class="language-java">public class WeightedRandomSelector {
+
+
+以下是加权随机选取算法的简化实现，帮助理解核心逻辑：
+</p>
+<p><pre class="code-block"><code class="language-java">public class WeightedRandomSelector {
 
     static class Service {
         String name;
@@ -446,25 +550,36 @@ limiter = () -&gt; savingService.getTaskCount() &lt; 1200;</code></pre>
         }
     }
 }</code></pre>
-<p><strong>输出示例</strong>：</p>
-<pre class="code-block"><code class="language-text">总权重: 510000
+
+
+<strong>输出示例</strong>：
+</p>
+<p><pre class="code-block"><code class="language-text">总权重: 510000
 采样值: 234567
 选中的 Service: VoxelIngestService
 10000 次模拟结果:
   VoxelIngestService: 98.04%
   SectionSavingService: 1.96%</code></pre>
-<p>✅ <strong>观察</strong>：由于权重 5000:100，即使 SectionSavingService 队列任务更多(50 vs 10)，VoxelIngestService 仍被选中约 98% 的时间。</p>
-<p><hr></p>
+
+
+✅ <strong>观察</strong>：由于权重 5000:100，即使 SectionSavingService 队列任务更多(50 vs 10)，VoxelIngestService 仍被选中约 98% 的时间。
+
+<hr>
+
 <h2 id="8-课后自查">8. 课后自查</h2>
-<p><ul><li>[ ] 为什么 Voxy Worker 线程的优先级设为 3 而不是 1 或 5？这对游戏体验有何影响？</li>
-<li>[ ] <code>shiftFactor</code> 在 <code>ServiceManager</code> 中的作用是什么？如果去掉会导致什么问题？</li>
-<li>[ ] <code>ServiceManager.tryRunAJob()</code> 返回值 0/1/2/3 分别代表什么？返回值如何影响 Worker 线程行为？</li>
-<li>[ ] 对比 VoxelIngestService (weight=5000) 和 SectionSavingService (weight=100)，这个权重比例的设计意图是什么？</li>
-<li>[ ] 解释 SectionSavingService 的双层限流机制：软上限 5000 和硬上限 1200 分别在什么场景触发？</li>
-<li>[ ] <code>steal()</code> 方法的作用是什么？它与普通 <code>execute()</code> 有何区别？</li>
-<li>[ ] 使用 Mermaid 绘制从调用 <code>VoxelIngestService.enqueueIngest()</code> 到数据被 Worker 线程处理的完整时序图</li></ul></p>
-<p><hr></p>
-<p><strong>上一篇</strong>：<a href="../README.html">目录</a> | <strong>下一篇</strong>：<a href="../02-rendering-pipeline.html">渲染管线</a>
+
+
+<ul><li>[ ] 为什么 Voxy Worker 线程的优先级设为 3 而不是 1 或 5？这对游戏体验有何影响？</li></ul>
+<ul><li>[ ] <code>shiftFactor</code> 在 <code>ServiceManager</code> 中的作用是什么？如果去掉会导致什么问题？</li></ul>
+<ul><li>[ ] <code>ServiceManager.tryRunAJob()</code> 返回值 0/1/2/3 分别代表什么？返回值如何影响 Worker 线程行为？</li></ul>
+<ul><li>[ ] 对比 VoxelIngestService (weight=5000) 和 SectionSavingService (weight=100)，这个权重比例的设计意图是什么？</li></ul>
+<ul><li>[ ] 解释 SectionSavingService 的双层限流机制：软上限 5000 和硬上限 1200 分别在什么场景触发？</li></ul>
+<ul><li>[ ] <code>steal()</code> 方法的作用是什么？它与普通 <code>execute()</code> 有何区别？</li></ul>
+<ul><li>[ ] 使用 Mermaid 绘制从调用 <code>VoxelIngestService.enqueueIngest()</code> 到数据被 Worker 线程处理的完整时序图</li></ul>
+
+<hr>
+
+<strong>上一篇</strong>：<a href="../README.html">目录</a> | <strong>下一篇</strong>：<a href="../02-rendering-pipeline.html">渲染管线</a>
 </p>
             </div>
 

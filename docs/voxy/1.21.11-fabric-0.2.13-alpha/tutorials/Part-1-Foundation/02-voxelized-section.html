@@ -243,32 +243,50 @@
 
             <div class="docs-body doc-content">
                 <h2 id="致谢">致谢</h2>
-<p>本教程基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 源码分析编写，是学习笔记而非官方文档。
-感谢原作者 <strong>Cortex</strong> 的开源贡献，原项目：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a></p>
+
+
+本教程基于 Voxy Mod 0.2.13-alpha (MC 1.21.11) 源码分析编写，是学习笔记而非官方文档。
+感谢原作者 <strong>Cortex</strong> 的开源贡献，原项目：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">官方仓库</a>
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#1-背景为什么需要体素化">1. 背景：为什么需要体素化？</a></li>
-<li><a href="#2-voxelizedsection-核心结构">2. VoxelizedSection 核心结构</a></li>
-<li><a href="#3-37-bitsvoxel-编码详解">3. 37 bits/voxel 编码详解</a></li>
-<li><a href="#4-4913-longs-如何存储-5-级-lod">4. 4913 longs 如何存储 5 级 LOD</a></li>
-<li><a href="#5-代码示例位运算提取数据">5. 代码示例：位运算提取数据</a></li>
-<li><a href="#6-课后自查">6. 课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#1-背景为什么需要体素化">1. 背景：为什么需要体素化？</a></li></ul>
+<ul><li><a href="#2-voxelizedsection-核心结构">2. VoxelizedSection 核心结构</a></li></ul>
+<ul><li><a href="#3-37-bitsvoxel-编码详解">3. 37 bits/voxel 编码详解</a></li></ul>
+<ul><li><a href="#4-4913-longs-如何存储-5-级-lod">4. 4913 longs 如何存储 5 级 LOD</a></li></ul>
+<ul><li><a href="#5-代码示例位运算提取数据">5. 代码示例：位运算提取数据</a></li></ul>
+<ul><li><a href="#6-课后自查">6. 课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="1-背景为什么需要体素化">1. 背景：为什么需要体素化？</h2>
+
+
 <h3>1.1 Minecraft 原生区块的局限</h3>
-<p>Minecraft 使用 <strong>16×16×16</strong> 的 <code>ChunkSection</code> 作为区块数据的基本单元：</p>
-<pre class="code-block"><code class="language-text">┌─────────────────────┐
+
+
+Minecraft 使用 <strong>16×16×16</strong> 的 <code>ChunkSection</code> 作为区块数据的基本单元：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────┐
 │  Minecraft Chunk    │
 │  16×16×16 = 4096    │
 │  BlockStates        │
 │  (PalettedContainer)│
 └─────────────────────┘</code></pre>
-<p>这种设计的问题：
-<ul><li><strong>GPU 不友好</strong>：<code>PalettedContainer</code> 需要复杂的解压逻辑</li>
-<li><strong>无 LOD 支持</strong>：远处和近处使用相同的细节层级</li>
-<li><strong>渲染效率低</strong>：需要额外计算确定哪些区块可见</li></ul></p>
+
+
+这种设计的问题：
+<ul><li><strong>GPU 不友好</strong>：<code>PalettedContainer</code> 需要复杂的解压逻辑</li></ul>
+<ul><li><strong>无 LOD 支持</strong>：远处和近处使用相同的细节层级</li></ul>
+<ul><li><strong>渲染效率低</strong>：需要额外计算确定哪些区块可见</li></ul>
+
 <h3>1.2 Voxy 的体素化方案</h3>
-<p>Voxy 将 16³ 的原版区块转换为 <strong>32³ 的体素区块</strong>，并预计算 5 级 LOD：</p>
-<pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────┐
+
+
+Voxy 将 16³ 的原版区块转换为 <strong>32³ 的体素区块</strong>，并预计算 5 级 LOD：
+</p>
+<p><pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────┐
 │                    Voxy 体素化方案                        │
 ├──────────────────────────────────────────────────────────┤
 │  Minecraft Chunk → VoxelizedSection → 5级LOD预计算      │
@@ -279,33 +297,61 @@
 │  Level 3: 2³  = 8 voxels       ← 8×8×8 合并             │
 │  Level 4: 1³  = 1 voxel        ← 16×16×16 合并          │
 └──────────────────────────────────────────────────────────┘</code></pre>
-<p><strong>核心优势</strong>：
-<ul><li>统一的数据格式，GPU 可直接读取</li>
-<li>预计算的 LOD 数据，渲染时无需实时计算</li>
-<li>位域打包减少内存占用</li></ul></p>
-<p><hr></p>
+
+
+<strong>核心优势</strong>：
+<ul><li>统一的数据格式，GPU 可直接读取</li></ul>
+<ul><li>预计算的 LOD 数据，渲染时无需实时计算</li></ul>
+<ul><li>位域打包减少内存占用</li></ul>
+
+<hr>
+
 <h2 id="2-voxelizedsection-核心结构">2. VoxelizedSection 核心结构</h2>
+
+
 <h3>2.1 类的定义</h3>
-<pre class="code-block"><code class="language-java">public class VoxelizedSection {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class VoxelizedSection {
     public int x;              // 世界坐标 X
     public int y;              // 世界坐标 Y
     public int z;              // 世界坐标 Z
     public int lvl0NonAirCount; // L0 层非空气方块数量
     public final long[] section; // 存储所有 LOD 层数据
 }</code></pre>
+
+
 <h3>2.2 字段说明</h3>
-<table class="data-table"><thead><tr><th>字段</th><th>类型</th><th>用途</th></tr></thead><tbody><tr><td><code>x, y, z</code></td><td>int</td><td>世界坐标位置，用于定位和索引计算</td></tr><tr><td><code>lvl0NonAirCount</code></td><td>int</td><td>快速判断区块是否为空（全空则跳过渲染）</td></tr><tr><td><code>section</code></td><td>long[]</td><td>4913 个 long，存储 5 级 LOD 层</td></tr></tbody></table>
+
+
+| 字段 | 类型 | 用途 |
+|------|------|------|
+| <code>x, y, z</code> | int | 世界坐标位置，用于定位和索引计算 |
+| <code>lvl0NonAirCount</code> | int | 快速判断区块是否为空（全空则跳过渲染） |
+| <code>section</code> | long[] | 4913 个 long，存储 5 级 LOD 层 |
+
 <h3>2.3 创建空区块</h3>
-<pre class="code-block"><code class="language-java">public static VoxelizedSection createEmpty() {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static VoxelizedSection createEmpty() {
     // 16³ + 8³ + 4³ + 2³ + 1 = 4913 longs
     return new VoxelizedSection(new long[16*16*16 + 8*8*8 + 4*4*4 + 2*2*2 + 1]);
 }</code></pre>
-<p>💡 <strong>设计亮点</strong>：数组大小 <code>4913</code> 是 5 个 LOD 层体素数量的总和，无需额外元数据记录层级边界。</p>
-<p><hr></p>
+
+
+💡 <strong>设计亮点</strong>：数组大小 <code>4913</code> 是 5 个 LOD 层体素数量的总和，无需额外元数据记录层级边界。
+
+<hr>
+
 <h2 id="3-37-bitsvoxel-编码详解">3. 37 bits/voxel 编码详解</h2>
+
+
 <h3>3.1 位域布局</h3>
-<p>每个体素使用 <strong>37 bits</strong> 编码在一个 <code>long</code>（64-bit）中：</p>
-<pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
+
+
+每个体素使用 <strong>37 bits</strong> 编码在一个 <code>long</code>（64-bit）中：
+</p>
+<p><pre class="code-block"><code class="language-text">┌─────────────────────────────────────────────────────────────────────────┐
 │  Bits 63-56 (8 bits)  │  Bits 47-55 (9 bits)  │  Bits 27-46 (20 bits) │
 ├───────────────────────┼───────────────────────┼─────────────────────────┤
 │        light          │        biome          │         block           │
@@ -315,26 +361,44 @@
                               ↑                                        ↑
                           9 bits                                  20 bits
                         512生态域                               支持全部MC方块</code></pre>
+
+
 <h3>3.2 光照字段 (8 bits)</h3>
-<pre class="code-block"><code class="language-text">┌────────────────────────────────────┐
+
+</p>
+<p><pre class="code-block"><code class="language-text">┌────────────────────────────────────┐
 │  Bits 60-63 (4 bits)  │  59-56    │
 ├───────────────────────┼───────────┤
 │    方块光 (Block)      │ 天空光    │
 │       0-15             │   0-15   │
 └────────────────────────────────────┘</code></pre>
-<p><ul><li><strong>高 4 位</strong>：方块光 (block light)</li>
-<li><strong>低 4 位</strong>：天空光 (sky light)</li></ul></p>
+
+
+<ul><li><strong>高 4 位</strong>：方块光 (block light)</li></ul>
+<ul><li><strong>低 4 位</strong>：天空光 (sky light)</li></ul>
+
 <h3>3.3 生物群系字段 (9 bits)</h3>
-<p>支持最多 <strong>512 种</strong>生物群系，远超 MC 现有需求，为未来扩展留有空间。</p>
+
+
+支持最多 <strong>512 种</strong>生物群系，远超 MC 现有需求，为未来扩展留有空间。
+
 <h3>3.4 方块状态字段 (20 bits)</h3>
-<p>足以编码 MC 所有可能的方块状态：
-<ul><li>MC 1.21 约有 3000+ 方块</li>
-<li>20 bits 可支持约 100 万种状态</li>
-<li>包含方块的所有状态变化（方向、湿润、年龄等）</li></ul></p>
-<p><hr></p>
+
+
+足以编码 MC 所有可能的方块状态：
+<ul><li>MC 1.21 约有 3000+ 方块</li></ul>
+<ul><li>20 bits 可支持约 100 万种状态</li></ul>
+<ul><li>包含方块的所有状态变化（方向、湿润、年龄等）</li></ul>
+
+<hr>
+
 <h2 id="4-4913-longs-如何存储-5-级-lod">4. 4913 longs 如何存储 5 级 LOD</h2>
+
+
 <h3>4.1 LOD 层级分布</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">graph TD
     subgraph L0["L0: 16³ = 4096 longs<br/>[偏移 0]"]
         A["每个 long = 1 voxel<br/>37 bits 编码"]
@@ -366,32 +430,56 @@
     style L3 fill:#64b5f6
     style L4 fill:#42a5f5</div>
 </div>
+
+
 <blockquote><p>⚠️ <strong>注意</strong>：实际计算为 4681 longs，但源码注释写的是 4913。这是分析文档中的小出入，以 <code>createEmpty()</code> 方法为准。</p></blockquote>
+
 <h3>4.2 索引计算</h3>
-<pre class="code-block"><code class="language-java">private static int getIdx(int x, int y, int z, int shiftBy, int size) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">private static int getIdx(int x, int y, int z, int shiftBy, int size) {
     int M = (1&lt;&lt;size)-1;
     x = (x&gt;&gt;shiftBy)&amp;M;
     y = (y&gt;&gt;shiftBy)&amp;M;
     z = (z&gt;&gt;shiftBy)&amp;M;
     return (y&lt;&lt;(size&lt;&lt;1))|(z&lt;&lt;size)|(x);
 }</code></pre>
-<p><strong>计算逻辑</strong>：
-<ul><li><code>shiftBy</code> 控制降采样的程度（L0=0, L1=1, L2=2...）</li>
-<li><code>size</code> 是层级的对数（L0=4 因为 2⁴=16, L1=3 因为 2³=8...）</li>
-<li>返回值是数组中的索引位置</li></ul></p>
+
+
+<strong>计算逻辑</strong>：
+<ul><li><code>shiftBy</code> 控制降采样的程度（L0=0, L1=1, L2=2...）</li></ul>
+<ul><li><code>size</code> 是层级的对数（L0=4 因为 2⁴=16, L1=3 因为 2³=8...）</li></ul>
+<ul><li>返回值是数组中的索引位置</li></ul>
+
 <h3>4.3 层级偏移计算</h3>
-<pre class="code-block"><code class="language-java">public static int getBaseIndexForLevel(int lvl) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int getBaseIndexForLevel(int lvl) {
     int offset = lvl==1?(1&lt;&lt;12):0;        // L1: +4096
     offset |= lvl==2?(1&lt;&lt;12)|(1&lt;&lt;9):0;    // L2: +4608
     offset |= lvl==3?(1&lt;&lt;12)|(1&lt;&lt;9)|(1&lt;&lt;6):0;  // L3: +4672
     offset |= lvl==4?(1&lt;&lt;12)|(1&lt;&lt;9)|(1&lt;&lt;6)|(1&lt;&lt;3):0; // L4: +4680
     return offset;
 }</code></pre>
-<table class="data-table"><thead><tr><th>Level</th><th>偏移量</th><th>十进制</th></tr></thead><tbody><tr><td>L0</td><td>0</td><td>0</td></tr><tr><td>L1</td><td>2¹²</td><td>4096</td></tr><tr><td>L2</td><td>2¹²+2⁹</td><td>4608</td></tr><tr><td>L3</td><td>2¹²+2⁹+2⁶</td><td>4672</td></tr><tr><td>L4</td><td>2¹²+2⁹+2⁶+2³</td><td>4680</td></tr></tbody></table>
-<hr></p>
+
+
+| Level | 偏移量 | 十进制 |
+|-------|--------|--------|
+| L0 | 0 | 0 |
+| L1 | 2¹² | 4096 |
+| L2 | 2¹²+2⁹ | 4608 |
+| L3 | 2¹²+2⁹+2⁶ | 4672 |
+| L4 | 2¹²+2⁹+2⁶+2³ | 4680 |
+
+<hr>
+
 <h2 id="5-代码示例位运算提取数据">5. 代码示例：位运算提取数据</h2>
+
+
 <h3>5.1 从 long 中提取各字段</h3>
-<pre class="code-block"><code class="language-java">public static int getBlockId(long id) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int getBlockId(long id) {
     // Block ID 在 bits 27-46 (20 bits)
     return (int) ((id &gt;&gt; 27) &amp; ((1 &lt;&lt; 20) - 1));
 }
@@ -405,25 +493,41 @@ public static int getLightId(long id) {
     // Light 在 bits 56-63 (8 bits)
     return (int) ((id &gt;&gt; 56) &amp; 0xFF);
 }</code></pre>
+
+
 <h3>5.2 合成 voxel 数据</h3>
-<pre class="code-block"><code class="language-java">public static long composeMappingId(int light, int blockId, int biomeId) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static long composeMappingId(int light, int blockId, int biomeId) {
     return ((long) light &lt;&lt; 56) | ((long) biomeId &lt;&lt; 47) | ((long) blockId &lt;&lt; 27);
 }</code></pre>
+
+
 <h3>5.3 判断是否为空气</h3>
-<pre class="code-block"><code class="language-java">public static boolean isAir(long id) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static boolean isAir(long id) {
     // Block ID = 0 表示空气
     return (id &amp; (((1L &lt;&lt; 20) - 1) &lt;&lt; 27)) == 0;
 }</code></pre>
+
+
 <h3>5.4 提取光照分量</h3>
-<pre class="code-block"><code class="language-java">public static int getBlockLight(long id) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int getBlockLight(long id) {
     return (getLightId(id) &gt;&gt; 4) &amp; 0xF;  // 高 4 位
 }
 
 public static int getSkyLight(long id) {
     return getLightId(id) &amp; 0xF;  // 低 4 位
 }</code></pre>
+
+
 <h3>5.5 Mermaid 图：VoxelizedSection 内存布局</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">classDiagram
     class VoxelizedSection {
         +int x
@@ -448,17 +552,32 @@ public static int getSkyLight(long id) {
     
     note for VoxelizedSection "section[0..4095] = L0 (16³)\nsection[4096..4607] = L1 (8³)\nsection[4608..4671] = L2 (4³)\nsection[4672..4679] = L3 (2³)\nsection[4680] = L4 (1³)"</div>
 </div>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="6-课后自查">6. 课后自查</h2>
-<p>✅ 以下问题可以帮助你检验对本章内容的理解：</p>
-<p><ul><li><strong>存储容量</strong>：VoxelizedSection 的 <code>section</code> 数组共有多少个 long？每个 long 编码多少 bits？</li>
-<li><strong>编码字段</strong>：37 bits 的编码中，light、biome、block 三个字段各占多少 bits？取值范围是多少？</li>
-<li><strong>LOD 层级</strong>：5 级 LOD 的体素数量分别是多少？（L0-L4）</li>
-<li><strong>层级偏移</strong>：Level 2 (L2) 的数据从数组索引多少开始？</li>
-<li><strong>位运算提取</strong>：如果要从 voxel ID 中提取 block ID，需要进行哪些位运算操作？</li></ul></p>
-<p><hr></p>
+
+
+✅ 以下问题可以帮助你检验对本章内容的理解：
+
+<ul><li><strong>存储容量</strong>：VoxelizedSection 的 <code>section</code> 数组共有多少个 long？每个 long 编码多少 bits？</li></ul>
+<ul><li><strong>编码字段</strong>：37 bits 的编码中，light、biome、block 三个字段各占多少 bits？取值范围是多少？</li></ul>
+<ul><li><strong>LOD 层级</strong>：5 级 LOD 的体素数量分别是多少？（L0-L4）</li></ul>
+<ul><li><strong>层级偏移</strong>：Level 2 (L2) 的数据从数组索引多少开始？</li></ul>
+<ul><li><strong>位运算提取</strong>：如果要从 voxel ID 中提取 block ID，需要进行哪些位运算操作？</li></ul>
+
+<hr>
+
 <h2 id="参考文件">参考文件</h2>
-<table class="data-table"><thead><tr><th>文件</th><th>路径</th></tr></thead><tbody><tr><td>VoxelizedSection.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/voxelization/VoxelizedSection.java</code></td></tr><tr><td>Mapper.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mapper.java</code></td></tr><tr><td>WorldConversionFactory.java</td><td><code>assets/voxy/src/main/java/me/cortex/voxy/common/voxelization/WorldConversionFactory.java</code></td></tr></tbody></table>
+
+
+| 文件 | 路径 |
+|------|------|
+| VoxelizedSection.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/voxelization/VoxelizedSection.java</code> |
+| Mapper.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/world/other/Mapper.java</code> |
+| WorldConversionFactory.java | <code>assets/voxy/src/main/java/me/cortex/voxy/common/voxelization/WorldConversionFactory.java</code> |
+</p>
             </div>
 
             <div class="docs-footer">

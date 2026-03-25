@@ -243,17 +243,27 @@
 
             <div class="docs-body doc-content">
                 <blockquote><p>本章基于 Voxy 源码分析，深入讲解世界引擎的核心组件与工作原理。</p></blockquote>
+
 <h2 id="目录">目录</h2>
-<p><ul><li><a href="#worldsection32³-数据容器">WorldSection：32³ 数据容器</a></li>
-<li><a href="#worldengine世界引擎核心">WorldEngine：世界引擎核心</a></li>
-<li><a href="#从-chunksection-到-voxelizedsection">从 ChunkSection 到 VoxelizedSection</a></li>
-<li><a href="#worldengine-tick-逻辑">WorldEngine Tick 逻辑</a></li>
-<li><a href="#课后自查">课后自查</a></li></ul></p>
-<p><hr></p>
+
+
+<ul><li><a href="#worldsection32³-数据容器">WorldSection：32³ 数据容器</a></li></ul>
+<ul><li><a href="#worldengine世界引擎核心">WorldEngine：世界引擎核心</a></li></ul>
+<ul><li><a href="#从-chunksection-到-voxelizedsection">从 ChunkSection 到 VoxelizedSection</a></li></ul>
+<ul><li><a href="#worldengine-tick-逻辑">WorldEngine Tick 逻辑</a></li></ul>
+<ul><li><a href="#课后自查">课后自查</a></li></ul>
+
+<hr>
+
 <h2 id="worldsection32-数据容器">WorldSection：32³ 数据容器</h2>
+
+
 <h3>什么是 WorldSection？</h3>
-<p><code>WorldSection</code> 是 Voxy 世界数据的基本存储单元，每个 section 覆盖 <strong>32×32×32 = 32,768</strong> 个体素。</p>
-<div class="mermaid-wrapper mermaid-container">
+
+
+<code>WorldSection</code> 是 Voxy 世界数据的基本存储单元，每个 section 覆盖 <strong>32×32×32 = 32,768</strong> 个体素。
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">classDiagram
     class WorldSection {
         +int lvl
@@ -275,19 +285,29 @@
 
     WorldSection --> ActiveSectionTracker : tracked by</div>
 </div>
+
+
 <h3>数据编码格式</h3>
-<p>每个体素用 <strong>37 bits</strong> 编码，存储在一个 <code>long[] data</code> 数组中：</p>
-<pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────────┐
+
+
+每个体素用 <strong>37 bits</strong> 编码，存储在一个 <code>long[] data</code> 数组中：
+</p>
+<p><pre class="code-block"><code class="language-text">┌──────────────────────────────────────────────────────────────────┐
 │ 63-56 (8 bits)  │  55-47 (9 bits)  │  46-27 (20 bits)  │ 26-0    │
 ├──────────────────┼──────────────────┼───────────────────┼─────────┤
 │ light            │ biome            │ block             │ unused  │
 │ 亮度 (0-255)     │ 生物群系 (0-511) │ 方块状态 (100万+) │         │
 └──────────────────────────────────────────────────────────────────┘</code></pre>
-<p><ul><li><strong>light (8 bits)</strong>：光照等级，包括方块光和天空光</li>
-<li><strong>biome (9 bits)</strong>：生物群系 ID，支持 512 种生物群系</li>
-<li><strong>block (20 bits)</strong>：方块状态 ID，支持约 100 万种方块状态</li></ul></p>
+
+
+<ul><li><strong>light (8 bits)</strong>：光照等级，包括方块光和天空光</li></ul>
+<ul><li><strong>biome (9 bits)</strong>：生物群系 ID，支持 512 种生物群系</li></ul>
+<ul><li><strong>block (20 bits)</strong>：方块状态 ID，支持约 100 万种方块状态</li></ul>
+
 <h3>引用计数机制</h3>
-<pre class="code-block"><code class="language-java">public final class WorldSection {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public final class WorldSection {
     // 原子状态：最低位=加载标志，其余位=引用计数
     private static final VarHandle ATOMIC_STATE_HANDLE;
 
@@ -304,17 +324,35 @@
         return (next &amp; 1) != 0;
     }
 }</code></pre>
-<p><strong>设计要点：</strong></p>
-<table class="data-table"><thead><tr><th>位</th><th>含义</th></tr></thead><tbody><tr><td>bit 0</td><td>加载标志：0=已释放，1=已加载</td></tr><tr><td>bits 1+</td><td>引用计数：每次 acquire +2，每次 release -2</td></tr></tbody></table>
+
+
+<strong>设计要点：</strong>
+
+| 位 | 含义 |
+|----|------|
+| bit 0 | 加载标志：0=已释放，1=已加载 |
+| bits 1+ | 引用计数：每次 acquire +2，每次 release -2 |
+
 <h3>数组复用缓存</h3>
-<p>为了减少 GC 压力，<code>WorldSection</code> 复用 <code>long[]</code> 数组而非每次新建：</p>
-<pre class="code-block"><code class="language-java">private static final int ARRAY_REUSE_CACHE_SIZE = 400;
+
+
+为了减少 GC 压力，<code>WorldSection</code> 复用 <code>long[]</code> 数组而非每次新建：
+</p>
+<p><pre class="code-block"><code class="language-java">private static final int ARRAY_REUSE_CACHE_SIZE = 400;
 private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new ConcurrentLinkedDeque&lt;&gt;();</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="worldengine世界引擎核心">WorldEngine：世界引擎核心</h2>
+
+
 <h3>WorldEngine 是什么？</h3>
-<p><code>WorldEngine</code> 是管理世界数据的主类，协调 <strong>LOD 层</strong>、<strong>Section 追踪器</strong> 和 <strong>持久化存储</strong>。</p>
-<pre class="code-block"><code class="language-java">public class WorldEngine {
+
+
+<code>WorldEngine</code> 是管理世界数据的主类，协调 <strong>LOD 层</strong>、<strong>Section 追踪器</strong> 和 <strong>持久化存储</strong>。
+</p>
+<p><pre class="code-block"><code class="language-java">public class WorldEngine {
     public static final int MAX_LOD_LAYER = 4;
 
     private final Mapper mapper;
@@ -322,27 +360,52 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
     private final SectionStorage storage;
     // ...
 }</code></pre>
+
+
 <h3>Section ID 编码</h3>
-<p>WorldEngine 使用 <strong>64 位 long</strong> 编码位置信息：</p>
-<pre class="code-block"><code class="language-java">public static long getWorldSectionId(int lvl, int x, int y, int z) {
+
+
+WorldEngine 使用 <strong>64 位 long</strong> 编码位置信息：
+</p>
+<p><pre class="code-block"><code class="language-java">public static long getWorldSectionId(int lvl, int x, int y, int z) {
     return ((long)lvl &lt;&lt; 60) |
            ((long)(y &amp; 0xFF) &lt;&lt; 52) |
            ((long)(z &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 28) |
            ((long)(x &amp; ((1 &lt;&lt; 24) - 1)) &lt;&lt; 4);
 }</code></pre>
-<p>64-bit Section ID 布局：</p>
-<pre class="code-block"><code class="language-text">┌────────┬────────┬─────────────────────┬─────────────────────┬──────┐
+
+
+64-bit Section ID 布局：
+</p>
+<p><pre class="code-block"><code class="language-text">┌────────┬────────┬─────────────────────┬─────────────────────┬──────┐
 │ 4 bits │ 8 bits │      24 bits        │      24 bits         │ 4bit │
 │  lvl   │   Y    │         Z           │         X           │ spare│
 │  60-63 │ 52-59  │      28-51          │      4-27           │ 0-3  │
 └────────┴────────┴─────────────────────┴─────────────────────┴──────┘</code></pre>
+
+
 <h3>LOD 层级映射</h3>
-<table class="data-table"><thead><tr><th>Level</th><th>Section 大小</th><th>覆盖体素数</th><th>用途</th></tr></thead><tbody><tr><td>L0</td><td>32³</td><td>32³</td><td>最高细节，近距离</td></tr><tr><td>L1</td><td>32³</td><td>64³</td><td>1:8 压缩</td></tr><tr><td>L2</td><td>32³</td><td>128³</td><td>1:64 压缩</td></tr><tr><td>L3</td><td>32³</td><td>256³</td><td>1:512 压缩</td></tr><tr><td>L4</td><td>32³</td><td>512³</td><td>最低细节，远距离</td></tr></tbody></table>
-每个 LOD 层的一个 section 覆盖 <strong>2^(lvl+1)</strong> 个 Level 0 sections。</p>
-<p><hr></p>
+
+
+| Level | Section 大小 | 覆盖体素数 | 用途 |
+|-------|-------------|-----------|------|
+| L0 | 32³ | 32³ | 最高细节，近距离 |
+| L1 | 32³ | 64³ | 1:8 压缩 |
+| L2 | 32³ | 128³ | 1:64 压缩 |
+| L3 | 32³ | 256³ | 1:512 压缩 |
+| L4 | 32³ | 512³ | 最低细节，远距离 |
+
+每个 LOD 层的一个 section 覆盖 <strong>2^(lvl+1)</strong> 个 Level 0 sections。
+
+<hr>
+
 <h2 id="从-chunksection-到-voxelizedsection">从 ChunkSection 到 VoxelizedSection</h2>
+
+
 <h3>转换流程图</h3>
-<div class="mermaid-wrapper mermaid-container">
+
+</p>
+<p><div class="mermaid-wrapper mermaid-container">
 <div class="mermaid">flowchart TB
     subgraph MC["Minecraft 原生"]
         CS["ChunkSection<br/>(16³, PalettedContainer)"]
@@ -374,14 +437,21 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
     style MIP fill:#e8f5e9
     style WE fill:#fff3e0</div>
 </div>
+
+
 <h3>VoxelizedSection 结构</h3>
-<pre class="code-block"><code class="language-java">public class VoxelizedSection {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class VoxelizedSection {
     public int x, y, z;
     public int lvl0NonAirCount;
     public final long[] section;  // 4913 longs = 16³ + 8³ + 4³ + 2³ + 1
 }</code></pre>
-<p><strong>4913 longs 的组成：</strong></p>
-<pre class="code-block"><code class="language-text">┌────────────────────────────────────────────┐
+
+
+<strong>4913 longs 的组成：</strong>
+</p>
+<p><pre class="code-block"><code class="language-text">┌────────────────────────────────────────────┐
 │  Level 0: 16³ = 4096 longs    [偏移 0]    │
 │  Level 1: 8³  = 512  longs   [偏移 4096]  │
 │  Level 2: 4³  = 64   longs   [偏移 4608]  │
@@ -390,10 +460,17 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
 ├────────────────────────────────────────────┤
 │  Total: 4681 longs ≈ 37 KB                │
 └────────────────────────────────────────────┘</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="worldengine-tick-逻辑">WorldEngine Tick 逻辑</h2>
+
+
 <h3>简化版 Tick 流程</h3>
-<pre class="code-block"><code class="language-java">public class WorldEngine {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public class WorldEngine {
     private final ActiveSectionTracker sectionTracker;
     private final Mapper mapper;
 
@@ -450,8 +527,12 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
         sectionTracker.unloadDistant(viewDistance);
     }
 }</code></pre>
+
+
 <h3>LOD 层切换逻辑</h3>
-<pre class="code-block"><code class="language-java">public static int selectLodLevel(int renderDistance, int blockX, int blockZ, int cameraX, int cameraZ) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static int selectLodLevel(int renderDistance, int blockX, int blockZ, int cameraX, int cameraZ) {
     int dx = blockX - cameraX;
     int dz = blockZ - cameraZ;
     int dist = Math.max(Math.abs(dx), Math.abs(dz));
@@ -463,8 +544,12 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
     if (dist &lt; 256) return 3;  // 256 blocks
     return 4;                   // 512 blocks (最大)
 }</code></pre>
+
+
 <h3>WorldUpdater 更新传播</h3>
-<pre class="code-block"><code class="language-java">public static void insertUpdate(WorldEngine into, VoxelizedSection section) {
+
+</p>
+<p><pre class="code-block"><code class="language-java">public static void insertUpdate(WorldEngine into, VoxelizedSection section) {
     for (int lvl = 0; lvl &lt;= MAX_LOD_LAYER; lvl++) {
         // 计算该 LOD 层对应的 section 坐标
         int sx = section.x &gt;&gt; (lvl + 1);
@@ -483,24 +568,39 @@ private static final ConcurrentLinkedDeque&lt;long[]&gt; ARRAY_REUSE_CACHE = new
         }
     }
 }</code></pre>
-<p><hr></p>
+
+
+<hr>
+
 <h2 id="课后自查">课后自查</h2>
-<p>✅ <strong>学完本章后，你能回答这些问题吗？</strong></p>
-<p><ul><li><strong>WorldSection 的 <code>long[] data</code> 每个条目如何编码？</strong> 37 bits 分别代表什么？</li></ul></p>
-<p><ul><li><strong>引用计数机制如何工作？</strong> 为什么最低位是加载标志位？</li></ul></p>
-<p><ul><li><strong>WorldEngine 如何用 64 位 long 编码 Section ID？</strong> 每段占多少位？</li></ul></p>
-<p><ul><li><strong>VoxelizedSection 的 4913 longs 如何分配给 5 个 LOD 层？</strong></li></ul></p>
-<p><ul><li><strong>为什么需要从 ChunkSection (16³) 转换到 VoxelizedSection？</strong> 转换带来了什么优势？</li></ul></p>
-<p><ul><li><strong>WorldUpdater 的 <code>insertUpdate()</code> 为什么要循环遍历所有 LOD 层？</strong></li></ul></p>
-<p><hr></p>
+
+
+✅ <strong>学完本章后，你能回答这些问题吗？</strong>
+
+<ul><li><strong>WorldSection 的 <code>long[] data</code> 每个条目如何编码？</strong> 37 bits 分别代表什么？</li></ul>
+
+<ul><li><strong>引用计数机制如何工作？</strong> 为什么最低位是加载标志位？</li></ul>
+
+<ul><li><strong>WorldEngine 如何用 64 位 long 编码 Section ID？</strong> 每段占多少位？</li></ul>
+
+<ul><li><strong>VoxelizedSection 的 4913 longs 如何分配给 5 个 LOD 层？</strong></li></ul>
+
+<ul><li><strong>为什么需要从 ChunkSection (16³) 转换到 VoxelizedSection？</strong> 转换带来了什么优势？</li></ul>
+
+<ul><li><strong>WorldUpdater 的 <code>insertUpdate()</code> 为什么要循环遍历所有 LOD 层？</strong></li></ul>
+
+<hr>
+
 <h2 id="参考资料">参考资料</h2>
-<p><ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">voxy</a></li>
-<li>源码文件：</li>
-</ul>  - <code>WorldSection.java</code>: <code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\common\world\WorldSection.java</code>
+
+
+<ul><li>官方仓库：<a href="https://github.com/comp500/voxy" target="_blank" rel="noopener noreferrer">voxy</a></li></ul>
+<ul><li>源码文件：</li></ul>
+  - <code>WorldSection.java</code>: <code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\common\world\WorldSection.java</code>
   - <code>WorldEngine.java</code>: <code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\common\world\WorldEngine.java</code>
   - <code>VoxyInstance.java</code>: <code>D:\Minecraft-Learning\assets\voxy\src\main\java\me\cortex\voxy\commonImpl\VoxyInstance.java</code>
-<ul><li>分析文档：<code>content/voxy/1.21.11-fabric-0.2.13-alpha/analysis/02-world-engine.md</code></li>
-</ul></p>
+<ul><li>分析文档：<code>content/voxy/1.21.11-fabric-0.2.13-alpha/analysis/02-world-engine.md</code></li></ul>
+</p>
             </div>
 
             <div class="docs-footer">
